@@ -1,0 +1,8 @@
+﻿User-agent: *
+Disallow: /api/
+Disallow: /src/
+Disallow: /database/
+Disallow: /logs/
+Disallow: /storage/
+Disallow: /vendor/
+Allow: /public/

@@ -1,0 +1,37 @@
+﻿# Environment files
+.env
+.env.local
+
+# Dependencies
+/vendor/
+node_modules/
+
+# Logs
+/logs/*.log
+/logs/*/*.log
+
+# Uploads
+/public/uploads/*
+!/public/uploads/.htaccess
+
+# Storage
+/storage/temp/*
+/storage/backups/*
+/storage/cache/*
+!/storage/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Composer
+composer.phar
+
+# Test coverage
+/coverage/

@@ -1,0 +1,13 @@
+﻿# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "\.(env|json|sql|sh|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Redirect to public directory
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/ [L]
