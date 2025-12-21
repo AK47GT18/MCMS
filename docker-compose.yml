@@ -1,0 +1,179 @@
+version: "3.9"
+
+services:
+
+  # ==========================================
+  # NGINX Web Server
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: mkaka_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./mkaka-construction-system:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - php
+    networks:
+      - mkaka-network
+
+  # ==========================================
+  # PHP-FPM 8.2 with Extensions
+  # ==========================================
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: mkaka_php
+    restart: unless-stopped
+    volumes:
+      - ./mkaka-construction-system:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    environment:
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_UPLOAD_MAX_FILESIZE=20M
+      - PHP_POST_MAX_SIZE=20M
+    networks:
+      - mkaka-network
+
+  # ==========================================
+  # MySQL 8.0 Database
+  # ==========================================
+  mysql:
+    image: mysql:8.0
+    container_name: mkaka_mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-mkaka_root_2026}
+      MYSQL_DATABASE: ${DB_NAME:-mcms}
+      MYSQL_USER: ${DB_USER:-mkaka_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-mkaka_secure_pass_2026}
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema:/docker-entrypoint-initdb.d
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf
+    networks:
+      - mkaka-network
+
+  # ==========================================
+  # phpMyAdmin - Database Management
+  # ==========================================
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: mkaka_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USER:-mkaka_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-mkaka_secure_pass_2026}
+      UPLOAD_LIMIT: 20M
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - mkaka-network
+
+  # ==========================================
+  # OnlyOffice Document Server
+  # Real-time document editing with version control
+  # ==========================================
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: mkaka_onlyoffice
+    restart: unless-stopped
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-mkaka_onlyoffice_secret_2026_change_in_production}
+      - JWT_HEADER=Authorization
+      - JWT_IN_BODY=true
+      # Database connection for collaborative editing
+      - DB_TYPE=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=onlyoffice
+      - DB_USER=${DB_USER:-mkaka_user}
+      - DB_PWD=${DB_PASSWORD:-mkaka_secure_pass_2026}
+      # Redis for co-editing sessions
+      - REDIS_SERVER_HOST=redis
+      - REDIS_SERVER_PORT=6379
+    ports:
+      - "8080:80"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+      - onlyoffice_fonts:/usr/share/fonts/truetype/custom
+      - ./mkaka-construction-system/public/uploads/documents:/var/www/html/documents
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - mkaka-network
+
+  # ==========================================
+  # Redis - Caching & Session Storage
+  # Used by OnlyOffice for real-time collaboration
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: mkaka_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-mkaka_redis_pass_2026}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mkaka-network
+
+  # ==========================================
+  # MailHog - Email Testing (Development Only)
+  # Remove in production, use real SMTP
+  # ==========================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mkaka_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - mkaka-network
+
+# ==========================================
+# Named Volumes
+# ==========================================
+volumes:
+  mysql_data:
+    driver: local
+  onlyoffice_data:
+    driver: local
+  onlyoffice_logs:
+    driver: local
+  onlyoffice_fonts:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+# ==========================================
+# Network Configuration
+# ==========================================
+networks:
+  mkaka-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
