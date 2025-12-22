@@ -1,14 +1,14 @@
 <?php
 /**
- * PUT /api/v1/contracts/:id
- * Update contract
+ * PUT /api/v1/equipment/:id
+ * Update equipment details
  * 
- * @requires Authentication, contracts.edit permission
- * @param int id Contract ID
- * @request JSON - any contract fields to update
+ * @requires Authentication, equipment.edit permission
+ * @param int id Equipment ID
+ * @request JSON - any equipment fields
  * @response JSON
  *   - success: boolean
- *   - contract: object
+ *   - equipment: object
  */
 
 require_once __DIR__ . '/../../../src/config/bootstrap.php';
@@ -25,54 +25,54 @@ if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
 }
 
 try {
-    Authorization::require('contracts.edit');
+    Authorization::require('equipment.edit');
     
-    $contractId = (int)($_GET['id'] ?? 0);
-    if (!$contractId) {
+    $equipmentId = (int)($_GET['id'] ?? 0);
+    if (!$equipmentId) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Contract ID required']);
+        echo json_encode(['success' => false, 'error' => 'Equipment ID required']);
         exit;
     }
     
     $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
     
-    $contractRepo = new ContractRepository();
-    $contract = $contractRepo->find($contractId);
+    $equipmentRepo = new EquipmentRepository();
+    $equipment = $equipmentRepo->find($equipmentId);
     
-    if (!$contract) {
+    if (!$equipment) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Contract not found']);
+        echo json_encode(['success' => false, 'error' => 'Equipment not found']);
         exit;
     }
     
-    $updated = $contractRepo->update($contractId, $input);
+    $updated = $equipmentRepo->update($equipmentId, $input);
     
     if (!$updated) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to update contract']);
+        echo json_encode(['success' => false, 'error' => 'Failed to update']);
         exit;
     }
     
     $auditLog = new AuditLog();
     $auditLog->create([
         'user_id' => Authentication::user()['id'],
-        'action' => 'contract_updated',
-        'entity_type' => 'contract',
-        'entity_id' => $contractId,
+        'action' => 'equipment_updated',
+        'entity_type' => 'equipment',
+        'entity_id' => $equipmentId,
         'details' => json_encode(array_keys($input)),
         'ip_address' => $_SERVER['REMOTE_ADDR']
     ]);
     
-    $updatedContract = $contractRepo->find($contractId);
+    $updatedEquipment = $equipmentRepo->find($equipmentId);
     
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'contract' => $updatedContract
+        'equipment' => $updatedEquipment
     ]);
     
 } catch (Exception $e) {
-    error_log("Update contract API error: " . $e->getMessage());
+    error_log("Update equipment API error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'An error occurred']);
 }
