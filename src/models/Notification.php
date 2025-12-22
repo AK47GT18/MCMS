@@ -1,4 +1,7 @@
 <?php
+namespace Mkaka\Models;
+
+use Mkaka\Core\Model;
 
 class Notification extends Model {
     protected $table = 'notifications';

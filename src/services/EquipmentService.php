@@ -1,4 +1,9 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\EquipmentRepository;
+use Mkaka\Services\AuditService;
+use Mkaka\Services\GpsService;
 
 class EquipmentService {
     

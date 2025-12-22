@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Core;
+
 class Request {
     private $data;
     

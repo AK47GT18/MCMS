@@ -1,4 +1,12 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\TransactionRepository;
+use Mkaka\Repositories\ProjectRepository;
+use Mkaka\Services\AuditService;
+use Mkaka\Services\NotificationService;
+use Mkaka\Services\ApprovalService;
+
 class FinanceService {
     
     private $transactionRepository;

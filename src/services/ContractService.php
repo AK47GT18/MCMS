@@ -1,4 +1,9 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\ContractRepository;
+use Mkaka\Services\AuditService;
+use Mkaka\Services\NotificationService;
 
 class ContractService {
     

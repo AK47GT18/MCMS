@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Core;
+
 abstract class Model {
     protected $db;
     protected $table;

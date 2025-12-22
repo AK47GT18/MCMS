@@ -1,4 +1,10 @@
 <?php
+namespace Mkaka\Controllers;
+
+use Mkaka\Core\Controller;
+use Mkaka\Models\Transaction;
+use Mkaka\Models\Budget;
+
 /**
  * Finance Controller
  * 

@@ -1,4 +1,11 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\ReportRepository;
+use Mkaka\Services\AuditService;
+use Mkaka\Services\GpsService;
+use Mkaka\Exceptions\ValidationException;
+
 class ReportService {
     
     private $reportRepository;

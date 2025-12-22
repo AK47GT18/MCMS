@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Models;
+
+use Mkaka\Core\Model;
+
 /**
  * Transaction Model
  * 

@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Core;
+
 class Response {
     private $statusCode = 200;
     private $headers = [];

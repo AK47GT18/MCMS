@@ -1,4 +1,5 @@
 <?php
+namespace Mkaka\Core;
 
 abstract class Controller {
     protected $request;

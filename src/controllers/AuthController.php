@@ -1,4 +1,10 @@
 <?php
+namespace Mkaka\Controllers;
+
+use Mkaka\Core\Controller;
+use Mkaka\Core\Authentication;
+use Mkaka\Models\User;
+
 /**
  * Authentication Controller
  * 

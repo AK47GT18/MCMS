@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\AuditRepository;
+
 class AuditService {
     
     private $auditRepository;

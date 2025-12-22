@@ -9,6 +9,11 @@
  * @supervisor Mr. John Kaira
  */
 
+namespace Mkaka\Middleware;
+
+use Mkaka\Core\Authorization;
+use Mkaka\Core\Authentication;
+
 class RoleMiddleware {
     
     /**

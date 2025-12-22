@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Services;
+
 class GpsService {
     
     // Malawi boundaries from SRS

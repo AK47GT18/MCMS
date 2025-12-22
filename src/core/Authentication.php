@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Core;
+
+use Mkaka\Models\User;
+use Mkaka\Models\AuditLog;
 
 class Authentication {
     private static $session;

@@ -9,6 +9,8 @@
  * @supervisor Mr. John Kaira
  */
 
+namespace Mkaka\Utils;
+
 class GpsExtractor {
     
     /**

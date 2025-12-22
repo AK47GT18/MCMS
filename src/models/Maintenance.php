@@ -1,4 +1,7 @@
 <?php
+namespace Mkaka\Models;
+
+use Mkaka\Core\Model;
 
 class Maintenance extends Model {
     protected $table = 'maintenance_records';

@@ -1,4 +1,5 @@
 <?php
+namespace Mkaka\Core;
 
 class Authorization {
     private static $permissions = [];

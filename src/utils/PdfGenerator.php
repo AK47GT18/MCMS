@@ -7,6 +7,8 @@
  * @author Anthony Kanjira (CEN/01/01/22)
  */
 
+namespace Mkaka\Utils;
+
 class PdfGenerator {
     
     /**

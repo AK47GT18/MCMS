@@ -1,5 +1,7 @@
 <?php
+namespace Mkaka\Services;
 
+use PHPMailer\PHPMailer\PHPMailer;
 
 class EmailService {
     

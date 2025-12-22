@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Exceptions;
+
 /**
  * Custom Exception Classes
  * 
@@ -16,7 +18,7 @@
  * 
  * Thrown when user input fails validation rules
  */
-class ValidationException extends Exception {
+class ValidationException extends \Exception {
     
     /**
      * Validation errors array

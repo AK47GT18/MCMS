@@ -1,10 +1,12 @@
 <?php
+namespace Mkaka\Exceptions;
+
 /**
  * Authorization Exception
  * 
  * Thrown when user lacks permission to access resource (FR-02)
  */
-class AuthorizationException extends Exception {
+class AuthorizationException extends \Exception {
     
     /**
      * Required permission

@@ -1,4 +1,7 @@
 <?php
+namespace Mkaka\Models;
+
+use Mkaka\Core\Model;
 
 /**
  * Approval Model - Complete Implementation

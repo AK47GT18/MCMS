@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Core\Database;
+
 class NotificationService {
     
     private $db;

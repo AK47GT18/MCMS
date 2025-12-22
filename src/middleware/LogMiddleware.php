@@ -9,6 +9,10 @@
  * @supervisor Mr. John Kaira
  */
 
+namespace Mkaka\Middleware;
+
+use Mkaka\Utils\Logger;
+
 class LogMiddleware {
     
     private $startTime;

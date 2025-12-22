@@ -1,4 +1,9 @@
 <?php
+namespace Mkaka\Controllers;
+
+use Mkaka\Core\Controller;
+use Mkaka\Models\Contract;
+
 /**
  * Contract Controller
  * 

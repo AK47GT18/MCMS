@@ -10,6 +10,10 @@
  * @security Implements OWASP CSRF protection best practices
  */
 
+namespace Mkaka\Middleware;
+
+use Mkaka\Core\Session;
+
 class CsrfMiddleware {
     
     /**

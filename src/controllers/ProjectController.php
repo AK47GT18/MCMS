@@ -1,4 +1,10 @@
 <?php
+namespace Mkaka\Controllers;
+
+use Mkaka\Core\Controller;
+use Mkaka\Models\Project;
+use Mkaka\Models\Task;
+
 /**
  * Project Controller
  * 

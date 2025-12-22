@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Utils;
+
 class ExcelExporter {
     
     /**

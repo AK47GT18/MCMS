@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Controllers;
+
+use Mkaka\Core\Controller;
+use Mkaka\Models\User;
 
 /**
  * User Controller

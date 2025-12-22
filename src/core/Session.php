@@ -1,7 +1,12 @@
 <?php
+namespace Mkaka\Core;
+
 class Session {
     public function __construct() {
         if (session_status() === PHP_SESSION_NONE) {
+            ini_set('session.save_handler', 'redis');
+            ini_set('session.save_path', 'tcp://redis:6379?database=1');
+            $this->start();
             $this->start();
         }
     }

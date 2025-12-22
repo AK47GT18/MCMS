@@ -1,4 +1,11 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\ProjectRepository;
+use Mkaka\Services\AuditService;
+use Mkaka\Services\NotificationService;
+use Mkaka\Exceptions\ValidationException;
+
 /**
  * Project and Finance Services
  * 

@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Middleware;
+
+use Mkaka\Core\Authentication;
+
 /**
  * Authentication Middleware
  * 

@@ -10,6 +10,10 @@
  * @security Implements sliding window rate limiting algorithm
  */
 
+namespace Mkaka\Middleware;
+
+use Mkaka\Core\RedisCache;
+
 class RateLimitMiddleware {
     
     /**

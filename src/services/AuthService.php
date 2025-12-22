@@ -1,4 +1,11 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Repositories\UserRepository;
+use Mkaka\Services\AuditService;
+use Mkaka\Exceptions\ValidationException;
+use Mkaka\Exceptions\AuthenticationException;
+
 /**
  * Authentication Service
  * 

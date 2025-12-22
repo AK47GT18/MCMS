@@ -1,10 +1,12 @@
 <?php
+namespace Mkaka\Exceptions;
+
 /**
  * Database Exception
  * 
  * Thrown when database operations fail
  */
-class DatabaseException extends Exception {
+class DatabaseException extends \Exception {
     
     /**
      * SQL query that caused the error

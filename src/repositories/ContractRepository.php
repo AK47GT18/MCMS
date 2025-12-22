@@ -1,4 +1,8 @@
 <?php
+namespace Mkaka\Repositories;
+
+use Mkaka\Core\Database;
+
 /**
  * Contract Repository (FR-09, FR-10)
  */

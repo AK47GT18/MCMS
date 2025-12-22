@@ -1,10 +1,12 @@
 <?php
+namespace Mkaka\Exceptions;
+
 /**
  * Authentication Exception
  * 
  * Thrown when user authentication fails (FR-01, FR-16, FR-17)
  */
-class AuthenticationException extends Exception {
+class AuthenticationException extends \Exception {
     
     /**
      * Authentication failure reason

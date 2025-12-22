@@ -1,10 +1,12 @@
 <?php
+namespace Mkaka\Exceptions;
+
 /**
  * Not Found Exception
  * 
  * Thrown when requested resource is not found
  */
-class NotFoundException extends Exception {
+class NotFoundException extends \Exception {
     
     /**
      * Resource type

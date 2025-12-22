@@ -1,4 +1,6 @@
 <?php
+namespace Mkaka\Utils;
+
 class Encryptor {
     
     private static $cipher = 'AES-256-CBC';

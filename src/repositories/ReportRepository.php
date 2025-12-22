@@ -1,4 +1,7 @@
 <?php
+namespace Mkaka\Repositories;
+
+use Mkaka\Core\Database;
 
 class ReportRepository {
     

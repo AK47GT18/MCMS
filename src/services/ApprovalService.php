@@ -1,4 +1,10 @@
 <?php
+namespace Mkaka\Services;
+
+use Mkaka\Core\Database;
+use Mkaka\Services\NotificationService;
+use Mkaka\Services\AuditService;
+
 class ApprovalService {
     
     private $db;
