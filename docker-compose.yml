@@ -1,3 +1,9 @@
+# ============================================
+# Mkaka Construction Management System
+# Complete Docker Stack - FIXED VERSION
+# Author: Anthony Kanjira (CEN/01/01/22)
+# ============================================
+
 version: "3.9"
 
 services:
@@ -62,6 +68,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./database/schema:/docker-entrypoint-initdb.d
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./docker/mysql/init-onlyoffice-db.sql:/docker-entrypoint-initdb.d/01-onlyoffice.sql
     networks:
       - mkaka-network
 
@@ -88,6 +95,7 @@ services:
   # ==========================================
   # OnlyOffice Document Server
   # Real-time document editing with version control
+  # FIXED: Dedicated database user + Redis password
   # ==========================================
   onlyoffice:
     image: onlyoffice/documentserver:latest
@@ -98,16 +106,17 @@ services:
       - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-mkaka_onlyoffice_secret_2026_change_in_production}
       - JWT_HEADER=Authorization
       - JWT_IN_BODY=true
-      # Database connection for collaborative editing
+      # Database connection - FIXED: Using dedicated OnlyOffice user
       - DB_TYPE=mysql
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_NAME=onlyoffice
-      - DB_USER=${DB_USER:-mkaka_user}
-      - DB_PWD=${DB_PASSWORD:-mkaka_secure_pass_2026}
-      # Redis for co-editing sessions
+      - DB_NAME=${ONLYOFFICE_DB_NAME:-onlyoffice}
+      - DB_USER=${ONLYOFFICE_DB_USER:-onlyoffice_user}
+      - DB_PWD=${ONLYOFFICE_DB_PASSWORD:-onlyoffice_secure_pass_2026}
+      # Redis for co-editing sessions - FIXED: Added password
       - REDIS_SERVER_HOST=redis
       - REDIS_SERVER_PORT=6379
+      - REDIS_SERVER_PASSWORD=${REDIS_PASSWORD:-mkaka_redis_pass_2026}
     ports:
       - "8080:80"
     volumes:
@@ -170,10 +179,11 @@ volumes:
 
 # ==========================================
 # Network Configuration
+# FIXED: Changed subnet to avoid Docker Desktop conflicts
 # ==========================================
 networks:
   mkaka-network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.25.0.0/16
