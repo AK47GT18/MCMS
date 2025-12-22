@@ -2,6 +2,12 @@
 namespace Mkaka\Models;
 
 use Mkaka\Core\Model;
+use Mkaka\Models\Transaction;
+use Mkaka\Models\User;
+use Mkaka\Models\Project;
+use Mkaka\Models\Contract;
+use Mkaka\Models\Equipment;
+use Mkaka\Models\SiteReport;
 
 class Notification extends Model {
     protected $table = 'notifications';

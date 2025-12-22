@@ -1,6 +1,9 @@
 <?php
 namespace Mkaka\Core;
 
+use Mkaka\Core\Authentication;
+use Mkaka\Core\Authorization;
+
 abstract class Controller {
     protected $request;
     protected $response;

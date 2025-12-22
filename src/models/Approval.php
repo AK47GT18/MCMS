@@ -2,6 +2,10 @@
 namespace Mkaka\Models;
 
 use Mkaka\Core\Model;
+use Mkaka\Core\Authentication;
+use Mkaka\Models\AuditLog;
+use Mkaka\Models\User;
+use Mkaka\Models\Notification;
 
 /**
  * Approval Model - Complete Implementation

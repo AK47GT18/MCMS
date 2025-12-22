@@ -2,6 +2,11 @@
 namespace Mkaka\Models;
 
 use Mkaka\Core\Model;
+use Mkaka\Core\Authentication;
+use Mkaka\Models\AuditLog;
+use Mkaka\Models\Notification;
+use Mkaka\Models\Budget;
+use Mkaka\Models\Task;
 
 /**
  * Project Model - Complete Implementation

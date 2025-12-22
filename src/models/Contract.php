@@ -2,6 +2,10 @@
 namespace Mkaka\Models;
 
 use Mkaka\Core\Model;
+use Mkaka\Core\Authentication;
+use Mkaka\Models\AuditLog;
+use Mkaka\Models\Document;
+use Mkaka\Models\Notification;
 
 /**
  * Contract Model
