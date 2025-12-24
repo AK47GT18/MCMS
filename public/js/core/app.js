@@ -215,9 +215,498 @@ const App = {
   }
 };
 
+/**
+ * UI Interaction Methods
+ */
+
+/**
+ * Toggle sidebar visibility
+ */
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+  if (sidebar) sidebar.classList.toggle('show');
+  if (overlay) overlay.classList.toggle('show');
+}
+
+/**
+ * Load page content
+ */
+function loadPage(page) {
+  App.loadPage(page);
+}
+
+/**
+ * Open project switcher dropdown
+ */
+function openProjectSwitcher() {
+  const modalId = 'project-switcher-modal';
+  let modal = document.getElementById(modalId);
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+      }
+    });
+  }
+
+  const projects = [
+    { id: 'PROJ-001', name: 'M1 Road Rehabilitation - Mzuzu', status: 'Active' },
+    { id: 'PROJ-002', name: 'M5 Bridge Rehabilitation', status: 'Active' },
+    { id: 'PROJ-003', name: 'City Road Upgrade - Blantyre', status: 'Planning' }
+  ];
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Switch Project</h3>
+        <div class="modal-close" onclick="document.getElementById('${modalId}').classList.remove('show')">
+          <i class="fas fa-times"></i>
+        </div>
+      </div>
+      <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+        ${projects.map(proj => `
+          <div onclick="selectProject('${proj.id}', '${proj.name}'); document.getElementById('${modalId}').classList.remove('show');" style="
+            padding: 16px;
+            border-bottom: 1px solid var(--slate-200);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          " onmouseover="this.style.background='var(--slate-50)'" onmouseout="this.style.background='white'">
+            <div>
+              <div style="font-weight: 700; color: var(--slate-900); margin-bottom: 4px;">${proj.name}</div>
+              <span class="status ${proj.status.toLowerCase()}">${proj.status}</span>
+            </div>
+            <i class="fas fa-arrow-right" style="color: var(--slate-400);"></i>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('show');
+}
+
+/**
+ * Select and switch project
+ */
+function selectProject(projectId, projectName) {
+  const projectElement = document.getElementById('current-project');
+  if (projectElement) {
+    projectElement.textContent = projectName;
+  }
+  NotificationComponent.success(`Switched to ${projectName}`);
+}
+
+/**
+ * Open user profile
+ */
+function openUserProfile() {
+  const modalId = 'user-profile-modal';
+  let modal = document.getElementById(modalId);
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+      }
+    });
+  }
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">My Profile</h3>
+        <div class="modal-close" onclick="document.getElementById('${modalId}').classList.remove('show')">
+          <i class="fas fa-times"></i>
+        </div>
+      </div>
+      <div class="modal-body" style="display: grid; gap: 20px;">
+        <div style="text-align: center; padding: 20px; background: var(--slate-50); border-radius: 12px;">
+          <div style="
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 32px;
+            color: white;
+            margin: 0 auto 16px;
+          ">AK</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--slate-900); margin-bottom: 4px;">Anthony Kanjira</div>
+          <div style="font-size: 14px; color: var(--slate-500); margin-bottom: 12px;">Project Manager</div>
+          <button class="btn btn-secondary" style="width: 100%;" onclick="editProfile()">
+            <i class="fas fa-edit"></i>
+            <span>Edit Profile</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Email</div>
+            <div style="font-size: 14px; color: var(--slate-900);">anthony.kanjira@mkaka.mw</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Phone</div>
+            <div style="font-size: 14px; color: var(--slate-900);">+265 9XX XXX XXX</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Department</div>
+            <div style="font-size: 14px; color: var(--slate-900);">Project Management</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Joined</div>
+            <div style="font-size: 14px; color: var(--slate-900);">January 15, 2024</div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--slate-200); padding-top: 20px;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--slate-900); margin-bottom: 12px;">Permissions</div>
+          <div style="display: grid; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-check-circle" style="color: var(--emerald);"></i>
+              <span style="font-size: 14px; color: var(--slate-700);">View Projects</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-check-circle" style="color: var(--emerald);"></i>
+              <span style="font-size: 14px; color: var(--slate-700);">Manage Contracts</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-check-circle" style="color: var(--emerald);"></i>
+              <span style="font-size: 14px; color: var(--slate-700);">View Financial Reports</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-check-circle" style="color: var(--emerald);"></i>
+              <span style="font-size: 14px; color: var(--slate-700);">Approve Commitments</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; padding-top: 20px; border-top: 1px solid var(--slate-200);">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="changePassword()">
+            <i class="fas fa-lock"></i>
+            <span>Change Password</span>
+          </button>
+          <button class="btn btn-secondary" onclick="document.getElementById('${modalId}').classList.remove('show')">
+            <span>Close</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('show');
+}
+
+/**
+ * Edit user profile
+ */
+function editProfile() {
+  NotificationComponent.info('Edit profile functionality');
+}
+
+/**
+ * Change password
+ */
+function changePassword() {
+  NotificationComponent.info('Change password functionality');
+}
+
+/**
+ * Open settings
+ */
+function openSettings() {
+  const menu = document.getElementById('user-menu-dropdown');
+  if (menu) menu.remove();
+  NotificationComponent.info('Opening settings...');
+}
+
+/**
+ * Open help and support
+ */
+function openHelp() {
+  const menu = document.getElementById('user-menu-dropdown');
+  if (menu) menu.remove();
+  NotificationComponent.info('Opening help center...');
+}
+
+/**
+ * Open search modal
+ */
+function openSearch() {
+  const modalId = 'search-modal';
+  let modal = document.getElementById(modalId);
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+      }
+    });
+  }
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Search</h3>
+        <div class="modal-close" onclick="document.getElementById('${modalId}').classList.remove('show')">
+          <i class="fas fa-times"></i>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Search across all modules</label>
+          <input type="text" class="form-input" id="search-input" placeholder="Search projects, tasks, commitments, equipment..." style="font-size: 16px;" autofocus onkeyup="performSearch(this.value)">
+        </div>
+        <div id="search-results" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
+          <div style="color: var(--slate-500); text-align: center; padding: 20px;">
+            <i class="fas fa-search" style="font-size: 32px; margin-bottom: 12px;"></i>
+            <div>Start typing to search...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('search-input')?.focus(), 100);
+}
+
+/**
+ * Perform search across modules
+ */
+function performSearch(query) {
+  if (!query) {
+    document.getElementById('search-results').innerHTML = `
+      <div style="color: var(--slate-500); text-align: center; padding: 20px;">
+        <i class="fas fa-search" style="font-size: 32px; margin-bottom: 12px;"></i>
+        <div>Start typing to search...</div>
+      </div>
+    `;
+    return;
+  }
+
+  const results = [];
+  const searchLower = query.toLowerCase();
+
+  // Search projects
+  if (typeof ProjectsModule !== 'undefined' && ProjectsModule.projects) {
+    ProjectsModule.projects.forEach(proj => {
+      if (proj.name.toLowerCase().includes(searchLower) || proj.description.toLowerCase().includes(searchLower)) {
+        results.push({
+          type: 'Project',
+          title: proj.name,
+          icon: 'fa-project-diagram',
+          color: 'var(--blue)',
+          action: `ProjectsModule.viewProject('${proj.id}')`
+        });
+      }
+    });
+  }
+
+  // Search equipment
+  if (typeof EquipmentModule !== 'undefined' && EquipmentModule.equipment) {
+    EquipmentModule.equipment.forEach(eq => {
+      if (eq.name.toLowerCase().includes(searchLower) || eq.id.toLowerCase().includes(searchLower)) {
+        results.push({
+          type: 'Equipment',
+          title: eq.name,
+          icon: 'fa-truck',
+          color: 'var(--orange)',
+          action: `EquipmentModule.viewEquipment('${eq.id}')`
+        });
+      }
+    });
+  }
+
+  // Search commitments
+  if (typeof CommitmentsModule !== 'undefined' && CommitmentsModule.commitments) {
+    Object.entries(CommitmentsModule.commitments).forEach(([id, contract]) => {
+      if (contract.title.toLowerCase().includes(searchLower) || id.toLowerCase().includes(searchLower)) {
+        results.push({
+          type: 'Contract',
+          title: contract.title,
+          icon: 'fa-file-contract',
+          color: 'var(--emerald)',
+          action: `CommitmentsModule.viewCommitment('${id}')`
+        });
+      }
+    });
+  }
+
+  const resultsDiv = document.getElementById('search-results');
+  if (results.length === 0) {
+    resultsDiv.innerHTML = `
+      <div style="color: var(--slate-500); text-align: center; padding: 20px;">
+        <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px;"></i>
+        <div>No results found for "${query}"</div>
+      </div>
+    `;
+    return;
+  }
+
+  resultsDiv.innerHTML = results.map(result => `
+    <div onclick="${result.action}; document.getElementById('search-modal').classList.remove('show');" style="
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--slate-200);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--transition);
+    " onmouseover="this.style.background='var(--slate-50)'" onmouseout="this.style.background='white'">
+      <i class="fas ${result.icon}" style="color: ${result.color}; font-size: 16px;"></i>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; color: var(--slate-900);">${result.title}</div>
+        <div style="font-size: 12px; color: var(--slate-400);">${result.type}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/**
+ * Open notifications panel
+ */
+function openNotifications() {
+  if (typeof NotificationComponent !== 'undefined') {
+    NotificationComponent.openPanel();
+  }
+}
+
+/**
+ * Open user menu dropdown
+ */
+function openUserMenu() {
+  // TODO: Implement user menu
+  alert('User menu (would show profile, settings, logout)');
+}
+
+
+/**
+ * Create new commitment
+ */
+function createCommitment() {
+  if (typeof CommitmentsModule !== 'undefined') {
+    CommitmentsModule.createCommitment();
+  }
+}
+
+/**
+ * View commitment details
+ */
+function viewCommitment(contractId) {
+  if (typeof CommitmentsModule !== 'undefined') {
+    CommitmentsModule.viewCommitment(contractId);
+  }
+}
+
+/**
+ * Close modal
+ */
+function closeModal() {
+  const modal = document.getElementById('modal-overlay');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+/**
+ * Switch tab
+ */
+function switchTab(element, tabName) {
+  if (typeof DataTables !== 'undefined') {
+    DataTables.switchTab(element, tabName);
+  }
+}
+
+/**
+ * Filter table
+ */
+function filterTable(type, value) {
+  if (typeof DataTables !== 'undefined') {
+    DataTables.filterTable(type, value);
+  }
+}
+
+/**
+ * Initialize all modules
+ */
+function initializeModules() {
+  // Initialize component services
+  if (typeof NotificationComponent !== 'undefined') {
+    NotificationComponent.init();
+  }
+
+  // Initialize modules based on current page
+  const currentPage = window.location.pathname;
+  
+  if (currentPage.includes('dashboard')) {
+    if (typeof DashboardModule !== 'undefined') DashboardModule.init();
+  } else if (currentPage.includes('projects')) {
+    if (typeof ProjectsModule !== 'undefined') ProjectsModule.init();
+  } else if (currentPage.includes('equipment')) {
+    if (typeof EquipmentModule !== 'undefined') EquipmentModule.init();
+  } else if (currentPage.includes('commitments') || currentPage.includes('finance')) {
+    if (typeof CommitmentsModule !== 'undefined') CommitmentsModule.init();
+  } else if (currentPage.includes('reports')) {
+    if (typeof FinanceModule !== 'undefined') FinanceModule.init();
+  }
+
+  // Initialize services
+  if (typeof GPSService !== 'undefined') {
+    GPSService.init();
+  }
+  if (typeof OfflineService !== 'undefined') {
+    OfflineService.init();
+  }
+  if (typeof SyncService !== 'undefined') {
+    SyncService.init();
+  }
+}
+
 // Initialize app when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => App.init());
+  document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+    initializeModules();
+  });
 } else {
   App.init();
+  initializeModules();
 }
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', () => {
+  const modalOverlay = document.getElementById('modal-overlay');
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+  }
+});
