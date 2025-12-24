@@ -1,0 +1,43 @@
+/* CSS Variables */
+:root {
+  /* Brand Colors */
+  --orange: #FF8A00;
+  --orange-dark: #FF5C00;
+  
+  /* Neutral Colors */
+  --slate-50: #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1;
+  --slate-400: #94A3B8;
+  --slate-500: #64748B;
+  --slate-700: #334155;
+  --slate-900: #0F172A;
+  --white: #FFFFFF;
+  
+  /* Semantic Colors */
+  --emerald: #10B981;
+  --red: #EF4444;
+  --blue: #3B82F6;
+  --amber: #F59E0B;
+  
+  /* Design Tokens */
+  --radius: 12px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Layout */
+  --header-height: 64px;
+  --sidebar-width: 280px;
+  
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-dropdown: 10;
+  --z-sticky: 50;
+  --z-sidebar: 99;
+  --z-sidebar-overlay: 99;
+  --z-header: 100;
+  --z-modal-overlay: 1000;
+  --z-modal: 1001;
+}

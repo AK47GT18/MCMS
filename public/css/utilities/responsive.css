@@ -1,0 +1,351 @@
+/* Responsive Utilities */
+
+/* Breakpoints:
+   - xs: 0-575px (mobile)
+   - sm: 576px-767px (mobile landscape)
+   - md: 768px-991px (tablet)
+   - lg: 992px-1199px (desktop)
+   - xl: 1200px+ (large desktop)
+*/
+
+/* Hide/Show by Breakpoint */
+@media (max-width: 575px) {
+  .hide-xs { display: none !important; }
+}
+
+@media (min-width: 576px) {
+  .show-xs { display: none !important; }
+}
+
+@media (max-width: 767px) {
+  .hide-sm { display: none !important; }
+}
+
+@media (min-width: 768px) {
+  .show-sm { display: none !important; }
+}
+
+@media (max-width: 991px) {
+  .hide-md { display: none !important; }
+}
+
+@media (min-width: 992px) {
+  .show-md { display: none !important; }
+}
+
+@media (max-width: 1199px) {
+  .hide-lg { display: none !important; }
+}
+
+@media (min-width: 1200px) {
+  .show-lg { display: none !important; }
+}
+
+/* Mobile Specific (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Typography */
+  h1, .page-title {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  h3, .card-title {
+    font-size: 16px;
+  }
+
+  /* Layout */
+  body {
+    overflow-x: hidden;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .page-header {
+    padding: 20px;
+  }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-group .btn {
+    border-radius: var(--radius) !important;
+    margin-bottom: 8px;
+  }
+
+  /* Cards */
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  /* Forms */
+  .form-grid,
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  /* Modals */
+  .modal {
+    max-width: 95%;
+    width: 95%;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+
+  /* Data Card */
+  .data-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Stat Grid */
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Tabs */
+  .tabs {
+    gap: 20px;
+    padding-bottom: 0;
+  }
+
+  .tab {
+    padding: 12px 4px;
+    font-size: 13px;
+  }
+
+  /* Navigation */
+  .top-actions {
+    gap: 8px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Avatar */
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  /* Tooltips */
+  .tooltip {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  /* Dropdown */
+  .dropdown-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  /* Badge */
+  .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    padding: 48px 20px;
+  }
+
+  .empty-state-icon {
+    font-size: 48px;
+  }
+
+  /* Dashboard */
+  .dashboard-welcome {
+    font-size: 22px;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+  }
+
+  .quick-action-card {
+    min-width: 100%;
+  }
+
+  /* Financial */
+  .financial-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .transaction-item {
+    flex-wrap: wrap;
+  }
+
+  .transaction-amount {
+    width: 100%;
+    text-align: right;
+    margin-top: 8px;
+  }
+
+  /* Spacing */
+  .m-md-0 { margin: 0 !important; }
+  .mt-md-0 { margin-top: 0 !important; }
+  .mb-md-0 { margin-bottom: 0 !important; }
+  .p-md-0 { padding: 0 !important; }
+  .pt-md-0 { padding-top: 0 !important; }
+  .pb-md-0 { padding-bottom: 0 !important; }
+}
+
+/* Tablet Specific (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .content {
+    padding: 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop Specific (min-width: 992px) */
+@media (min-width: 992px) {
+  /* Hover effects only on desktop */
+  .desktop-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* Print Styles */
+@media print {
+  /* Hide UI elements */
+  .sidebar,
+  .top-bar,
+  .hamburger,
+  .top-actions,
+  .btn,
+  .filters,
+  .modal-overlay,
+  .toast-container {
+    display: none !important;
+  }
+
+  /* Adjust layout */
+  .main-content {
+    margin: 0;
+    padding: 0;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  /* Remove shadows and borders */
+  .card,
+  .stat-card,
+  .data-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  /* Typography */
+  body {
+    font-size: 12pt;
+    color: #000;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-after: always;
+  }
+
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Links */
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+}
+
+/* Landscape Orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+  .modal {
+    max-height: 95vh;
+  }
+
+  .modal-body {
+    max-height: 70vh;
+  }
+}
+
+/* High DPI / Retina Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders and text */
+  .card,
+  .btn,
+  .form-input {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if required */
+  /* Example:
+  :root {
+    --slate-900: #F8FAFC;
+    --slate-50: #0F172A;
+  }
+  */
+}
