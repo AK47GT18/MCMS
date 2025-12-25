@@ -1,207 +1,168 @@
 <?php
 /**
- * Dashboard - Main Page
- * Display system overview, charts, and key metrics
+ * Dashboard - Project Manager
  */
-
 $pageTitle = 'Dashboard';
 $currentPage = 'dashboard';
-$breadcrumbs = [];
 ?>
 
 <?php include __DIR__ . '/../../layouts/main.php'; ?>
 
-<div class="page-header">
-    <div class="header-title">
-        <h1>📊 Dashboard</h1>
-        <p>Welcome back! Here's your system overview.</p>
-    </div>
-    <div class="header-actions">
-        <button class="btn btn-primary" onclick="location.reload();">
-            <span class="icon">🔄</span> Refresh
-        </button>
-    </div>
+<div class="header-title">
+    <!-- Breadcrumb and Actions handled by main layout/header, specific page actions can go here if needed -->
 </div>
 
-<!-- Statistics Cards -->
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon stat-projects">📋</div>
-        <div class="stat-content">
-            <p class="stat-label">Active Projects</p>
-            <h3 class="stat-value" id="activeProjects">0</h3>
-            <p class="stat-change positive">↑ 12% this month</p>
+        <div class="stat-header">
+            <div class="stat-icon orange">
+                <i class="fas fa-project-diagram"></i>
+            </div>
         </div>
+        <div class="stat-value" id="activeProjects">0</div>
+        <div class="stat-label">Active Projects</div>
     </div>
 
     <div class="stat-card">
-        <div class="stat-icon stat-equipment">⚙️</div>
-        <div class="stat-content">
-            <p class="stat-label">Equipment in Use</p>
-            <h3 class="stat-value" id="equipmentInUse">0</h3>
-            <p class="stat-change positive">↑ 8% this month</p>
+        <div class="stat-header">
+            <div class="stat-icon blue">
+                <i class="fas fa-tasks"></i>
+            </div>
         </div>
+        <div class="stat-value" id="myTasks">0</div>
+        <div class="stat-label">My Pending Tasks</div>
     </div>
 
     <div class="stat-card">
-        <div class="stat-icon stat-budget">💰</div>
-        <div class="stat-content">
-            <p class="stat-label">Total Budget</p>
-            <h3 class="stat-value" id="totalBudget">MWK 0</h3>
-            <p class="stat-change negative">↓ 5% spent</p>
+        <div class="stat-header">
+            <div class="stat-icon emerald">
+                <i class="fas fa-check-circle"></i>
+            </div>
         </div>
+        <div class="stat-value" id="completedProjects">0</div>
+        <div class="stat-label">Completed Projects</div>
     </div>
 
     <div class="stat-card">
-        <div class="stat-icon stat-tasks">✓</div>
-        <div class="stat-content">
-            <p class="stat-label">Pending Approvals</p>
-            <h3 class="stat-value" id="pendingApprovals">0</h3>
-            <p class="stat-change warning">⚠️ Action needed</p>
+        <div class="stat-header">
+            <div class="stat-icon red">
+                <i class="fas fa-wallet"></i>
+            </div>
+        </div>
+        <div class="stat-value" id="totalBudget">MWK 0</div>
+        <div class="stat-label">Total Allocated Budget</div>
+    </div>
+</div>
+
+<!-- Tabs for Dashboard View -->
+<div class="tabs">
+    <div class="tab active" onclick="switchTab(this, 'overview')">Overview</div>
+    <div class="tab" onclick="switchTab(this, 'projects')">My Projects</div>
+    <div class="tab" onclick="switchTab(this, 'financials')">Financial Status</div>
+</div>
+
+<!-- Data Card: Active Projects -->
+<div class="data-card">
+    <div class="data-card-header">
+        <h3 class="card-title">Recent Active Projects</h3>
+        <div class="filters">
+            <select class="filter-select">
+                <option>All Status</option>
+                <option>Planning</option>
+                <option>In Progress</option>
+                <option>On Hold</option>
+            </select>
         </div>
     </div>
-</div>
-
-<!-- Charts Row -->
-<div class="charts-row">
-    <!-- Project Status Chart -->
-    <div class="chart-container">
-        <h3 class="chart-title">Project Status</h3>
-        <canvas id="projectStatusChart"></canvas>
-    </div>
-
-    <!-- Budget Utilization -->
-    <div class="chart-container">
-        <h3 class="chart-title">Budget Utilization</h3>
-        <canvas id="budgetChart"></canvas>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="activity-section">
-    <div class="section-header">
-        <h2>Recent Activity</h2>
-        <a href="<?php echo BASE_URL; ?>/activity" class="view-all">View All →</a>
-    </div>
-
-    <div class="activity-list" id="activityList">
-        <div class="loading-skeleton">
-            <div class="skeleton-item"></div>
-            <div class="skeleton-item"></div>
-            <div class="skeleton-item"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="quick-actions">
-    <h2>Quick Actions</h2>
-    <div class="action-buttons">
-        <a href="<?php echo BASE_URL; ?>/projects/create" class="btn btn-primary">
-            <span class="icon">➕</span> New Project
-        </a>
-        <a href="<?php echo BASE_URL; ?>/equipment/register" class="btn btn-secondary">
-            <span class="icon">⚙️</span> Register Equipment
-        </a>
-        <a href="<?php echo BASE_URL; ?>/finance/create-transaction" class="btn btn-secondary">
-            <span class="icon">💳</span> Add Transaction
-        </a>
-        <a href="<?php echo BASE_URL; ?>/reports" class="btn btn-secondary">
-            <span class="icon">📊</span> Generate Report
-        </a>
+    <div class="table-responsive">
+        <table id="projects-table">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Code</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Contract Value</th>
+                    <th>Completion</th>
+                </tr>
+            </thead>
+            <tbody id="projects-table-body">
+                <!-- Populated by JS -->
+                <tr>
+                    <td colspan="6" class="loading"><i class="fas fa-spinner"></i> Loading...</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-// Load dashboard data
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadDashboardData();
-    initCharts();
+    await loadDashboardStats();
 });
 
-async function loadDashboardData() {
+async function loadDashboardStats() {
     try {
         const response = await fetch('<?php echo BASE_URL; ?>/api/v1/dashboard/stats');
-        const data = await response.json();
-
-        if (data.success) {
-            document.getElementById('activeProjects').textContent = data.data.activeProjects;
-            document.getElementById('equipmentInUse').textContent = data.data.equipmentInUse;
-            document.getElementById('totalBudget').textContent = 'MWK ' + data.data.totalBudget.toLocaleString();
-            document.getElementById('pendingApprovals').textContent = data.data.pendingApprovals;
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
             
-            loadRecentActivity(data.data.recentActivity);
+            // Update Stats
+            document.getElementById('activeProjects').textContent = data.project_count || 0;
+            document.getElementById('myTasks').textContent = data.tasks_summary?.total || 0;
+            document.getElementById('totalBudget').textContent = 'MWK ' + (data.total_budget || 0).toLocaleString();
+            
+            // Populate Projects Table
+            const tbody = document.getElementById('projects-table-body');
+            tbody.innerHTML = '';
+            
+            if (data.my_projects && data.my_projects.length > 0) {
+                data.my_projects.slice(0, 5).forEach(project => {
+                    const progress = project.completion_percentage || 0;
+                    const row = `
+                        <tr onclick="window.location.href='<?php echo BASE_URL; ?>/projects/${project.id}'">
+                            <td data-label="Project Name" style="font-weight:700;">${project.project_name}</td>
+                            <td data-label="Code">${project.project_code}</td>
+                            <td data-label="Location">${project.location}</td>
+                            <td data-label="Status"><span class="status ${getStatusClass(project.status)}">${project.status}</span></td>
+                            <td data-label="Value">MWK ${(project.contract_value || 0).toLocaleString()}</td>
+                            <td data-label="Completion">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="progress-bar" style="flex: 1;">
+                                        <div class="progress-fill" style="width: ${progress}%"></div>
+                                    </div>
+                                    <span style="font-weight: 700; font-size: 13px;">${progress}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No active projects found.</td></tr>';
+            }
         }
-    } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        AlertsComponent?.error('Failed to load dashboard data');
+    } catch (e) {
+        console.error("Error loading stats:", e);
     }
 }
 
-function loadRecentActivity(activities) {
-    const listEl = document.getElementById('activityList');
-    listEl.innerHTML = '';
-
-    if (!activities || activities.length === 0) {
-        listEl.innerHTML = '<p class="empty-state">No recent activity</p>';
-        return;
+function getStatusClass(status) {
+    switch(status.toLowerCase()) {
+        case 'active': return 'approved'; // reusing approved style for active
+        case 'planning': return 'pending';
+        case 'completed': return 'completed';
+        case 'on_hold': return 'rejected'; // reusing rejected style for warn
+        default: return 'in-progress';
     }
-
-    activities.slice(0, 5).forEach(activity => {
-        const div = document.createElement('div');
-        div.className = 'activity-item';
-        div.innerHTML = `
-            <div class="activity-icon">${activity.icon}</div>
-            <div class="activity-content">
-                <p class="activity-title">${activity.title}</p>
-                <p class="activity-description">${activity.description}</p>
-            </div>
-            <div class="activity-time">${activity.time}</div>
-        `;
-        listEl.appendChild(div);
-    });
 }
 
-function initCharts() {
-    // Project Status Chart
-    const projectCtx = document.getElementById('projectStatusChart');
-    if (projectCtx && typeof Chart !== 'undefined') {
-        new Chart(projectCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Active', 'Completed', 'On Hold', 'Cancelled'],
-                datasets: [{
-                    data: [12, 8, 3, 1],
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
-    }
-
-    // Budget Chart
-    const budgetCtx = document.getElementById('budgetChart');
-    if (budgetCtx && typeof Chart !== 'undefined') {
-        new Chart(budgetCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Budget Used',
-                    data: [65, 59, 80, 81, 56, 55],
-                    backgroundColor: '#3b82f6'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
+function switchTab(el, tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    // Implement tab switching logic here
 }
 </script>
+

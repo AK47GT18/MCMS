@@ -23,19 +23,19 @@ RUN apk add --no-cache \
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        bcmath \
-        exif \
-        gd \
-        intl \
-        mysqli \
-        opcache \
-        pdo \
-        pdo_mysql \
-        zip
+    bcmath \
+    exif \
+    gd \
+    intl \
+    mysqli \
+    opcache \
+    pdo \
+    pdo_mysql \
+    zip
 
-# Install APCu for caching (FR-17 - Login lockout)
-RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && pecl install apcu \
+RUN apk update && apk add --no-cache --virtual .build-deps \
+    autoconf gcc g++ make musl-dev \
+    && pecl install apcu-5.1.23 \
     && docker-php-ext-enable apcu \
     && apk del .build-deps
 

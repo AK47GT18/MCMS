@@ -10,7 +10,7 @@ $userRole = $user['role'] ?? 'guest';
 $currentPage = $currentPage ?? '';
 ?>
 
-<aside class="app-sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <button class="sidebar-close" id="sidebarClose" aria-label="Close Sidebar">
             <span class="icon">✕</span>
@@ -21,7 +21,7 @@ $currentPage = $currentPage ?? '';
         <!-- Main Navigation -->
         <nav class="sidebar-nav">
             <div class="nav-section">
-                <h3 class="nav-section-title">Main</h3>
+                <h3 class="nav-label">Main</h3>
                 <ul class="nav-list">
                     <li class="nav-item">
                         <a href="<?php echo BASE_URL; ?>/dashboard" class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>">

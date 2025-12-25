@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +9,12 @@
     <link rel="manifest" href="/MCMS/public/manifest.json">
     <link rel="icon" type="image/png" href="/MCMS/public/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- DHTMLX Gantt -->
+    <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    
     <link rel="stylesheet" href="/MCMS/public/css/main.css">
     <?php if (isset($additionalCSS) && is_array($additionalCSS)): ?>
         <?php foreach ($additionalCSS as $css): ?>
@@ -17,20 +23,24 @@
     <?php endif; ?>
 </head>
 <body>
-    <div class="main-layout">
+    <div class="app">
+        <div class="sidebar-overlay"></div>
+        
         <?php include __DIR__ . '/../partials/sidebar.php'; ?>
         
-        <header class="header">
-            <?php include __DIR__ . '/../partials/header.php'; ?>
-        </header>
-        
-        <main class="main-content">
-            <?php if (isset($breadcrumbs)): ?>
-                <?php include __DIR__ . '/../partials/breadcrumb.php'; ?>
-            <?php endif; ?>
+        <div class="workspace">
+            <header class="top-bar">
+                <?php include __DIR__ . '/../partials/header.php'; ?>
+            </header>
             
-            <?php echo isset($content) ? $content : ''; ?>
-        </main>
+            <main class="main-content">
+                <?php if (isset($breadcrumbs)): ?>
+                    <?php include __DIR__ . '/../partials/breadcrumb.php'; ?>
+                <?php endif; ?>
+                
+                <?php echo isset($content) ? $content : ''; ?>
+            </main>
+        </div>
     </div>
 
     <div id="notification-container"></div>
@@ -48,7 +58,8 @@
     <script src="/MCMS/public/js/components/modals.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
     
     <script src="/MCMS/public/js/services/api.js"></script>
     <script src="/MCMS/public/js/services/notifications.js"></script>

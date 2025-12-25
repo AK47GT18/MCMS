@@ -25,6 +25,7 @@
 @import './components/tooltips.css';
 
 /* Layouts - Page Structure */
+@import './layouts/app.css';
 @import './layouts/header.css';
 @import './layouts/sidebar.css';
 @import './layouts/grid.css';

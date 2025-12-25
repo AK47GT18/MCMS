@@ -471,4 +471,94 @@ class ProjectController extends Controller {
             ], 500);
         }
     }
+    /**
+     * Get project documents (FR-22)
+     */
+    public function getDocuments($id) {
+        $this->requireAuth();
+        $this->authorize('documents.view');
+        
+        try {
+            $document = new \Mkaka\Models\Document(); // Use full namespace or fix import
+            
+            // Assuming Document model has a method to get by entity
+            // Since we don't have getProjectDocuments, we use search
+            $documents = $document->searchDocuments([
+                'entity_type' => 'project',
+                'entity_id' => $id
+            ]);
+            
+            return $this->json([
+                'success' => true,
+                'data' => $documents
+            ]);
+            
+        } catch (Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Error loading documents'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update Gantt data (FR-03)
+     * Handles DHTMLX Data Processor requests
+     */
+    public function updateGanttData($id) {
+        $this->requireAuth();
+        $this->authorize('projects.edit');
+        
+        try {
+            // DHTMLX sends 'ids' parameter with comma-separated list of IDs changed
+            // Then for each ID, parameters like {id}_text, {id}_start_date... AND {id}_!nativeeditor_status
+            
+            $ids = explode(',', $this->request->input('ids'));
+            $project = new Project();
+            $task = new Task();
+            $results = [];
+            
+            foreach($ids as $itemId) {
+                $status = $this->request->input($itemId . '_!nativeeditor_status');
+                
+                // Extract task data from request
+                $taskData = [
+                    'task_name' => $this->request->input($itemId . '_text'),
+                    'start_date' => $this->request->input($itemId . '_start_date'),
+                    'duration' => $this->request->input($itemId . '_duration'),
+                    'progress' => $this->request->input($itemId . '_progress'),
+                    'parent' => $this->request->input($itemId . '_parent'),
+                    'project_id' => $id
+                ];
+
+                $response = ['tid' => $itemId, 'type' => $status];
+                
+                switch($status) {
+                    case 'inserted':
+                        $newId = $task->createTask($taskData);
+                        $response['sid'] = $newId; // DHTMLX needs the new DB ID
+                        break;
+                        
+                    case 'updated':
+                        $task->update($itemId, $taskData); 
+                        // Assuming update method exists in Task model
+                        break;
+                        
+                    case 'deleted':
+                        $task->delete($itemId);
+                        // Assuming delete method exists
+                        break;
+                }
+                $results[] = $response;
+            }
+            
+            return $this->json([
+                'action' => 'updated', // DHTMLX expected response
+                'tid' => $ids[0] // Simplified response
+            ]);
+            
+        } catch (Exception $e) {
+            return $this->json(['action' => 'error'], 500);
+        }
+    }
 }

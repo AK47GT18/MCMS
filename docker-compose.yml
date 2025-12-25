@@ -19,7 +19,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./mkaka-construction-system:/var/www/html
+      - ./mcms:/var/www/html
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./docker/nginx/ssl:/etc/nginx/ssl
       - nginx_logs:/var/log/nginx
@@ -38,7 +38,7 @@ services:
     container_name: mkaka_php
     restart: unless-stopped
     volumes:
-      - ./mkaka-construction-system:/var/www/html
+      - ./mcms:/var/www/html
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       - PHP_MEMORY_LIMIT=512M
@@ -123,7 +123,7 @@ services:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
       - onlyoffice_fonts:/usr/share/fonts/truetype/custom
-      - ./mkaka-construction-system/public/uploads/documents:/var/www/html/documents
+      - ./mcms/public/uploads/documents:/var/www/html/documents
     depends_on:
       - mysql
       - redis
@@ -155,8 +155,8 @@ services:
     container_name: mkaka_mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # Web UI
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
     networks:
       - mkaka-network
 

@@ -89,6 +89,95 @@ class DocumentController extends Controller {
         }
     }
     
+    /**
+     * Get OnlyOffice configuration for a document
+     */
+    public function getConfig($id) {
+        $this->requireAuth();
+        $this->authorize('documents.view');
+        
+        try {
+            $document = new Document();
+            $doc = $document->find($id);
+            
+            if (!$doc) {
+                return $this->json(['success' => false, 'message' => 'Document not found'], 404);
+            }
+            
+            $config = require __DIR__ . '/../config/onlyoffice.php';
+            $user = Authentication::user();
+            
+            $docConfig = [
+                'document' => [
+                    'fileType' => pathinfo($doc['file_name'], PATHINFO_EXTENSION),
+                    'key' => $doc['file_key'] ?? md5($doc['id'] . $doc['updated_at']),
+                    'title' => $doc['file_name'],
+                    'url' => BASE_URL . '/documents/download/' . $id,
+                    'permissions' => [
+                        'comment' => true,
+                        'download' => true,
+                        'edit' => $this->can('documents.edit'),
+                        'print' => true,
+                        'review' => true
+                    ]
+                ],
+                'documentType' => $this->getDocumentType(pathinfo($doc['file_name'], PATHINFO_EXTENSION)),
+                'editorConfig' => [
+                    'callbackUrl' => BASE_URL . '/api/v1/documents/callback/' . $id,
+                    'user' => [
+                        'id' => (string)$user['id'],
+                        'name' => $user['first_name'] . ' ' . $user['last_name']
+                    ],
+                    'customization' => [
+                        'autosave' => true,
+                        'forcesave' => true,
+                    ]
+                ]
+            ];
+            
+            // Generate JWT
+            $docConfig['token'] = $this->generateJWT($docConfig, $config['jwt_secret']);
+            
+            return $this->json([
+                'success' => true,
+                'config' => $docConfig,
+                'serverUrl' => $config['document_server_url']
+            ]);
+            
+        } catch (Exception $e) {
+            return $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    
+    private function getDocumentType($extension) {
+        $types = [
+            'word' => ['doc', 'docx', 'txt', 'odt', 'rtf'],
+            'cell' => ['xls', 'xlsx', 'csv', 'ods'],
+            'slide' => ['ppt', 'pptx', 'odp']
+        ];
+        
+        foreach ($types as $type => $extensions) {
+            if (in_array(strtolower($extension), $extensions)) {
+                return $type;
+            }
+        }
+        
+        return 'word'; // Default
+    }
+    
+    private function generateJWT($payload, $secret) {
+        $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+        $payload = json_encode($payload);
+        
+        $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+        $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+        
+        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secret, true);
+        $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+        
+        return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+    }
+
     public function delete($id) {
         $this->requireAuth();
         $this->authorize('documents.delete');

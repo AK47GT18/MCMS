@@ -1,4 +1,4 @@
-/* Modals */
+/* Modals Component */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -22,11 +22,10 @@
   border-radius: 16px;
   max-width: 600px;
   width: 90%;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: modalSlideIn 0.3s ease;
-  z-index: var(--z-modal);
 }
 
 @keyframes modalSlideIn {
@@ -34,15 +33,12 @@
     transform: translateY(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
   }
 }
-
-.modal-sm { max-width: 400px; }
-.modal-lg { max-width: 800px; }
-.modal-xl { max-width: 1200px; }
 
 .modal-header {
   padding: 24px 28px;
@@ -50,14 +46,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
 }
 
 .modal-title {
   font-size: 20px;
   font-weight: 800;
   color: var(--slate-900);
-  flex: 1;
 }
 
 .modal-close {
@@ -83,49 +77,24 @@
   overflow-y: auto;
 }
 
-.modal-body::-webkit-scrollbar {
-  width: 8px;
+.loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--slate-400);
 }
 
-.modal-body::-webkit-scrollbar-track {
-  background: var(--slate-100);
-  border-radius: 10px;
+.loading i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: spin 1s linear infinite;
 }
 
-.modal-body::-webkit-scrollbar-thumb {
-  background: var(--slate-300);
-  border-radius: 10px;
-}
-
-.modal-footer {
-  padding: 20px 28px;
-  border-top: 1px solid var(--slate-200);
-  background: var(--slate-50);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-@media (max-width: 768px) {
-  .modal {
-    max-width: 95%;
-    width: 95%;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
 
-  .modal-header {
-    padding: 20px;
-  }
-
-  .modal-body {
-    padding: 20px;
-  }
-
-  .modal-footer {
-    padding: 16px 20px;
-    flex-direction: column;
-  }
-
-  .modal-footer .btn {
-    width: 100%;
+  to {
+    transform: rotate(360deg);
   }
 }
