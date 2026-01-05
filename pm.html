@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Manager Workspace | Mkaka CMS</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. ENTERPRISE DESIGN TOKENS --- */
+        :root {
+            --orange: #F97316;
+            --orange-light: #FFF7ED;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-300: #CBD5E1;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1E293B;
+            --slate-900: #0F172A;
+            --white: #FFFFFF;
+
+            --emerald: #10B981;
+            --red: #EF4444;
+            --blue: #3B82F6;
+
+            --radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-900);
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            letter-spacing: -0.025em;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* --- FORMS --- */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--slate-700);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--slate-900);
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px var(--orange-light);
+        }
+
+        /* --- 2. LAYOUT COMPONENTS --- */
+        .top-bar {
+            height: 56px;
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+            z-index: 40;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--slate-200);
+            display: flex;
+            flex-direction: column;
+            z-index: 30;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- 3. SIDEBAR STYLES --- */
+        .logo {
+            font-weight: 800;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--slate-900);
+            letter-spacing: -0.5px;
+        }
+
+        .logo i {
+            color: var(--orange);
+            font-size: 20px;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--slate-800);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-800);
+        }
+
+        .profile-role {
+            font-size: 11px;
+            color: var(--slate-500);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            color: var(--slate-600);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: var(--transition);
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--slate-100);
+            color: var(--slate-900);
+        }
+
+        .nav-link.active {
+            background: var(--orange-light);
+            color: var(--orange);
+            font-weight: 600;
+        }
+
+        .nav-link.active i {
+            color: var(--orange);
+        }
+
+        .nav-link i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* --- 4. CONTENT STYLES --- */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 20px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .breadcrumb {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 4px;
+        }
+
+        .page-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .context-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--slate-500);
+            font-weight: 500;
+        }
+
+        .context-dot {
+            width: 3px;
+            height: 3px;
+            background: var(--slate-300);
+            border-radius: 50%;
+        }
+
+        .context-value {
+            color: var(--slate-700);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .content {
+            padding: 24px 32px;
+            max-width: 1600px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--slate-900);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--slate-800);
+            transform: translateY(-1px);
+        }
+
+        .btn-action {
+            background: var(--orange);
+            color: white;
+        }
+
+        .btn-action:hover {
+            background: #ea580c;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--slate-700);
+            border-color: var(--slate-200);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--slate-300);
+            background: var(--slate-50);
+        }
+
+        /* Stats & Tables */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            border-color: var(--orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--slate-900);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            margin-top: 4px;
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .data-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .data-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--slate-50);
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--slate-100);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: var(--slate-50);
+        }
+
+        tbody td {
+            padding: 12px 20px;
+            font-size: 13px;
+            color: var(--slate-700);
+            vertical-align: middle;
+        }
+
+        .project-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--slate-600);
+            background: var(--slate-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: var(--slate-100);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--orange);
+            border-radius: 3px;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: var(--slate-500);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status.active {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .status.delayed {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status.review {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        /* --- 5. VIEW SWITCHING & SPECIAL SECTIONS --- */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Gantt Chart */
+        .gantt-container {
+            border-top: 1px solid var(--slate-200);
+            background: white;
+            overflow-x: auto;
+        }
+
+        .gantt-header {
+            display: grid;
+            grid-template-columns: 200px repeat(12, 1fr);
+            border-bottom: 1px solid var(--slate-200);
+            background: var(--slate-50);
+            min-width: 1000px;
+        }
+
+        .gantt-header-cell {
+            padding: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-align: center;
+            border-right: 1px solid var(--slate-200);
+        }
+
+        .gantt-row {
+            display: grid;
+            grid-template-columns: 200px repeat(12, 1fr);
+            border-bottom: 1px solid var(--slate-100);
+            align-items: center;
+            height: 48px;
+            min-width: 1000px;
+        }
+
+        .gantt-task {
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-700);
+            border-right: 1px solid var(--slate-200);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gantt-bar-container {
+            position: relative;
+            height: 100%;
+            border-right: 1px solid var(--slate-100);
+        }
+
+        .gantt-bar {
+            height: 24px;
+            border-radius: 4px;
+            position: absolute;
+            top: 12px;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            font-size: 10px;
+            color: white;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .gantt-bar:hover {
+            transform: scaleY(1.1);
+            z-index: 10;
+        }
+
+        .gantt-bar.done {
+            background: var(--emerald);
+        }
+
+        .gantt-bar.progress {
+            background: var(--orange);
+        }
+
+        .gantt-bar.delayed {
+            background: var(--red);
+        }
+
+        /* Team Grid */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .team-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .team-card:hover {
+            border-color: var(--orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .team-avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--slate-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--slate-600);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* --- 6. DRAWER STYLES --- */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 600px;
+            height: 100%;
+            background: white;
+            box-shadow: var(--shadow-drawer);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-overlay.show .drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: white;
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: var(--slate-50);
+        }
+
+        .drawer-section {
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* Drawer Specifics */
+        .tabs {
+            display: flex;
+            gap: 24px;
+        }
+
+        .tab {
+            padding: 0 0 12px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-500);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab:hover {
+            color: var(--slate-800);
+        }
+
+        .tab.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+        }
+
+        .evidence-photo {
+            width: 100%;
+            height: 200px;
+            background: var(--slate-200);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 16px;
+            border: 1px solid var(--slate-300);
+        }
+
+        .evidence-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .geo-tag {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono';
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <header class="top-bar">
+            <div class="logo">
+                <i class="fas fa-hard-hat"></i>
+                <span>MKAKA</span>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
+                <button class="btn btn-secondary" style="border: none; padding: 8px;">
+                    <i class="fas fa-bell" style="color: var(--slate-500);"></i>
+                </button>
+                <div class="user-profile">
+                    <div class="profile-avatar">AK</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="user-profile">
+                        <div class="profile-avatar" style="background: var(--orange);">AK</div>
+                        <div class="profile-info">
+                            <div class="profile-name">Anthony Kanjira</div>
+                            <div class="profile-role">Project Manager</div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-label">Main</div>
+                        <a class="nav-link active" onclick="navigateTo('portfolio', this)">
+                            <i class="fas fa-th-large"></i> <span>Portfolio</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('portfolio', this)">
+                            <i class="fas fa-chart-pie"></i> <span>Analytics</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Execution</div>
+                        <a class="nav-link" onclick="navigateTo('gantt', this)">
+                            <i class="fas fa-stream"></i> <span>Gantt Schedule</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('budget', this)">
+                            <i class="fas fa-coins"></i> <span>Budget Control</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('teams', this)">
+                            <i class="fas fa-users"></i> <span>Field Teams</span>
+                        </a>
+                        <div class="nav-section">
+                            <div class="nav-label">Risk & Issues</div>
+                            <a class="nav-link" onclick="navigateTo('risks', this)">
+                                <i class="fas fa-exclamation-triangle"></i> <span>Risk Register</span>
+                            </a>
+                            <a class="nav-link" onclick="navigateTo('requests', this)">
+                                <i class="fas fa-clipboard-list"></i> <span>Requests</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Documents</div>
+                        <a class="nav-link" onclick="navigateTo('reports', this)">
+                            <i class="fas fa-file-pdf"></i> <span>Reports</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <span>Workspace</span>
+                        <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+                        <span id="header-breadcrumb">Project Portfolio</span>
+                    </div>
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title" id="header-title">Project Controls</h1>
+                            <div class="context-strip" id="header-context">
+                                <span class="context-value">4</span> Active Projects
+                                <div class="context-dot"></div>
+                                <span class="context-value">MWK 450M</span> Total Value
+                                <div class="context-dot"></div>
+                                <span style="color: var(--orange); font-weight: 600;">3 Pending Logs</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-action" onclick="openDrawer('new_project')">
+                            <i class="fas fa-plus"></i>
+                            <span>New Project</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content">
+
+                    <div id="view-portfolio" class="view-section active">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Budget Health</span><i
+                                        class="fas fa-wallet" style="color: var(--emerald);"></i></div>
+                                <div class="stat-value">85%</div>
+                                <div class="stat-sub"><i class="fas fa-arrow-up"></i> Utilized (Aggregate)</div>
+                            </div>
+                            <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;"
+                                onclick="filterTable('review')">
+                                <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Pending
+                                        Reviews</span><i class="fas fa-clipboard-check"
+                                        style="color: var(--orange);"></i></div>
+                                <div class="stat-value" style="color: var(--orange);">3</div>
+                                <div class="stat-sub">Field logs awaiting approval</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Schedule Variance</span><i
+                                        class="fas fa-clock" style="color: var(--blue);"></i></div>
+                                <div class="stat-value">-2 Days</div>
+                                <div class="stat-sub">Minor delay on CEN-01</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Incidents</span><i
+                                        class="fas fa-exclamation-triangle" style="color: var(--red);"></i></div>
+                                <div class="stat-value">0</div>
+                                <div class="stat-sub" style="color: var(--emerald);">No open safety issues</div>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="tabs" style="margin-bottom: 0;">
+                                    <div class="tab active">Active Projects</div>
+                                    <div class="tab">Pending Verification (3)</div>
+                                    <div class="tab">Archived</div>
+                                </div>
+                                <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filter</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Project ID</th>
+                                        <th>Project Name</th>
+                                        <th>Supervisor</th>
+                                        <th style="width: 200px;">Progress</th>
+                                        <th>Budget (MWK)</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('LOG-001')">
+                                        <td><span class="project-id">CEN-01</span></td>
+                                        <td style="font-weight: 600;">Unilia Library Complex <div
+                                                style="font-size: 11px; color: var(--orange); margin-top: 2px;"><i
+                                                    class="fas fa-circle" style="font-size: 8px;"></i> New Site Log
+                                                Received</div>
+                                        </td>
+                                        <td>John Banda</td>
+                                        <td>
+                                            <div class="progress-text"><span>Foundation</span> <span>25%</span></div>
+                                            <div class="progress-container">
+                                                <div class="progress-bar" style="width: 25%"></div>
+                                            </div>
+                                        </td>
+                                        <td>450,000,000</td>
+                                        <td><span class="status review"><i class="fas fa-hourglass-half"></i> Review
+                                                Log</span></td>
+                                        <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
+                                    </tr>
+                                    <tr onclick="openDrawer('LOG-002')">
+                                        <td><span class="project-id">MZ-05</span></td>
+                                        <td style="font-weight: 600;">Mzuzu Clinic Extension</td>
+                                        <td>Peter Phiri</td>
+                                        <td>
+                                            <div class="progress-text"><span>Finishing</span> <span>92%</span></div>
+                                            <div class="progress-container">
+                                                <div class="progress-bar"
+                                                    style="width: 92%; background: var(--emerald);"></div>
+                                            </div>
+                                        </td>
+                                        <td>120,000,000</td>
+                                        <td><span class="status active"><i class="fas fa-check"></i> On Track</span>
+                                        </td>
+                                        <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">LIL-02</span></td>
+                                        <td style="font-weight: 600;">Area 18 Mall Access</td>
+                                        <td>Davi Moyo</td>
+                                        <td>
+                                            <div class="progress-text"><span>Surfacing</span> <span>60%</span></div>
+                                            <div class="progress-container">
+                                                <div class="progress-bar" style="width: 60%; background: var(--red);">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>85,000,000</td>
+                                        <td><span class="status delayed"><i class="fas fa-exclamation-circle"></i>
+                                                Material Delay</span></td>
+                                        <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-gantt" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">CEN-01: Master Schedule</div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-secondary">Day</button>
+                                    <button class="btn btn-primary">Week</button>
+                                    <button class="btn btn-secondary">Month</button>
+                                </div>
+                            </div>
+                            <div class="gantt-container">
+                                <div class="gantt-header">
+                                    <div class="gantt-header-cell" style="text-align:left; padding-left:16px;">Task Name
+                                    </div>
+                                    <div class="gantt-header-cell">W1</div>
+                                    <div class="gantt-header-cell">W2</div>
+                                    <div class="gantt-header-cell">W3</div>
+                                    <div class="gantt-header-cell">W4</div>
+                                    <div class="gantt-header-cell">W5</div>
+                                    <div class="gantt-header-cell">W6</div>
+                                    <div class="gantt-header-cell">W7</div>
+                                    <div class="gantt-header-cell">W8</div>
+                                    <div class="gantt-header-cell">W9</div>
+                                    <div class="gantt-header-cell">W10</div>
+                                    <div class="gantt-header-cell">W11</div>
+                                    <div class="gantt-header-cell">W12</div>
+                                </div>
+                                <div class="gantt-row">
+                                    <div class="gantt-task">1. Site Preparation</div>
+                                    <div class="gantt-bar-container" style="grid-column: span 2;">
+                                        <div class="gantt-bar done" style="width: 90%; left: 5%;">Complete</div>
+                                    </div>
+                                </div>
+                                <div class="gantt-row">
+                                    <div class="gantt-task">2. Foundation Excavation</div>
+                                    <div class="gantt-bar-container" style="grid-column: span 12;">
+                                        <div class="gantt-bar progress" style="width: 280%; left: 200%;">In Progress
+                                            (25%)</div>
+                                    </div>
+                                </div>
+                                <div class="gantt-row">
+                                    <div class="gantt-task">3. Concrete Pouring</div>
+                                    <div class="gantt-bar-container" style="grid-column: span 12;">
+                                        <div class="gantt-bar delayed" style="width: 180%; left: 500%;">Delayed
+                                            (Material)</div>
+                                    </div>
+                                </div>
+                                <div class="gantt-row">
+                                    <div class="gantt-task">4. Steel Framework</div>
+                                    <div class="gantt-bar-container" style="grid-column: span 12;">
+                                        <div class="gantt-bar"
+                                            style="width: 300%; left: 700%; background: var(--slate-400);">Planned</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="view-budget" class="view-section">
+                        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Total Spent</span></div>
+                                <div class="stat-value">MWK 145M</div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 45%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Committed (POs)</span></div>
+                                <div class="stat-value">MWK 50M</div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: 20%; background: var(--blue);"></div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Remaining</span></div>
+                                <div class="stat-value" style="color: var(--emerald);">MWK 255M</div>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Budget Line Items (CEN-01)</div>
+                                <button class="btn btn-secondary">Request Reallocation</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Category</th>
+                                        <th>Total Budget</th>
+                                        <th>Spent + Committed</th>
+                                        <th>Variance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="project-id">01-LAB</span></td>
+                                        <td style="font-weight: 600;">Site Labor</td>
+                                        <td>MWK 50,000,000</td>
+                                        <td>MWK 12,000,000</td>
+                                        <td style="color: var(--emerald);">+ MWK 38M</td>
+                                        <td><span class="status active">Under Budget</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">02-MAT</span></td>
+                                        <td style="font-weight: 600;">Construction Materials</td>
+                                        <td>MWK 200,000,000</td>
+                                        <td>MWK 180,000,000</td>
+                                        <td style="color: var(--orange);">+ MWK 20M</td>
+                                        <td><span class="status review">Warning (90%)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">03-EQU</span></td>
+                                        <td style="font-weight: 600;">Equipment Rental</td>
+                                        <td>MWK 40,000,000</td>
+                                        <td>MWK 45,000,000</td>
+                                        <td style="color: var(--red);">- MWK 5M</td>
+                                        <td><span class="status delayed">Over Budget</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-teams" class="view-section">
+                        <div class="team-grid">
+                            <div class="team-card">
+                                <div class="team-avatar">JB</div>
+                                <div>
+                                    <div style="font-weight: 700;">John Banda</div>
+                                    <div style="font-size: 12px; color: var(--slate-500);">Site Supervisor | CEN-01
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 11px; display: flex; gap: 8px;">
+                                        <span class="status active">On Site</span>
+                                        <span style="color: var(--slate-500);"><i class="fas fa-users"></i> 14
+                                            Crew</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary" style="margin-left: auto;"><i
+                                        class="fas fa-phone"></i></button>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-avatar" style="background: var(--blue); color: white;">PP</div>
+                                <div>
+                                    <div style="font-weight: 700;">Peter Phiri</div>
+                                    <div style="font-size: 12px; color: var(--slate-500);">Foreman | MZ-05</div>
+                                    <div style="margin-top: 8px; font-size: 11px; display: flex; gap: 8px;">
+                                        <span class="status active">On Site</span>
+                                        <span style="color: var(--slate-500);"><i class="fas fa-users"></i> 8
+                                            Crew</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary" style="margin-left: auto;"><i
+                                        class="fas fa-phone"></i></button>
+                            </div>
+                            <div class="team-card">
+                                <div class="team-avatar" style="background: var(--slate-800); color: white;">DM</div>
+                                <div>
+                                    <div style="font-weight: 700;">Davi Moyo</div>
+                                    <div style="font-size: 12px; color: var(--slate-500);">Supervisor | LIL-02</div>
+                                    <div style="margin-top: 8px; font-size: 11px; display: flex; gap: 8px;">
+                                        <span class="status delayed">Absent</span>
+                                        <span style="color: var(--slate-500);"><i class="fas fa-users"></i> 20
+                                            Crew</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary" style="margin-left: auto;"><i
+                                        class="fas fa-phone"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="view-risks" class="view-section">
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div class="card-title">Project Risk Register</div>
+                            <button class="btn btn-action" onclick="openDrawer('risk_log')">
+                                <i class="fas fa-plus"></i> Log Risk
+                            </button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Risk ID</th>
+                                    <th>Description</th>
+                                    <th>Impact</th>
+                                    <th>Probability</th>
+                                    <th>Status</th>
+                                    <th>Owner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="project-id">RSK-001</span></td>
+                                    <td style="font-weight: 600;">Delayed Cement Delivery <div
+                                            style="font-size:11px; color:var(--slate-500);">Supplier transport strike
+                                            expected</div>
+                                    </td>
+                                    <td style="color:var(--red);">High</td>
+                                    <td style="color:var(--orange);">Medium</td>
+                                    <td><span class="status active">Active</span></td>
+                                    <td>P. Phiri</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="project-id">RSK-002</span></td>
+                                    <td style="font-weight: 600;">Heavy Cost Overrun on Labour <div
+                                            style="font-size:11px; color:var(--slate-500);">Overtime required to meet
+                                            deadline</div>
+                                    </td>
+                                    <td style="color:var(--orange);">Medium</td>
+                                    <td style="color:var(--emerald);">Low</td>
+                                    <td><span class="status review">Monitored</span></td>
+                                    <td>J. Banda</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-requests" class="view-section">
+                    <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="stat-card" onclick="openDrawer('request_budget')">
+                            <div class="stat-header"><span class="stat-label">Budget Reallocation</span><i
+                                    class="fas fa-coins" style="color: var(--blue);"></i></div>
+                            <div class="stat-value" style="font-size:16px; margin-top:8px;">New Request</div>
+                            <div class="stat-sub">Transfer funds between lines</div>
+                        </div>
+                        <div class="stat-card" onclick="openDrawer('request_equipment')">
+                            <div class="stat-header"><span class="stat-label">Equipment Need</span><i
+                                    class="fas fa-truck-moving" style="color: var(--orange);"></i></div>
+                            <div class="stat-value" style="font-size:16px; margin-top:8px;">Request Machinery</div>
+                            <div class="stat-sub">Schedule fleet for site</div>
+                        </div>
+                    </div>
+
+                    <div class="data-card" style="margin-top:24px;">
+                        <div class="data-card-header">
+                            <div class="card-title">Active Requests</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Req ID</th>
+                                    <th>Type</th>
+                                    <th>Project</th>
+                                    <th>Details</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="project-id">REQ-102</span></td>
+                                    <td>Budget</td>
+                                    <td>CEN-01</td>
+                                    <td>Move 2M from Materials to Labor</td>
+                                    <td><span class="status review">Pending Approval</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="project-id">REQ-101</span></td>
+                                    <td>Equipment</td>
+                                    <td>MZ-05</td>
+                                    <td>Excavator for 3 days</td>
+                                    <td><span class="status active">Approved</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-reports" class="view-section">
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div class="card-title">Generated Reports</div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Report Name</th>
+                                    <th>Date Generated</th>
+                                    <th>Type</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight: 600;"><i class="fas fa-file-pdf"
+                                            style="color: var(--red); margin-right: 8px;"></i> Weekly Progress
+                                        Report - Week 42</td>
+                                    <td>Jan 02, 2026</td>
+                                    <td><span class="project-id">Progress</span></td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px;">Download</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;"><i class="fas fa-file-excel"
+                                            style="color: var(--emerald); margin-right: 8px;"></i> Financial
+                                        Variance Analysis</td>
+                                    <td>Dec 30, 2025</td>
+                                    <td><span class="project-id">Financial</span></td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px;">Download</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+        </div>
+        </main>
+    </div>
+    </div>
+
+    <div class="drawer-overlay" id="drawer-overlay">
+        <div class="drawer" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div>
+                    <span class="project-id" id="d-id">CEN-01</span>
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
+                        id="d-title">Site Log Verification</h2>
+                </div>
+                <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+                    <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
+                </div>
+            </div>
+
+            <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
+                <div class="tabs" style="margin-bottom: 0;">
+                    <div class="tab active" onclick="switchTab(this)">Verify Log</div>
+                    <div class="tab" onclick="switchTab(this)">Budget Check</div>
+                    <div class="tab" onclick="switchTab(this)">Tasks</div>
+                </div>
+            </div>
+
+            <div class="drawer-content" id="drawer-body">
+            </div>
+
+            <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px;"
+                id="drawer-footer">
+                <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);">Reject
+                    Log</button>
+                <button class="btn btn-primary" style="flex: 1; background: var(--emerald);">Confirm & Update
+                    Gantt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & STATE ---
+        const views = {
+            'portfolio': { title: 'Project Controls', context: '4 Active Projects' },
+            'gantt': { title: 'Master Schedule', context: 'Timeline View (CEN-01 Focus)' },
+            'budget': { title: 'Budget Control', context: 'Financial Variance Analysis' },
+            'teams': { title: 'Field Personnel', context: '3 Active Sites | 42 Total Staff' },
+            'risks': { title: 'Risk Management', context: 'Active Risk Register' },
+            'requests': { title: 'Resource Requests', context: 'Budget & Equipment' },
+            'reports': { title: 'Documents & Reports', context: 'Repository' }
+        };
+
+        const logData = {
+            'LOG-001': {
+                project: 'Unilia Library Complex',
+                supervisor: 'John Banda',
+                date: 'Today, 08:30 AM',
+                location: 'Sector 4 (-13.98, 33.78)',
+                summary: 'Excavated 50 meters of trenching. Encountered minor rock obstruction but cleared. 15 bags cement received.',
+                photoUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop',
+                materials: ['Cement: 15 Bags', 'Sand: 2 Tons'],
+                labor: '12 General, 2 Skilled'
+            }
+        };
+
+        // --- NAVIGATION LOGIC ---
+        function navigateTo(viewId, navElement) {
+            // 1. Sidebar Active State
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            if (navElement) navElement.classList.add('active');
+
+            // 2. Show View
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.add('active');
+
+            // 3. Update Header
+            if (views[viewId]) {
+                document.getElementById('header-title').innerText = views[viewId].title;
+                document.getElementById('header-breadcrumb').innerText = views[viewId].title;
+                document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
+            }
+        }
+
+        // --- DRAWER LOGIC ---
+        function openDrawer(id) {
+            const overlay = document.getElementById('drawer-overlay');
+            const dBody = document.getElementById('drawer-body');
+            const dTitle = document.getElementById('d-title');
+            const dFooter = document.getElementById('drawer-footer');
+
+            overlay.classList.add('show');
+
+            if (id === 'new_project') {
+        // --- NEW PROJECT WIZARD (MULTI-STEP) ---
+        dTitle.innerText = "Initialize New Project";
+        document.getElementById('d-id').innerText = "WIZARD";
+        
+        // CSS for Map Selector
+        const mapStyles = `
+            <style>
+                .step-content { display: none; }
+                .step-content.active { display: block; animation: fadeIn 0.3s; }
+                .wizard-stepper { display: flex; gap: 8px; margin-bottom: 24px; }
+                .step-dot { height: 4px; flex: 1; background: var(--slate-200); border-radius: 2px; transition: 0.3s; }
+                .step-dot.active { background: var(--orange); }
+                .step-dot.completed { background: var(--emerald); }
+                
+                .map-container {
+                    height: 250px;
+                    background: #e2e8f0;
+                    border-radius: 8px;
+                    position: relative;
+                    overflow: hidden;
+                    cursor: crosshair;
+                    border: 2px solid var(--slate-300);
+                }
+                .map-bg {
+                    width: 100%; height: 100%;
+                    background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg');
+                    background-size: cover;
+                    background-position: center;
+                    opacity: 0.5;
+                }
+                .map-pin {
+                    position: absolute;
+                    color: var(--red);
+                    font-size: 24px;
+                    transform: translate(-50%, -100%);
+                    pointer-events: none;
+                    transition: top 0.2s, left 0.2s;
+                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+                }
+            </style>
+        `;
+
+        dBody.innerHTML = mapStyles + `
+            <div class="wizard-stepper">
+                <div class="step-dot active" id="dot-1"></div>
+                <div class="step-dot" id="dot-2"></div>
+                <div class="step-dot" id="dot-3"></div>
+            </div>
+
+            <!-- STEP 1: BASICS -->
+            <div id="step-1" class="step-content active">
+                <div class="form-group"><label class="form-label">Project Name</label><input class="form-input" id="wiz-name" type="text" placeholder="e.g. Unilia Library Complex"></div>
+                <div class="form-group"><label class="form-label">Project Code</label><input class="form-input" id="wiz-code" type="text" placeholder="e.g. CEN-01"></div>
+                <div class="form-group"><label class="form-label">Client / Beneficiary</label><select class="form-input"><option>Ministry of Education</option><option>Private Sector</option></select></div>
+                <div class="form-group"><label class="form-label">Project Manager</label><input class="form-input" type="text" value="Arthony (You)" disabled style="background:var(--slate-50);"></div>
+            </div>
+
+            <!-- STEP 2: LOCATION (MAP) -->
+            <div id="step-2" class="step-content">
+                <div class="form-group">
+                    <label class="form-label">Project Location (Click Map)</label>
+                    <div class="map-container" id="wiz-map" onclick="placePin(event)">
+                        <div class="map-bg"></div>
+                        <i class="fas fa-map-marker-alt map-pin" id="wiz-pin" style="display:none; top:50%; left:50%;"></i>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <div class="form-group" style="flex:1;"><label class="form-label">Latitude</label><input class="form-input" id="wiz-lat" type="text" readonly placeholder="-13.98"></div>
+                    <div class="form-group" style="flex:1;"><label class="form-label">Longitude</label><input class="form-input" id="wiz-long" type="text" readonly placeholder="33.78"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Site Address</label><input class="form-input" type="text" placeholder="Nearest landmark..."></div>
+            </div>
+
+            <!-- STEP 3: BUDGET & ALLOCATION -->
+            <div id="step-3" class="step-content">
+                <div class="form-group"><label class="form-label">Total Grant / Budget (MWK)</label><input class="form-input" type="number" placeholder="500,000,000"></div>
+                <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date"></div>
+                <div style="background:var(--orange-light); padding:16px; border-radius:6px; border:1px solid var(--orange); color:var(--orange-dark); font-size:12px;">
+                    <i class="fas fa-info-circle"></i> Initial budget lines will be auto-generated based on the 'Standard Construction' template.
+                </div>
+            </div>
+        `;
+
+        // Footer Logic for Wizard
+        const updateFooter = (step) => {
+            let btns = '';
+            if(step === 1) {
+                btns = `<button class="btn btn-secondary" onclick="closeDrawer()">Cancel</button>
+                        <button class="btn btn-primary" onclick="nextStep(2)">Next: Location <i class="fas fa-arrow-right"></i></button>`;
+            } else if(step === 2) {
+                btns = `<button class="btn btn-secondary" onclick="nextStep(1)">Back</button>
+                        <button class="btn btn-primary" onclick="nextStep(3)">Next: Budget <i class="fas fa-arrow-right"></i></button>`;
+            } else {
+                btns = `<button class="btn btn-secondary" onclick="nextStep(2)">Back</button>
+                        <button class="btn btn-primary" onclick="closeDrawer()">Create Project <i class="fas fa-check"></i></button>`;
+            }
+            dFooter.innerHTML = btns;
+        };
+        
+        // Expose wizard functions globally temporarily for the drawer context
+        window.nextStep = (step) => {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('step-' + step).classList.add('active');
+            
+            document.querySelectorAll('.step-dot').forEach((el, idx) => {
+                el.className = 'step-dot';
+                if(idx + 1 === step) el.classList.add('active');
+                if(idx + 1 < step) el.classList.add('completed');
+            });
+            updateFooter(step);
+        };
+        
+        window.placePin = (e) => {
+            const rect = e.target.getBoundingClientRect();
+            // Handle clicking on the pin itself or background
+            if (e.target.id === 'wiz-pin') return; 
+
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const pin = document.getElementById('wiz-pin');
+            pin.style.display = 'block';
+            pin.style.left = x + 'px';
+            pin.style.top = y + 'px';
+            
+            // Mock Lat/Long Calc (relative to center of Malawi approx)
+            const mapW = rect.width;
+            const mapH = rect.height;
+            // Malawi approx: Lat -9 to -17, Long 33 to 36
+            // Normalize 0-1
+            const normX = x / mapW;
+            const normY = y / mapH;
+            
+            const lat = (-9 - (normY * 8)).toFixed(4);
+            const long = (33 + (normX * 3)).toFixed(4);
+            
+            document.getElementById('wiz-lat').value = lat;
+            document.getElementById('wiz-long').value = long;
+        };
+
+        updateFooter(1); // Init
+
+    } else if (id === 'risk_log') {
+                // --- RISK LOG ---
+                dTitle.innerText = "Log New Risk";
+                document.getElementById('d-id').innerText = "RSK-NEW";
+                dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Save Risk</button>`;
+                dBody.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group">
+                    <label class="form-label">Risk Description</label>
+                    <input class="form-input" type="text" placeholder="Short description of risk">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Impact Level</label>
+                    <select class="form-input"><option>High</option><option>Medium</option><option>Low</option></select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Probability</label>
+                    <select class="form-input"><option>High</option><option>Medium</option><option>Low</option></select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Mitigation Strategy</label>
+                    <input class="form-input" type="text" placeholder="Plan to reduce impact">
+                </div>
+            </div>
+             `;
+            } else if (id === 'request_budget') {
+                // --- BUDGET REQUEST ---
+                dTitle.innerText = "Budget Reallocation Request";
+                document.getElementById('d-id').innerText = "REQ-NEW";
+                dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Submit Request</button>`;
+                dBody.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group">
+                    <label class="form-label">Source Budget Line</label>
+                    <select class="form-input"><option>02-MAT Construction Materials</option><option>05-EQUIP Equipment</option></select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Target Budget Line</label>
+                    <select class="form-input"><option>01-LAB Site Labor</option><option>03-SUB Subcontractors</option></select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Transfer Amount (MWK)</label>
+                    <input class="form-input" type="number">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Justification</label>
+                    <input class="form-input" type="text" placeholder="Reason for transfer">
+                </div>
+            </div>
+             `;
+            } else if (id === 'request_equipment') {
+                // --- EQUIPMENT REQUEST ---
+                dTitle.innerText = "Equipment Request";
+                document.getElementById('d-id').innerText = "EQ-REQ-NEW";
+                dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Submit Request</button>`;
+                dBody.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group">
+                    <label class="form-label">Equipment Type</label>
+                     <select class="form-input"><option>Excavator (CAT 320)</option><option>Dump Truck</option><option>Concrete Mixer</option></select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Required Date</label>
+                    <input class="form-input" type="date">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Duration (Days)</label>
+                    <input class="form-input" type="number">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Site Location</label>
+                     <select class="form-input"><option>CEN-01 Unilia Library</option><option>MZ-05 Mzuzu Clinic</option></select>
+                </div>
+            </div>
+             `;
+            } else {
+                // SITE LOG VERIFICATION
+                const data = logData['LOG-001'];
+                document.getElementById('d-id').innerText = id;
+                dTitle.innerText = "Daily Log Review";
+                dFooter.innerHTML = `
+             <button class="btn btn-secondary" style="flex: 1; color: var(--red); border-color: var(--slate-200);" onclick="closeDrawer()">Reject</button>
+             <button class="btn btn-primary" style="flex: 1;" onclick="closeDrawer()">Approve Progress</button>
+        `;
+
+                dBody.innerHTML = `
+            <div class="drawer-section">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                        <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Supervisor</div>
+                        <div style="font-weight:600;">${data.supervisor}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Timestamp</div>
+                        <div style="font-weight:600;">${data.date}</div>
+                    </div>
+                </div>
+
+                <div class="evidence-photo">
+                    <img src="${data.photoUrl}" alt="Site Evidence">
+                    <div class="geo-tag">
+                        <i class="fas fa-map-marker-alt"></i> ${data.location}
+                    </div>
+                </div>
+
+                <div style="font-size:13px; font-weight:700; color:var(--slate-900); margin-bottom:8px;">Narrative Report</div>
+                <p style="font-size:13px; color:var(--slate-600); line-height:1.5; background:var(--slate-50); padding:12px; border-radius:6px;">
+                    "${data.summary}"
+                </p>
+            </div>
+
+            <div class="drawer-section">
+                <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:12px;">Resource Consumption</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
+                        <div style="font-size:11px; color:var(--slate-500);">Materials</div>
+                        <div style="font-weight:600;">${data.materials[0]}</div>
+                        <div style="font-weight:600;">${data.materials[1]}</div>
+                    </div>
+                    <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
+                        <div style="font-size:11px; color:var(--slate-500);">Attendance</div>
+                        <div style="font-weight:600;">${data.labor}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="drawer-section" style="border:none;">
+                 <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:12px;">Impact on Schedule</div>
+                 <div style="background:var(--orange-light); padding:12px; border-radius:6px; display:flex; gap:12px; align-items:center;">
+                    <i class="fas fa-info-circle" style="color:var(--orange);"></i>
+                    <div style="font-size:12px; color:var(--slate-800);">
+                        Approving this log will advance <strong>Task 2.4 (Foundation)</strong> from 20% to <strong>25%</strong>.
+                    </div>
+                 </div>
+            </div>
+        `;
+            }
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer-overlay').classList.remove('show');
+        }
+
+        document.getElementById('drawer-overlay').addEventListener('click', function (e) {
+            if (e.target === this) closeDrawer();
+        });
+
+        function switchTab(el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

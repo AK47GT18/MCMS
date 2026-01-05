@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Administrator | Mkaka CMS</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. ENTERPRISE DESIGN TOKENS (EXACT MATCH TO FINANCE/PM) --- */
+        :root {
+            --orange: #F97316;
+            --orange-light: #FFF7ED;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-300: #CBD5E1;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1E293B;
+            --slate-900: #0F172A;
+            --white: #FFFFFF;
+
+            --emerald: #10B981;
+            --red: #EF4444;
+            --blue: #3B82F6;
+            --amber: #F59E0B;
+
+            --radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-900);
+            overflow: hidden;
+            font-size: 13px;
+            /* Standard Enterprise Size */
+        }
+
+        /* --- 2. LAYOUT SHELL --- */
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-bar {
+            height: 50px;
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 40;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--slate-200);
+            display: flex;
+            flex-direction: column;
+            z-index: 30;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- 3. SIDEBAR STYLING --- */
+        .logo {
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--slate-900);
+        }
+
+        .logo i {
+            color: var(--orange);
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--slate-800);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-800);
+        }
+
+        .profile-role {
+            font-size: 11px;
+            color: var(--slate-500);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            color: var(--slate-600);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: var(--transition);
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--slate-100);
+            color: var(--slate-900);
+        }
+
+        .nav-link.active {
+            background: var(--orange-light);
+            color: var(--orange);
+            font-weight: 600;
+        }
+
+        .nav-link.active i {
+            color: var(--orange);
+        }
+
+        .nav-link i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* --- 4. CONTENT AREA --- */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 20px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .breadcrumb {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 4px;
+        }
+
+        .page-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .context-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--slate-500);
+            font-weight: 500;
+        }
+
+        .context-value {
+            color: var(--slate-700);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .content {
+            padding: 24px 32px;
+            max-width: 1800px;
+        }
+
+        /* Components */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: var(--orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--slate-900);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            margin-top: 4px;
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .data-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .data-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--slate-50);
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--slate-100);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: var(--slate-50);
+        }
+
+        tbody td {
+            padding: 12px 20px;
+            font-size: 13px;
+            color: var(--slate-700);
+            vertical-align: middle;
+        }
+
+        /* Utilities specific to Contracts */
+        .mono-val {
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.5px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status.active {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .status.expiring {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status.expired {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status.tender {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .version-tag {
+            background: var(--slate-100);
+            color: var(--slate-600);
+            border: 1px solid var(--slate-200);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono';
+        }
+
+        /* --- 5. DRAWER & MODALS --- */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 600px;
+            height: 100%;
+            background: white;
+            box-shadow: var(--shadow-drawer);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-overlay.show .drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: white;
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: var(--slate-50);
+        }
+
+        .drawer-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--slate-200);
+            background: white;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Views */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Inputs */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--slate-300);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--slate-900);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--slate-800);
+            transform: translateY(-1px);
+        }
+
+        .btn-action {
+            background: var(--orange);
+            color: white;
+        }
+
+        .btn-action:hover {
+            background: #ea580c;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--slate-700);
+            border-color: var(--slate-200);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--slate-300);
+            background: var(--slate-50);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <header class="top-bar">
+            <div class="logo">
+                <i class="fas fa-hard-hat"></i>
+                <span>MKAKA CONTRACTS</span>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
+                <div
+                    style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
+                    <i class="fas fa-clock"></i> 3 Deadlines in 7 Days
+                </div>
+                <button class="btn btn-secondary" style="border: none; padding: 8px;">
+                    <i class="fas fa-bell" style="color: var(--slate-500);"></i>
+                </button>
+                <div class="user-profile">
+                    <div class="profile-avatar" style="background: #7C3AED;">CA</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="user-profile">
+                        <div class="profile-avatar" style="background: #7C3AED;">CA</div>
+                        <div class="profile-info">
+                            <div class="profile-name">John Kaira</div>
+                            <div class="profile-role">Contract Admin</div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-label">Lifecycle</div>
+                        <a class="nav-link active" onclick="navigateTo('dashboard', this)">
+                            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('repository', this)">
+                            <i class="fas fa-folder-open"></i> <span>Repository</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('milestones', this)">
+                            <i class="fas fa-flag"></i> <span>Milestones</span>
+                            <span class="nav-badge">3</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('amendments', this)">
+                            <i class="fas fa-pen-to-square"></i> <span>Amendments</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('tenders', this)">
+                            <i class="fas fa-gavel"></i> <span>Tenders</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Compliance</div>
+                        <a class="nav-link" onclick="navigateTo('compliance', this)">
+                            <i class="fas fa-shield-halved"></i> <span>Ins. & Bonds</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('vendors', this)">
+                            <i class="fas fa-store"></i> <span>Vendor Registry</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Reporting</div>
+                        <a class="nav-link" onclick="navigateTo('reports', this)">
+                            <i class="fas fa-file-invoice"></i> <span>Performance</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <span>Contract Workspace</span>
+                        <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+                        <span id="header-breadcrumb">Dashboard</span>
+                    </div>
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title" id="header-title">Contract Overview</h1>
+                            <div class="context-strip" id="header-context">
+                                <span class="context-value">4</span> Active Contracts
+                                <div class="context-dot"></div>
+                                <span class="context-value" style="color: var(--emerald);">98% Compliance</span>
+                                <div class="context-dot"></div>
+                                <span style="color: var(--orange); font-weight: 600;">3 Approaching Deadlines</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-action" onclick="openDrawer('new')">
+                            <i class="fas fa-plus"></i>
+                            <span>New Contract</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content">
+
+                    <div id="view-dashboard" class="view-section active">
+                        <div class="stats-grid">
+                            <div class="stat-card" style="border-left: 4px solid var(--orange);">
+                                <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Upcoming
+                                        Deadlines</span><i class="fas fa-clock" style="color: var(--orange);"></i></div>
+                                <div class="stat-value" style="color: var(--orange);">3</div>
+                                <div class="stat-sub">Milestones due < 7 days</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-header"><span class="stat-label">Active Contracts</span><i
+                                            class="fas fa-file-contract" style="color: var(--blue);"></i></div>
+                                    <div class="stat-value">4</div>
+                                    <div class="stat-sub">Total Value: MWK 890M</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-header"><span class="stat-label">Pending Amendments</span><i
+                                            class="fas fa-file-pen" style="color: var(--slate-600);"></i></div>
+                                    <div class="stat-value">1</div>
+                                    <div class="stat-sub">Awaiting PM Approval</div>
+                                </div>
+                                <div class="stat-card" style="border-left: 4px solid var(--red);">
+                                    <div class="stat-header"><span class="stat-label"
+                                            style="color: var(--red);">Compliance Alerts</span><i
+                                            class="fas fa-triangle-exclamation" style="color: var(--red);"></i></div>
+                                    <div class="stat-value" style="color: var(--red);">1</div>
+                                    <div class="stat-sub">Expired Insurance (VEN-012)</div>
+                                </div>
+                            </div>
+
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Immediate Attention Required (7-Day Lookahead)</div>
+                                    <button class="btn btn-secondary">View Calendar</button>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Contract ID</th>
+                                            <th>Project</th>
+                                            <th>Milestone</th>
+                                            <th>Deadline</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr onclick="openDrawer('contract', 'CNT-045')">
+                                            <td><span class="mono-val">CNT-045</span></td>
+                                            <td style="font-weight: 600;">CEN-01 Unilia</td>
+                                            <td>Foundation Complete</td>
+                                            <td class="mono-val" style="color: var(--red); font-weight: 700;">Jan 07 (4
+                                                Days)</td>
+                                            <td><span class="status expiring">At Risk</span></td>
+                                            <td><button class="btn btn-secondary"
+                                                    style="padding: 4px 8px; font-size: 11px;">Track</button></td>
+                                        </tr>
+                                        <tr onclick="openDrawer('contract', 'CNT-052')">
+                                            <td><span class="mono-val">CNT-052</span></td>
+                                            <td style="font-weight: 600;">MZ-05 Clinic</td>
+                                            <td>Ins. Renewal</td>
+                                            <td class="mono-val" style="color: var(--orange); font-weight: 700;">Jan 10
+                                                (7 Days)</td>
+                                            <td><span class="status expiring">Warning</span></td>
+                                            <td><button class="btn btn-secondary"
+                                                    style="padding: 4px 8px; font-size: 11px;">Renew</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="view-repository" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Contract Registry</div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" placeholder="Search contracts..." class="form-input"
+                                            style="width: 250px; padding: 6px;">
+                                        <button class="btn btn-secondary">Filter</button>
+                                    </div>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Contract ID</th>
+                                            <th>Project</th>
+                                            <th>Vendor/Client</th>
+                                            <th>Type</th>
+                                            <th>Version</th>
+                                            <th>Status</th>
+                                            <th>Value (MWK)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr onclick="openDrawer('contract', 'CNT-045')">
+                                            <td><span class="mono-val">CNT-045</span></td>
+                                            <td style="font-weight: 600;">CEN-01 Unilia</td>
+                                            <td>Mkaka Ltd (Client)</td>
+                                            <td>Main Works</td>
+                                            <td><span class="version-tag">v3.0</span></td>
+                                            <td><span class="status active">Active</span></td>
+                                            <td class="mono-val" style="text-align: right;">500,000,000</td>
+                                        </tr>
+                                        <tr onclick="openDrawer('contract', 'CNT-052')">
+                                            <td><span class="mono-val">CNT-052</span></td>
+                                            <td style="font-weight: 600;">MZ-05 Clinic</td>
+                                            <td>Gov Malawi</td>
+                                            <td>Main Works</td>
+                                            <td><span class="version-tag">v1.2</span></td>
+                                            <td><span class="status active">Active</span></td>
+                                            <td class="mono-val" style="text-align: right;">120,000,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="mono-val">CNT-055</span></td>
+                                            <td style="font-weight: 600;">LIL-02 Mall</td>
+                                            <td>Steel Supply</td>
+                                            <td>Supply</td>
+                                            <td><span class="version-tag">v1.0</span></td>
+                                            <td><span class="status tender">Tender</span></td>
+                                            <td class="mono-val" style="text-align: right;">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="view-milestones" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Milestone Tracker</div>
+                                    <button class="btn btn-primary" onclick="openDrawer('milestone_add')">Add
+                                        Milestone</button>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Due Date</th>
+                                            <th>Contract</th>
+                                            <th>Milestone</th>
+                                            <th>Linked Deliverable</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="mono-val" style="color: var(--red); font-weight: 700;">Jan 07
+                                            </td>
+                                            <td>CNT-045</td>
+                                            <td>Foundation Complete</td>
+                                            <td>Site Inspection Report</td>
+                                            <td><span class="status expiring">Pending</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="mono-val">Jan 20</td>
+                                            <td>CNT-045</td>
+                                            <td>First Payment Release</td>
+                                            <td>Inv #992 Verified</td>
+                                            <td><span class="status active">Scheduled</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="view-amendments" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Amendments Log</div>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Ref</th><th>Date</th><th>Contract</th><th>Type</th><th>Impact</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><span class="mono-val">AMD-001</span></td><td>Jan 02, 2026</td><td>CEN-01</td><td>Variation</td><td>+ MWK 2.5M</td><td><span class="status active">Approved</span></td></tr>
+                                        <tr><td><span class="mono-val">AMD-002</span></td><td>Dec 15, 2025</td><td>MZ-05</td><td>Extension</td><td>+ 14 Days</td><td><span class="status active">Approved</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="view-tenders" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Active Tenders</div>
+                                    <button class="btn btn-primary" style="padding:4px 12px; font-size:12px;">Create Package</button>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Ref</th><th>Package Name</th><th>Closing Date</th><th>Bids Rec.</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr><td><span class="mono-val">TDR-2026-01</span></td><td><span style="font-weight:600;">LIL-02 Mall Steel Supply</span></td><td>Jan 30, 2026</td><td>3</td><td><span class="status tender">Open</span></td></tr>
+                                        <tr><td><span class="mono-val">TDR-2026-02</span></td><td><span style="font-weight:600;">Security Services</span></td><td>Feb 15, 2026</td><td>0</td><td><span class="status active">Draft</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="view-compliance" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Compliance Checks</div>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Vendor</th><th>Document</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        <tr><td style="font-weight:600;">Mkaka Ltd</td><td>All Risks Insurance</td><td style="color:var(--red); font-weight:700;">Jan 10, 2026</td><td><span class="status expiring">Expiring</span></td><td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;">Request</button></td></tr>
+                                        <tr><td style="font-weight:600;">Gov Malawi</td><td>Performance Bond</td><td>Jun 30, 2026</td><td><span class="status active">Valid</span></td><td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;">View</button></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="view-vendors" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Vendor Registry</div>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Name</th><th>Service</th><th>Rating</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr><td style="font-weight:600;">BuildIt Corp</td><td>Construction</td><td style="color:var(--amber);"><i class="fas fa-star"></i> 4.5</td><td><span class="status active">Verified</span></td></tr>
+                                        <tr><td style="font-weight:600;">Malawi Steel</td><td>Materials</td><td style="color:var(--amber);"><i class="fas fa-star"></i> 3.8</td><td><span class="status active">Verified</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="view-reports" class="view-section">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Reports</div>
+                                </div>
+                                <div style="padding: 24px;">
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
+                                        <div style="border:1px solid var(--slate-200); padding:16px; border-radius:8px; text-align:center;">
+                                            <i class="fas fa-file-invoice-dollar" style="font-size:24px; color:var(--blue); margin-bottom:8px;"></i>
+                                            <div style="font-weight:600;">Financial Summary</div>
+                                        </div>
+                                        <div style="border:1px solid var(--slate-200); padding:16px; border-radius:8px; text-align:center;">
+                                            <i class="fas fa-chart-line" style="font-size:24px; color:var(--emerald); margin-bottom:8px;"></i>
+                                            <div style="font-weight:600;">Vendor Performance</div>
+                                        </div>
+                                        <div style="border:1px solid var(--slate-200); padding:16px; border-radius:8px; text-align:center;">
+                                            <i class="fas fa-clock" style="font-size:24px; color:var(--orange); margin-bottom:8px;"></i>
+                                            <div style="font-weight:600;">Milestone Report</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="drawer-overlay" id="drawer-overlay">
+        <div class="drawer" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;"
+                        id="d-sub">Contract Details</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
+                        id="d-title">CNT-045</div>
+                </div>
+                <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+                    <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
+                </div>
+            </div>
+
+            <div class="drawer-content" id="d-body"></div>
+
+            <div class="drawer-footer" id="d-footer"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- NAVIGATION LOGIC ---
+        const views = {
+            'dashboard': { title: 'Overview', context: 'Active Contracts: 4 | Deadlines: 3' },
+            'repository': { title: 'Contract Repository', context: 'Centralized Document Store' },
+            'milestones': { title: 'Milestone Tracker', context: 'Critical Path Deadlines' },
+            'amendments': { title: 'Amendments', context: 'Change Control Log' },
+            'tenders': { title: 'Tender Management', context: 'Open Bids & Packages' },
+            'compliance': { title: 'Compliance & Risk', context: 'Insurance & Bonds' },
+            'vendors': { title: 'Vendor Registry', context: 'Stakeholder Management' },
+            'reports': { title: 'Reporting', context: 'Performance Analytics' }
+        };
+
+        function navigateTo(viewId, navElement) {
+            // 1. Sidebar Active State
+            if (navElement) {
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+            }
+
+            // 2. View Switching
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.add('active');
+
+            // 3. Header Text
+            if (views[viewId]) {
+                document.getElementById('header-title').innerText = views[viewId].title;
+                document.getElementById('header-breadcrumb').innerText = views[viewId].title;
+                document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
+            }
+        }
+
+        // --- DRAWER LOGIC ---
+        function openDrawer(type, id) {
+            const overlay = document.getElementById('drawer-overlay');
+            const title = document.getElementById('d-title');
+            const sub = document.getElementById('d-sub');
+            const body = document.getElementById('d-body');
+            const footer = document.getElementById('d-footer');
+
+            overlay.classList.add('show');
+
+            if (type === 'contract') {
+                // --- VIEW CONTRACT DETAILS ---
+                sub.innerText = "Project: CEN-01 Unilia";
+                title.innerText = id + ": Main Works Contract";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                    <div><div class="stat-label">Start Date</div><div style="font-weight:600;">Jan 01, 2025</div></div>
+                    <div><div class="stat-label">End Date</div><div style="font-weight:600;">Dec 31, 2026</div></div>
+                    <div><div class="stat-label">Current Value</div><div class="mono-val" style="font-weight:700;">MWK 500,000,000</div></div>
+                    <div><div class="stat-label">Current Version</div><div class="version-tag">v3.0</div></div>
+                </div>
+            </div>
+            
+            <div class="drawer-section">
+                <div class="stat-label" style="margin-bottom:12px;">Version History (Immutable Audit)</div>
+                <table style="font-size:12px;">
+                    <thead><tr><th>Ver</th><th>Date</th><th>User</th><th>Type</th><th>File</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="version-tag">v3.0</span></td><td>Jan 02, 2026</td><td>S. Mwale</td><td>Amendment</td><td style="color:var(--blue);"><i class="fas fa-download"></i></td></tr>
+                        <tr><td><span class="version-tag">v2.1</span></td><td>Dec 15, 2025</td><td>L. Kambala</td><td>Addendum</td><td style="color:var(--blue);"><i class="fas fa-download"></i></td></tr>
+                        <tr><td><span class="version-tag">v1.0</span></td><td>Jan 01, 2025</td><td>J. Kaira</td><td>Original</td><td style="color:var(--blue);"><i class="fas fa-download"></i></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="drawer-section">
+                <div class="stat-label" style="margin-bottom:8px;">Description</div>
+                <p style="font-size:13px; color:var(--slate-600); line-height:1.5;">Main works contract for the construction of the Unilia Library Complex, including foundation, structural, and finishing works.</p>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Print Summary</button>
+            <button class="btn btn-action" style="flex:2;" onclick="openDrawer('upload', '${id}')"><i class="fas fa-cloud-upload-alt"></i> Upload Amendment</button>
+        `;
+
+            } else if (type === 'new') {
+                // --- NEW CONTRACT ---
+                sub.innerText = "Lifecycle Management";
+                title.innerText = "Create New Contract";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group"><label class="form-label">Project</label><select class="form-input"><option>CEN-01 Unilia</option></select></div>
+                <div class="form-group"><label class="form-label">Vendor/Client</label><select class="form-input"><option>Mkaka Ltd</option></select></div>
+                <div class="form-group"><label class="form-label">Contract Type</label><select class="form-input"><option>Main Works</option><option>Supply</option></select></div>
+                <div class="form-group"><label class="form-label">Value (MWK)</label><input class="form-input" type="number"></div>
+                <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date"></div>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Create Record</button>
+        `;
+
+            } else if (type === 'upload') {
+                // --- UPLOAD AMENDMENT ---
+                sub.innerText = "Version Control";
+                title.innerText = "Upload Amendment for " + id;
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group"><label class="form-label">Amendment Type</label><select class="form-input"><option>Variation Order</option><option>Addendum</option></select></div>
+                <div class="form-group"><label class="form-label">Change Description</label><textarea class="form-input" rows="3"></textarea></div>
+                <div class="form-group"><label class="form-label">Financial Impact</label><input class="form-input" type="number" placeholder="+/- Amount"></div>
+                 <div class="form-group">
+                    <label class="form-label">Document Upload</label>
+                    <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:6px; color:var(--slate-500);">
+                       <i class="fas fa-file-pdf" style="font-size:24px; margin-bottom:8px;"></i><br>Drag PDF here
+                    </div>
+                </div>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Save New Version</button>
+        `;
+            } else if (type === 'milestone_add') {
+                // --- ADD MILESTONE ---
+                sub.innerText = "Tracker";
+                title.innerText = "Add Critical Milestone";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group"><label class="form-label">Contract</label><select class="form-input"><option>CEN-01 Unilia</option></select></div>
+                <div class="form-group"><label class="form-label">Milestone Name</label><input type="text" class="form-input" placeholder="e.g. Structure Complete"></div>
+                <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Linked Payment (%)</label><input type="number" class="form-input" placeholder="10"></div>
+                <div class="form-group"><label class="form-label">Deliverables</label><textarea class="form-input" rows="2"></textarea></div>
+            </div>
+        `;
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Set Milestone</button>
+        `;
+            }
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer-overlay').classList.remove('show');
+        }
+
+        // Close on click outside
+        document.getElementById('drawer-overlay').addEventListener('click', function (e) {
+            if (e.target === this) closeDrawer();
+        });
+    </script>
+</body>
+
+</html>

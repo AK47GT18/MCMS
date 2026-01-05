@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Director | Mkaka CMS</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. EXACT PM DASHBOARD DESIGN TOKENS --- */
+        :root {
+            --orange: #F97316;
+            --orange-light: #FFF7ED;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-300: #CBD5E1;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1E293B;
+            --slate-900: #0F172A;
+            --white: #FFFFFF;
+            
+            --emerald: #10B981;
+            --red: #EF4444;
+            --blue: #3B82F6;
+
+            --radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-900);
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            letter-spacing: -0.025em;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* --- 2. LAYOUT COMPONENTS --- */
+        .top-bar {
+            height: 56px;
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+            z-index: 40;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--slate-200);
+            display: flex;
+            flex-direction: column;
+            z-index: 30;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- 3. SIDEBAR STYLES --- */
+        .logo {
+            font-weight: 800;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--slate-900);
+            letter-spacing: -0.5px;
+        }
+
+        .logo i {
+            color: var(--orange);
+            font-size: 20px;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--slate-800);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-800);
+        }
+
+        .profile-role {
+            font-size: 11px;
+            color: var(--slate-500);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            color: var(--slate-600);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: var(--transition);
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--slate-100);
+            color: var(--slate-900);
+        }
+
+        .nav-link.active {
+            background: var(--orange-light);
+            color: var(--orange);
+            font-weight: 600;
+        }
+
+        .nav-link.active i {
+            color: var(--orange);
+        }
+
+        .nav-link i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* --- 4. CONTENT STYLES --- */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 20px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .breadcrumb {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 4px;
+        }
+
+        .page-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .context-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--slate-500);
+            font-weight: 500;
+        }
+
+        .context-dot {
+            width: 3px;
+            height: 3px;
+            background: var(--slate-300);
+            border-radius: 50%;
+        }
+
+        .context-value {
+            color: var(--slate-700);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .content {
+            padding: 24px 32px;
+            max-width: 1600px;
+        }
+
+        /* Buttons - EXACT PM DASHBOARD MATCH */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--slate-900);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--slate-800);
+            transform: translateY(-1px);
+        }
+
+        .btn-action {
+            background: var(--orange);
+            color: white;
+        }
+
+        .btn-action:hover {
+            background: #ea580c;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--slate-700);
+            border-color: var(--slate-200);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--slate-300);
+            background: var(--slate-50);
+        }
+
+        .btn-danger {
+            background: white;
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        .btn-danger:hover {
+            background: #FEF2F2;
+        }
+
+        /* Stats & Tables */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            border-color: var(--orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--slate-900);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            margin-top: 4px;
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .data-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .data-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--slate-50);
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--slate-200);
+            position: sticky;
+            top: 0;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--slate-100);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: var(--slate-50);
+        }
+
+        tbody td {
+            padding: 12px 20px;
+            font-size: 13px;
+            color: var(--slate-700);
+            vertical-align: middle;
+        }
+
+        .project-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--slate-600);
+            background: var(--slate-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status.active {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .status.pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status.rejected {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status.locked {
+            background: var(--slate-100);
+            color: var(--slate-600);
+            border: 1px solid var(--slate-300);
+        }
+
+        /* --- 5. FINANCE SPECIFIC VISUALS --- */
+        .budget-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: var(--slate-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .budget-bar-fill {
+            height: 100%;
+            background: var(--emerald);
+        }
+
+        .budget-bar-fill.warn {
+            background: #F59E0B;
+        }
+
+        .budget-bar-fill.danger {
+            background: var(--red);
+        }
+
+        .fraud-alert-card {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* --- 6. VIEW MANAGEMENT --- */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- 7. DRAWER --- */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 700px;
+            height: 100%;
+            background: white;
+            box-shadow: var(--shadow-drawer);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-overlay.show .drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: white;
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: var(--slate-50);
+        }
+
+        .drawer-section {
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .drawer-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--slate-200);
+            background: white;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Tabs inside Drawer */
+        .tabs {
+            display: flex;
+            gap: 24px;
+        }
+
+        .tab {
+            padding: 0 0 12px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-500);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab:hover {
+            color: var(--slate-800);
+        }
+
+        .tab.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--slate-300);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <header class="top-bar">
+            <div class="logo">
+                <i class="fas fa-hard-hat"></i>
+                <span>MKAKA FINANCE</span>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
+                <div
+                    style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
+                    <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
+                </div>
+                <button class="btn btn-secondary" style="border: none; padding: 8px;">
+                    <i class="fas fa-bell" style="color: var(--slate-500);"></i>
+                </button>
+                <div class="user-profile">
+                    <div class="profile-avatar">FD</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="user-profile">
+                        <div class="profile-avatar" style="background: var(--emerald);">SM</div>
+                        <div class="profile-info">
+                            <div class="profile-name">Sarah Mwale</div>
+                            <div class="profile-role">Finance Director</div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-label">Strategic</div>
+                        <a class="nav-link active" onclick="navigateTo('dashboard', this)">
+                            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('analytics', this)">
+                            <i class="fas fa-chart-pie"></i> <span>Analytics</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Operations</div>
+                        <a class="nav-link" onclick="openDrawer('transaction')">
+                            <i class="fas fa-plus-circle"></i> <span>Transaction Entry</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('approvals', this)">
+                            <i class="fas fa-check-to-slot"></i> <span>Approvals</span>
+                            <span class="nav-badge">5</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('ledger', this)">
+                            <i class="fas fa-book"></i> <span>General Ledger</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('reconciliation', this)">
+                            <i class="fas fa-scale-balanced"></i> <span>Reconciliation</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Governance</div>
+                        <a class="nav-link" onclick="navigateTo('bcr', this)">
+                            <i class="fas fa-sliders"></i> <span>Budget Control</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('audit', this)">
+                            <i class="fas fa-fingerprint"></i> <span>Audit Log</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('fraud', this)">
+                            <i class="fas fa-shield-cat"></i> <span>Fraud Detection</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('contracts', this)">
+                            <i class="fas fa-file-contract"></i> <span>Contracts</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('vendors', this)">
+                            <i class="fas fa-store"></i> <span>Vendor Registry</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Reporting</div>
+                        <a class="nav-link" onclick="navigateTo('reports', this)">
+                            <i class="fas fa-file-pdf"></i> <span>Reports Generator</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Resources</div>
+                        <a class="nav-link" onclick="navigateTo('documents', this)">
+                            <i class="fas fa-folder-open"></i> <span>Document Repository</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <span>Finance Workspace</span>
+                        <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+                        <span id="header-breadcrumb">Financial Overview</span>
+                    </div>
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title" id="header-title">Financial Dashboard</h1>
+                            <div class="context-strip" id="header-context">
+                                <span class="context-value">FY 2025-26</span>
+                                <div class="context-dot"></div>
+                                <span class="context-value" style="color: var(--emerald);">Cash Position: Strong</span>
+                                <div class="context-dot"></div>
+                                <span style="color: var(--orange); font-weight: 600;">5 Items Pending</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-action" onclick="openDrawer('new_bcr')">
+                            <i class="fas fa-plus"></i>
+                            <span>New Budget Request</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content">
+
+                    <div id="view-dashboard" class="view-section active">
+                        <div class="stats-grid">
+                            <div class="stat-card" style="border-left: 4px solid var(--red);">
+                                <div class="stat-header"><span class="stat-label" style="color: var(--red);">Fraud
+                                        Alerts</span><i class="fas fa-shield-halved" style="color: var(--red);"></i>
+                                </div>
+                                <div class="stat-value" style="color: var(--red);">1</div>
+                                <div class="stat-sub">Duplicate Payment Detected</div>
+                            </div>
+                            <div class="stat-card" style="border-left: 4px solid #F59E0B; cursor: pointer;"
+                                onclick="navigateTo('approvals')">
+                                <div class="stat-header"><span class="stat-label" style="color: #F59E0B;">Pending
+                                        Approvals</span><i class="fas fa-clock" style="color: #F59E0B;"></i></div>
+                                <div class="stat-value" style="color: #F59E0B;">5</div>
+                                <div class="stat-sub">MWK 45M Total Value</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Contract Deadlines</span><i
+                                        class="fas fa-file-signature" style="color: var(--blue);"></i></div>
+                                <div class="stat-value">3</div>
+                                <div class="stat-sub">Expiring within 7 days</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Budget Overruns</span><i
+                                        class="fas fa-chart-bar" style="color: var(--slate-600);"></i></div>
+                                <div class="stat-value">2</div>
+                                <div class="stat-sub">Projects exceeding 90%</div>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Priority Action Items</div>
+                                <button class="btn btn-secondary">View All</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('approval', 'REQ-089')">
+                                        <td><span class="project-id">REQ-089</span></td>
+                                        <td><span class="status pending">Approval</span></td>
+                                        <td style="font-weight: 600;">Materials - CEN-01</td>
+                                        <td style="font-family: 'JetBrains Mono';">4,500,000</td>
+                                        <td style="color: var(--slate-500);">Awaiting You</td>
+                                        <td><button class="btn btn-secondary"
+                                                style="padding: 4px 8px; font-size: 11px;">Review</button></td>
+                                    </tr>
+                                    <tr style="background: #FEF2F2;" onclick="openDrawer('fraud', 'REQ-095')">
+                                        <td><span class="project-id" style="background: #FECACA;">REQ-095</span></td>
+                                        <td><span class="status rejected">Fraud Flag</span></td>
+                                        <td style="font-weight: 600; color: var(--red);">Duplicate Payment Check</td>
+                                        <td style="font-family: 'JetBrains Mono';">850,000</td>
+                                        <td style="color: var(--red);">Investigation Req.</td>
+                                        <td><button class="btn btn-danger"
+                                                style="padding: 4px 8px; font-size: 11px;">Investigate</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">BCR-102</span></td>
+                                        <td><span class="status locked">Budget Lock</span></td>
+                                        <td>Materials Budget Increase</td>
+                                        <td style="font-family: 'JetBrains Mono';">+20,000,000</td>
+                                        <td style="color: var(--slate-500);">Pending PM</td>
+                                        <td><button class="btn btn-secondary"
+                                                style="padding: 4px 8px; font-size: 11px;">Track</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-approvals" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Requisition Queue & Payment Execution</div>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-secondary">Filter</button>
+                                    <button class="btn btn-primary">Bulk Process</button>
+                                </div>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox"></th>
+                                        <th>Req ID</th>
+                                        <th>Project</th>
+                                        <th>Vendor</th>
+                                        <th>Description</th>
+                                        <th style="text-align:right">Amount</th>
+                                        <th>Fraud Check</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('approval', 'REQ-089')">
+                                        <td><input type="checkbox"></td>
+                                        <td><span class="project-id">REQ-089</span></td>
+                                        <td>CEN-01 Unilia</td>
+                                        <td>Malawi Cement</td>
+                                        <td>600 Bags Portland Cement</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">4,500,000</td>
+                                        <td><span style="color: var(--emerald); font-weight: 600;"><i
+                                                    class="fas fa-check-circle"></i> Clean</span></td>
+                                        <td><button class="btn btn-secondary"
+                                                style="padding:4px 8px; font-size:11px;">Review</button></td>
+                                    </tr>
+                                    <tr style="background-color: #F0FDF4;">
+                                        <td><input type="checkbox"></td>
+                                        <td><span class="project-id">REQ-085</span></td>
+                                        <td>HQ Ops</td>
+                                        <td>ESCOM</td>
+                                        <td>Utilities - January</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">1,200,000</td>
+                                        <td><span style="color: var(--emerald); font-weight: 600;"><i
+                                                    class="fas fa-check-circle"></i> Clean</span></td>
+                                        <td><button class="btn btn-action" style="padding:4px 8px; font-size:11px;"
+                                                onclick="event.stopPropagation(); openDrawer('payment_execution', 'REQ-085')">Pay
+                                                Now</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-bcr" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Budget Change Requests (Governance)</div>
+                                <button class="btn btn-action" onclick="openDrawer('new_bcr')"><i
+                                        class="fas fa-plus"></i> Initiate Change</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>BCR ID</th>
+                                        <th>Project</th>
+                                        <th>Category</th>
+                                        <th style="text-align:right">Current</th>
+                                        <th style="text-align:right">Proposed</th>
+                                        <th style="text-align:right">Variance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="project-id">BCR-102</span></td>
+                                        <td>CEN-01 Unilia</td>
+                                        <td>02-MAT Materials</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">200M</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">220M</td>
+                                        <td style="text-align:right; color: var(--emerald);">+20M</td>
+                                        <td><span class="status locked">Locked (PM Pending)</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-audit" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title"><i class="fas fa-lock"></i> Immutable System Log</div>
+                                <button class="btn btn-secondary">Export Audit Report</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>User</th>
+                                        <th>Role</th>
+                                        <th>Action</th>
+                                        <th>Target</th>
+                                        <th>IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="color: var(--slate-500);">09:15:23</td>
+                                        <td style="font-weight: 600;">S. Mwale</td>
+                                        <td>Finance Dir</td>
+                                        <td><span class="status active">Approved</span></td>
+                                        <td>TRX-9901</td>
+                                        <td style="font-family: 'JetBrains Mono';">105.12.4.22</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: var(--slate-500);">09:10:45</td>
+                                        <td style="font-weight: 600;">A. Kanjira</td>
+                                        <td>PM</td>
+                                        <td><span class="status pending">Submitted</span></td>
+                                        <td>TRX-9901</td>
+                                        <td style="font-family: 'JetBrains Mono';">105.12.4.55</td>
+                                    </tr>
+                                    <tr style="background: #F8FAFC;">
+                                        <td style="color: var(--slate-500);">08:30:12</td>
+                                        <td style="color: var(--slate-400);">Unknown</td>
+                                        <td>-</td>
+                                        <td><span class="status rejected">Login Fail</span></td>
+                                        <td>Auth</td>
+                                        <td style="font-family: 'JetBrains Mono';">192.168.1.5</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-fraud" class="view-section">
+                        <div class="fraud-alert-card">
+                            <div style="font-size: 24px; color: var(--red);"><i class="fas fa-triangle-exclamation"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 700; color: var(--red); font-size: 16px;">Duplicate Payment
+                                    Detected</div>
+                                <div style="color: var(--slate-600); margin-top: 4px;">REQ-095 (MWK 850,000) matches
+                                    TRX-9885 from 3 days ago. Vendor: Mzuzu Hardware.</div>
+                                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                    <button class="btn btn-danger"
+                                        onclick="openDrawer('fraud', 'REQ-095')">Investigate</button>
+                                    <button class="btn btn-secondary">Mark False Positive</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="view-contracts" class="view-section">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Total Committed</span><i
+                                        class="fas fa-file-signature" style="color: var(--blue);"></i></div>
+                                <div class="stat-value">MWK 850M</div>
+                                <div class="stat-sub">Across 12 Active Contracts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Retention Held</span><i
+                                        class="fas fa-piggy-bank" style="color: var(--emerald);"></i></div>
+                                <div class="stat-value">MWK 42.5M</div>
+                                <div class="stat-sub">5% of Work Done</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Performance Bonds</span><i
+                                        class="fas fa-shield-alt" style="color: var(--orange);"></i></div>
+                                <div class="stat-value">12 Valid</div>
+                                <div class="stat-sub">0 Expiring soon</div>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Active Contract Terms</div>
+                                <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filter</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Contract ID</th>
+                                        <th>Project</th>
+                                        <th>Vendor</th>
+                                        <th style="text-align:right">Total Value</th>
+                                        <th style="text-align:right">Paid</th>
+                                        <th style="text-align:right">Remaining</th>
+                                        <th>Retention</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('contract_detail', 'CON-2025-01')">
+                                        <td><span class="project-id">CON-01</span></td>
+                                        <td>CEN-01 Unilia</td>
+                                        <td>Master Builders Ltd</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">120,000,000</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">45,000,000</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">75,000,000</td>
+                                        <td><span class="gps-badge"
+                                                style="color:var(--orange); background:var(--orange-light); border-color:var(--orange);">5%
+                                                Active</span></td>
+                                        <td><span class="status active">Active</span></td>
+                                    </tr>
+                                    <tr onclick="openDrawer('contract_detail', 'CON-2025-02')">
+                                        <td><span class="project-id">CON-02</span></td>
+                                        <td>CEN-01 Unilia</td>
+                                        <td>Standard Electric</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">45,000,000</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">10,000,000</td>
+                                        <td style="text-align:right; font-family: 'JetBrains Mono';">35,000,000</td>
+                                        <td><span class="gps-badge"
+                                                style="color:var(--orange); background:var(--orange-light); border-color:var(--orange);">5%
+                                                Active</span></td>
+                                        <td><span class="status active">Active</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="view-vendors" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Vendor Registry</div>
+                                <button class="btn btn-action" onclick="openDrawer('vendor_onboard')"><i
+                                        class="fas fa-plus"></i> Onboard Consultant/Vendor</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Vendor Name</th>
+                                        <th>Service Type</th>
+                                        <th>Tax ID / TPIN</th>
+                                        <th>Compliance</th>
+                                        <th>Rating</th>
+                                        <th style="text-align:right">YTD Spend</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight:600;">Malawi Cement Co.</td>
+                                        <td>Materials Supply</td>
+                                        <td style="font-family:'JetBrains Mono';">TPIN-992811</td>
+                                        <td><span class="gps-badge"><i class="fas fa-check"></i> Verified</span></td>
+                                        <td><i class="fas fa-star" style="color:#F59E0B"></i> 4.8</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">45,200,000</td>
+                                        <td><span class="status active">Approved</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:600;">Mzuzu Hardware</td>
+                                        <td>General Supplies</td>
+                                        <td style="font-family:'JetBrains Mono';">TPIN-112233</td>
+                                        <td><span class="gps-badge"
+                                                style="color:var(--red); background:#FEF2F2; border-color:#FECACA;"><i
+                                                    class="fas fa-times"></i> Expired</span></td>
+                                        <td><i class="fas fa-star" style="color:#F59E0B"></i> 3.2</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">8,500,000</td>
+                                        <td><span class="status locked">Audit Pending</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="view-ledger" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Master Journal (General Ledger)</div>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-secondary"><i class="fas fa-calendar-alt"></i> Date
+                                        Range</button>
+                                    <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filters</button>
+                                    <button class="btn btn-secondary"><i class="fas fa-download"></i> Export</button>
+                                </div>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>TRX ID</th>
+                                        <th>Account / Category</th>
+                                        <th>Description</th>
+                                        <th style="text-align:right">Debit (Out)</th>
+                                        <th style="text-align:right">Credit (In)</th>
+                                        <th style="text-align:right">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="color:var(--slate-500);">Jan 03, 2026</td>
+                                        <td><span class="project-id">TRX-1004</span></td>
+                                        <td>02-MAT <span style="color:var(--slate-400); font-size:10px;">></span> Cement
+                                        </td>
+                                        <td>Payment to Malawi Cement Co (INV-8821)</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono'; color:var(--red);">-
+                                            4,500,000</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">-</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">145,200,000</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:var(--slate-500);">Jan 02, 2026</td>
+                                        <td><span class="project-id">TRX-1003</span></td>
+                                        <td>10-INC <span style="color:var(--slate-400); font-size:10px;">></span> Client
+                                            Pmt</td>
+                                        <td>Milestone Payment 3 - CEN-01</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">-</td>
+                                        <td
+                                            style="text-align:right; font-family:'JetBrains Mono'; color:var(--emerald);">
+                                            + 25,000,000</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">149,700,000</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:var(--slate-500);">Jan 01, 2026</td>
+                                        <td><span class="project-id">TRX-1002</span></td>
+                                        <td>01-LAB <span style="color:var(--slate-400); font-size:10px;">></span> Wages
+                                        </td>
+                                        <td>Weekly Payroll - Site A</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono'; color:var(--red);">-
+                                            1,200,000</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">-</td>
+                                        <td style="text-align:right; font-family:'JetBrains Mono';">124,700,000</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="view-analytics" class="view-section">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Cash Position</span></div>
+                                <div class="stat-value">MWK 450M</div>
+                                <div class="stat-sub" style="color:var(--emerald);"><i class="fas fa-arrow-up"></i> 12%
+                                    vs last month</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Monthly Burn Rate</span></div>
+                                <div class="stat-value">MWK 125M</div>
+                                <div class="stat-sub" style="color:var(--slate-500);">Avg over 3 months</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Outstanding Receivables</span></div>
+                                <div class="stat-value">MWK 85M</div>
+                                <div class="stat-sub" style="color:var(--orange);">3 Invoices Overdue</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Payables</span></div>
+                                <div class="stat-value">MWK 42M</div>
+                                <div class="stat-sub">Due within 30 days</div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Cash Flow Forecast</div>
+                                </div>
+                                <div
+                                    style="padding:24px; height:300px; display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
+                                    <!-- Simple CSS Bar Chart -->
+                                    <div
+                                        style="width:100%; height:40%; background:var(--slate-200); border-radius:4px 4px 0 0; position:relative;">
+                                        <span
+                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Jan</span>
+                                    </div>
+                                    <div
+                                        style="width:100%; height:55%; background:var(--slate-200); border-radius:4px 4px 0 0; position:relative;">
+                                        <span
+                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Feb</span>
+                                    </div>
+                                    <div
+                                        style="width:100%; height:45%; background:var(--slate-200); border-radius:4px 4px 0 0; position:relative;">
+                                        <span
+                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Mar</span>
+                                    </div>
+                                    <div
+                                        style="width:100%; height:70%; background:var(--emerald); border-radius:4px 4px 0 0; position:relative; opacity:0.8;">
+                                        <span
+                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Apr
+                                            (Fcst)</span>
+                                    </div>
+                                    <div
+                                        style="width:100%; height:65%; background:var(--emerald); border-radius:4px 4px 0 0; position:relative; opacity:0.6;">
+                                        <span
+                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">May
+                                            (Fcst)</span>
+                                    </div>
+                                    <div
+                                        style="width:100%; height:60%; background:var(--emerald); border-radius:4px 4px 0 0; position:relative; opacity:0.4;">
+                                        <span
+                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Jun
+                                            (Fcst)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Budget Variance</div>
+                                </div>
+                                <div style="padding:24px;">
+                                    <div style="margin-bottom:16px;">
+                                        <div
+                                            style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                                            <span>Materials</span>
+                                            <span style="color:var(--red);">+12% Over</span>
+                                        </div>
+                                        <div class="budget-bar-bg">
+                                            <div class="budget-bar-fill danger" style="width:100%"></div>
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom:16px;">
+                                        <div
+                                            style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                                            <span>Labor</span>
+                                            <span style="color:var(--emerald);">-5% Under</span>
+                                        </div>
+                                        <div class="budget-bar-bg">
+                                            <div class="budget-bar-fill" style="width:95%"></div>
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom:16px;">
+                                        <div
+                                            style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                                            <span>Equipment</span>
+                                            <span style="color:var(--slate-600);">On Track</span>
+                                        </div>
+                                        <div class="budget-bar-bg">
+                                            <div class="budget-bar-fill" style="width:88%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="view-reports" class="view-section">
+                        <div class="data-card" style="max-width: 800px; margin: 0 auto;">
+                            <div class="data-card-header">
+                                <div class="card-title">Report Generator</div>
+                            </div>
+                            <div style="padding: 32px;">
+                                <div class="form-group">
+                                    <label class="form-label">Report Type</label>
+                                    <select class="form-input">
+                                        <option>Profit & Loss Statement (P&L)</option>
+                                        <option>Cash Flow Statement</option>
+                                        <option>Balance Sheet</option>
+                                        <option>Project Cost Performance</option>
+                                        <option>Vendor Spend Analysis</option>
+                                    </select>
+                                </div>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                                    <div class="form-group">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="date" class="form-input" value="2026-01-01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">End Date</label>
+                                        <input type="date" class="form-input" value="2026-01-31">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Filter by Project (Optional)</label>
+                                    <select class="form-input">
+                                        <option>All Projects</option>
+                                        <option>CEN-01 Unilia Library</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Format</label>
+                                    <div style="display:flex; gap:16px;">
+                                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input
+                                                type="radio" name="fmt" checked> PDF Document</label>
+                                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input
+                                                type="radio" name="fmt"> Excel Spreadsheet</label>
+                                    </div>
+                                </div>
+                                <div
+                                    style="border-top:1px solid var(--slate-200); margin-top:24px; padding-top:24px; display:flex; justify-content:flex-end; gap:12px;">
+                                    <button class="btn btn-secondary">Preview</button>
+                                    <button class="btn btn-primary"><i class="fas fa-download"></i> Generate
+                                        Report</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="view-reconciliation" class="view-section">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <div class="card-title">Bank Reconciliation</div>
+                            <button class="btn btn-secondary"><i class="fas fa-upload"></i> Upload Statement</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">Bank Statement (Start: Jan 01)</div>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Desc</th>
+                                            <th style="text-align:right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="background:#F0FDF4;">
+                                            <td>Jan 03</td>
+                                            <td>MALAWI CEMENT CO</td>
+                                            <td style="text-align:right;">4,500,000</td>
+                                        </tr>
+                                        <tr style="background:#F0FDF4;">
+                                            <td>Jan 02</td>
+                                            <td>ESCOM PREPAID</td>
+                                            <td style="text-align:right;">1,200,000</td>
+                                        </tr>
+                                        <tr style="background:#FEF2F2;">
+                                            <td>Jan 02</td>
+                                            <td>UNKNOWN TRANSFER</td>
+                                            <td style="text-align:right;">50,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="data-card">
+                                <div class="data-card-header">
+                                    <div class="card-title">System Ledger</div>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Desc</th>
+                                            <th style="text-align:right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="background:#F0FDF4;">
+                                            <td>Jan 03</td>
+                                            <td>Inv #8821 Malawi Cem...</td>
+                                            <td style="text-align:right;">4,500,000</td>
+                                        </tr>
+                                        <tr style="background:#F0FDF4;">
+                                            <td>Jan 02</td>
+                                            <td>Utils - Jan</td>
+                                            <td style="text-align:right;">1,200,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3"
+                                                style="text-align:center; color:var(--slate-400); padding:24px;">No
+                                                match found for 50,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="view-documents" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Document Repository</div>
+                                <div style="display:flex; gap:12px;">
+                                    <div style="position:relative;">
+                                        <i class="fas fa-search"
+                                            style="position:absolute; left:10px; top:10px; color:var(--slate-400);"></i>
+                                        <input type="text" placeholder="Search docs..." class="form-input"
+                                            style="padding-left:32px; width:250px;">
+                                    </div>
+                                    <button class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
+                                </div>
+                            </div>
+                            <div style="display:flex; border-bottom:1px solid var(--slate-200);">
+                                <div style="width:200px; border-right:1px solid var(--slate-200); padding:16px;">
+                                    <div class="nav-label">Folders</div>
+                                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:4px;">
+                                        <div
+                                            style="background:var(--slate-100); padding:6px 10px; border-radius:4px; font-weight:600; color:var(--slate-800); font-size:13px; cursor:pointer;">
+                                            <i class="fas fa-folder" style="color:var(--orange);"></i> Invoices
+                                        </div>
+                                        <div
+                                            style="padding:6px 10px; border-radius:4px; font-weight:500; color:var(--slate-600); font-size:13px; cursor:pointer;">
+                                            <i class="fas fa-folder" style="color:var(--slate-400);"></i> Contracts
+                                        </div>
+                                        <div
+                                            style="padding:6px 10px; border-radius:4px; font-weight:500; color:var(--slate-600); font-size:13px; cursor:pointer;">
+                                            <i class="fas fa-folder" style="color:var(--slate-400);"></i> Reports
+                                        </div>
+                                        <div
+                                            style="padding:6px 10px; border-radius:4px; font-weight:500; color:var(--slate-600); font-size:13px; cursor:pointer;">
+                                            <i class="fas fa-folder" style="color:var(--slate-400);"></i> Receipts
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="flex:1; padding:0;">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Date</th>
+                                                <th>Size</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-weight:600;"><i class="fas fa-file-pdf"
+                                                        style="color:var(--red); margin-right:8px;"></i>
+                                                    INV-8821_MalawiCement.pdf</td>
+                                                <td style="color:var(--slate-500);">Jan 03, 2026</td>
+                                                <td style="font-family:'JetBrains Mono';">245 KB</td>
+                                                <td><i class="fas fa-ellipsis-v"
+                                                        style="color:var(--slate-400); cursor:pointer;"></i></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight:600;"><i class="fas fa-file-excel"
+                                                        style="color:var(--emerald); margin-right:8px;"></i>
+                                                    Dec_2025_Payroll.xlsx</td>
+                                                <td style="color:var(--slate-500);">Dec 31, 2025</td>
+                                                <td style="font-family:'JetBrains Mono';">1.2 MB</td>
+                                                <td><i class="fas fa-ellipsis-v"
+                                                        style="color:var(--slate-400); cursor:pointer;"></i></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight:600;"><i class="fas fa-file-image"
+                                                        style="color:var(--blue); margin-right:8px;"></i>
+                                                    Receipt_Hardware.jpg</td>
+                                                <td style="color:var(--slate-500);">Dec 28, 2025</td>
+                                                <td style="font-family:'JetBrains Mono';">3.4 MB</td>
+                                                <td><i class="fas fa-ellipsis-v"
+                                                        style="color:var(--slate-400); cursor:pointer;"></i></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="drawer-overlay" id="drawer-overlay">
+        <div class="drawer" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;"
+                        id="d-sub">Subtitle</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
+                        id="d-title">Title</div>
+                </div>
+                <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+                    <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
+                </div>
+            </div>
+
+            <div class="drawer-content" id="d-body"></div>
+
+            <div class="drawer-footer" id="d-footer"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- NAVIGATION LOGIC ---
+        const views = {
+            'dashboard': { title: 'Financial Overview', context: 'FY 2025-26 | Cash Position: Strong' },
+            'analytics': { title: 'Analytics', context: 'Burn Rate & Forecasting' },
+            'approvals': { title: 'Requisition Queue', context: 'Operational Gatekeeping' },
+            'ledger': { title: 'General Ledger', context: 'Master Record' },
+            'reconciliation': { title: 'Bank Reconciliation', context: 'Statement Matching' },
+            'bcr': { title: 'Budget Control', context: 'Governance & Change Requests' },
+            'audit': { title: 'Audit Log', context: 'Immutable System Record' },
+            'fraud': { title: 'Fraud Detection', context: 'Active Alerts & Rules' },
+            'contracts': { title: 'Contract Management', context: 'Milestones & Deadlines' },
+            'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
+            'reports': { title: 'Reporting', context: 'Export & Print' },
+            'documents': { title: 'Document Repository', context: 'Centralized File Storage' }
+        };
+
+        function navigateTo(viewId, navElement) {
+            // 1. Sidebar Active State
+            if (navElement) {
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+            }
+
+            // 2. View Switching
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.add('active');
+
+            // 3. Header Text
+            if (views[viewId]) {
+                document.getElementById('header-title').innerText = views[viewId].title;
+                document.getElementById('header-breadcrumb').innerText = views[viewId].title;
+                document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
+            }
+        }
+
+        // --- DRAWER LOGIC ---
+        function openDrawer(type, id) {
+            const overlay = document.getElementById('drawer-overlay');
+            const title = document.getElementById('d-title');
+            const sub = document.getElementById('d-sub');
+            const body = document.getElementById('d-body');
+            const footer = document.getElementById('d-footer');
+
+            overlay.classList.add('show');
+
+            if (type === 'approval') {
+                // --- APPROVAL DRAWER ---
+                sub.innerText = "Requisition Review";
+                title.innerText = "REQ-089: Cement Purchase";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                    <div><div class="stat-label">Project</div><div style="font-weight:600;">CEN-01 Unilia</div></div>
+                    <div><div class="stat-label">Vendor</div><div style="font-weight:600;">Malawi Cement Co.</div></div>
+                    <div><div class="stat-label">Category</div><div class="project-id">02-MAT</div></div>
+                    <div><div class="stat-label">Amount</div><div class="stat-value" style="font-size:16px;">MWK 4,500,000</div></div>
+                </div>
+            </div>
+
+            <div class="drawer-section">
+                <div class="stat-label" style="margin-bottom:8px;">Budget Impact Analysis</div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                   <span>Current Utilization</span>
+                   <span>92% -> <strong style="color:var(--red)">94.5%</strong></span>
+                </div>
+                <div class="budget-bar-bg">
+                   <div class="budget-bar-fill" style="width:92%; float:left; border-right:2px solid white;"></div>
+                   <div class="budget-bar-fill warn" style="width:2.5%; float:left;"></div>
+                </div>
+                <div style="font-size:11px; color:var(--slate-500); margin-top:8px;">
+                   Approving this will leave <strong>MWK 11.5M</strong> remaining in this category.
+                </div>
+            </div>
+            
+            <div class="drawer-section">
+                <div class="stat-label">Documents</div>
+                <button class="btn btn-secondary" style="width:100%; justify-content:flex-start; margin-top:8px;"><i class="fas fa-file-pdf"></i> View Invoice #8821</button>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Request Info</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Reject</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Approve & Pay</button>
+        `;
+
+            } else if (type === 'new_bcr') {
+                // --- NEW BUDGET REQUEST ---
+                sub.innerText = "Governance";
+                title.innerText = "Initiate Budget Change";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                 <div style="background: #FFF7ED; border: 1px solid #FED7AA; color: #9A3412; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 20px;">
+                    <strong>System Enforcer:</strong> Finance cannot modify budgets directly. This request locks the budget line until PM Approval.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project</label>
+                    <select class="form-input"><option>CEN-01 Unilia Library</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input"><option>02-MAT Materials</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Proposed Budget</label>
+                    <input class="form-input" type="number">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Justification</label>
+                    <textarea class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Submit for Approval</button>
+        `;
+
+            } else if (type === 'transaction') {
+                // --- TRANSACTION ENTRY ---
+                sub.innerText = "Accounting";
+                title.innerText = "Record Financial Transaction";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                 <div class="form-group">
+                    <label class="form-label">Transaction Type</label>
+                    <div style="display:flex; gap:12px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="tt" checked> Expense</label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="tt"> Income</label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="tt"> Transfer</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input class="form-input" type="date" value="2026-01-04">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Project / Cost Center</label>
+                    <select class="form-input"><option>CEN-01 Unilia Library</option><option>HQ Operations</option></select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Expense Category</label>
+                    <select class="form-input"><option>02-MAT Materials</option><option>05-EQUIP Equipment</option></select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Vendor / Payee</label>
+                    <select class="form-input"><option>Malawi Cement Co.</option><option>ESCOM</option><option>Lilongwe Water Board</option></select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input class="form-input" type="text" placeholder="e.g. Invoice #9921 Payment">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Amount (MWK)</label>
+                    <input class="form-input" type="number" placeholder="0.00">
+                </div>
+                 
+                <div class="form-group">
+                    <label class="form-label">Supporting Documents (Invoice/Receipt)</label>
+                    <div class="photo-zone" style="padding:32px;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size:24px; margin-bottom:8px;"></i>
+                        <div>Click to Upload or Drag Files</div>
+                        <div style="font-size:11px; margin-top:4px;">PDF, JPG, PNG accepted</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Record Transaction</button>
+        `;
+            } else if (type === 'fraud') {
+                // --- FRAUD INVESTIGATION ---
+                sub.innerText = "Fraud Detection";
+                title.innerText = "Investigation: Duplicate Payment";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div style="background: #FEF2F2; padding:16px; border-radius:6px; margin-bottom:16px;">
+                    <div style="color:var(--red); font-weight:700; margin-bottom:4px;">High Risk Alert</div>
+                    <div style="color:var(--slate-700);">REQ-095 matches transaction TRX-9885 from 3 days ago exactly (Amount & Vendor).</div>
+                </div>
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="data-card" style="margin:0; border:1px solid var(--red);">
+                        <div class="data-card-header">Current</div>
+                        <div style="padding:16px;">
+                            <div style="font-weight:700;">REQ-095</div>
+                            <div>MWK 850,000</div>
+                            <div>Jan 03, 2026</div>
+                        </div>
+                    </div>
+                     <div class="data-card" style="margin:0;">
+                        <div class="data-card-header">Previous</div>
+                        <div style="padding:16px;">
+                            <div style="font-weight:700;">TRX-9885</div>
+                            <div>MWK 850,000</div>
+                            <div>Dec 30, 2025</div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="form-group" style="margin-top:16px;">
+                    <label class="form-label">Investigation Notes</label>
+                    <textarea class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+        `;
+
+                footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">False Positive</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Block Vendor</button>
+        `;
+            } else if (type === 'payment_execution') {
+                // --- PAYMENT EXECUTION ---
+                sub.innerText = "Treasury";
+                title.innerText = "Execute Payment: " + (id || 'REQ-085');
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group">
+                    <label class="form-label">Payment Source</label>
+                    <select class="form-input">
+                        <option>Main Operating Account (FDH Bank - *9921)</option>
+                        <option>Project Account (Standard Bank - *4421)</option>
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Beneficiary</label>
+                    <div style="background:var(--slate-50); padding:10px; border-radius:4px; font-size:13px; font-weight:600;">
+                        ESCOM CORPORATION<br>
+                        <span style="font-weight:400; color:var(--slate-500);">Acct: 1000299281 | National Bank</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <input class="form-input" type="text" value="MWK 1,200,000" readonly style="background:var(--slate-100);">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Transaction Reference</label>
+                    <input class="form-input" type="text" value="UTIL-JAN-26">
+                </div>
+            </div>
+        `;
+                footer.innerHTML = `
+             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+             <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()"><i class="fas fa-paper-plane"></i> Confirm Transfer</button>
+        `;
+            } else if (type === 'vendor_onboard') {
+                // --- VENDOR ONBOARDING ---
+                sub.innerText = "Vendor Management";
+                title.innerText = "New Vendor Registration";
+
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group">
+                    <label class="form-label">Business Name</label>
+                    <input class="form-input" type="text" placeholder="Registered Name">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Trading As</label>
+                    <input class="form-input" type="text">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Service Category</label>
+                    <select class="form-input"><option>Materials Supply</option><option>Construction Services</option><option>Transport</option></select>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Tax ID (TPIN)</label>
+                    <input class="form-input" type="text">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Compliance Documents</label>
+                     <div class="photo-zone" style="padding:20px;">
+                        <i class="fas fa-file-contract" style="font-size:24px; margin-bottom:8px;"></i>
+                        <div>Upload Certificate of Inc, TPIN, Tax Clearance</div>
+                    </div>
+                </div>
+            </div>
+        `;
+                footer.innerHTML = `
+             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+             <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Register Vendor</button>
+        `;
+            } else if (type === 'contract_detail') {
+                // --- CONTRACT DETAILS ---
+                sub.innerText = "Contract Management";
+                title.innerText = "Contract: " + (id || 'CON-01');
+
+                body.innerHTML = `
+            <div class="drawer-section">
+               <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                   <div><div class="stat-label">Total Value</div><div style="font-weight:700;">120,000,000</div></div>
+                   <div><div class="stat-label">Paid</div><div style="color:var(--emerald); font-weight:700;">45,000,000</div></div>
+               </div>
+               <div style="margin-top:16px;">
+                   <div class="stat-label">Progress</div>
+                   <div class="budget-bar-bg" style="margin-bottom:4px;"><div class="budget-bar-fill" style="width:37%"></div></div>
+                   <div style="font-size:11px; color:var(--slate-500);">37% Financial Completion</div>
+               </div>
+            </div>
+             <div class="drawer-section">
+                <div class="card-title" style="font-size:14px; margin-bottom:12px;">Milestones</div>
+                <table style="font-size:12px;">
+                    <tbody>
+                        <tr>
+                            <td>Mobilization</td>
+                            <td style="text-align:right;">20%</td>
+                            <td><span class="status active" style="font-size:10px;">Paid</span></td>
+                        </tr>
+                         <tr>
+                            <td>Foundation</td>
+                            <td style="text-align:right;">25%</td>
+                            <td><span class="status active" style="font-size:10px;">Paid</span></td>
+                        </tr>
+                         <tr>
+                            <td>Superstructure</td>
+                            <td style="text-align:right;">30%</td>
+                            <td><span class="status pending" style="font-size:10px;">Pending</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+             </div>
+        `;
+                footer.innerHTML = `
+             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Close</button>
+             <button class="btn btn-primary" style="flex:1;" onclick="closeDrawer()">View Full Contract</button>
+        `;
+            }
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer-overlay').classList.remove('show');
+        }
+
+        // Close on click outside
+        document.getElementById('drawer-overlay').addEventListener('click', function (e) {
+            if (e.target === this) closeDrawer();
+        });
+    </script>
+</body>
+
+</html>

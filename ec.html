@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment Coordinator | Mkaka CMS</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. ENTERPRISE DESIGN TOKENS (UNIFIED SYSTEM) --- */
+        :root {
+            --orange: #F97316;
+            --orange-light: #FFF7ED;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-300: #CBD5E1;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1E293B;
+            --slate-900: #0F172A;
+            --white: #FFFFFF;
+
+            --emerald: #10B981;
+            --red: #EF4444;
+            --blue: #3B82F6;
+            --amber: #F59E0B;
+            --indigo: #6366F1;
+
+            --radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-900);
+            overflow: hidden;
+            font-size: 13px;
+        }
+
+        /* --- 2. LAYOUT --- */
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-bar {
+            height: 50px;
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 40;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--slate-200);
+            display: flex;
+            flex-direction: column;
+            z-index: 30;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- 3. SIDEBAR --- */
+        .logo {
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--slate-900);
+        }
+
+        .logo i {
+            color: var(--orange);
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--slate-800);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-800);
+        }
+
+        .profile-role {
+            font-size: 11px;
+            color: var(--slate-500);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            color: var(--slate-600);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: var(--transition);
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--slate-100);
+            color: var(--slate-900);
+        }
+
+        .nav-link.active {
+            background: var(--orange-light);
+            color: var(--orange);
+            font-weight: 600;
+        }
+
+        .nav-link.active i {
+            color: var(--orange);
+        }
+
+        .nav-link i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* --- 4. CONTENT --- */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            padding: 20px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .breadcrumb {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 4px;
+        }
+
+        .context-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--slate-500);
+            font-weight: 500;
+        }
+
+        .context-dot {
+            width: 3px;
+            height: 3px;
+            background: var(--slate-300);
+            border-radius: 50%;
+        }
+
+        .context-value {
+            color: var(--slate-700);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .content {
+            padding: 24px 32px;
+            max-width: 1800px;
+        }
+
+        /* Components */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: var(--orange);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--slate-900);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            margin-top: 4px;
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .data-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .data-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--slate-50);
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--slate-100);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: var(--slate-50);
+        }
+
+        tbody td {
+            padding: 12px 20px;
+            font-size: 13px;
+            color: var(--slate-700);
+            vertical-align: middle;
+        }
+
+        .mono-val {
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.5px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status.active {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .status.maintenance {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status.alert {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status.transit {
+            background: #E0E7FF;
+            color: #3730A3;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--slate-900);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--slate-800);
+            transform: translateY(-1px);
+        }
+
+        .btn-action {
+            background: var(--orange);
+            color: white;
+        }
+
+        .btn-action:hover {
+            background: #ea580c;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--slate-700);
+            border-color: var(--slate-200);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--slate-300);
+            background: var(--slate-50);
+        }
+
+        /* --- 5. DRAWER --- */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 600px;
+            height: 100%;
+            background: white;
+            box-shadow: var(--shadow-drawer);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-overlay.show .drawer {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: white;
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: var(--slate-50);
+        }
+
+        .drawer-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--slate-200);
+            background: white;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 24px;
+            border-bottom: 1px solid var(--slate-200);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 0 0 12px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate-500);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab:hover {
+            color: var(--slate-800);
+        }
+
+        .tab.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+        }
+
+        /* View Switching */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-500);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--slate-300);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        /* Specific: GPS Badge */
+        .gps-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--slate-800);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono';
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <header class="top-bar">
+            <div class="logo">
+                <i class="fas fa-truck-moving" style="color: var(--orange);"></i>
+                <span style="font-weight: 800; font-size: 16px; margin-left: 10px;">MKAKA FLEET</span>
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
+                <div
+                    style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
+                    <i class="fas fa-shield-halved"></i> 1 GPS Violation
+                </div>
+                <button class="btn btn-secondary" style="border: none; padding: 8px;">
+                    <i class="fas fa-bell" style="color: var(--slate-500);"></i>
+                </button>
+                <div class="user-profile">
+                    <div class="profile-avatar" style="background: var(--indigo);">EC</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="user-profile">
+                        <div class="profile-avatar" style="background: var(--indigo);">EC</div>
+                        <div class="profile-info">
+                            <div class="profile-name">Blessings Phiri</div>
+                            <div class="profile-role">Equipment Coord.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-label">Fleet Management</div>
+                        <a class="nav-link active" onclick="navigateTo('dashboard', this)">
+                            <i class="fas fa-chart-simple"></i> <span>Dashboard</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('registry', this)">
+                            <i class="fas fa-list"></i> <span>Asset Registry</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('tracking', this)">
+                            <i class="fas fa-map-location-dot"></i> <span>GPS Tracking</span>
+                        </a>
+                        <a class="nav-link" onclick="openDrawer('checkout')">
+                            <i class="fas fa-right-from-bracket"></i> <span>Check-Out Asset</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Maintenance</div>
+                        <a class="nav-link" onclick="navigateTo('maintenance', this)">
+                            <i class="fas fa-wrench"></i> <span>Service Schedule</span>
+                            <span class="nav-badge">2</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('costs', this)">
+                            <i class="fas fa-coins"></i> <span>Repair Costs</span>
+                        </a>
+                    </div>
+
+                    <div class="nav-section">
+                        <div class="nav-label">Reporting</div>
+                        <a class="nav-link" onclick="navigateTo('utilization', this)">
+                            <i class="fas fa-chart-pie"></i> <span>Utilization Reports</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('operators', this)">
+                            <i class="fas fa-id-card"></i> <span>Operator Logs</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <span>Fleet Workspace</span>
+                        <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+                        <span id="header-breadcrumb">Dashboard</span>
+                    </div>
+                    <div class="page-title-row">
+                        <div>
+                            <h1 class="page-title" id="header-title">Fleet Overview</h1>
+                            <div class="context-strip" id="header-context">
+                                <span class="context-value">45</span> Total Assets
+                                <div class="context-dot"></div>
+                                <span class="context-value" style="color: var(--emerald);">85% Available</span>
+                                <div class="context-dot"></div>
+                                <span style="color: var(--red); font-weight: 600;">1 Security Alert</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-action" onclick="openDrawer('checkout')">
+                            <i class="fas fa-key"></i>
+                            <span>Assign Equipment</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content">
+
+                    <div id="view-dashboard" class="view-section active">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Utilization Rate</span><i
+                                        class="fas fa-gauge-high" style="color: var(--blue);"></i></div>
+                                <div class="stat-value">78%</div>
+                                <div class="stat-sub">35 Assets Deployed</div>
+                            </div>
+                            <div class="stat-card warn" onclick="navigateTo('maintenance')">
+                                <div class="stat-header"><span class="stat-label"
+                                        style="color: var(--amber);">Maintenance Due</span><i class="fas fa-wrench"
+                                        style="color: var(--amber);"></i></div>
+                                <div class="stat-value" style="color: var(--amber);">2</div>
+                                <div class="stat-sub">Scheduled Next 48h</div>
+                            </div>
+                            <div class="stat-card alert">
+                                <div class="stat-header"><span class="stat-label" style="color: var(--red);">Security
+                                        Alerts</span><i class="fas fa-lock-open" style="color: var(--red);"></i></div>
+                                <div class="stat-value" style="color: var(--red);">1</div>
+                                <div class="stat-sub">Geo-Fence Breach (EQP-023)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Total Fleet</span><i
+                                        class="fas fa-truck-front" style="color: var(--slate-600);"></i></div>
+                                <div class="stat-value">45</div>
+                                <div class="stat-sub">Value: MWK 3.5B</div>
+                            </div>
+                        </div>
+
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Real-Time Fleet Status</div>
+                                <button class="btn btn-secondary">Map View</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Asset ID</th>
+                                        <th>Equipment Name</th>
+                                        <th>Current Location</th>
+                                        <th>Assigned To</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('asset', 'EQP-045')">
+                                        <td><span class="mono-val">EQP-045</span></td>
+                                        <td style="font-weight: 600;">Caterpillar 320D Excavator</td>
+                                        <td><span class="gps-tag">-13.96, 33.77</span> CEN-01</td>
+                                        <td>John Banda (PM)</td>
+                                        <td><span class="status active">In Use</span></td>
+                                        <td><button class="btn btn-secondary"
+                                                style="padding: 4px 8px; font-size: 11px;">Track</button></td>
+                                    </tr>
+                                    <tr onclick="openDrawer('asset', 'EQP-012')">
+                                        <td><span class="mono-val">EQP-012</span></td>
+                                        <td style="font-weight: 600;">Tipper Truck 10T</td>
+                                        <td><span class="gps-tag">-13.98, 33.75</span> Transit</td>
+                                        <td>Davi Moyo</td>
+                                        <td><span class="status transit">Moving</span></td>
+                                        <td><button class="btn btn-secondary"
+                                                style="padding: 4px 8px; font-size: 11px;">Track</button></td>
+                                    </tr>
+                                    <tr style="background: #FEF2F2;" onclick="alert('Opening GPS Trace...')">
+                                        <td><span class="mono-val">EQP-023</span></td>
+                                        <td style="font-weight: 600; color: var(--red);">Honda Generator 5kVA</td>
+                                        <td><span class="gps-tag" style="background: var(--red);">-14.12, 33.56</span>
+                                            UNKNOWN</td>
+                                        <td>-</td>
+                                        <td><span class="status alert">THEFT ALERT</span></td>
+                                        <td><button class="btn btn-danger"
+                                                style="padding: 4px 8px; font-size: 11px;">Lock</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-maintenance" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Maintenance Schedule</div>
+                                <button class="btn btn-primary" onclick="openDrawer('maintenance')">Schedule
+                                    Service</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Work Order</th>
+                                        <th>Asset</th>
+                                        <th>Service Type</th>
+                                        <th>Scheduled Date</th>
+                                        <th>Provider</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="mono-val">WO-2026-001</span></td>
+                                        <td>EQP-045 Excavator</td>
+                                        <td>250hr Service (Oil/Filters)</td>
+                                        <td>Jan 05, 2026</td>
+                                        <td>Malawi Equip. Services</td>
+                                        <td><span class="status maintenance">Upcoming</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="mono-val">WO-2026-002</span></td>
+                                        <td>EQP-012 Tipper</td>
+                                        <td>Tire Replacement</td>
+                                        <td>Jan 06, 2026</td>
+                                        <td>In-House Yard</td>
+                                        <td><span class="status maintenance">Upcoming</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-registry" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Master Asset Registry</div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-action" onclick="openDrawer('add_asset')"><i class="fas fa-plus"></i> Add Asset</button>
+                                    <input type="text" placeholder="Search serial #..." class="form-input"
+                                        style="width: 250px; padding: 6px;">
+                                    <button class="btn btn-secondary">Filter</button>
+                                </div>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Asset ID</th>
+                                        <th>Name</th>
+                                        <th>Serial #</th>
+                                        <th>Purchase Date</th>
+                                        <th>Cost (MWK)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('asset', 'EQP-045')">
+                                        <td class="mono-val">EQP-045</td>
+                                        <td>Caterpillar 320D</td>
+                                        <td class="mono-val">CAT-8892-XJ</td>
+                                        <td>Jan 10, 2024</td>
+                                        <td>145,000,000</td>
+                                        <td><span class="status active">Active</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-tracking" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">GPS Real-Time Map</div>
+                            <div style="height: 500px; background: #E5E7EB; position: relative; overflow: hidden;">
+                                <!-- Mock Map Background -->
+                                <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0.3; background-image: radial-gradient(#6B7280 1px, transparent 1px); background-size: 20px 20px;"></div>
+                                
+                                <!-- Asset Pin 1 -->
+                                <div style="position: absolute; top: 30%; left: 40%; transform: translate(-50%, -50%); text-align: center; cursor: pointer;" onclick="openDrawer('asset', 'EQP-045')">
+                                    <div style="background: var(--orange); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-truck-moving" style="font-size: 12px;"></i>
+                                    </div>
+                                    <div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">EQP-045</div>
+                                </div>
+
+                                <!-- Asset Pin 2 -->
+                                <div style="position: absolute; top: 60%; left: 70%; transform: translate(-50%, -50%); text-align: center; cursor: pointer;" onclick="openDrawer('asset', 'EQP-012')">
+                                    <div style="background: var(--blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-truck" style="font-size: 12px;"></i>
+                                    </div>
+                                    <div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">EQP-012</div>
+                                </div>
+
+                                <!-- Asset Pin 3 (Alert) -->
+                                <div style="position: absolute; top: 15%; left: 20%; transform: translate(-50%, -50%); text-align: center; cursor: pointer;">
+                                    <div style="background: var(--red); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-exclamation" style="font-size: 12px;"></i>
+                                    </div>
+                                    <div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); color: var(--red);">EQP-023</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="view-costs" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">Cost Analysis</div>
+                            <div style="padding:24px;">Cost Table Placeholder</div>
+                        </div>
+                    </div>
+                    <div id="view-utilization" class="view-section">
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="data-card">
+                                <div class="data-card-header"><div class="card-title">Fleet Utilization (Hrs/Week)</div></div>
+                                <div style="padding: 24px;">
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Excavators</span><span>85%</span></div>
+                                        <div style="background:var(--slate-100); height:8px; border-radius:4px;"><div style="background:var(--blue); width:85%; height:100%; border-radius:4px;"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Dump Trucks</span><span>92%</span></div>
+                                        <div style="background:var(--slate-100); height:8px; border-radius:4px;"><div style="background:var(--emerald); width:92%; height:100%; border-radius:4px;"></div></div>
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Compactors</span><span>40%</span></div>
+                                        <div style="background:var(--slate-100); height:8px; border-radius:4px;"><div style="background:var(--orange); width:40%; height:100%; border-radius:4px;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="data-card">
+                                <div class="data-card-header"><div class="card-title">Fuel Efficiency</div></div>
+                                <div style="display:flex; align-items:center; justify-content:center; height:100%; min-height:150px;">
+                                    <div style="text-align:center;">
+                                        <div style="font-size:32px; font-weight:700; color:var(--slate-900);">4.2 <span style="font-size:14px; color:var(--slate-500); font-weight:500;">km/L</span></div>
+                                        <div style="font-size:12px; color:var(--emerald); margin-top:4px;"><i class="fas fa-arrow-up"></i> 5% better than avg</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="view-operators" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">Operator Management</div>
+                            <div style="padding:24px;">Operator List Placeholder</div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="drawer-overlay" id="drawer-overlay">
+        <div class="drawer" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;"
+                        id="d-sub">Asset Management</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
+                        id="d-title">Title</div>
+                </div>
+                <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+                    <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
+                </div>
+            </div>
+
+            <div class="drawer-content" id="d-body"></div>
+
+            <div class="drawer-footer" id="d-footer"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- NAVIGATION LOGIC ---
+        const views = {
+            'dashboard': { title: 'Fleet Overview', context: '45 Assets | 85% Utilization' },
+            'registry': { title: 'Asset Registry', context: 'Master Database' },
+            'tracking': { title: 'GPS Tracking', context: 'Real-Time Locations' },
+            'maintenance': { title: 'Maintenance Schedule', context: 'Preventive & Corrective' },
+            'costs': { title: 'Fleet Costs', context: 'Operating & Repair Expenses' },
+            'utilization': { title: 'Utilization Analysis', context: 'Efficiency Reports' },
+            'operators': { title: 'Operator Management', context: 'Drivers & Licenses' }
+        };
+
+        function navigateTo(viewId, navElement) {
+            if (navElement) { document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active')); navElement.classList.add('active'); }
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.add('active');
+            else document.getElementById('view-dashboard').classList.add('active');
+
+            if (views[viewId]) {
+                document.getElementById('header-title').innerText = views[viewId].title;
+                document.getElementById('header-breadcrumb').innerText = views[viewId].title;
+                document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
+            }
+        }
+
+        // --- DRAWER LOGIC ---
+        function openDrawer(type, id) {
+            const overlay = document.getElementById('drawer-overlay');
+            const title = document.getElementById('d-title');
+            const sub = document.getElementById('d-sub');
+            const body = document.getElementById('d-body');
+            const footer = document.getElementById('d-footer');
+
+            overlay.classList.add('show');
+
+            if (type === 'checkout') {
+                // --- CHECK-OUT ASSET ---
+                sub.innerText = "Operations";
+                title.innerText = "Assign Equipment";
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group"><label class="form-label">Select Equipment</label><select class="form-input"><option>EQP-045 Excavator</option><option>EQP-012 Tipper</option></select></div>
+                <div class="form-group"><label class="form-label">Assign To (Project)</label><select class="form-input"><option>CEN-01 Unilia Library</option><option>MZ-05 Clinic</option></select></div>
+                <div class="form-group"><label class="form-label">Responsible User</label><select class="form-input"><option>John Banda (PM)</option><option>Peter Phiri</option></select></div>
+                <div class="form-group"><label class="form-label">Expected Return</label><input type="date" class="form-input"></div>
+            </div>
+            <div class="drawer-section" style="background: #F8FAFC;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: var(--slate-700);">GPS Validation</span>
+                    <span class="status active"><i class="fas fa-satellite-dish"></i> Signal Locked</span>
+                </div>
+                <div style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">Current Loc: -13.9626, 33.7741 (HQ Yard)</div>
+            </div>
+        `;
+                footer.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button><button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Confirm Handover</button>`;
+
+            } else if (type === 'asset') {
+                // --- ASSET DETAILS ---
+                sub.innerText = "Registry";
+                title.innerText = id + ": Caterpillar 320D";
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                    <div><div class="stat-label">Serial Number</div><div class="mono-val">CAT-8892-XJ</div></div>
+                    <div><div class="stat-label">Purchase Date</div><div style="font-weight:600;">Jan 2024</div></div>
+                    <div><div class="stat-label">Hours</div><div class="mono-val">248 Hrs</div></div>
+                    <div><div class="stat-label">Status</div><span class="status active">In Use</span></div>
+                </div>
+            </div>
+            <div class="drawer-section">
+                <div class="stat-label" style="margin-bottom: 8px;">Maintenance History</div>
+                <table style="font-size: 11px;">
+                    <thead><tr><th>Date</th><th>Type</th><th>Cost</th></tr></thead>
+                    <tbody>
+                        <tr><td>Dec 10, 2025</td><td>Hydraulic Check</td><td>MWK 150,000</td></tr>
+                        <tr><td>Oct 05, 2025</td><td>500hr Service</td><td>MWK 450,000</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+                footer.innerHTML = `<button class="btn btn-secondary" style="width:100%" onclick="closeDrawer()">View Full History</button>`;
+
+            } else if (type === 'maintenance') {
+                // --- SCHEDULE MAINTENANCE ---
+                sub.innerText = "Service";
+                title.innerText = "Schedule Maintenance";
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group"><label class="form-label">Equipment</label><select class="form-input"><option>EQP-045 Excavator</option></select></div>
+                <div class="form-group"><label class="form-label">Service Type</label><select class="form-input"><option>Preventive (Scheduled)</option><option>Corrective (Repair)</option></select></div>
+                <div class="form-group"><label class="form-label">Service Provider</label><input type="text" class="form-input" value="Malawi Equip. Services"></div>
+                <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input"></div>
+            </div>
+        `;
+                footer.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Create Work Order</button>`;
+            } else if (type === 'add_asset') {
+                // --- ADD NEW ASSET ---
+                sub.innerText = "Registry";
+                title.innerText = "Register New Asset";
+                body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group"><label class="form-label">Equipment Name</label><input type="text" class="form-input" placeholder="e.g. Komatsu Grader"></div>
+                <div class="form-group"><label class="form-label">Category</label><select class="form-input"><option>Heavy Machinery</option><option>Vehicle</option><option>Generator</option></select></div>
+                <div class="form-group"><label class="form-label">Serial Number</label><input type="text" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Purchase Cost (MWK)</label><input type="number" class="form-input"></div>
+            </div>
+        `;
+                footer.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Save to Registry</button>`;
+            }
+        }
+
+        function closeDrawer() { document.getElementById('drawer-overlay').classList.remove('show'); }
+        document.getElementById('drawer-overlay').addEventListener('click', (e) => { if (e.target.id === 'drawer-overlay') closeDrawer(); });
+    </script>
+</body>
+
+</html>
