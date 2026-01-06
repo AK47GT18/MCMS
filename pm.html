@@ -332,65 +332,93 @@
         .notify-desc { font-size: 11px; color: var(--slate-500); line-height: 1.4; }
         .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; }
 
-        /* --- TOAST NOTIFICATIONS --- */
-        #toast-container {
-            position: fixed;
-            top: 70px; /* Below top-bar */
-            right: 20px;
-            z-index: 3000;
+
+        /* --- NOTIFICATION DROPDOWN (Toast Style) --- */
+        .notification-wrapper { position: relative; }
+        
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: -10px;
+            width: 380px;
+            background: var(--slate-50); /* Light gray bg for contrast with white cards */
+            border: 1px solid var(--slate-200);
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 1000;
+            margin-top: 16px;
+            display: none;
+            overflow: hidden;
+            animation: slideDown 0.2s ease-out;
+            max-height: 80vh;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .notification-dropdown.show { display: flex; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .notify-header {
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .notify-header h3 { font-size: 14px; font-weight: 700; color: var(--slate-900); margin: 0; }
+        .notify-action { font-size: 11px; color: var(--slate-500); cursor: pointer; font-weight: 600; }
+        .notify-action:hover { color: var(--orange); }
+
+        .notify-list {
+            padding: 12px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            pointer-events: none; /* Let clicks pass through container */
+        }
+
+        /* Toast Card Item Style */
+        .notify-item {
+            background: white;
+            border-left: 4px solid var(--slate-300);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .notify-item:hover { transform: translateX(2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        
+        .notify-item.success { border-left-color: var(--emerald); }
+        .notify-item.error { border-left-color: var(--red); }
+        .notify-item.info { border-left-color: var(--blue); }
+
+        .notify-icon {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
         
-        .toast {
-            background: white;
-            border-left: 4px solid var(--slate-800);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            padding: 16px;
-            border-radius: 4px;
-            min-width: 300px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            pointer-events: auto; /* Re-enable clicks */
-            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-        }
+        .notify-item.success .notify-icon { background: #DCFCE7; color: var(--emerald); }
+        .notify-item.error .notify-icon { background: #FEE2E2; color: var(--red); }
+        .notify-item.info .notify-icon { background: #DBEAFE; color: var(--blue); }
 
-        .toast.success { border-color: var(--emerald); }
-        .toast.error { border-color: var(--red); }
-        .toast.info { border-color: var(--blue); }
+        .notify-content { flex: 1; }
+        .notify-title { font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 2px; }
+        .notify-msg { font-size: 11px; color: var(--slate-600); line-height: 1.4; }
+        .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; text-align: right; }
 
-        .toast-icon { font-size: 18px; margin-top: 2px; }
-        .toast.success .toast-icon { color: var(--emerald); }
-        .toast.error .toast-icon { color: var(--red); }
-        .toast.info .toast-icon { color: var(--blue); }
-
-        .toast-content { flex: 1; }
-        .toast-title { font-size: 14px; font-weight: 700; color: var(--slate-900); margin-bottom: 2px; }
-        .toast-message { font-size: 12px; color: var(--slate-600); line-height: 1.4; }
-
-        .toast-close {
-            position: absolute;
-            top: 8px; right: 8px;
-            color: var(--slate-400);
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .toast-close:hover { color: var(--slate-800); }
-
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes fadeOutRight {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(20px); }
-        }
 
 
         /* --- 4. CONTENT STYLES --- */
@@ -1015,7 +1043,6 @@
     </style>
 
     <div class="app">
-    <div id="toast-container"></div>
         <header class="top-bar">
             <div class="logo">
                 <i class="fas fa-hard-hat"></i>
@@ -2236,115 +2263,74 @@
             el.addEventListener('click', openProfileDrawer);
         });
 
-        // --- NOTIFICATION LOGIC ---
-        let notificationCount = 12; // Demo starting count > 10
-        
-        function updateBadge() {
-            const badge = document.getElementById('notify-badge');
-            if(notificationCount > 0) {
-                badge.classList.add('active');
-                badge.innerText = notificationCount > 10 ? '10+' : notificationCount;
-            } else {
-                badge.classList.remove('active');
-            }
-        }
-        
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notify-dropdown');
-            dropdown.classList.toggle('show');
-            
-            // Populate if empty (Mock Data)
-            const list = document.getElementById('notify-list');
-            if(list.children.length === 0) {
-                list.innerHTML = `
-                    <div class="notify-item unread">
-                        <div class="notify-icon" style="background:#DCFCE7; color:#166534;"><i class="fas fa-check"></i></div>
-                        <div class="notify-content">
-                            <div class="notify-title">Log Approved</div>
-                            <div class="notify-desc">Daily Report for CEN-01 approved by System.</div>
-                            <div class="notify-time">2 mins ago</div>
-                        </div>
-                    </div>
-                    <div class="notify-item unread">
-                         <div class="notify-icon" style="background:#FEF2F2; color:#991B1B;"><i class="fas fa-exclamation-triangle"></i></div>
-                        <div class="notify-content">
-                            <div class="notify-title">Budget Alert</div>
-                            <div class="notify-desc">Project MZ-05 exceeded 90% threshold.</div>
-                            <div class="notify-time">1 hour ago</div>
-                        </div>
-                    </div>
-                     <div class="notify-item">
-                         <div class="notify-icon"><i class="fas fa-info"></i></div>
-                        <div class="notify-content">
-                            <div class="notify-title">New Assignment</div>
-                            <div class="notify-desc">You were assigned to "Review Contracts".</div>
-                            <div class="notify-time">Yesterday</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.notification-wrapper');
-            if (!wrapper.contains(e.target)) {
-               document.getElementById('notify-dropdown').classList.remove('show');
-            }
-        });
-        
-        // Init
-        updateBadge();
-
     </script>
-<div class="modal-overlay" id="notificationOverlay">
-    <div class="notification-modal">
-        <div class="modal-content">
-            <div class="modal-icon" id="modalIcon"><i class="fas fa-check"></i></div>
-            <h3 class="modal-title" id="modalTitle">Success</h3>
-            <p class="modal-message" id="modalMessage">Operation completed successfully.</p>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="closeNotification()">Dismiss</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
-    // Global Notification Logic (Toast)
+    // --- NOTIFICATION SYSTEM ---
+    const notifyList = document.getElementById('notify-list');
+    const notifyBadge = document.getElementById('notify-badge');
+    let notificationCount = 0;
+
+    function toggleNotifications() {
+        const dropdown = document.getElementById('notification-dropdown');
+        dropdown.classList.toggle('show');
+        
+        // Close on click outside
+        if (dropdown.classList.contains('show')) {
+            document.addEventListener('click', closeDropdownOutside);
+        } else {
+            document.removeEventListener('click', closeDropdownOutside);
+        }
+    }
+
+    function closeDropdownOutside(e) {
+        const wrapper = document.querySelector('.notification-wrapper');
+        if (!wrapper.contains(e.target)) {
+            document.getElementById('notification-dropdown').classList.remove('show');
+            document.removeEventListener('click', closeDropdownOutside);
+        }
+    }
+
     function showNotification(type, title, message) {
-        const container = document.getElementById('toast-container');
+        // Update Badge
+        notificationCount++;
+        notifyBadge.innerText = notificationCount;
+        notifyBadge.classList.add('active');
         
-        // Create Toast Elements
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        // Create Item
+        const item = document.createElement('div');
+        item.className = `notify-item ${type}`;
         
-        const iconClass = type === 'success' ? 'fa-check-circle' :
-                          type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
+        const iconClass = type === 'success' ? 'fa-check' :
+                          type === 'error' ? 'fa-times' : 'fa-info';
+                          
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        toast.innerHTML = `
-            <div class="toast-icon"><i class="fas ${iconClass}"></i></div>
-            <div class="toast-content">
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
+        item.innerHTML = `
+            <div class="notify-icon"><i class="fas ${iconClass}"></i></div>
+            <div class="notify-content">
+                <div class="notify-title">${title}</div>
+                <div class="notify-msg">${message}</div>
+                <div class="notify-time">${timeStr}</div>
             </div>
-            <div class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></div>
         `;
-
-        // Add to container
-        container.appendChild(toast);
-
-        // Sound Effect (Optional, subtle click)
-        // const audio = new Audio('assets/notification.mp3'); 
-        // audio.play().catch(e => {}); 
-
-        // Auto Dismiss
-        setTimeout(() => {
-            toast.style.animation = 'fadeOutRight 0.3s forwards';
-            toast.addEventListener('animationend', () => {
-                toast.remove();
-            });
-        }, 5000); // 5 seconds
+        
+        // Prepend to list
+        if(notifyList.firstChild) {
+            notifyList.insertBefore(item, notifyList.firstChild);
+        } else {
+            notifyList.appendChild(item);
+        }
+        
+        // Auto-open if critical? No, users prefer manual check usually.
+        // Optional: Pulse bell animation
+    }
+    
+    function clearNotifications() {
+        notifyList.innerHTML = '';
+        notificationCount = 0;
+        notifyBadge.classList.remove('active');
+        notifyBadge.innerText = '0';
     }
 
     // Initialize Analytics Charts
@@ -2443,10 +2429,14 @@
         if(bell) {
             bell.parentElement.addEventListener('click', (e) => {
                 e.preventDefault();
-                showNotification('info', 'System Notifications', 'You have 3 unread reports awaiting review.');
-                setTimeout(() => {
-                     showNotification('success', 'Sync Complete', 'Project data synchronized with central server.');
-                }, 800);
+                // Demo Notifications
+                if(notificationCount === 0) {
+                     showNotification('info', 'System Notifications', 'You have 3 unread reports awaiting review.');
+                     setTimeout(() => showNotification('success', 'Sync Complete', 'Project data synchronized.'), 800);
+                     setTimeout(() => showNotification('error', 'Budget Alert', 'CEN-01 Materials exceeded budget by 5%.'), 1600);
+                } else {
+                    // Already has items, just toggle (handled by onclick)
+                }
             });
         }
     });
