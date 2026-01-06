@@ -630,6 +630,14 @@
         .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
         .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
         .modal-actions { display: flex; gap: 12px; justify-content: center; }
+    /* --- Wizard Styles --- */
+    .wizard-step { display: none; animation: fadeIn 0.3s ease; }
+    .wizard-step.active { display: block; }
+    .step-indicator { display: flex; gap: 4px; margin-bottom: 24px; }
+    .step-dot { flex: 1; height: 4px; background: var(--slate-200); border-radius: 2px; transition: background 0.3s; }
+    .step-dot.active { background: var(--orange); }
+    .step-dot.completed { background: var(--emerald); }
+    .wizard-nav { display: flex; justify-content: space-between; margin-top: 24px; border-top: 1px solid var(--slate-200); padding-top: 16px; }
     </style>
     <style>
         /* --- 7. GLOBAL NOTIFICATIONS --- */
@@ -921,35 +929,103 @@
 
             if (type === 'report') {
                 title.innerText = "Daily Site Report";
-                body.innerHTML = `
-            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;" id="gps-status-box">
-                <span style="font-weight: 600; color: var(--slate-600); font-size: 12px;">GPS Location</span>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <button class="btn btn-secondary" style="padding: 2px 6px; font-size:9px; height:20px;" onclick="toggleGPSFail()">Simulate Error</button>
-                    <span class="gps-badge" id="gps-badge"><i class="fas fa-check"></i> -13.98, 33.78</span>
+            <!-- WIZARD HEADER -->
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot-1"></div>
+                <div class="step-dot" id="dot-2"></div>
+                <div class="step-dot" id="dot-3"></div>
+                <div class="step-dot" id="dot-4"></div>
+                <div class="step-dot" id="dot-5"></div>
+            </div>
+
+            <!-- STEP 1: PROGRESS -->
+            <div class="wizard-step active" id="step-1">
+                <div class="form-group">
+                    <label class="form-label">Step 1: Work Progress</label>
+                    <textarea class="form-input" rows="5" placeholder="Detailed description of works (e.g., Excavated trenches A1-A4)..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Completion Estimate (%)</label>
+                    <input type="range" style="width: 100%; margin-top: 8px;" oninput="document.getElementById('pct-val').innerText = this.value + '%'">
+                    <div style="text-align: right; font-weight: 700; color: var(--orange);" id="pct-val">50%</div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Work Completed Today</label>
-                <textarea class="form-input" rows="4" placeholder="Describe progress (e.g., Excavated 15m)..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Photo Evidence (Required)</label>
-                <div class="photo-zone" onclick="alert('Camera Launched')">
-                    <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
-                    <div style="font-weight: 600;">Tap to Take Photo</div>
-                    <div style="font-size: 11px;">Geotagging Enabled</div>
+            <!-- STEP 2: RESOURCES -->
+            <div class="wizard-step" id="step-2">
+                <label class="form-label">Step 2: Material Usage</label>
+                <div class="form-group" style="background:var(--slate-50); padding:8px; border-radius:6px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Cement (Bags)</span><input type="number" class="form-input" style="width:60px; padding:4px;" value="0"></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Sand (Tons)</span><input type="number" class="form-input" style="width:60px; padding:4px;" value="0"></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Aggregates</span><input type="number" class="form-input" style="width:60px; padding:4px;" value="0"></div>
+                </div>
+                <label class="form-label">Equipment Hours</label>
+                <div class="form-group" style="background:var(--slate-50); padding:8px; border-radius:6px;">
+                     <div style="font-size:11px; color:var(--slate-500); margin-bottom:4px;">Excavator (CAT-320)</div>
+                     <input type="number" class="form-input" placeholder="Hours Run">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Completion %</label>
-                <input type="range" style="width: 100%; margin-top: 8px;">
+            <!-- STEP 3: TEAM -->
+            <div class="wizard-step" id="step-3">
+                 <label class="form-label">Step 3: Labor Attendance</label>
+                 <div class="form-group">
+                    <label class="form-label">Skilled Labor</label>
+                    <input type="number" class="form-input" value="4">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">General Labor</label>
+                    <input type="number" class="form-input" value="12">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Safety Incident?</label>
+                    <select class="form-input"><option>No Incidents</option><option>Minor Injury</option><option>Near Miss</option></select>
+                </div>
             </div>
 
-            <button class="btn btn-primary" onclick="submitReport()">Submit Daily Log</button>
+            <!-- STEP 4: CONDITIONS -->
+            <div class="wizard-step" id="step-4">
+                 <label class="form-label">Step 4: Site Conditions</label>
+                 <div class="form-group">
+                    <label class="form-label">Weather</label>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary active" style="flex:1;">Sunny</button>
+                        <button class="btn btn-secondary" style="flex:1;">Rain</button>
+                        <button class="btn btn-secondary" style="flex:1;">Cloudy</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Delays / Issues</label>
+                    <textarea class="form-input" rows="3" placeholder="Any blockers?"></textarea>
+                </div>
+            </div>
+
+            <!-- STEP 5: VERIFY -->
+            <div class="wizard-step" id="step-5">
+                 <label class="form-label">Step 5: Validation</label>
+                 <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;" id="gps-status-box">
+                    <span style="font-weight: 600; color: var(--slate-600); font-size: 12px;">GPS Check</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="btn btn-secondary" style="padding: 2px 6px; font-size:9px; height:20px;" onclick="toggleGPSFail()">Simulate Error</button>
+                        <span class="gps-badge" id="gps-badge"><i class="fas fa-check"></i> -13.98, 33.78</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Photo Evidence</label>
+                    <div class="photo-zone" onclick="alert('Camera Launched')">
+                        <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
+                        <div style="font-weight: 600;">Tap to Capture</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAVIGATION -->
+            <div class="wizard-nav">
+                <button class="btn btn-secondary" id="prev-btn" style="visibility:hidden;" onclick="changeStep(-1)">Back</button>
+                <button class="btn btn-primary" id="next-btn" onclick="changeStep(1)">Next: Resources</button>
+                <button class="btn btn-primary" id="submit-btn" style="display:none;" onclick="submitReport()">Submit Report</button>
+            </div>
         `;
             } else if (type === 'material') {
                 title.innerText = "Material Log";
@@ -1018,11 +1094,49 @@
 
         function submitReport() {
             if(gpsFailMode) {
-                // Show Global Notification Error (using the one injected in Phase 1)
                 showNotification('error', 'GPS Validation Failed', 'Coordinates are missing or outside project boundaries. Submission Rejected.');
             } else {
                 showNotification('success', 'Report Submitted', 'Daily log uploaded securely with verified geotag.');
                 closeDrawer();
+            }
+        }
+
+        // Wizard Logic
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function changeStep(dir) {
+            // Validate before moving next? (Skip for prototype)
+            
+            // Hide current
+            document.getElementById('step-' + currentStep).classList.remove('active');
+            document.getElementById('dot-' + currentStep).classList.remove('active');
+            if(dir > 0) document.getElementById('dot-' + currentStep).classList.add('completed');
+            
+            currentStep += dir;
+            
+            // Show new
+            document.getElementById('step-' + currentStep).classList.add('active');
+            document.getElementById('dot-' + currentStep).classList.add('active');
+
+            // Update Buttons
+            const prev = document.getElementById('prev-btn');
+            const next = document.getElementById('next-btn');
+            const sub = document.getElementById('submit-btn');
+
+            if(currentStep === 1) prev.style.visibility = 'hidden';
+            else prev.style.visibility = 'visible';
+
+            if(currentStep === totalSteps) {
+                next.style.display = 'none';
+                sub.style.display = 'block';
+            } else {
+                next.style.display = 'block';
+                sub.style.display = 'none';
+                
+                // Dynamic button text
+                const labels = ['', 'Resources', 'Team', 'Conditions', 'Verify'];
+                next.innerText = 'Next: ' + labels[currentStep];
             }
         }
     </script>
