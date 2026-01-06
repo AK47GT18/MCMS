@@ -565,6 +565,42 @@
             border-color: var(--slate-300);
             background: var(--slate-50);
         }
+        /* --- 7. GLOBAL NOTIFICATIONS --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .notification-modal {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 400px;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.active .notification-modal { transform: scale(1); }
+        .modal-content { padding: 32px; text-align: center; }
+        .modal-icon {
+            width: 64px; height: 64px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px auto; font-size: 32px;
+        }
+        .modal-icon.success { background: #DCFCE7; color: #166534; }
+        .modal-icon.error { background: #FEE2E2; color: #991B1B; }
+        .modal-icon.info { background: #DBEAFE; color: #1E40AF; }
+        .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
+        .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
     </style>
 </head>
 
@@ -1098,3 +1134,50 @@
 </body>
 
 </html>
+
+<!-- Global Notification Modal -->
+<div class="modal-overlay" id="notificationOverlay">
+    <div class="notification-modal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon"><i class="fas fa-check"></i></div>
+            <h3 class="modal-title" id="modalTitle">Success</h3>
+            <p class="modal-message" id="modalMessage">Operation completed successfully.</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="closeNotification()">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showNotification(type, title, message) {
+        const overlay = document.getElementById('notificationOverlay');
+        const icon = document.getElementById('modalIcon');
+        const titleEl = document.getElementById('modalTitle');
+        const msgEl = document.getElementById('modalMessage');
+
+        overlay.classList.add('active');
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        icon.className = 'modal-icon ' + type;
+        icon.innerHTML = type === 'success' ? '<i class="fas fa-check"></i>' :
+                        type === 'error' ? '<i class="fas fa-times"></i>' :
+                        '<i class="fas fa-info"></i>';
+    }
+
+    function closeNotification() {
+        document.getElementById('notificationOverlay').classList.remove('active');
+    }
+
+    // Wire up bell
+    document.addEventListener('DOMContentLoaded', () => {
+        const bell = document.querySelector('.fa-bell');
+        if(bell) {
+            bell.parentElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                showNotification('info', 'Notifications', 'No new alerts for Contract Admin.');
+            });
+        }
+    });
+</script>

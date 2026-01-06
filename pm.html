@@ -779,6 +779,93 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* --- 7. GLOBAL NOTIFICATIONS --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .notification-modal {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 400px;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-overlay.active .notification-modal {
+            transform: scale(1);
+        }
+
+        .modal-content {
+            padding: 32px;
+            text-align: center;
+        }
+
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            font-size: 32px;
+        }
+
+        .modal-icon.success {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .modal-icon.error {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        
+        .modal-icon.info {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--slate-900);
+            margin-bottom: 8px;
+        }
+
+        .modal-message {
+            font-size: 14px;
+            color: var(--slate-500);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
     </style>
 </head>
 
@@ -994,12 +1081,14 @@
                             <div class="data-card-header">
                                 <div class="card-title">CEN-01: Master Schedule</div>
                                 <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="openDrawer('gantt_add')"><i class="fas fa-plus"></i> Add Task</button>
                                     <button class="btn btn-secondary">Day</button>
                                     <button class="btn btn-primary">Week</button>
                                     <button class="btn btn-secondary">Month</button>
                                 </div>
                             </div>
-                            <div class="gantt-container">
+                            <div class="gantt-container" id="gantt-chart-area" style="position:relative;">
+                                <svg id="gantt-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;"></svg>
                                 <div class="gantt-header">
                                     <div class="gantt-header-cell" style="text-align:left; padding-left:16px;">Task Name
                                     </div>
@@ -1072,7 +1161,8 @@
                         <div class="data-card">
                             <div class="data-card-header">
                                 <div class="card-title">Budget Line Items (CEN-01)</div>
-                                <button class="btn btn-secondary">Request Reallocation</button>
+                                <button class="btn btn-secondary" onclick="openDrawer('request_budget')">Request Reallocation</button>
+                                <button class="btn btn-action" style="margin-left:8px;" onclick="openDrawer('budget_variation')"><i class="fas fa-paper-plane"></i> Request Variation (FM)</button>
                             </div>
                             <table>
                                 <thead>
@@ -1257,6 +1347,18 @@
                                     <td>Excavator for 3 days</td>
                                     <td><span class="status active">Approved</span></td>
                                 </tr>
+                                <tr>
+                                    <td><span class="project-id">REQ-105</span></td>
+                                    <td>Payment</td>
+                                    <td>LIL-02</td>
+                                    <td>Vendor Payment > 50M MWK</td>
+                                    <td>
+                                        <div style="display:flex; flex-direction:column; gap:2px;">
+                                            <span class="status locked"><i class="fas fa-route"></i> Routed to Director</span>
+                                            <span style="font-size:10px; color:var(--red);">Exceeds Limit</span>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1432,6 +1534,56 @@
                     transition: top 0.2s, left 0.2s;
                     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
                 }
+
+                /* --- 7. GLOBAL NOTIFICATIONS --- */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(15, 23, 42, 0.4);
+                    backdrop-filter: blur(5px);
+                    z-index: 2000;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+                .modal-overlay.active {
+                    display: flex;
+                    opacity: 1;
+                }
+                .notification-modal {
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                    width: 400px;
+                    overflow: hidden;
+                    transform: scale(0.95);
+                    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .modal-overlay.active .notification-modal {
+                    transform: scale(1);
+                }
+                .modal-content {
+                    padding: 32px;
+                    text-align: center;
+                }
+                .modal-icon {
+                    width: 64px;
+                    height: 64px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 20px auto;
+                    font-size: 32px;
+                }
+                .modal-icon.success { background: #DCFCE7; color: #166534; }
+                .modal-icon.error { background: #FEE2E2; color: #991B1B; }
+                .modal-icon.info { background: #DBEAFE; color: #1E40AF; }
+                .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
+                .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
+                .modal-actions { display: flex; gap: 12px; justify-content: center; }
             </style>
         `;
 
@@ -1610,6 +1762,29 @@
                 </div>
             </div>
              `;
+            } else if (id === 'budget_variation') {
+                // --- BUDGET VARIATION REQUEST (PM -> FM) ---
+                dTitle.innerText = "Request Budget Variation";
+                document.getElementById('d-id').innerText = "VAR-REQ";
+                dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="submitVariation()">Send to Finance</button>`;
+                dBody.innerHTML = `
+            <div class="drawer-section">
+                <div style="background:var(--slate-50); padding:12px; border-radius:6px; font-size:12px; margin-bottom:16px;">
+                    This request will be routed to the Finance Director (FM) for approval and allocation.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project</label>
+                    <select class="form-input"><option>CEN-01 Unilia Library</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Variation Amount (MWK)</label>
+                    <input class="form-input" type="number" placeholder="5,000,000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason</label>
+                    <textarea class="form-input" rows="3" placeholder="Explain cost overrun or scope change..."></textarea>
+                </div>
+            </div>`;
             } else {
                 // SITE LOG VERIFICATION
                 const data = logData['LOG-001'];
@@ -1686,7 +1861,199 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
         }
+        // FR-07: Budget Variance Alerts (Dynamic Coloring)
+        function updateBudgetHealth() {
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                const widthStyle = bar.style.width;
+                if(!widthStyle) return;
+                
+                const pct = parseInt(widthStyle);
+                if(pct >= 90) {
+                    bar.style.backgroundColor = 'var(--red)';
+                    // Optional: Add warning icon near it if it fits, or just rely on color
+                } else if(pct >= 80) {
+                    bar.style.backgroundColor = 'var(--orange)'; // Amber/Orange
+                } else {
+                    bar.style.backgroundColor = 'var(--emerald)';
+                }
+            });
+        }
+        
+        // Init Budget Health
+        updateBudgetHealth();
+
+        // FR-03: Gantt Chart Logic
+        function renderDependencies() {
+            const svg = document.getElementById('gantt-svg');
+            svg.innerHTML = ''; // Clear
+            
+            // Define connections: [FromRowIndex, ToRowIndex] (0-indexed based on visual rows)
+            // Example hardcoded for demo, in real app this comes from data
+            const dependencies = [
+                [0, 1], // Site Prep -> Foundation
+                [1, 2], // Foundation -> Concrete
+                [2, 3]  // Concrete -> Steel
+            ];
+
+            const rows = document.querySelectorAll('.gantt-row');
+            const svgRect = svg.getBoundingClientRect();
+
+            dependencies.forEach(dep => {
+                const fromRow = rows[dep[0]];
+                const toRow = rows[dep[1]];
+                
+                if(!fromRow || !toRow) return;
+
+                const fromBar = fromRow.querySelector('.gantt-bar');
+                const toBar = toRow.querySelector('.gantt-bar');
+
+                if(!fromBar || !toBar) return;
+
+                const r1 = fromBar.getBoundingClientRect();
+                const r2 = toBar.getBoundingClientRect();
+
+                // Calculate reliability coords relative to SVG
+                const x1 = r1.right - svgRect.left;
+                const y1 = r1.top + (r1.height / 2) - svgRect.top;
+                const x2 = r2.left - svgRect.left;
+                const y2 = r2.top + (r2.height / 2) - svgRect.top;
+
+                // Draw Path (Curved connector)
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const midX = x1 + (x2 - x1) / 2;
+                
+                // L-shape or curve
+                const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+                
+                path.setAttribute('d', d);
+                path.setAttribute('stroke', '#94a3b8');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+                
+                svg.appendChild(path);
+            });
+            
+            // Add Arrow Marker
+            if(!document.getElementById('arrowhead')) {
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '7');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '3.5');
+                marker.setAttribute('orient', 'auto');
+                
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+                polygon.setAttribute('fill', '#94a3b8');
+                
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+                svg.appendChild(defs);
+            }
+        }
+
+        function addTaskToGantt() {
+            const name = document.getElementById('new-task-name').value;
+            const start = parseInt(document.getElementById('new-task-start').value); // Week 1-12
+            const dur = parseInt(document.getElementById('new-task-dur').value);
+            
+            // Calculate grid-column logic
+            // Header has 1 name col + 12 week cols. 
+            // Name col is separate div in row.
+            // Bar container: grid-column: span 12;
+            // Bar position: width % and left % relative to container (12 weeks).
+            // 1 Week = 100% / 12 = 8.33%
+            
+            const pctPerWeek = 100 / 12; // 8.33
+            const leftPct = (start - 1) * pctPerWeek; // Start at (Week - 1)
+            const widthPct = dur * pctPerWeek;
+
+            const container = document.querySelector('.gantt-container');
+            const rowCount = document.querySelectorAll('.gantt-row').length + 1;
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'gantt-row';
+            newRow.innerHTML = `
+                <div class="gantt-task">${rowCount}. ${name}</div>
+                <div class="gantt-bar-container" style="grid-column: span 12;">
+                    <div class="gantt-bar" style="width: ${widthPct}%; left: ${leftPct}%; background: var(--blue);">Planned</div>
+                </div>
+            `;
+            
+            container.appendChild(newRow);
+            
+            // If predecessor was set, we'd add to dependencies list and re-render
+            // For now, simpler re-render
+            setTimeout(renderDependencies, 100);
+            
+            showNotification('success', 'Task Created', 'Gantt chart updated.');
+            closeDrawer();
+        }
+
+        function submitVariation() {
+             showNotification('success', 'Request Sent', 'Variation Request (VAR-REQ) forwarded to Finance Director.');
+             closeDrawer();
+             // In a real app, this would update DB. Here we simulate the FM seeing it in their view.
+        }
+
+        // Run Initial Render on Load (and resize)
+        window.addEventListener('load', renderDependencies);
+        window.addEventListener('resize', renderDependencies);
+        // Also run when switching tabs to ensure coordinates are correct if hidden
+        // (Handled by checking visibility/dimensions in renderDependencies safely)
+
     </script>
 </body>
 
 </html>
+
+<!-- Global Notification Modal -->
+<div class="modal-overlay" id="notificationOverlay">
+    <div class="notification-modal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon"><i class="fas fa-check"></i></div>
+            <h3 class="modal-title" id="modalTitle">Success</h3>
+            <p class="modal-message" id="modalMessage">Operation completed successfully.</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="closeNotification()">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global Notification Logic
+    function showNotification(type, title, message) {
+        const overlay = document.getElementById('notificationOverlay');
+        const icon = document.getElementById('modalIcon');
+        const titleEl = document.getElementById('modalTitle');
+        const msgEl = document.getElementById('modalMessage');
+
+        overlay.classList.add('active');
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        icon.className = 'modal-icon ' + type;
+        icon.innerHTML = type === 'success' ? '<i class="fas fa-check"></i>' :
+                        type === 'error' ? '<i class="fas fa-times"></i>' :
+                        '<i class="fas fa-info"></i>';
+    }
+
+    function closeNotification() {
+        document.getElementById('notificationOverlay').classList.remove('active');
+    }
+
+    // Wire up bell
+    document.addEventListener('DOMContentLoaded', () => {
+        const bell = document.querySelector('.fa-bell');
+        if(bell) {
+            bell.parentElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                showNotification('info', 'Notifications', 'You have 3 unread system alerts.');
+            });
+        }
+    });
+</script>
