@@ -312,11 +312,6 @@ export function openProfileDrawer() {
     if(el) el.classList.add('show');
 }
 
-export function openProfileDrawer() {
-    const el = document.getElementById('profile-overlay');
-    if(el) el.classList.add('show');
-}
-
 export function closeProfileDrawer() {
     const el = document.getElementById('profile-overlay');
     if(el) el.classList.remove('show');
