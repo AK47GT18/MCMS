@@ -3,9 +3,34 @@
  * Handles View Switching, Charts, Drawer Interaction, and Gantt
  */
 
+// --- IMPORTS ---
 import { notificationService } from '../services/notification.service.js';
+import { initGantt, switchGanttView, addTask } from '../features/gantt.js';
+import { showConfirmationModal } from '../features/modals.js';
 
-// State
+// --- GANTT BRIDGES ---
+export function addTaskToGantt() {
+    const name = document.getElementById('gantt-name').value;
+// ... (rest same)
+    const start = document.getElementById('gantt-start').value;
+    const duration = document.getElementById('gantt-duration').value;
+    const unit = document.getElementById('gantt-unit').value; // New field
+
+    if(!name || !start || !duration) {
+        notificationService.add('error', 'Validation Error', 'Please fill all fields');
+        return;
+    }
+
+    addTask(name, start, duration, unit);
+    notificationService.add('success', 'Task Created', 'Gantt chart updated.');
+    closeDrawer();
+}
+
+export function setGanttView(mode) {
+    switchGanttView(mode);
+}
+
+// ... rest of dashboard logic ...
 const views = {
     'portfolio': { title: 'Project Controls', context: '4 Active Projects' },
     'gantt': { title: 'Master Schedule', context: 'Timeline View (CEN-01 Focus)' },
@@ -181,14 +206,22 @@ export function openDrawer(id) {
                     <input class="form-input" id="gantt-start" type="number" min="1" max="12" value="5">
                 </div>
                 <div class="form-group" style="margin-bottom: 20px;">
-                     <label class="form-label">Duration (Weeks)</label>
-                     <input class="form-input" id="gantt-duration" type="number" min="1" max="12" value="2">
+                     <label class="form-label">Duration</label>
+                     <div style="display:flex; gap:10px;">
+                        <input class="form-input" id="gantt-duration" type="number" min="1" value="2" style="flex:1;">
+                        <select class="form-input" id="gantt-unit" style="width:100px;">
+                            <option value="weeks">Weeks</option>
+                            <option value="days">Days</option>
+                            <option value="months">Months</option>
+                        </select>
+                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Dependencies</label>
                     <select class="form-input">
                         <option>None</option>
-                        ${ganttTasks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                        <option value="1">1. Site Preparation</option>
+                        <option value="2">2. Foundation</option>
                     </select>
                 </div>
             </div>`;
@@ -198,7 +231,7 @@ export function openDrawer(id) {
 // (Initialization update)
     // Init Logic
     updateBudgetHealth();
-    renderGantt(); // Render Gantt on load
+    // initGantt() is called in DOMContentLoaded at bottom, so we don't need renderGantt here.
     
     // Seed Dummy Notifications
 // ...
@@ -328,90 +361,8 @@ export function placePin(e) {
 }
 
 // --- GANTT & ACTIONS ---
-let ganttTasks = [
-    { id: 1, name: '1. Site Preparation', start: 1, duration: 2, status: 'done' },
-    { id: 2, name: '2. Foundation Excavation', start: 3, duration: 3, status: 'progress' },
-    { id: 3, name: '3. Concrete Pouring', start: 6, duration: 2, status: 'delayed' },
-    { id: 4, name: '4. Steel Framework', start: 8, duration: 3, status: 'todo' }
-];
-
-export function renderGantt() {
-    const container = document.getElementById('gantt-chart-area');
-    if(!container) return;
-
-    // Remove existing rows (keep header and SVG)
-    container.querySelectorAll('.gantt-row').forEach(el => el.remove());
-
-    ganttTasks.forEach(task => {
-        const row = document.createElement('div');
-        row.className = 'gantt-row';
-        
-        // Calculate Position (12 Weeks Total)
-        // Col 2 starts the timeline. We want a track spanning col 2 to end.
-        // But our CSS defines columns for grid lines. 
-        // Best approach: Use the same grid layout, but put the bar inside a container that spans all 12 cols?
-        // Actually, simple calculation: (start - 1) * 8.33% left, duration * 8.33% width.
-        
-        /* 
-           Layout Note: The grid has 13 columns (200px + 12x1fr). 
-           We will place a 'track' div from col 2 to 14.
-        */
-        
-        const leftPct = (task.start - 1) * (100/12);
-        const widthPct = task.duration * (100/12);
-        
-        let statusClass = '';
-        if(task.status === 'done') statusClass = 'done';
-        else if(task.status === 'progress') statusClass = 'progress';
-        else if(task.status === 'delayed') statusClass = 'delayed';
-        else statusClass = 'todo'; // Gray
-
-        let label = task.status === 'progress' ? `In Progress (${Math.round(Math.random()*80 + 10)}%)` : 
-                    task.status === 'done' ? 'Complete' : 
-                    task.status === 'delayed' ? 'Delayed' : 'Planned';
-
-        row.innerHTML = `
-            <div class="gantt-task">${task.name}</div>
-            <div class="gantt-bar-container" style="grid-column: 2 / span 12; position: relative; border-right: none;">
-                <!-- Grid Lines (Background) -->
-                <div style="position: absolute; top:0; left:0; width:100%; height:100%; display:grid; grid-template-columns:repeat(12,1fr); pointer-events:none; z-index:0;">
-                    ${Array(12).fill('<div style="border-right:1px solid var(--slate-100);"></div>').join('')}
-                </div>
-                
-                <!-- The Bar -->
-                <div class="gantt-bar ${statusClass}" 
-                     style="left: ${leftPct}%; width: ${widthPct}%; z-index:1;"
-                     title="Weeks ${task.start} - ${task.start + task.duration}">
-                    ${label}
-                </div>
-            </div>
-        `;
-        container.appendChild(row);
-    });
-}
-
-export function addTaskToGantt() {
-    const name = document.getElementById('gantt-name').value;
-    const start = parseInt(document.getElementById('gantt-start').value);
-    const duration = parseInt(document.getElementById('gantt-duration').value);
-    
-    if(!name || !start || !duration) {
-        notificationService.add('error', 'Validation Error', 'Please fill all fields');
-        return;
-    }
-
-    ganttTasks.push({
-        id: ganttTasks.length + 1,
-        name: `${ganttTasks.length + 1}. ${name}`,
-        start: start,
-        duration: duration,
-        status: 'todo'
-    });
-
-    renderGantt();
-    notificationService.add('success', 'Task Created', 'Gantt chart updated.');
-    closeDrawer();
-}
+// Gantt logic now in features/gantt.js
+// Bridges defined above.
 
 export function submitVariation() {
     notificationService.add('success', 'Request Sent', 'Variation Request (VAR-REQ) forwarded to Finance Director.');
@@ -471,23 +422,15 @@ window.showRejectReason = showRejectReason;
 window.submitRejection = submitRejection;
 window.approveRequest = approveRequest;
 
+window.setGanttView = setGanttView; 
+window.confirmAction = showConfirmationModal; // Expose as confirmAction
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Bind overlays closing
-    const dO = document.getElementById('drawer-overlay');
-    if(dO) dO.addEventListener('click', (e) => { if(e.target===dO) closeDrawer(); });
-
-    const pO = document.getElementById('profile-overlay');
-    if(pO) pO.addEventListener('click', (e) => { if(e.target===pO) closeProfileDrawer(); });
-
-    // Profile triggers
-    document.querySelectorAll('.user-profile').forEach(el => {
-        el.addEventListener('click', openProfileDrawer);
-    });
-
-    // Init Logic (Budget Health etc)
+    // ...
     updateBudgetHealth();
-    renderGantt();
+    initGantt(); // New Init
+
 
     // Seed Dummy Notifications
     setTimeout(() => {

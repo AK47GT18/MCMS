@@ -248,9 +248,9 @@
                                 <div class="card-title">CEN-01: Master Schedule</div>
                                 <div style="display: flex; gap: 8px;">
                                     <button class="btn btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="openDrawer('gantt_add')"><i class="fas fa-plus"></i> Add Task</button>
-                                    <button class="btn btn-secondary">Day</button>
-                                    <button class="btn btn-primary">Week</button>
-                                    <button class="btn btn-secondary">Month</button>
+                                    <button class="btn btn-secondary btn-view-mode" data-mode="day" onclick="setGanttView('day')">Day</button>
+                                    <button class="btn btn-primary btn-view-mode" data-mode="week" onclick="setGanttView('week')">Week</button>
+                                    <button class="btn btn-secondary btn-view-mode" data-mode="month" onclick="setGanttView('month')">Month</button>
                                 </div>
                             </div>
                             <div class="gantt-container" id="gantt-chart-area" style="position:relative;">
