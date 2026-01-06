@@ -380,12 +380,13 @@
             border-radius: 8px;
             padding: 16px;
             transition: var(--transition);
-            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .stat-card:hover {
-            border-color: var(--orange);
-            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: var(--slate-200);
         }
 
         .stat-header {
@@ -876,15 +877,14 @@
 
                     <div id="view-dashboard" class="view-section active">
                         <div class="stats-grid">
-                            <div class="stat-card" style="border-left: 4px solid var(--red);">
+                            <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label" style="color: var(--red);">Fraud
                                         Alerts</span><i class="fas fa-shield-halved" style="color: var(--red);"></i>
                                 </div>
                                 <div class="stat-value" style="color: var(--red);">1</div>
                                 <div class="stat-sub">Duplicate Payment Detected</div>
                             </div>
-                            <div class="stat-card" style="border-left: 4px solid #F59E0B; cursor: pointer;"
-                                onclick="navigateTo('approvals')">
+                            <div class="stat-card" onclick="navigateTo('approvals')">
                                 <div class="stat-header"><span class="stat-label" style="color: #F59E0B;">Pending
                                         Approvals</span><i class="fas fa-clock" style="color: #F59E0B;"></i></div>
                                 <div class="stat-value" style="color: #F59E0B;">5</div>
@@ -2056,6 +2056,44 @@
         });
         
         updateBadge();
+    </script>
+    <!-- User Profile Drawer -->
+    <div class="drawer-overlay" id="profile-overlay">
+        <div class="drawer">
+            <div class="drawer-header">
+                <h3>User Profile</h3>
+                <button class="btn btn-secondary" onclick="closeProfileDrawer()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="drawer-content">
+                <div style="padding: 24px; text-align: center; border-bottom: 1px solid var(--slate-200);">
+                    <div style="width: 80px; height: 80px; background: var(--orange); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 16px auto;">FM</div>
+                    <h2 style="margin-bottom: 4px;">Finance Manager</h2>
+                    <p style="color: var(--slate-500);">Finance Department</p>
+                </div>
+                <div style="padding: 24px;">
+                    <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Account Settings</h4>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-input" value="finance@mkaka.com" readonly>
+                    </div>
+                     <div style="margin-top: 32px;">
+                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openProfileDrawer() {
+            document.getElementById('profile-overlay').classList.add('show');
+        }
+        function closeProfileDrawer() {
+            document.getElementById('profile-overlay').classList.remove('show');
+        }
+        document.querySelectorAll('.user-profile').forEach(el => {
+            el.addEventListener('click', openProfileDrawer);
+        });
     </script>
 </body>
 </html>
