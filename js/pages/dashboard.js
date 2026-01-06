@@ -165,7 +165,43 @@ export function openDrawer(id) {
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Variation Amount (MWK)</label><input class="form-input" type="number" placeholder="5,000,000"></div>
                 <div class="form-group"><label class="form-label">Reason</label><textarea class="form-input" rows="3" placeholder="Explain cost overrun..."></textarea></div>
             </div>`;
+// --- GANTT & ACTIONS ---
+// (ganttTasks defined above)
+
+// (openDrawer update)
+     } else if (id === 'gantt_add') {
+        if(dTitle) dTitle.innerText = "Add Schedule Task";
+        if(dId) dId.innerText = "TSK-NEW";
+        if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="addTaskToGantt()">Add to Schedule</button>`;
+        dBody.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Task Name</label><input class="form-input" id="gantt-name" type="text" placeholder="e.g. Roof Trusses"></div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Start Week (1-12)</label>
+                    <input class="form-input" id="gantt-start" type="number" min="1" max="12" value="5">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                     <label class="form-label">Duration (Weeks)</label>
+                     <input class="form-input" id="gantt-duration" type="number" min="1" max="12" value="2">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dependencies</label>
+                    <select class="form-input">
+                        <option>None</option>
+                        ${ganttTasks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                    </select>
+                </div>
+            </div>`;
     } else if (id === 'request_review') {
+// ...
+
+// (Initialization update)
+    // Init Logic
+    updateBudgetHealth();
+    renderGantt(); // Render Gantt on load
+    
+    // Seed Dummy Notifications
+// ...
         if(dTitle) dTitle.innerText = "Review Request";
         if(dId) dId.innerText = "REQ-REVIEW";
         if(dFooter) dFooter.innerHTML = `
@@ -292,7 +328,87 @@ export function placePin(e) {
 }
 
 // --- GANTT & ACTIONS ---
+let ganttTasks = [
+    { id: 1, name: '1. Site Preparation', start: 1, duration: 2, status: 'done' },
+    { id: 2, name: '2. Foundation Excavation', start: 3, duration: 3, status: 'progress' },
+    { id: 3, name: '3. Concrete Pouring', start: 6, duration: 2, status: 'delayed' },
+    { id: 4, name: '4. Steel Framework', start: 8, duration: 3, status: 'todo' }
+];
+
+export function renderGantt() {
+    const container = document.getElementById('gantt-chart-area');
+    if(!container) return;
+
+    // Remove existing rows (keep header and SVG)
+    container.querySelectorAll('.gantt-row').forEach(el => el.remove());
+
+    ganttTasks.forEach(task => {
+        const row = document.createElement('div');
+        row.className = 'gantt-row';
+        
+        // Calculate Position (12 Weeks Total)
+        // Col 2 starts the timeline. We want a track spanning col 2 to end.
+        // But our CSS defines columns for grid lines. 
+        // Best approach: Use the same grid layout, but put the bar inside a container that spans all 12 cols?
+        // Actually, simple calculation: (start - 1) * 8.33% left, duration * 8.33% width.
+        
+        /* 
+           Layout Note: The grid has 13 columns (200px + 12x1fr). 
+           We will place a 'track' div from col 2 to 14.
+        */
+        
+        const leftPct = (task.start - 1) * (100/12);
+        const widthPct = task.duration * (100/12);
+        
+        let statusClass = '';
+        if(task.status === 'done') statusClass = 'done';
+        else if(task.status === 'progress') statusClass = 'progress';
+        else if(task.status === 'delayed') statusClass = 'delayed';
+        else statusClass = 'todo'; // Gray
+
+        let label = task.status === 'progress' ? `In Progress (${Math.round(Math.random()*80 + 10)}%)` : 
+                    task.status === 'done' ? 'Complete' : 
+                    task.status === 'delayed' ? 'Delayed' : 'Planned';
+
+        row.innerHTML = `
+            <div class="gantt-task">${task.name}</div>
+            <div class="gantt-bar-container" style="grid-column: 2 / span 12; position: relative; border-right: none;">
+                <!-- Grid Lines (Background) -->
+                <div style="position: absolute; top:0; left:0; width:100%; height:100%; display:grid; grid-template-columns:repeat(12,1fr); pointer-events:none; z-index:0;">
+                    ${Array(12).fill('<div style="border-right:1px solid var(--slate-100);"></div>').join('')}
+                </div>
+                
+                <!-- The Bar -->
+                <div class="gantt-bar ${statusClass}" 
+                     style="left: ${leftPct}%; width: ${widthPct}%; z-index:1;"
+                     title="Weeks ${task.start} - ${task.start + task.duration}">
+                    ${label}
+                </div>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
 export function addTaskToGantt() {
+    const name = document.getElementById('gantt-name').value;
+    const start = parseInt(document.getElementById('gantt-start').value);
+    const duration = parseInt(document.getElementById('gantt-duration').value);
+    
+    if(!name || !start || !duration) {
+        notificationService.add('error', 'Validation Error', 'Please fill all fields');
+        return;
+    }
+
+    ganttTasks.push({
+        id: ganttTasks.length + 1,
+        name: `${ganttTasks.length + 1}. ${name}`,
+        start: start,
+        duration: duration,
+        status: 'todo'
+    });
+
+    renderGantt();
     notificationService.add('success', 'Task Created', 'Gantt chart updated.');
     closeDrawer();
 }
@@ -338,7 +454,6 @@ export function approveRequest() {
     closeDrawer();
 }
 
-
 // --- GLOBAL BINDINGS ---
 // Critical for HTML onclick attributes to work with Modules
 window.navigateTo = navigateTo;
@@ -372,7 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Init Logic (Budget Health etc)
     updateBudgetHealth();
-    
+    renderGantt();
+
     // Seed Dummy Notifications
     setTimeout(() => {
         notificationService.add('info', 'System Update', 'Maintenance scheduled for tonight at 2 AM.');
