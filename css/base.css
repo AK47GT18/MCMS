@@ -1,0 +1,49 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--slate-50);
+    color: var(--slate-900);
+    overflow: hidden;
+    font-size: 14px;
+}
+
+h1,
+h2,
+h3 {
+    letter-spacing: -0.025em;
+}
+
+/* --- FORMS --- */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--slate-700);
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--slate-300);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--slate-900);
+    transition: var(--transition);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px var(--orange-light);
+}

@@ -1,0 +1,61 @@
+/* --- LAYOUT COMPONENTS --- */
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.top-bar {
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid var(--slate-200);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    z-index: 40;
+}
+
+.workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 260px;
+    background: white;
+    border-right: 1px solid var(--slate-200);
+    display: flex;
+    flex-direction: column;
+    z-index: 30;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* --- SIDEBAR STYLES --- */
+.logo {
+    font-weight: 800;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--slate-900);
+    letter-spacing: -0.5px;
+}
+
+.logo i {
+    color: var(--orange);
+    font-size: 20px;
+}
+
+.sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--slate-200);
+}

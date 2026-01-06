@@ -1,0 +1,236 @@
+/* --- DASHBOARD PAGE STYLES --- */
+
+/* Page Header */
+.page-header {
+    background: white;
+    border-bottom: 1px solid var(--slate-200);
+    padding: 20px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.breadcrumb {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--slate-500);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--slate-900);
+    margin-bottom: 4px;
+}
+
+.page-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.context-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--slate-500);
+    font-weight: 500;
+}
+
+.context-dot {
+    width: 3px;
+    height: 3px;
+    background: var(--slate-300);
+    border-radius: 50%;
+}
+
+.context-value {
+    color: var(--slate-700);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.content {
+    padding: 24px 32px;
+    max-width: 1600px;
+}
+
+/* Identifiers & Status */
+.project-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--slate-600);
+    background: var(--slate-100);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.status.active { background: #DCFCE7; color: #166534; }
+.status.delayed { background: #FEE2E2; color: #991B1B; }
+.status.review { background: #FEF3C7; color: #92400E; }
+.status.locked { background: var(--slate-100); color: var(--slate-600); }
+
+/* Progress Bars */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: var(--slate-100);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--orange);
+    border-radius: 3px;
+}
+
+.progress-text {
+    font-size: 11px;
+    color: var(--slate-500);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* View Sections */
+.view-section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.view-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Gantt Chart */
+.gantt-container {
+    border-top: 1px solid var(--slate-200);
+    background: white;
+    overflow-x: auto;
+}
+
+.gantt-header {
+    display: grid;
+    grid-template-columns: 200px repeat(12, 1fr);
+    border-bottom: 1px solid var(--slate-200);
+    background: var(--slate-50);
+    min-width: 1000px;
+}
+
+.gantt-header-cell {
+    padding: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--slate-500);
+    text-align: center;
+    border-right: 1px solid var(--slate-200);
+}
+
+.gantt-row {
+    display: grid;
+    grid-template-columns: 200px repeat(12, 1fr);
+    border-bottom: 1px solid var(--slate-100);
+    align-items: center;
+    height: 48px;
+    min-width: 1000px;
+}
+
+.gantt-task {
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slate-700);
+    border-right: 1px solid var(--slate-200);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gantt-bar-container {
+    position: relative;
+    height: 100%;
+    border-right: 1px solid var(--slate-100);
+}
+
+.gantt-bar {
+    height: 24px;
+    border-radius: 4px;
+    position: absolute;
+    top: 12px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 10px;
+    color: white;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.gantt-bar:hover {
+    transform: scaleY(1.1);
+    z-index: 10;
+}
+
+.gantt-bar.done { background: var(--emerald); }
+.gantt-bar.progress { background: var(--orange); }
+.gantt-bar.delayed { background: var(--red); }
+
+/* Wizard & Map Styles (Extracted from JS) */
+.step-content { display: none; }
+.step-content.active { display: block; animation: fadeIn 0.3s; }
+.wizard-stepper { display: flex; gap: 8px; margin-bottom: 24px; }
+.step-dot { height: 4px; flex: 1; background: var(--slate-200); border-radius: 2px; transition: 0.3s; }
+.step-dot.active { background: var(--orange); }
+.step-dot.completed { background: var(--emerald); }
+
+.map-container {
+    height: 250px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    border: 2px solid var(--slate-300);
+}
+
+.map-bg {
+    width: 100%; height: 100%;
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5;
+}
+
+.map-pin {
+    position: absolute;
+    color: var(--red);
+    font-size: 24px;
+    transform: translate(-50%, -100%);
+    pointer-events: none;
+    transition: top 0.2s, left 0.2s;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
