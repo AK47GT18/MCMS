@@ -9,6 +9,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- 1. ENTERPRISE DESIGN TOKENS --- */
         :root {
@@ -330,6 +331,66 @@
         .notify-title { font-size: 13px; font-weight: 600; color: var(--slate-800); margin-bottom: 2px; }
         .notify-desc { font-size: 11px; color: var(--slate-500); line-height: 1.4; }
         .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        #toast-container {
+            position: fixed;
+            top: 70px; /* Below top-bar */
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Let clicks pass through container */
+        }
+        
+        .toast {
+            background: white;
+            border-left: 4px solid var(--slate-800);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            padding: 16px;
+            border-radius: 4px;
+            min-width: 300px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            pointer-events: auto; /* Re-enable clicks */
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toast.success { border-color: var(--emerald); }
+        .toast.error { border-color: var(--red); }
+        .toast.info { border-color: var(--blue); }
+
+        .toast-icon { font-size: 18px; margin-top: 2px; }
+        .toast.success .toast-icon { color: var(--emerald); }
+        .toast.error .toast-icon { color: var(--red); }
+        .toast.info .toast-icon { color: var(--blue); }
+
+        .toast-content { flex: 1; }
+        .toast-title { font-size: 14px; font-weight: 700; color: var(--slate-900); margin-bottom: 2px; }
+        .toast-message { font-size: 12px; color: var(--slate-600); line-height: 1.4; }
+
+        .toast-close {
+            position: absolute;
+            top: 8px; right: 8px;
+            color: var(--slate-400);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .toast-close:hover { color: var(--slate-800); }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(20px); }
+        }
 
 
         /* --- 4. CONTENT STYLES --- */
@@ -954,6 +1015,7 @@
     </style>
 
     <div class="app">
+    <div id="toast-container"></div>
         <header class="top-bar">
             <div class="logo">
                 <i class="fas fa-hard-hat"></i>
@@ -987,7 +1049,7 @@
                         <a class="nav-link active" onclick="navigateTo('portfolio', this)">
                             <i class="fas fa-th-large"></i> <span>Portfolio</span>
                         </a>
-                        <a class="nav-link" onclick="navigateTo('portfolio', this)">
+                        <a class="nav-link" onclick="navigateTo('analytics', this)">
                             <i class="fas fa-chart-pie"></i> <span>Analytics</span>
                         </a>
                     </div>
@@ -1483,6 +1545,45 @@
                     </div>
                 </div>
 
+                <div id="view-analytics" class="view-section">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Total Budget vs Actual</span></div>
+                            <div style="height: 200px; position: relative;">
+                                <canvas id="chart-budget"></canvas>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Project Progress (Avg)</span></div>
+                             <div style="height: 200px; position: relative; display: flex; justify-content: center;">
+                                <canvas id="chart-progress"></canvas>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Resource Allocation</span></div>
+                             <div style="height: 200px; position: relative;">
+                                <canvas id="chart-resources"></canvas>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><span class="stat-label">Risk Distribution</span></div>
+                             <div style="height: 200px; position: relative;">
+                                <canvas id="chart-risks"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-card" style="margin-top: 24px;">
+                        <div class="data-card-header">
+                            <div class="card-title">Performance Trends (Last 6 Months)</div>
+                             <button class="btn btn-secondary">Export Data</button>
+                        </div>
+                        <div style="padding: 24px; height: 300px;">
+                            <canvas id="chart-trends"></canvas>
+                        </div>
+                    </div>
+                </div>
+
         </div>
         </main>
     </div>
@@ -1531,7 +1632,9 @@
             'teams': { title: 'Field Personnel', context: '3 Active Sites | 42 Total Staff' },
             'risks': { title: 'Risk Management', context: 'Active Risk Register' },
             'requests': { title: 'Resource Requests', context: 'Budget & Equipment' },
-            'reports': { title: 'Documents & Reports', context: 'Repository' }
+
+            'reports': { title: 'Documents & Reports', context: 'Repository' },
+            'analytics': { title: 'Analytics Dashboard', context: 'Real-time Performance Metrics' }
         };
 
         const logData = {
@@ -1563,6 +1666,12 @@
                 document.getElementById('header-title').innerText = views[viewId].title;
                 document.getElementById('header-breadcrumb').innerText = views[viewId].title;
                 document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
+            }
+
+            // Analytics Hook
+            if (viewId === 'analytics') {
+                // Short delay to allow DOM to show before rendering canvas
+                setTimeout(renderAnalytics, 50);
             }
         }
 
@@ -2202,25 +2311,130 @@
 </div>
 
 <script>
-    // Global Notification Logic
+    // Global Notification Logic (Toast)
     function showNotification(type, title, message) {
-        const overlay = document.getElementById('notificationOverlay');
-        const icon = document.getElementById('modalIcon');
-        const titleEl = document.getElementById('modalTitle');
-        const msgEl = document.getElementById('modalMessage');
+        const container = document.getElementById('toast-container');
+        
+        // Create Toast Elements
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const iconClass = type === 'success' ? 'fa-check-circle' :
+                          type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
 
-        overlay.classList.add('active');
-        titleEl.textContent = title;
-        msgEl.textContent = message;
+        toast.innerHTML = `
+            <div class="toast-icon"><i class="fas ${iconClass}"></i></div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <div class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></div>
+        `;
 
-        icon.className = 'modal-icon ' + type;
-        icon.innerHTML = type === 'success' ? '<i class="fas fa-check"></i>' :
-                        type === 'error' ? '<i class="fas fa-times"></i>' :
-                        '<i class="fas fa-info"></i>';
+        // Add to container
+        container.appendChild(toast);
+
+        // Sound Effect (Optional, subtle click)
+        // const audio = new Audio('assets/notification.mp3'); 
+        // audio.play().catch(e => {}); 
+
+        // Auto Dismiss
+        setTimeout(() => {
+            toast.style.animation = 'fadeOutRight 0.3s forwards';
+            toast.addEventListener('animationend', () => {
+                toast.remove();
+            });
+        }, 5000); // 5 seconds
     }
 
-    function closeNotification() {
-        document.getElementById('notificationOverlay').classList.remove('active');
+    // Initialize Analytics Charts
+    let charts = {}; // Store instances to destroy before re-creating
+    
+    function renderAnalytics() {
+        console.log("Rendering Analytics...");
+
+        // Common Config
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748B';
+        
+        // 1. Budget Variance (Bar)
+        renderChart('chart-budget', 'bar', {
+            labels: ['CEN-01', 'MZ-05', 'LIL-02', 'SAL-09'],
+            datasets: [
+                { label: 'Budget', data: [450, 120, 85, 200], backgroundColor: '#E2E8F0' },
+                { label: 'Actual', data: [145, 110, 60, 45], backgroundColor: '#0F172A' }
+            ]
+        }, { scales: { y: { beginAtZero: true } } });
+
+        // 2. Project Progress (Doughnut)
+        renderChart('chart-progress', 'doughnut', {
+            labels: ['Complete', 'In Progress', 'Delayed', 'Not Started'],
+            datasets: [{
+                data: [15, 35, 10, 40],
+                backgroundColor: ['#10B981', '#3B82F6', '#EF4444', '#E2E8F0'],
+                borderWidth: 0
+            }]
+        }, { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } } });
+
+        // 3. Resource Allocation (Pie/Polar)
+        renderChart('chart-resources', 'polarArea', {
+            labels: ['Labor', 'Materials', 'Equipment', 'Services'],
+            datasets: [{
+                data: [45, 30, 15, 10],
+                backgroundColor: ['#F97316', '#3B82F6', '#8B5CF6', '#10B981']
+            }]
+        }, { plugins: { legend: { display: false } } });
+
+        // 4. Risks (Radar)
+        renderChart('chart-risks', 'radar', {
+            labels: ['Safety', 'Cost', 'Schedule', 'Quality', 'Env'],
+            datasets: [{
+                label: 'Risk Exposure',
+                data: [2, 4, 3, 1, 2],
+                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                borderColor: '#EF4444',
+                pointBackgroundColor: '#EF4444'
+            }]
+        }, { scales: { r: { beginAtZero: true, suggestedMax: 5 } } });
+        
+        // 5. Trend Line
+        renderChart('chart-trends', 'line', {
+            labels: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+                { 
+                    label: 'Efficiency Index', 
+                    data: [85, 88, 87, 92, 90, 94],
+                    borderColor: '#10B981',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                },
+                { 
+                    label: 'Cost Variance', 
+                    data: [5, 4, 6, 3, 5, 2],
+                    borderColor: '#F97316',
+                    tension: 0.4,
+                    borderDash: [5, 5]
+                }
+            ]
+        }, { maintainAspectRatio: false });
+    }
+
+    function renderChart(id, type, data, options = {}) {
+        const ctx = document.getElementById(id);
+        if(!ctx) return;
+        
+        // Destroy existing
+        if(charts[id]) charts[id].destroy();
+
+        charts[id] = new Chart(ctx, {
+            type: type,
+            data: data,
+            options: {
+                responsive: true,
+                ...options
+            }
+        });
     }
 
     // Wire up bell
@@ -2229,7 +2443,10 @@
         if(bell) {
             bell.parentElement.addEventListener('click', (e) => {
                 e.preventDefault();
-                showNotification('info', 'Notifications', 'You have 3 unread system alerts.');
+                showNotification('info', 'System Notifications', 'You have 3 unread reports awaiting review.');
+                setTimeout(() => {
+                     showNotification('success', 'Sync Complete', 'Project data synchronized with central server.');
+                }, 800);
             });
         }
     });
