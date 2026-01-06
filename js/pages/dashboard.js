@@ -90,21 +90,22 @@ export function openDrawer(id) {
             </div>
 
             <div id="step-1" class="step-content active">
-                <div class="form-group"><label class="form-label">Project Name</label><input class="form-input" id="wiz-name" type="text" placeholder="e.g. Unilia Library Complex"></div>
-                <div class="form-group"><label class="form-label">Project Code</label><input class="form-input" id="wiz-code" type="text" placeholder="e.g. CEN-01"></div>
-                <div class="form-group"><label class="form-label">Client / Beneficiary</label><select class="form-input"><option>Ministry of Education</option><option>Private Sector</option></select></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Project Name</label><input class="form-input" id="wiz-name" type="text" placeholder="e.g. Unilia Library Complex" value="Unilia Library Complex"></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Project Code</label><input class="form-input" id="wiz-code" type="text" placeholder="e.g. CEN-01" value="CEN-01"></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Client / Beneficiary</label><select class="form-input"><option>Ministry of Education</option><option>Private Sector</option><option>Donor Funded</option></select></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Project Type</label><select class="form-input"><option>Infrastructure - Education</option><option>Infrastructure - Health</option><option>Roads & Transport</option></select></div>
                 <div class="form-group"><label class="form-label">Project Manager</label><input class="form-input" type="text" value="Arthony (You)" disabled style="background:var(--slate-50);"></div>
             </div>
 
             <div id="step-2" class="step-content">
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 20px;">
                     <label class="form-label">Project Location (Click Map)</label>
                     <div class="map-container" id="wiz-map" onclick="placePin(event)">
                         <div class="map-bg"></div>
                         <i class="fas fa-map-marker-alt map-pin" id="wiz-pin" style="display:none; top:50%; left:50%;"></i>
                     </div>
                 </div>
-                <div style="display:flex; gap:12px;">
+                <div style="display:flex; gap:12px; margin-bottom: 20px;">
                     <div class="form-group" style="flex:1;"><label class="form-label">Latitude</label><input class="form-input" id="wiz-lat" type="text" readonly placeholder="-13.98"></div>
                     <div class="form-group" style="flex:1;"><label class="form-label">Longitude</label><input class="form-input" id="wiz-long" type="text" readonly placeholder="33.78"></div>
                 </div>
@@ -112,8 +113,9 @@ export function openDrawer(id) {
             </div>
 
             <div id="step-3" class="step-content">
-                <div class="form-group"><label class="form-label">Total Grant / Budget (MWK)</label><input class="form-input" type="number" placeholder="500,000,000"></div>
-                <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date"></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Total Grant / Budget (MWK)</label><input class="form-input" type="number" placeholder="500,000,000"></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">StartDate</label><input class="form-input" type="date"></div>
+                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Contractor</label><input class="form-input" type="text" placeholder="Search contractor..."></div>
                 <div style="background:var(--orange-light); padding:16px; border-radius:6px; border:1px solid var(--orange); color:var(--orange-dark); font-size:12px;">
                     <i class="fas fa-info-circle"></i> Initial budget lines will be auto-generated based on the 'Standard Construction' template.
                 </div>
@@ -128,9 +130,9 @@ export function openDrawer(id) {
         if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Save Risk</button>`;
         dBody.innerHTML = `
             <div class="drawer-section">
-                <div class="form-group"><label class="form-label">Risk Description</label><input class="form-input" type="text" placeholder="Short description of risk"></div>
-                <div class="form-group"><label class="form-label">Impact Level</label><select class="form-input"><option>High</option><option>Medium</option><option>Low</option></select></div>
-                <div class="form-group"><label class="form-label">Probability</label><select class="form-input"><option>High</option><option>Medium</option><option>Low</option></select></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Risk Description</label><input class="form-input" type="text" placeholder="Short description of risk"></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Impact Level</label><select class="form-input"><option>High</option><option>Medium</option><option>Low</option></select></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Probability</label><select class="form-input"><option>High</option><option>Medium</option><option>Low</option></select></div>
                 <div class="form-group"><label class="form-label">Mitigation Strategy</label><input class="form-input" type="text" placeholder="Plan to reduce impact"></div>
             </div>`;
     } else if (id === 'request_budget') {
@@ -138,14 +140,29 @@ export function openDrawer(id) {
         if(dTitle) dTitle.innerText = "Budget Reallocation Request";
         if(dId) dId.innerText = "REQ-NEW";
         if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Submit Request</button>`;
-        dBody.innerHTML = `<div class="drawer-section"><p>Budget request form here...</p></div>`; // Simplified for now
+        dBody.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group" style="margin-bottom: 16px;">
+                     <label class="form-label">Source Budget Line</label>
+                     <select class="form-input"><option>02-MAT Construction Materials</option><option>01-LAB Site Labor</option></select>
+                </div>
+                 <div class="form-group" style="margin-bottom: 16px;">
+                     <label class="form-label">Destination Budget Line</label>
+                     <select class="form-input"><option>03-EQU Equipment Rental</option><option>04-SER Specialized Services</option></select>
+                </div>
+                 <div class="form-group" style="margin-bottom: 16px;">
+                     <label class="form-label">Amount (MWK)</label>
+                     <input type="number" class="form-input" placeholder="0.00">
+                </div>
+                <div class="form-group"><label class="form-label">Justification</label><textarea class="form-input" rows="3"></textarea></div>
+            </div>`; 
     } else if (id === 'budget_variation') {
         if(dTitle) dTitle.innerText = "Request Budget Variation";
         if(dId) dId.innerText = "VAR-REQ";
         if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="submitVariation()">Send to Finance</button>`;
         dBody.innerHTML = `
             <div class="drawer-section">
-                <div class="form-group"><label class="form-label">Variation Amount (MWK)</label><input class="form-input" type="number" placeholder="5,000,000"></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Variation Amount (MWK)</label><input class="form-input" type="number" placeholder="5,000,000"></div>
                 <div class="form-group"><label class="form-label">Reason</label><textarea class="form-input" rows="3" placeholder="Explain cost overrun..."></textarea></div>
             </div>`;
     } else {
@@ -165,7 +182,20 @@ export function openDrawer(id) {
                     <div style="text-align:right;"><div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Timestamp</div><div style="font-weight:600;">${data.date}</div></div>
                 </div>
                 <div class="evidence-photo"><img src="${data.photoUrl}" alt="Site Evidence" style="width:100%; border-radius:6px; margin-bottom:8px;"></div>
-                <p style="font-size:13px; color:var(--slate-600); line-height:1.5; background:var(--slate-50); padding:12px; border-radius:6px;">"${data.summary}"</p>
+                <p style="font-size:13px; color:var(--slate-600); line-height:1.5; background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom: 20px;">"${data.summary}"</p>
+                
+                <h4 style="font-size:12px; font-weight:700; color:var(--slate-800); margin-bottom:8px; text-transform:uppercase;">Resource Consumption</h4>
+                <div style="background: white; border:1px solid var(--slate-200); border-radius:6px;">
+                    <div style="padding: 8px 12px; border-bottom:1px solid var(--slate-100); display:flex; justify-content:space-between; font-size:13px;">
+                        <span>Cement</span> <span style="font-weight:600;">15 Bags</span>
+                    </div>
+                    <div style="padding: 8px 12px; border-bottom:1px solid var(--slate-100); display:flex; justify-content:space-between; font-size:13px;">
+                        <span>Sand</span> <span style="font-weight:600;">2 Tons</span>
+                    </div>
+                     <div style="padding: 8px 12px; display:flex; justify-content:space-between; font-size:13px;">
+                        <span>Labor</span> <span style="font-weight:600;">14 Personnel</span>
+                    </div>
+                </div>
             </div>
         `;
     }
