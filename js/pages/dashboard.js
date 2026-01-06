@@ -67,7 +67,6 @@ export function navigateTo(viewId, navElement) {
 // --- DRAWER ---
 export function openDrawer(id) {
     const overlay = document.getElementById('drawer-overlay');
-    constdBody = document.getElementById('drawer-body'); // Typo fix in original? no `const dBody`
     const dBody = document.getElementById('drawer-body');
     const dTitle = document.getElementById('d-title');
     const dFooter = document.getElementById('drawer-footer');
