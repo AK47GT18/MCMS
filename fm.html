@@ -218,8 +218,41 @@
             border-radius: 4px;
             font-weight: 700;
         }
-
-        /* --- 4. CONTENT STYLES --- */
+            /* --- NOTIFICATION SYSTEM (Refined) --- */
+    .notification-wrapper { position: relative; display: inline-block; }
+    .notification-badge {
+        position: absolute;
+        top: -5px; right: -5px;
+        background: var(--red); color: white;
+        font-size: 9px; font-weight: 800;
+        height: 16px; min-width: 16px;
+        padding: 0 4px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid white;
+        opacity: 0; transform: scale(0.8);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .notification-badge.active { opacity: 1; transform: scale(1); }
+    .notification-dropdown {
+        position: absolute; top: 100%; right: 0;
+        width: 320px; background: white;
+        border: 1px solid var(--slate-200); border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        z-index: 1000; margin-top: 12px;
+        display: none; overflow: hidden;
+        animation: slideDown 0.2s ease-out;
+    }
+    .notification-dropdown.show { display: block; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .notify-header { padding: 12px 16px; border-bottom: 1px solid var(--slate-100); font-weight: 700; color: var(--slate-800); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .notify-item { padding: 12px 16px; border-bottom: 1px solid var(--slate-50); cursor: pointer; transition: background 0.1s; display: flex; gap: 12px; }
+    .notify-item:hover { background: var(--slate-50); } .notify-item.unread { background: var(--blue-light); }
+    .notify-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--slate-100); color: var(--slate-500); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .notify-content { flex: 1; }
+    .notify-title { font-size: 13px; font-weight: 600; color: var(--slate-800); margin-bottom: 2px; }
+    .notify-desc { font-size: 11px; color: var(--slate-500); line-height: 1.4; }
+    .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; }
+    </style>      /* --- 4. CONTENT STYLES --- */
         .page-header {
             background: white;
             border-bottom: 1px solid var(--slate-200);
@@ -709,10 +742,31 @@
                     style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
                     <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
                 </div>
-                <button class="btn btn-secondary" style="border: none; padding: 8px;">
-                    <i class="fas fa-bell" style="color: var(--slate-500);"></i>
-                </button>
-                <div class="user-profile">
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div style="position: relative;">
+                        <input type="text" placeholder="Search..."
+                            style="padding: 8px 12px 8px 36px; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 13px; width: 200px; background: var(--slate-50);">
+                        <i class="fas fa-search"
+                            style="position: absolute; left: 12px; top: 10px; color: var(--slate-400); font-size: 13px;"></i>
+                    </div>
+                    
+                     <!-- Notification Wrapper -->
+                    <div class="notification-wrapper">
+                        <div class="icon-btn" onclick="toggleNotifications()" style="cursor: pointer; position: relative;">
+                            <i class="fas fa-bell" style="color: var(--slate-500); font-size: 18px;"></i>
+                            <div class="notification-badge" id="notify-badge">0</div>
+                        </div>
+                        
+                        <!-- Dropdown -->
+                        <div class="notification-dropdown" id="notify-dropdown">
+                            <div class="notify-header">
+                                <span>Notifications</span>
+                            </div>
+                            <div id="notify-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="user-profile">
                     <div class="profile-avatar">FD</div>
                 </div>
             </div>
@@ -1971,4 +2025,35 @@
             });
         }
     });
-</script>
+      function submitProposal() {
+        showNotification('success', 'Proposal Sent', 'Budget Allocation Proposal sent back to Project Manager for final acceptance.');
+        closeDrawer();
+    }
+    
+            // --- NOTIFICATION LOGIC ---
+        let notificationCount = 5; 
+        
+        function updateBadge() {
+            const badge = document.getElementById('notify-badge');
+            if(notificationCount > 0) {
+                badge.classList.add('active');
+                badge.innerText = notificationCount > 10 ? '10+' : notificationCount;
+            } else {
+                badge.classList.remove('active');
+            }
+        }
+        
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notify-dropdown');
+            dropdown.classList.toggle('show');
+            const list = document.getElementById('notify-list');
+            if(list.children.length === 0) list.innerHTML = '<div class="notify-item unread"><div class="notify-icon"><i class="fas fa-file-invoice-dollar"></i></div><div class="notify-content"><div class="notify-title">Confirm Payment</div><div class="notify-desc">New invoice pending approval.</div></div></div>';
+        }
+        
+        document.addEventListener('click', function(e) {
+            const wrapper = document.querySelector('.notification-wrapper');
+            if (!wrapper.contains(e.target)) document.getElementById('notify-dropdown').classList.remove('show');
+        });
+        
+        updateBadge();
+    </script>
