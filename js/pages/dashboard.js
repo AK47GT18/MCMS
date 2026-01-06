@@ -117,7 +117,7 @@ export function openDrawer(id) {
             <div id="step-1" class="step-content active">
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Project Name</label><input class="form-input" id="wiz-name" type="text" placeholder="e.g. Unilia Library Complex" value="Unilia Library Complex"></div>
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Project Code</label><input class="form-input" id="wiz-code" type="text" placeholder="e.g. CEN-01" value="CEN-01"></div>
-                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Client / Beneficiary</label><select class="form-input"><option>Ministry of Education</option><option>Private Sector</option><option>Donor Funded</option></select></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Client / Beneficiary</label><input class="form-input" type="text" placeholder="e.g. Ministry of Education"></div>
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Project Type</label><select class="form-input"><option>Infrastructure - Education</option><option>Infrastructure - Health</option><option>Roads & Transport</option></select></div>
                 <div class="form-group"><label class="form-label">Project Manager</label><input class="form-input" type="text" value="Arthony (You)" disabled style="background:var(--slate-50);"></div>
             </div>
@@ -139,7 +139,12 @@ export function openDrawer(id) {
 
             <div id="step-3" class="step-content">
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Total Grant / Budget (MWK)</label><input class="form-input" type="number" placeholder="500,000,000"></div>
-                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">StartDate</label><input class="form-input" type="date"></div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Start Date</label><input class="form-input" type="date">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Expected End Date</label><input class="form-input" type="date">
+                </div>
                  <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Contractor</label><input class="form-input" type="text" placeholder="Search contractor..."></div>
                 <div style="background:var(--orange-light); padding:16px; border-radius:6px; border:1px solid var(--orange); color:var(--orange-dark); font-size:12px;">
                     <i class="fas fa-info-circle"></i> Initial budget lines will be auto-generated based on the 'Standard Construction' template.
@@ -149,6 +154,32 @@ export function openDrawer(id) {
         
         updateFooter(1);
 
+    } else if (id === 'create_report') {
+        if(dTitle) dTitle.innerText = "Generate New Report";
+        if(dId) dId.innerText = "RPT-NEW";
+        if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer(); notificationService.add('success', 'Report Generated', 'PDF report has been created.');">Generate & Download</button>`;
+        dBody.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Report Title</label><input class="form-input" type="text" placeholder="e.g. Monthly Progress Report"></div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Report Type</label>
+                    <select class="form-input">
+                        <option>Progress Report</option>
+                        <option>Financial Variance</option>
+                        <option>Risk & Issues</option>
+                        <option>Custom</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Reporting Period</label>
+                    <div style="display:flex; gap:10px;">
+                        <input class="form-input" type="date">
+                        <span style="align-self:center;">to</span>
+                        <input class="form-input" type="date">
+                    </div>
+                </div>
+                <div class="form-group"><label class="form-label">Summary / Notes</label><textarea class="form-input" rows="4" placeholder="Executive summary..."></textarea></div>
+            </div>`;
     } else if (id === 'risk_log') {
         if(dTitle) dTitle.innerText = "Log New Risk";
         if(dId) dId.innerText = "RSK-NEW";

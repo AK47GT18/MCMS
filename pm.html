@@ -506,6 +506,7 @@
                     <div class="data-card">
                         <div class="data-card-header">
                             <div class="card-title">Generated Reports</div>
+                             <button class="btn btn-action" onclick="openDrawer('create_report')"><i class="fas fa-plus"></i> Generate Report</button>
                         </div>
                         <table>
                             <thead>
@@ -557,7 +558,7 @@
                         <div class="stat-card">
                             <div class="stat-header"><span class="stat-label">Resource Allocation</span></div>
                              <div style="height: 200px; position: relative;">
-                                <canvas id="chart-resources"></canvas>
+                                 <canvas id="chart-resources"></canvas>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -633,17 +634,35 @@
                     <p style="color: var(--slate-500);">Project Manager</p>
                 </div>
                 <div style="padding: 24px;">
-                    <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Account Settings</h4>
-                    <div class="form-group">
+                    <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Account Details</h4>
+                    <div class="form-group" style="margin-bottom: 16px;">
                         <label class="form-label">Email Address</label>
                         <input type="email" class="form-input" value="anthony.k@mkaka.com" readonly>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-input" value="+265 999 123 456" readonly>
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" class="form-input" value="+265 999 123 456">
                     </div>
+                    
+                    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px dashed var(--slate-200);">
+                        <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Security</h4>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-input" placeholder="••••••••">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-input" placeholder="New password">
+                        </div>
+                         <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-input" placeholder="Confirm new password">
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="notificationService.add('success', 'Password Updated', 'Your password has been changed successfully.')">Update Password</button>
+                    </div>
+
                     <div style="margin-top: 32px;">
-                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--slate-200);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
                     </div>
                 </div>
             </div>
