@@ -165,6 +165,42 @@ export function openDrawer(id) {
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Variation Amount (MWK)</label><input class="form-input" type="number" placeholder="5,000,000"></div>
                 <div class="form-group"><label class="form-label">Reason</label><textarea class="form-input" rows="3" placeholder="Explain cost overrun..."></textarea></div>
             </div>`;
+    } else if (id === 'request_review') {
+        if(dTitle) dTitle.innerText = "Review Request";
+        if(dId) dId.innerText = "REQ-REVIEW";
+        if(dFooter) dFooter.innerHTML = `
+             <button class="btn btn-secondary" style="flex: 1; color: var(--red); border-color: var(--slate-200);" onclick="showRejectReason()">Reject</button>
+             <button class="btn btn-primary" style="flex: 1;" onclick="approveRequest()">Approve Request</button>
+        `;
+
+        dBody.innerHTML = `
+            <div class="drawer-section">
+                <div style="background:var(--slate-50); padding:16px; border-radius:6px; margin-bottom:20px; border:1px solid var(--slate-200);">
+                     <div style="font-size:11px; text-transform:uppercase; color:var(--slate-500); font-weight:700; margin-bottom:4px;">Request Details</div>
+                     <div style="font-weight:600; font-size:15px; margin-bottom:8px;">Move 2M from Materials to Labor</div>
+                     <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--slate-600);">
+                        <span>Project: <span style="font-weight:600; color:var(--slate-900);">CEN-01</span></span>
+                        <span>Amount: <span style="font-weight:600; color:var(--slate-900);">MWK 2,000,000</span></span>
+                     </div>
+                </div>
+
+                <div id="reject-section" style="display:none; animation: fadeIn 0.3s;">
+                    <div class="form-group">
+                        <label class="form-label" style="color:var(--red);">Rejection Reason</label>
+                        <textarea class="form-input" id="reject-reason" rows="3" placeholder="Please provide a reason for rejection..."></textarea>
+                    </div>
+                    <button class="btn btn-secondary" style="width:100%; border-color:var(--red); color:var(--red); margin-top:8px;" onclick="submitRejection()">Confirm Rejection</button>
+                </div>
+
+                 <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--slate-100);">
+                    <div style="font-size:12px; color:var(--slate-400); margin-bottom:8px;">History</div>
+                    <div style="font-size:13px; color:var(--slate-600); display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                        <div style="width:24px; height:24px; background:var(--orange-light); color:var(--orange); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px;"><i class="fas fa-plus"></i></div>
+                        <div>Created by <strong>John Banda</strong> <span style="color:var(--slate-400); font-size:11px;">2 hours ago</span></div>
+                    </div>
+                </div>
+            </div>
+        `;
     } else {
         // LOG VERIFICATION (Default)
         const data = logData['LOG-001'];
@@ -276,9 +312,35 @@ export function openProfileDrawer() {
     if(el) el.classList.add('show');
 }
 
+export function openProfileDrawer() {
+    const el = document.getElementById('profile-overlay');
+    if(el) el.classList.add('show');
+}
+
 export function closeProfileDrawer() {
     const el = document.getElementById('profile-overlay');
     if(el) el.classList.remove('show');
+}
+
+// --- REQUEST WORKFLOW ---
+export function showRejectReason() {
+    const section = document.getElementById('reject-section');
+    if(section) section.style.display = 'block';
+}
+
+export function submitRejection() {
+    const reason = document.getElementById('reject-reason').value;
+    if(!reason) {
+        notificationService.add('info', 'Input Required', 'Please provide a reason for rejection.');
+        return;
+    }
+    notificationService.add('error', 'Request Rejected', 'The request has been returned to the originator.');
+    closeDrawer();
+}
+
+export function approveRequest() {
+    notificationService.add('success', 'Request Approved', 'Budget transfer authorized and processed.');
+    closeDrawer();
 }
 
 
@@ -294,6 +356,10 @@ window.submitVariation = submitVariation;
 window.switchTab = switchTab;
 window.openProfileDrawer = openProfileDrawer;
 window.closeProfileDrawer = closeProfileDrawer;
+// Request Bindings
+window.showRejectReason = showRejectReason;
+window.submitRejection = submitRejection;
+window.approveRequest = approveRequest;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -311,6 +377,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Init Logic (Budget Health etc)
     updateBudgetHealth();
+    
+    // Seed Dummy Notifications
+    setTimeout(() => {
+        notificationService.add('info', 'System Update', 'Maintenance scheduled for tonight at 2 AM.');
+        notificationService.add('warning', 'Budget Alert', 'CEN-01 is approaching 90% budget utilization.');
+        notificationService.add('success', 'Report Generated', 'Weekly Progress Report is ready for review.');
+    }, 500);
 });
 
 function updateBudgetHealth() {
