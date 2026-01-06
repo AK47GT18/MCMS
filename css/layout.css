@@ -16,6 +16,80 @@
     z-index: 40;
 }
 
+/* Search Bar in Top Bar */
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar i {
+    position: absolute;
+    left: 12px;
+    color: var(--slate-400);
+    font-size: 13px;
+}
+
+.search-bar input {
+    padding: 8px 12px 8px 36px;
+    border-radius: 6px;
+    border: 1px solid var(--slate-200);
+    font-size: 13px;
+    width: 240px;
+    background: var(--slate-50);
+    transition: var(--transition);
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--orange);
+    background: white;
+}
+
+/* Header Tools (Right side of top bar) */
+.header-tools {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Header Alert Badge */
+.header-alert {
+    background: #FEF2F2;
+    color: var(--red);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #FECACA;
+}
+
+/* Icon Button */
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.icon-btn i {
+    color: var(--slate-500);
+    font-size: 18px;
+}
+
+.icon-btn:hover {
+    background: var(--slate-100);
+}
+
 .workspace {
     display: flex;
     flex: 1;
@@ -144,4 +218,25 @@
     width: 20px;
     text-align: center;
     font-size: 14px;
+}
+
+/* --- VIEW MANAGEMENT --- */
+.view-section {
+    display: none !important;
+    animation: fadeIn 0.3s ease;
+}
+
+.view-section.active {
+    display: block !important;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }

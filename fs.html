@@ -9,778 +9,18 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* --- 1. ENTERPRISE DESIGN TOKENS (STRICT UNIFIED SYSTEM) --- */
-        :root {
-            --orange: #F97316;
-            --orange-light: #FFF7ED;
-            --slate-50: #F8FAFC;
-            --slate-100: #F1F5F9;
-            --slate-200: #E2E8F0;
-            --slate-300: #CBD5E1;
-            --slate-400: #94A3B8;
-            --slate-500: #64748B;
-            --slate-600: #475569;
-            --slate-700: #334155;
-            --slate-800: #1E293B;
-            --slate-900: #0F172A;
-            --white: #FFFFFF;
-            --emerald: #10B981;
-            --red: #EF4444;
-            --blue: #3B82F6;
-            --amber: #F59E0B;
-            --radius: 8px;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
-            --transition: all 0.2s ease-in-out;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--slate-50);
-            color: var(--slate-900);
-            overflow-x: hidden;
-            /* Prevent horizontal scroll */
-            font-size: 13px;
-        }
-
-        /* --- 2. LAYOUT SHELL --- */
-        .app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .top-bar {
-            height: 56px;
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 40;
-            position: sticky;
-            top: 0;
-        }
-
-        .workspace {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid var(--slate-200);
-            display: flex;
-            flex-direction: column;
-            z-index: 30;
-            transition: transform 0.3s;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        /* --- 3. RESPONSIVE NAVIGATION LOGIC --- */
-        .bottom-nav {
-            display: none;
-        }
-
-        /* Hidden on Desktop */
-
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-
-            /* Hide Sidebar on Mobile */
-
-            .bottom-nav {
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background: white;
-                border-top: 1px solid var(--slate-200);
-                padding: 10px 0;
-                z-index: 100;
-                padding-bottom: max(10px, env(safe-area-inset-bottom));
-                box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
-            }
-
-            .main-content {
-                padding-bottom: 80px;
-            }
-
-            /* Space for bottom nav */
-            .stats-grid {
-                grid-template-columns: 1fr 1fr !important;
-            }
-
-            /* Mobile Grid */
-            .content {
-                padding: 16px !important;
-            }
-        }
-
-        /* Bottom Nav Item Styling */
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--slate-400);
-            text-decoration: none;
-            font-size: 10px;
-            font-weight: 500;
-        }
-
-        .nav-item i {
-            font-size: 20px;
-        }
-
-        .nav-item.active {
-            color: var(--orange);
-        }
-
-        .nav-fab {
-            background: var(--orange);
-            color: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: -24px;
-            box-shadow: 0 4px 6px rgba(249, 115, 22, 0.4);
-            border: 4px solid var(--slate-50);
-        }
-
-        /* --- 4. SIDEBAR STYLING (Desktop) --- */
-        .logo {
-            font-weight: 800;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--slate-900);
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--slate-200);
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-
-        .profile-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--slate-800);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .profile-info {
-            flex: 1;
-        }
-
-        .profile-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--slate-800);
-        }
-
-        .profile-role {
-            font-size: 11px;
-            color: var(--slate-500);
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 12px;
-        }
-
-        .nav-section {
-            margin-bottom: 24px;
-        }
-
-        .nav-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--slate-400);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
-            padding-left: 10px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            color: var(--slate-600);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: var(--transition);
-            margin-bottom: 2px;
-            cursor: pointer;
-        }
-
-        .nav-link:hover {
-            background: var(--slate-100);
-            color: var(--slate-900);
-        }
-
-        .nav-link.active {
-            background: var(--orange-light);
-            color: var(--orange);
-            font-weight: 600;
-        }
-
-        .nav-link i {
-            width: 18px;
-            text-align: center;
-        }
-
-        /* --- 5. CONTENT STYLES --- */
-        .page-header {
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            padding: 20px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .breadcrumb {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--slate-500);
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--slate-900);
-            margin-bottom: 4px;
-        }
-
-        .context-strip {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--slate-500);
-            font-weight: 500;
-            flex-wrap: wrap;
-        }
-
-        .content {
-            padding: 24px 32px;
-            max-width: 1600px;
-        }
-
-        /* Components */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: white;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            padding: 16px;
-            transition: var(--transition);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .stat-card:hover {
-             transform: translateY(-2px);
-             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-             border-color: var(--slate-200);
-        }
-
-        .stat-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--slate-900);
-            font-family: 'JetBrains Mono', monospace;
-            margin-top: 4px;
-        }
-
-        .stat-sub {
-            font-size: 11px;
-            margin-top: 4px;
-            color: var(--slate-500);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .data-card {
-            background: white;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .data-card-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title {
-            font-weight: 700;
-            color: var(--slate-900);
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            background: var(--slate-50);
-            padding: 12px 20px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--slate-200);
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--slate-100);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        tbody tr:hover {
-            background: var(--slate-50);
-        }
-
-        tbody td {
-            padding: 12px 20px;
-            font-size: 13px;
-            color: var(--slate-700);
-            vertical-align: middle;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: var(--transition);
-            border: 1px solid transparent;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background: var(--orange);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--slate-700);
-            border-color: var(--slate-300);
-        }
-
-        .btn-secondary:hover {
-            background: var(--slate-50);
-        }
-
-        /* Field Specifics */
-        .gps-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--emerald);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .photo-zone {
-            border: 2px dashed var(--slate-300);
-            background: var(--slate-50);
-            padding: 24px;
-            text-align: center;
-            border-radius: 8px;
-            color: var(--slate-500);
-            margin-bottom: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .photo-zone:active {
-            background: var(--orange-light);
-            border-color: var(--orange);
-            color: var(--orange);
-        }
-
-        /* Drawer */
-        .drawer-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(2px);
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .drawer-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .drawer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: auto;
-            max-height: 90vh;
-            background: white;
-            border-radius: 16px 16px 0 0;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-            z-index: 1001;
-        }
-
-        /* Desktop Drawer Override */
-        @media(min-width: 769px) {
-            .drawer {
-                bottom: 0;
-                right: 0;
-                left: auto;
-                width: 500px;
-                height: 100%;
-                border-radius: 0;
-                transform: translateX(100%);
-            }
-
-            .drawer-overlay.show .drawer {
-                transform: translateX(0);
-            }
-        }
-
-        .drawer-overlay.show .drawer {
-            transform: translateY(0);
-        }
-
-        /* Mobile Slide Up */
-        @media(min-width: 769px) {
-            .drawer-overlay.show .drawer {
-                transform: translateX(0);
-            }
-        }
-
-        /* Desktop Slide Left */
-
-        .drawer-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .drawer-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-        }
-
-        .drawer-handle {
-            width: 40px;
-            height: 4px;
-            background: var(--slate-300);
-            border-radius: 2px;
-            margin: 0 auto 12px auto;
-            display: block;
-        }
-
-        @media(min-width: 769px) {
-            .drawer-handle {
-                display: none;
-            }
-        }
-
-        /* Inputs */
-        .form-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--slate-500);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--slate-300);
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 14px;
-            background: white;
-        }
-
-        /* --- 7. GLOBAL NOTIFICATIONS --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .notification-modal {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 90%; max-width: 400px;
-            overflow: hidden;
-            transform: scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .modal-overlay.active .notification-modal { transform: scale(1); }
-        .modal-content { padding: 32px; text-align: center; }
-        .modal-icon {
-            width: 64px; height: 64px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px auto; font-size: 32px;
-        }
-        .modal-icon.success { background: #DCFCE7; color: #166534; }
-        .modal-icon.error { background: #FEE2E2; color: #991B1B; }
-        .modal-icon.info { background: #DBEAFE; color: #1E40AF; }
-        .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
-        .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-    /* --- Wizard Styles --- */
-    .wizard-step { display: none; animation: fadeIn 0.3s ease; }
-    .wizard-step.active { display: block; }
-    .step-indicator { display: flex; gap: 4px; margin-bottom: 24px; }
-    .step-dot { flex: 1; height: 4px; background: var(--slate-200); border-radius: 2px; transition: background 0.3s; }
-    .step-dot.active { background: var(--orange); }
-    .step-dot.completed { background: var(--emerald); }
-    .wizard-nav { display: flex; justify-content: space-between; margin-top: 24px; border-top: 1px solid var(--slate-200); padding-top: 16px; }
     
-    /* --- NOTIFICATION SYSTEM (Refined) --- */
-    .notification-wrapper { position: relative; display: inline-block; }
-    .notification-badge {
-        position: absolute;
-        top: -5px; right: -5px;
-        background: var(--red); color: white;
-        font-size: 9px; font-weight: 800;
-        height: 16px; min-width: 16px;
-        padding: 0 4px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        border: 2px solid white;
-        opacity: 0; transform: scale(0.8);
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .notification-badge.active { opacity: 1; transform: scale(1); }
-    .notification-dropdown {
-        position: absolute; top: 100%; right: 0;
-        width: 320px; background: white;
-        border: 1px solid var(--slate-200); border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        z-index: 1000; margin-top: 12px;
-        display: none; overflow: hidden;
-        animation: slideDown 0.2s ease-out;
-    }
-    .notification-dropdown.show { display: block; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .notify-header { padding: 12px 16px; border-bottom: 1px solid var(--slate-100); font-weight: 700; color: var(--slate-800); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-    .notify-item { padding: 12px 16px; border-bottom: 1px solid var(--slate-50); cursor: pointer; transition: background 0.1s; display: flex; gap: 12px; }
-    .notify-item:hover { background: var(--slate-50); } .notify-item.unread { background: var(--blue-light); }
-    .notify-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--slate-100); color: var(--slate-500); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .notify-content { flex: 1; }
-    .notify-title { font-size: 13px; font-weight: 600; color: var(--slate-800); margin-bottom: 2px; }
-    .notify-desc { font-size: 11px; color: var(--slate-500); line-height: 1.4; }
-    .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; }
-    
-    /* --- NOTIFICATION DROPDOWN (Toast Style - Updated) --- */
-    .notification-wrapper { position: relative; }
-    
-    .notification-dropdown {
-        position: absolute;
-        top: 100%;
-        right: -10px;
-        width: 320px;
-        background: var(--slate-50);
-        border: 1px solid var(--slate-200);
-        border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        z-index: 1000;
-        margin-top: 16px;
-        display: none;
-        overflow: hidden;
-        animation: slideDown 0.2s ease-out;
-        flex-direction: column;
-    }
-    
-    .notification-dropdown.show { display: flex; }
-
-    /* Toast Card Item Style */
-    .notify-item {
-        background: white;
-        border-left: 4px solid var(--slate-300);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        padding: 12px;
-        border-radius: 6px;
-        display: flex;
-        gap: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin: 8px 12px; /* Adding margin for card look */
-    }
-
-    .notify-item:hover { transform: translateX(2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    
-    .notify-item.success { border-left-color: var(--emerald); }
-    .notify-item.error { border-left-color: var(--red); }
-    .notify-item.info { border-left-color: var(--blue); }
-    .notify-item.unread { background: white; } /* Override previous unread bg */
-
-    .notify-icon {
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px;
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-    
-    .notify-item.success .notify-icon { background: #DCFCE7; color: var(--emerald); }
-    .notify-item.error .notify-icon { background: #FEE2E2; color: var(--red); }
-    .notify-item.info .notify-icon { background: #DBEAFE; color: var(--blue); }
-
-    .notify-content { flex: 1; }
-    .notify-title { font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 2px; }
-    .notify-msg { font-size: 11px; color: var(--slate-600); line-height: 1.4; }
-    .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; text-align: right; }
-    
-    </style>
-    <style>
-        /* --- 7. GLOBAL NOTIFICATIONS --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .notification-modal {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 90%; max-width: 400px;
-            overflow: hidden;
-            transform: scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .modal-overlay.active .notification-modal { transform: scale(1); }
-        .modal-content { padding: 32px; text-align: center; }
-        .modal-icon {
-            width: 64px; height: 64px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px auto; font-size: 32px;
-        }
-        .modal-icon.success { background: #DCFCE7; color: #166534; }
-        .modal-icon.error { background: #FEE2E2; color: #991B1B; }
-        .modal-icon.info { background: #DBEAFE; color: #1E40AF; }
-        .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
-        .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-    </style>
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/cards.css">
+    <link rel="stylesheet" href="css/components/tables.css">
+    <link rel="stylesheet" href="css/components/drawer.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/pages/field.css">
 </head>
 
 <body>
@@ -789,26 +29,30 @@
         <header class="top-bar">
             <div class="logo">
                 <i class="fas fa-hard-hat" style="color: var(--orange);"></i>
-                <span style="font-weight: 800; font-size: 16px; margin-left: 10px; color: var(--slate-900);">MKAKA
-                    FIELD</span>
+                <span>MKAKA FIELD</span>
             </div>
-            <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+            <div class="header-tools">
                 <div class="gps-badge">
                     <i class="fas fa-satellite-dish"></i> GPS LOCKED
                 </div>
-                
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+
                 <!-- Notification Wrapper -->
                 <div class="notification-wrapper">
                     <div class="icon-btn" onclick="toggleNotifications()" style="cursor: pointer; position: relative;">
                         <i class="fas fa-bell" style="color: var(--slate-500); font-size: 18px;"></i>
-                        <div class="notification-badge" id="notify-badge">0</div>
+                        <div class="notification-badge" id="notify-badge">1</div>
                     </div>
                     
                     <div class="notification-dropdown" id="notification-dropdown">
                         <div class="notify-header">
-                            <span>Notifications</span>
+                            <h3>Notifications</h3>
+                            <span class="notify-action">Clear All</span>
                         </div>
-                        <div id="notify-list">
+                        <div class="notify-list" id="notify-list">
                              <!-- Demo Items -->
                              <div class="notify-item info">
                                 <div class="notify-icon"><i class="fas fa-info"></i></div>
@@ -822,7 +66,7 @@
                     </div>
                 </div>
 
-                <div class="user-profile">
+                <div class="user-profile" onclick="openProfileDrawer()" style="cursor: pointer;">
                     <div class="profile-avatar" style="background: var(--blue);">FS</div>
                 </div>
             </div>
@@ -841,19 +85,19 @@
                 </div>
                 <nav class="sidebar-nav">
                     <div class="nav-section">
-                        <div class="nav-label">Field Operations</div>
-                        <a class="nav-link active" id="sidebar-home" onclick="navigateTo('home')"><i class="fas fa-home"></i> <span>Site Dashboard</span></a>
-                        <a class="nav-link" id="sidebar-tasks" onclick="navigateTo('tasks')"><i class="fas fa-list-check"></i> <span>Tasks</span></a>
+                        <div class="nav-label">Main</div>
+                        <a class="nav-link active" id="sidebar-home" onclick="navigateTo('home')"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+                        <a class="nav-link" id="sidebar-tasks" onclick="navigateTo('tasks', this)"><i class="fas fa-list-check"></i> <span>Tasks</span></a>
                         <a class="nav-link" onclick="openDrawer('report')"><i class="fas fa-camera"></i> <span>Daily Reports</span></a>
-                        <a class="nav-link" id="sidebar-assets" onclick="navigateTo('assets')"><i class="fas fa-truck-moving"></i> <span>Equipment</span></a>
+                        <a class="nav-link" id="sidebar-assets" onclick="navigateTo('assets', this)"><i class="fas fa-truck-moving"></i> <span>Equipment</span></a>
                     </div>
                 </nav>
             </aside>
 
             <main class="main-content">
                 <div class="page-header">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div>
+                    <div style="display: flex; justify-content: space-between; align-items: start; flex:1;">
+                        <div style="width:100%;">
                             <h1 class="page-title">CEN-01 Unilia Library</h1>
                             <div class="context-strip">
                                 <span>Sat, Jan 03</span>
@@ -915,73 +159,58 @@
                                 <tbody>
                                     <tr>
                                         <td style="color: var(--slate-500);">14:30</td>
-                                        <td style="font-weight: 600;"><i class="fas fa-truck"
-                                                style="color: var(--emerald); margin-right: 6px;"></i> Delivery</td>
-                                        <td>15 Bags Cement</td>
-                                        <td><span class="gps-badge" style="font-size: 9px; padding: 2px 4px;">-13.98,
-                                                33.78</span></td>
-                                        <td><span class="status active">Synced</span></td>
+                                        <td><strong>Material</strong></td>
+                                        <td>Cement Received (15 Bags)</td>
+                                        <td style="font-family:'JetBrains Mono'; font-size:11px;">-13.98, 33.78</td>
+                                        <td><span class="status active"><i class="fas fa-check"></i> Verified</span></td>
                                     </tr>
                                     <tr>
-                                        <td style="color: var(--slate-500);">12:15</td>
-                                        <td style="font-weight: 600;"><i class="fas fa-camera"
-                                                style="color: var(--blue); margin-right: 6px;"></i> Progress</td>
-                                        <td>Foundation Trench (15m)</td>
-                                        <td><span class="gps-badge" style="font-size: 9px; padding: 2px 4px;">-13.98,
-                                                33.78</span></td>
-                                        <td><span class="status active">Synced</span></td>
+                                        <td style="color: var(--slate-500);">10:15</td>
+                                        <td><strong>Inspection</strong></td>
+                                        <td>Foundation Trench Checked</td>
+                                        <td style="font-family:'JetBrains Mono'; font-size:11px;">-13.98, 33.78</td>
+                                        <td><span class="status active"><i class="fas fa-check"></i> Valid</span></td>
                                     </tr>
                                     <tr>
-                                        <td style="color: var(--slate-500);">08:00</td>
-                                        <td style="font-weight: 600;"><i class="fas fa-users"
-                                                style="color: var(--slate-600); margin-right: 6px;"></i> Labor</td>
-                                        <td>Attendance Check</td>
-                                        <td><span class="gps-badge" style="font-size: 9px; padding: 2px 4px;">-13.98,
-                                                33.78</span></td>
-                                        <td><span class="status active">Synced</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div> <!-- End view-home -->
-
-                    <div id="view-tasks" class="view-section" style="display:none; animation: fadeIn 0.3s ease;">
-                        <div class="data-card">
-                            <div class="data-card-header">
-                                <div class="card-title">Assigned Tasks</div>
-                            </div>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div style="font-weight:700;">Foundation Trenches</div>
-                                            <div style="font-size:11px; color:var(--slate-500);">Sector A-C</div>
-                                        </td>
-                                        <td><span class="status active">In Progress</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div style="font-weight:700;">Rebar Assembly</div>
-                                            <div style="font-size:11px; color:var(--slate-500);">Preparation</div>
-                                        </td>
-                                        <td><span class="status review">Pending</span></td>
+                                        <td style="color: var(--slate-500);">07:30</td>
+                                        <td><strong>Attendance</strong></td>
+                                        <td>Morning Roll Call (14 pax)</td>
+                                        <td style="font-family:'JetBrains Mono'; font-size:11px;">-13.98, 33.78</td>
+                                        <td><span class="status active"><i class="fas fa-check"></i> Valid</span></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div id="view-assets" class="view-section" style="display:none; animation: fadeIn 0.3s ease;">
-                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
-                            <div class="stat-card">
-                                <div class="stat-label">Stock</div>
-                                <div class="stat-value">45</div>
-                                <div class="stat-sub">Cement Bags</div>
+                    <div id="view-tasks" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header"><div class="card-title">Assigned Tasks</div></div>
+                            <!-- Mock Content -->
+                            <div style="padding: 16px;">
+                                <div style="border-bottom: 1px solid var(--slate-100); padding-bottom: 12px; margin-bottom: 12px;">
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Excavate Trench A4</div>
+                                    <div style="font-size: 12px; color: var(--slate-500);">Due: Today | Assigned by A. Kanjira</div>
+                                    <div style="margin-top: 8px;"><span class="status active">In Progress</span></div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Receive Cement Delivery</div>
+                                    <div style="font-size: 12px; color: var(--slate-500);">Due: 14:00 | Vendor: Malawi Cement</div>
+                                    <div style="margin-top: 8px;"><span class="status completed">Completed</span></div>
+                                </div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-label">Equipment</div>
-                                <div class="stat-value">3</div>
-                                <div class="stat-sub">Active Units</div>
+                        </div>
+                    </div>
+                     <div id="view-assets" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header"><div class="card-title">On-Site Equipment</div></div>
+                            <!-- Mock Content -->
+                             <div style="padding: 16px;">
+                                <div style="border-bottom: 1px solid var(--slate-100); padding-bottom: 12px; margin-bottom: 12px;">
+                                    <div style="font-weight: 600; margin-bottom: 4px;">CAT-320 Excavator</div>
+                                    <div style="font-size: 12px; color: var(--emerald);">Operational</div>
+                                    <div style="font-size: 11px; margin-top: 4px;">Hours: 4.5 hrs today</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -989,347 +218,50 @@
                 </div>
             </main>
         </div>
-
+        
+        <!-- Bottom Nav for Mobile -->
         <nav class="bottom-nav">
-            <a onclick="navigateTo('home')" class="nav-item active" id="nav-home">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
+            <a class="nav-item active" id="nav-home" onclick="navigateTo('home')">
+                <i class="fas fa-home"></i> <span>Home</span>
             </a>
-            <a onclick="navigateTo('tasks')" class="nav-item" id="nav-tasks">
-                <i class="fas fa-list-check"></i>
-                <span>Tasks</span>
+            <a class="nav-item" id="nav-tasks" onclick="navigateTo('tasks')">
+                <i class="fas fa-tasks"></i> <span>Tasks</span>
             </a>
-            <div class="nav-item" onclick="openDrawer('report')">
-                <div class="nav-fab">
-                    <i class="fas fa-plus" style="margin: 0; font-size: 24px;"></i>
-                </div>
+            <div class="nav-fab" onclick="openDrawer('report')">
+                <i class="fas fa-plus"></i>
             </div>
-            <a onclick="navigateTo('assets')" class="nav-item" id="nav-assets">
-                <i class="fas fa-truck-moving"></i>
-                <span>Assets</span>
+            <a class="nav-item" id="nav-assets" onclick="navigateTo('assets')">
+                <i class="fas fa-truck"></i> <span>Assets</span>
             </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
+            <a class="nav-item" onclick="openProfileDrawer()">
+                <i class="fas fa-user"></i> <span>Profile</span>
             </a>
         </nav>
-
     </div>
 
+    <!-- Main Drawer -->
     <div class="drawer-overlay" id="drawer-overlay">
         <div class="drawer" onclick="event.stopPropagation()">
-            <div class="drawer-handle"></div>
             <div class="drawer-header">
                 <div>
-                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px;">Current Site</div>
-                    <div style="font-size: 14px; font-weight: 700; color: var(--slate-900); display: flex; align-items: center; gap: 6px;">
-                        CEN-01 Unilia Library <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--slate-400);"></i>
-                    </div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;" id="d-sub">Data Entry</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
+                        id="d-title">Title</div>
                 </div>
-                
-                <div class="notification-wrapper">
-                    <div class="icon-btn" onclick="toggleNotifications()" style="width: 36px; height: 36px; border-radius: 50%; background: white; border: 1px solid var(--slate-200); display: flex; align-items: center; justify-content: center; color: var(--slate-600); box-shadow: 0 1px 2px rgba(0,0,0,0.05); position:relative; cursor:pointer;">
-                        <i class="fas fa-bell"></i>
-                         <div class="notification-badge" id="notify-badge">0</div>
-                    </div>
-                     <div class="notification-dropdown" id="notify-dropdown" style="right: auto; left: 50%; transform: translateX(-85%); margin-top:8px; width:280px;">
-                        <div class="notify-header">
-                            <span>Notifications</span>
-                        </div>
-                        <div id="notify-list"></div>
-                    </div>
+                <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+                    <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
                 </div>
             </div>
+
             <div class="drawer-content" id="d-body">
+            </div>
+
+            <div class="drawer-footer" id="d-footer">
             </div>
         </div>
     </div>
 
-    <script>
-        function navigateTo(viewId) {
-            // Hide all views
-            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-            const targetView = document.getElementById('view-' + viewId);
-            if (targetView) targetView.style.display = 'block';
-
-            // Update Bottom Nav
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navItem = document.getElementById('nav-' + viewId);
-            if (navItem) navItem.classList.add('active');
-
-            // Update Sidebar
-            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-            const sidebarItem = document.getElementById('sidebar-' + viewId);
-            if (sidebarItem) sidebarItem.classList.add('active');
-        }
-
-        // --- DRAWER LOGIC ---
-        function openDrawer(type) {
-            const overlay = document.getElementById('drawer-overlay');
-            const title = document.getElementById('d-title');
-            const body = document.getElementById('d-body');
-
-            overlay.classList.add('show');
-
-            if (type === 'report') {
-                title.innerText = "Daily Site Report";
-                body.innerHTML = `
-            <!-- WIZARD HEADER -->
-            <div class="step-indicator">
-                <div class="step-dot active" id="dot-1"></div>
-                <div class="step-dot" id="dot-2"></div>
-                <div class="step-dot" id="dot-3"></div>
-                <div class="step-dot" id="dot-4"></div>
-                <div class="step-dot" id="dot-5"></div>
-            </div>
-
-            <!-- STEP 1: PROGRESS -->
-            <div class="wizard-step active" id="step-1">
-                <div class="form-group">
-                    <label class="form-label">Step 1: Work Progress</label>
-                    <textarea class="form-input" rows="5" placeholder="Detailed description of works (e.g., Excavated trenches A1-A4)..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Completion Estimate (%)</label>
-                    <input type="range" style="width: 100%; margin-top: 8px;" oninput="document.getElementById('pct-val').innerText = this.value + '%'">
-                    <div style="text-align: right; font-weight: 700; color: var(--orange);" id="pct-val">50%</div>
-                </div>
-            </div>
-
-            <!-- STEP 2: RESOURCES -->
-            <div class="wizard-step" id="step-2">
-                <label class="form-label">Step 2: Material Usage</label>
-                <div class="form-group" style="background:var(--slate-50); padding:8px; border-radius:6px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Cement (Bags)</span><input type="number" class="form-input" style="width:60px; padding:4px;" value="0"></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Sand (Tons)</span><input type="number" class="form-input" style="width:60px; padding:4px;" value="0"></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Aggregates</span><input type="number" class="form-input" style="width:60px; padding:4px;" value="0"></div>
-                </div>
-                <label class="form-label">Equipment Hours</label>
-                <div class="form-group" style="background:var(--slate-50); padding:8px; border-radius:6px;">
-                     <div style="font-size:11px; color:var(--slate-500); margin-bottom:4px;">Excavator (CAT-320)</div>
-                     <input type="number" class="form-input" placeholder="Hours Run">
-                </div>
-            </div>
-
-            <!-- STEP 3: TEAM -->
-            <div class="wizard-step" id="step-3">
-                 <label class="form-label">Step 3: Labor Attendance</label>
-                 <div class="form-group">
-                    <label class="form-label">Skilled Labor</label>
-                    <input type="number" class="form-input" value="4">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">General Labor</label>
-                    <input type="number" class="form-input" value="12">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Safety Incident?</label>
-                    <select class="form-input"><option>No Incidents</option><option>Minor Injury</option><option>Near Miss</option></select>
-                </div>
-            </div>
-
-            <!-- STEP 4: CONDITIONS -->
-            <div class="wizard-step" id="step-4">
-                 <label class="form-label">Step 4: Site Conditions</label>
-                 <div class="form-group">
-                    <label class="form-label">Weather</label>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-secondary active" style="flex:1;">Sunny</button>
-                        <button class="btn btn-secondary" style="flex:1;">Rain</button>
-                        <button class="btn btn-secondary" style="flex:1;">Cloudy</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Delays / Issues</label>
-                    <textarea class="form-input" rows="3" placeholder="Any blockers?"></textarea>
-                </div>
-            </div>
-
-            <!-- STEP 5: VERIFY -->
-            <div class="wizard-step" id="step-5">
-                 <label class="form-label">Step 5: Validation</label>
-                 <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;" id="gps-status-box">
-                    <span style="font-weight: 600; color: var(--slate-600); font-size: 12px;">GPS Check</span>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="btn btn-secondary" style="padding: 2px 6px; font-size:9px; height:20px;" onclick="toggleGPSFail()">Simulate Error</button>
-                        <span class="gps-badge" id="gps-badge"><i class="fas fa-check"></i> -13.98, 33.78</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Photo Evidence</label>
-                    <div class="photo-zone" onclick="alert('Camera Launched')">
-                        <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
-                        <div style="font-weight: 600;">Tap to Capture</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NAVIGATION -->
-            <div class="wizard-nav">
-                <button class="btn btn-secondary" id="prev-btn" style="visibility:hidden;" onclick="changeStep(-1)">Back</button>
-                <button class="btn btn-primary" id="next-btn" onclick="changeStep(1)">Next: Resources</button>
-                <button class="btn btn-primary" id="submit-btn" style="display:none;" onclick="submitReport()">Submit Report</button>
-            </div>
-        `;
-            } else if (type === 'material') {
-                title.innerText = "Material Log";
-                body.innerHTML = `
-            <div class="form-group">
-                <label class="form-label">Action Type</label>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-primary" style="flex:1;">Usage (Consumed)</button>
-                    <button class="btn btn-secondary" style="flex:1;">Delivery (Received)</button>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Material Category</label>
-                <select class="form-input"><option>Cement (Bags)</option><option>Sand (Tons)</option></select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Quantity</label>
-                <input type="number" class="form-input" placeholder="0">
-            </div>
-            <button class="btn btn-primary" onclick="closeDrawer()">Save Record</button>
-        `;
-            } else if (type === 'attendance') {
-                title.innerText = "Worker Attendance";
-                body.innerHTML = `
-            <div class="form-group"><label class="form-label">General Labor</label><input type="number" class="form-input" value="12"></div>
-            <div class="form-group"><label class="form-label">Skilled Labor</label><input type="number" class="form-input" value="2"></div>
-            <div class="form-group"><label class="form-label">Absentee Notes</label><input type="text" class="form-input" placeholder="Name/Reason"></div>
-            <button class="btn btn-primary" onclick="closeDrawer()">Update Register</button>
-        `;
-            } else if (type === 'incident') {
-                title.innerText = "Report Incident";
-                body.innerHTML = `
-            <div style="background: #FEF2F2; color: #B91C1C; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 16px;">
-                <i class="fas fa-triangle-exclamation"></i> This will immediately alert the Project Manager and Safety Officer.
-            </div>
-            <div class="form-group"><label class="form-label">Type</label><select class="form-input"><option>Injury</option><option>Near Miss</option><option>Property Damage</option></select></div>
-            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" rows="3"></textarea></div>
-            <div class="form-group"><label class="form-label">Witnesses</label><input class="form-input" type="text" placeholder="Names / Contact"></div>
-            <div class="photo-zone"><i class="fas fa-camera"></i> Capture Scene</div>
-            <button class="btn btn-primary" style="background: var(--red); border-color: var(--red);" onclick="closeDrawer()">Submit Alert</button>
-        `;
-            }
-        }
-
-        function closeDrawer() {
-            document.getElementById('drawer-overlay').classList.remove('show');
-        }
-
-        // FR-14: GPS Validation Logic
-        let gpsFailMode = false;
-
-        function toggleGPSFail() {
-            gpsFailMode = !gpsFailMode;
-            const badge = document.getElementById('gps-badge');
-            
-            if(gpsFailMode) {
-                badge.style.background = '#FEE2E2';
-                badge.style.color = '#991B1B';
-                badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> No Signal';
-            } else {
-                badge.style.background = '#DCFCE7';
-                badge.style.color = '#166534';
-                badge.innerHTML = '<i class="fas fa-check"></i> -13.98, 33.78';
-            }
-        }
-
-        function submitReport() {
-            if(gpsFailMode) {
-                showNotification('error', 'GPS Validation Failed', 'Coordinates are missing or outside project boundaries. Submission Rejected.');
-            } else {
-                showNotification('success', 'Report Submitted', 'Daily log uploaded securely with verified geotag.');
-                closeDrawer();
-            }
-        }
-
-        // Wizard Logic
-        let currentStep = 1;
-        const totalSteps = 5;
-
-        function changeStep(dir) {
-            // Validate before moving next? (Skip for prototype)
-            
-            // Hide current
-            document.getElementById('step-' + currentStep).classList.remove('active');
-            document.getElementById('dot-' + currentStep).classList.remove('active');
-            if(dir > 0) document.getElementById('dot-' + currentStep).classList.add('completed');
-            
-            currentStep += dir;
-            
-            // Show new
-            document.getElementById('step-' + currentStep).classList.add('active');
-            document.getElementById('dot-' + currentStep).classList.add('active');
-
-            // Update Buttons
-            const prev = document.getElementById('prev-btn');
-            const next = document.getElementById('next-btn');
-            const sub = document.getElementById('submit-btn');
-
-            if(currentStep === 1) prev.style.visibility = 'hidden';
-            else prev.style.visibility = 'visible';
-
-            if(currentStep === totalSteps) {
-                next.style.display = 'none';
-                sub.style.display = 'block';
-            } else {
-                next.style.display = 'block';
-                sub.style.display = 'none';
-                
-                // Dynamic button text
-                const labels = ['', 'Resources', 'Team', 'Conditions', 'Verify'];
-                next.innerText = 'Next: ' + labels[currentStep];
-            }
-        }
-
-        // --- NOTIFICATION LOGIC ---
-        let notificationCount = 3; 
-        
-        function updateBadge() {
-            const badge = document.getElementById('notify-badge');
-            if(notificationCount > 0) {
-                badge.classList.add('active');
-                badge.innerText = notificationCount > 10 ? '10+' : notificationCount;
-            } else {
-                badge.classList.remove('active');
-            }
-        }
-        
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notify-dropdown');
-            dropdown.classList.toggle('show');
-            
-            const list = document.getElementById('notify-list');
-            if(list.children.length === 0) {
-                list.innerHTML = `
-                    <div class="notify-item unread">
-                        <div class="notify-icon" style="background:#DBEAFE; color:#1E40AF;"><i class="fas fa-tasks"></i></div>
-                        <div class="notify-content">
-                            <div class="notify-title">New Task Assigned</div>
-                            <div class="notify-desc">PM assigned "Pour Concrete" to you.</div>
-                            <div class="notify-time">10 mins ago</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.notification-wrapper');
-            if (!wrapper.contains(e.target)) {
-               document.getElementById('notify-dropdown').classList.remove('show');
-            }
-        });
-        
-        // Init
-        updateBadge();
-    </script>
-
-    <!-- User Profile Drawer -->
+    <!-- Profile Drawer -->
     <div class="drawer-overlay" id="profile-overlay">
         <div class="drawer">
             <div class="drawer-header">
@@ -1338,90 +270,21 @@
             </div>
             <div class="drawer-content">
                 <div style="padding: 24px; text-align: center; border-bottom: 1px solid var(--slate-200);">
-                    <div style="width: 80px; height: 80px; background: var(--orange); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 16px auto;">FS</div>
-                    <h2 style="margin-bottom: 4px;">Field Sup. One</h2>
+                    <div style="width: 80px; height: 80px; background: var(--blue); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 16px auto;">FS</div>
+                    <h2 style="margin-bottom: 4px;">John Banda</h2>
                     <p style="color: var(--slate-500);">Field Supervisor</p>
                 </div>
                 <div style="padding: 24px;">
-                    <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Account Settings</h4>
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-input" value="fs.one@mkaka.com" readonly>
-                    </div>
                      <div style="margin-top: 32px;">
-                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--slate-200);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Global Notification Modal -->
-    <div class="modal-overlay" id="notificationOverlay">
-        <div class="notification-modal">
-            <div class="modal-content">
-                <div class="modal-icon" id="modalIcon"><i class="fas fa-check"></i></div>
-                <h3 class="modal-title" id="modalTitle">Success</h3>
-                <p class="modal-message" id="modalMessage">Operation completed successfully.</p>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="closeNotification()">Dismiss</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function openProfileDrawer() {
-            document.getElementById('profile-overlay').classList.add('show');
-        }
-        function closeProfileDrawer() {
-            document.getElementById('profile-overlay').classList.remove('show');
-        }
-        document.querySelectorAll('.user-profile').forEach(el => {
-            el.addEventListener('click', openProfileDrawer);
-        });
-
-        function showNotification(type, title, message) {
-            const overlay = document.getElementById('notificationOverlay');
-            const icon = document.getElementById('modalIcon');
-            const titleEl = document.getElementById('modalTitle');
-            const msgEl = document.getElementById('modalMessage');
-
-            overlay.classList.add('active');
-            titleEl.textContent = title;
-            msgEl.textContent = message;
-
-            icon.className = 'modal-icon ' + type;
-            icon.innerHTML = type === 'success' ? '<i class="fas fa-check"></i>' :
-                            type === 'error' ? '<i class="fas fa-times"></i>' :
-                            '<i class="fas fa-info"></i>';
-        }
-
-        function closeNotification() {
-            document.getElementById('notificationOverlay').classList.remove('active');
-        }
-    </script>
-    <script>
-        // --- NOTIFICATION LOGIC ---
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notification-dropdown');
-            dropdown.classList.toggle('show');
-            
-            // Close on click outside
-            if (dropdown.classList.contains('show')) {
-                document.addEventListener('click', closeDropdownOutside);
-            } else {
-                document.removeEventListener('click', closeDropdownOutside);
-            }
-        }
-
-        function closeDropdownOutside(e) {
-            const wrapper = document.querySelector('.notification-wrapper');
-            if (!wrapper.contains(e.target)) {
-                document.getElementById('notification-dropdown').classList.remove('show');
-                document.removeEventListener('click', closeDropdownOutside);
-            }
-        }
-    </script>
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/pages/field.js"></script>
 </body>
 </html>

@@ -9,697 +9,18 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* --- 1. ENTERPRISE DESIGN TOKENS (UNIFIED SYSTEM) --- */
-        :root {
-            --orange: #F97316;
-            --orange-light: #FFF7ED;
-            --slate-50: #F8FAFC;
-            --slate-100: #F1F5F9;
-            --slate-200: #E2E8F0;
-            --slate-300: #CBD5E1;
-            --slate-400: #94A3B8;
-            --slate-500: #64748B;
-            --slate-600: #475569;
-            --slate-700: #334155;
-            --slate-800: #1E293B;
-            --slate-900: #0F172A;
-            --white: #FFFFFF;
-
-            --emerald: #10B981;
-            --red: #EF4444;
-            --blue: #3B82F6;
-            --amber: #F59E0B;
-            --indigo: #6366F1;
-
-            --radius: 8px;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
-            --transition: all 0.2s ease-in-out;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--slate-50);
-            color: var(--slate-900);
-            overflow: hidden;
-            font-size: 13px;
-        }
-
-        /* --- 2. LAYOUT --- */
-        .app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .top-bar {
-            height: 50px;
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 40;
-        }
-
-        .workspace {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid var(--slate-200);
-            display: flex;
-            flex-direction: column;
-            z-index: 30;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        /* --- 3. SIDEBAR --- */
-        .logo {
-            font-weight: 800;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--slate-900);
-        }
-
-        .logo i {
-            color: var(--orange);
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--slate-200);
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-
-        .profile-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--slate-800);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .profile-info {
-            flex: 1;
-        }
-
-        .profile-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--slate-800);
-        }
-
-        .profile-role {
-            font-size: 11px;
-            color: var(--slate-500);
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 12px;
-        }
-
-        .nav-section {
-            margin-bottom: 24px;
-        }
-
-        .nav-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--slate-400);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
-            padding-left: 10px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            color: var(--slate-600);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: var(--transition);
-            margin-bottom: 2px;
-            cursor: pointer;
-        }
-
-        .nav-link:hover {
-            background: var(--slate-100);
-            color: var(--slate-900);
-        }
-
-        .nav-link.active {
-            background: var(--orange-light);
-            color: var(--orange);
-            font-weight: 600;
-        }
-
-        .nav-link.active i {
-            color: var(--orange);
-        }
-
-        .nav-link i {
-            width: 18px;
-            text-align: center;
-        }
-
-        .nav-badge {
-            margin-left: auto;
-            background: var(--red);
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-        }
-            /* --- NOTIFICATION SYSTEM (Refined) --- */
-    .notification-wrapper { position: relative; display: inline-block; }
-    .notification-badge {
-        position: absolute;
-        top: -5px; right: -5px;
-        background: var(--red); color: white;
-        font-size: 9px; font-weight: 800;
-        height: 16px; min-width: 16px;
-        padding: 0 4px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        border: 2px solid white;
-        opacity: 0; transform: scale(0.8);
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .notification-badge.active { opacity: 1; transform: scale(1); }
-    .notification-dropdown {
-        position: absolute; top: 100%; right: 0;
-        width: 320px; background: white;
-        border: 1px solid var(--slate-200); border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        z-index: 1000; margin-top: 12px;
-        display: none; overflow: hidden;
-        animation: slideDown 0.2s ease-out;
-    }
-    .notification-dropdown.show { display: block; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .notify-header { padding: 12px 16px; border-bottom: 1px solid var(--slate-100); font-weight: 700; color: var(--slate-800); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-    /* Toast Card Item Style - Updated */
-    .notify-item {
-        background: white;
-        border-left: 4px solid var(--slate-300);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        padding: 12px;
-        border-radius: 6px;
-        display: flex;
-        gap: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin: 8px 12px;
-    }
-
-    .notify-item:hover { transform: translateX(2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
     
-    .notify-item.success { border-left-color: var(--emerald); }
-    .notify-item.error { border-left-color: var(--red); }
-    .notify-item.info { border-left-color: var(--blue); }
-    .notify-item.unread { background: white; }
-
-    .notify-icon {
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px;
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-    
-    .notify-item.success .notify-icon { background: #DCFCE7; color: var(--emerald); }
-    .notify-item.error .notify-icon { background: #FEE2E2; color: var(--red); }
-    .notify-item.info .notify-icon { background: #DBEAFE; color: var(--blue); }
-
-    .notify-content { flex: 1; }
-    .notify-title { font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 2px; }
-    .notify-msg { font-size: 11px; color: var(--slate-600); line-height: 1.4; }
-    .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; text-align: right; }
-
-        /* --- 4. CONTENT --- */
-        .page-header {
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            padding: 20px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .breadcrumb {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--slate-500);
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--slate-900);
-            margin-bottom: 4px;
-        }
-
-        .context-strip {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--slate-500);
-            font-weight: 500;
-        }
-
-        .context-dot {
-            width: 3px;
-            height: 3px;
-            background: var(--slate-300);
-            border-radius: 50%;
-        }
-
-        .context-value {
-            color: var(--slate-700);
-            font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .content {
-            padding: 24px 32px;
-            max-width: 1800px;
-        }
-
-        /* Components */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: white;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            padding: 16px;
-            transition: var(--transition);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: var(--slate-200);
-        }
-
-        .stat-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--slate-900);
-            font-family: 'Inter', sans-serif;
-            letter-spacing: -0.5px;
-        }
-
-        .stat-sub {
-            font-size: 11px;
-            margin-top: 4px;
-            color: var(--slate-500);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .data-card {
-            background: white;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .data-card-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title {
-            font-weight: 700;
-            color: var(--slate-900);
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            background: var(--slate-50);
-            padding: 12px 20px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--slate-200);
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--slate-100);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        tbody tr:hover {
-            background: var(--slate-50);
-        }
-
-        tbody td {
-            padding: 12px 20px;
-            font-size: 13px;
-            color: var(--slate-700);
-            vertical-align: middle;
-        }
-
-        .mono-val {
-            font-family: 'JetBrains Mono', monospace;
-            letter-spacing: -0.5px;
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-
-        .status.active {
-            background: #DCFCE7;
-            color: #166534;
-        }
-
-        .status.maintenance {
-            background: #FEF3C7;
-            color: #92400E;
-        }
-
-        .status.alert {
-            background: #FEE2E2;
-            color: #991B1B;
-        }
-
-        .status.transit {
-            background: #E0E7FF;
-            color: #3730A3;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-            border: 1px solid transparent;
-        }
-
-        .btn-primary {
-            background: var(--slate-900);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--slate-800);
-            transform: translateY(-1px);
-        }
-
-        .btn-action {
-            background: var(--orange);
-            color: white;
-        }
-
-        .btn-action:hover {
-            background: #ea580c;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--slate-700);
-            border-color: var(--slate-200);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--slate-300);
-            background: var(--slate-50);
-        }
-
-        /* --- 5. DRAWER --- */
-        .drawer-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(2px);
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .drawer-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .drawer {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 600px;
-            height: 100%;
-            background: white;
-            box-shadow: var(--shadow-drawer);
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .drawer-overlay.show .drawer {
-            transform: translateX(0);
-        }
-
-        .drawer-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            background: white;
-        }
-
-        .drawer-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            background: var(--slate-50);
-        }
-
-        .drawer-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--slate-200);
-            background: white;
-            display: flex;
-            gap: 12px;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 24px;
-            border-bottom: 1px solid var(--slate-200);
-            margin-bottom: 24px;
-        }
-
-        .tab {
-            padding: 0 0 12px 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--slate-500);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: var(--transition);
-        }
-
-        .tab:hover {
-            color: var(--slate-800);
-        }
-
-        .tab.active {
-            color: var(--orange);
-            border-bottom-color: var(--orange);
-        }
-
-        /* View Switching */
-        .view-section {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Forms */
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--slate-500);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--slate-300);
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 13px;
-        }
-
-        /* Specific: GPS Badge */
-        .gps-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--slate-800);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-family: 'JetBrains Mono';
-        }
-
-        /* --- 7. GLOBAL NOTIFICATIONS --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .notification-modal {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 400px;
-            overflow: hidden;
-            transform: scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .modal-overlay.active .notification-modal { transform: scale(1); }
-        .modal-content { padding: 32px; text-align: center; }
-        .modal-icon {
-            width: 64px; height: 64px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px auto; font-size: 32px;
-        }
-        .modal-icon.success { background: #DCFCE7; color: #166534; }
-        .modal-icon.error { background: #FEE2E2; color: #991B1B; }
-        .modal-icon.info { background: #DBEAFE; color: #1E40AF; }
-        .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
-        .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-    </style>
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/cards.css">
+    <link rel="stylesheet" href="css/components/tables.css">
+    <link rel="stylesheet" href="css/components/drawer.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/pages/fleet.css">
 </head>
 
 <body>
@@ -708,28 +29,31 @@
         <header class="top-bar">
             <div class="logo">
                 <i class="fas fa-truck-moving" style="color: var(--orange);"></i>
-                <span style="font-weight: 800; font-size: 16px; margin-left: 10px;">MKAKA FLEET</span>
+                <span>MKAKA FLEET</span>
             </div>
-            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
-                <div
-                    style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search assets...">
+            </div>
+            <div class="header-tools">
+                <div class="header-alert">
                     <i class="fas fa-shield-halved"></i> 1 GPS Violation
                 </div>
                 <div class="notification-wrapper">
-                        <div class="icon-btn" onclick="toggleNotifications()" style="cursor: pointer; position: relative;">
-                            <i class="fas fa-bell" style="color: var(--slate-500); font-size: 18px;"></i>
-                            <div class="notification-badge" id="notify-badge">0</div>
-                        </div>
-                        
-                        <!-- Dropdown -->
-                        <div class="notification-dropdown" id="notify-dropdown">
-                            <div class="notify-header">
-                                <span>Notifications</span>
-                            </div>
-                            <div id="notify-list"></div>
-                        </div>
+                    <div class="icon-btn" onclick="toggleNotifications()">
+                        <i class="fas fa-bell"></i>
+                        <div class="notification-badge" id="notify-badge">0</div>
                     </div>
-                <div class="user-profile">
+                    
+                    <!-- Dropdown -->
+                    <div class="notification-dropdown" id="notify-dropdown">
+                        <div class="notify-header">
+                            <span>Notifications</span>
+                        </div>
+                        <div id="notify-list"></div>
+                    </div>
+                </div>
+                <div class="user-profile" onclick="openProfileDrawer()">
                     <div class="profile-avatar" style="background: var(--indigo);">EC</div>
                 </div>
             </div>
@@ -794,49 +118,24 @@
                         <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
                         <span id="header-breadcrumb">Dashboard</span>
                     </div>
-                    <div class="page-title-row">
+                    <div class="page-title-row" style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <h1 class="page-title" id="header-title">Fleet Overview</h1>
                             <div class="context-strip" id="header-context">
-                                <span class="context-value">45</span> Total Assets
-                                <div class="context-dot"></div>
-                                <span class="context-value" style="color: var(--emerald);">85% Available</span>
-                                <div class="context-dot"></div>
-                                <span style="color: var(--red); font-weight: 600;">1 Security Alert</span>
+                                <span class="context-value">45 Assets | 85% Utilization</span>
                             </div>
                         </div>
-                        <button class="btn btn-action" onclick="openDrawer('checkout')">
-                            <i class="fas fa-key"></i>
-                            <span>Assign Equipment</span>
-                        </button>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <!-- Search Bar -->
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Search...">
+                            </div>
+                            <button class="btn btn-primary" onclick="openDrawer('add_asset')"><i class="fas fa-plus"></i> New Asset</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="header-right">
-                <div style="display: flex; gap: 20px; align-items: center;">
-                    <div style="position: relative;">
-                        <input type="text" placeholder="Search assets..."
-                            style="padding: 8px 12px 8px 36px; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 13px; width: 220px; background: var(--slate-50);">
-                        <i class="fas fa-search"
-                            style="position: absolute; left: 12px; top: 10px; color: var(--slate-400); font-size: 13px;"></i>
-                    </div>
-                     <!-- Notification Wrapper -->
-                    <div class="notification-wrapper">
-                        <div class="icon-btn" onclick="toggleNotifications()" style="cursor: pointer; position: relative;">
-                            <i class="fas fa-bell" style="color: var(--slate-500); font-size: 18px;"></i>
-                            <div class="notification-badge" id="notify-badge">0</div>
-                        </div>
-                        
-                        <!-- Dropdown -->
-                        <div class="notification-dropdown" id="notify-dropdown">
-                            <div class="notify-header">
-                                <span>Notifications</span>
-                            </div>
-                            <div id="notify-list"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
                 <div class="content">
 
                     <div id="view-dashboard" class="view-section active">
@@ -871,7 +170,7 @@
                         <div class="data-card">
                             <div class="data-card-header">
                                 <div class="card-title">Real-Time Fleet Status</div>
-                                <button class="btn btn-secondary">Map View</button>
+                                <button class="btn btn-secondary" onclick="navigateTo('tracking')">Map View</button>
                             </div>
                             <table>
                                 <thead>
@@ -1002,34 +301,34 @@
                                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0.3; background-image: radial-gradient(#6B7280 1px, transparent 1px); background-size: 20px 20px;"></div>
                                 
                                 <!-- Asset Pin 1 -->
-                                <div style="position: absolute; top: 30%; left: 40%; transform: translate(-50%, -50%); text-align: center; cursor: pointer;" onclick="openDrawer('asset', 'EQP-045')">
-                                    <div style="background: var(--orange); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <div class="map-pin" style="top: 30%; left: 40%;" onclick="openDrawer('asset', 'EQP-045')">
+                                    <div class="pin-icon" style="background: var(--orange); color: white;">
                                         <i class="fas fa-truck-moving" style="font-size: 12px;"></i>
                                     </div>
-                                    <div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">EQP-045</div>
+                                    <div class="pin-label">EQP-045</div>
                                 </div>
 
                                 <!-- Asset Pin 2 -->
-                                <div style="position: absolute; top: 60%; left: 70%; transform: translate(-50%, -50%); text-align: center; cursor: pointer;" onclick="openDrawer('asset', 'EQP-012')">
-                                    <div style="background: var(--blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <div class="map-pin" style="top: 60%; left: 70%;" onclick="openDrawer('asset', 'EQP-012')">
+                                    <div class="pin-icon" style="background: var(--blue); color: white;">
                                         <i class="fas fa-truck" style="font-size: 12px;"></i>
                                     </div>
-                                    <div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">EQP-012</div>
+                                    <div class="pin-label">EQP-012</div>
                                 </div>
 
                                 <!-- Asset Pin 3 (Alert) -->
-                                <div style="position: absolute; top: 15%; left: 20%; transform: translate(-50%, -50%); text-align: center; cursor: pointer;">
-                                    <div style="background: var(--red); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <div class="map-pin" style="top: 15%; left: 20%;">
+                                    <div class="pin-icon" style="background: var(--red); color: white;">
                                         <i class="fas fa-exclamation" style="font-size: 12px;"></i>
                                     </div>
-                                    <div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); color: var(--red);">EQP-023</div>
+                                    <div class="pin-label" style="color: var(--red);">EQP-023</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div id="view-costs" class="view-section">
                         <div class="data-card">
-                            <div class="data-card-header">Cost Analysis</div>
+                            <div class="data-card-header"><div class="card-title">Cost Analysis</div></div>
                             <div style="padding:24px;">Cost Table Placeholder</div>
                         </div>
                     </div>
@@ -1065,7 +364,7 @@
                     </div>
                     <div id="view-operators" class="view-section">
                         <div class="data-card">
-                            <div class="data-card-header">Operator Management</div>
+                            <div class="data-card-header"><div class="card-title">Operator Management</div></div>
                             <div style="padding:24px;">Operator List Placeholder</div>
                         </div>
                     </div>
@@ -1075,6 +374,7 @@
         </div>
     </div>
 
+    <!-- Main Drawer -->
     <div class="drawer-overlay" id="drawer-overlay">
         <div class="drawer" onclick="event.stopPropagation()">
             <div class="drawer-header">
@@ -1095,196 +395,7 @@
         </div>
     </div>
 
-    <script>
-        // --- NAVIGATION LOGIC ---
-        const views = {
-            'dashboard': { title: 'Fleet Overview', context: '45 Assets | 85% Utilization' },
-            'registry': { title: 'Asset Registry', context: 'Master Database' },
-            'tracking': { title: 'GPS Tracking', context: 'Real-Time Locations' },
-            'maintenance': { title: 'Maintenance Schedule', context: 'Preventive & Corrective' },
-            'costs': { title: 'Fleet Costs', context: 'Operating & Repair Expenses' },
-            'utilization': { title: 'Utilization Analysis', context: 'Efficiency Reports' },
-            'operators': { title: 'Operator Management', context: 'Drivers & Licenses' }
-        };
-
-        function navigateTo(viewId, navElement) {
-            if (navElement) { document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active')); navElement.classList.add('active'); }
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-
-            const target = document.getElementById('view-' + viewId);
-            if (target) target.classList.add('active');
-            else document.getElementById('view-dashboard').classList.add('active');
-
-            if (views[viewId]) {
-                document.getElementById('header-title').innerText = views[viewId].title;
-                document.getElementById('header-breadcrumb').innerText = views[viewId].title;
-                document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
-            }
-        }
-
-        // --- DRAWER LOGIC ---
-        function openDrawer(type, id) {
-            const overlay = document.getElementById('drawer-overlay');
-            const title = document.getElementById('d-title');
-            const sub = document.getElementById('d-sub');
-            const body = document.getElementById('d-body');
-            const footer = document.getElementById('d-footer');
-
-            overlay.classList.add('show');
-
-            if (type === 'checkout') {
-                // --- CHECK-OUT ASSET ---
-                sub.innerText = "Operations";
-                title.innerText = "Assign Equipment";
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="form-group"><label class="form-label">Select Equipment</label><select class="form-input"><option>EQP-045 Excavator</option><option>EQP-012 Tipper</option></select></div>
-                <div class="form-group"><label class="form-label">Assign To (Project)</label><select class="form-input"><option>CEN-01 Unilia Library</option><option>MZ-05 Clinic</option></select></div>
-                <div class="form-group"><label class="form-label">Responsible User</label><select class="form-input"><option>John Banda (PM)</option><option>Peter Phiri</option></select></div>
-                <div class="form-group"><label class="form-label">Expected Return</label><input type="date" class="form-input"></div>
-            </div>
-            <div class="drawer-section" style="background: #F8FAFC;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 600; color: var(--slate-700);">GPS Validation</span>
-                    <span class="status active"><i class="fas fa-satellite-dish"></i> Signal Locked</span>
-                </div>
-                <div style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">Current Loc: -13.9626, 33.7741 (HQ Yard)</div>
-            </div>
-        `;
-                footer.innerHTML = `<button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button><button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Confirm Handover</button>`;
-
-            } else if (type === 'asset') {
-                // --- ASSET DETAILS ---
-                sub.innerText = "Registry";
-                title.innerText = id + ": Caterpillar 320D";
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
-                    <div><div class="stat-label">Serial Number</div><div class="mono-val">CAT-8892-XJ</div></div>
-                    <div><div class="stat-label">Purchase Date</div><div style="font-weight:600;">Jan 2024</div></div>
-                    <div><div class="stat-label">Hours</div><div class="mono-val">248 Hrs</div></div>
-                    <div><div class="stat-label">Status</div><span class="status active">In Use</span></div>
-                </div>
-            </div>
-            <div class="drawer-section">
-                <div class="stat-label" style="margin-bottom: 8px;">Maintenance History</div>
-                <table style="font-size: 11px;">
-                    <thead><tr><th>Date</th><th>Type</th><th>Cost</th></tr></thead>
-                    <tbody>
-                        <tr><td>Dec 10, 2025</td><td>Hydraulic Check</td><td>MWK 150,000</td></tr>
-                        <tr><td>Oct 05, 2025</td><td>500hr Service</td><td>MWK 450,000</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        `;
-                footer.innerHTML = `<button class="btn btn-secondary" style="width:100%" onclick="closeDrawer()">View Full History</button>`;
-
-            } else if (type === 'maintenance') {
-                // --- SCHEDULE MAINTENANCE ---
-                sub.innerText = "Service";
-                title.innerText = "Schedule Maintenance";
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="form-group"><label class="form-label">Equipment</label><select class="form-input"><option>EQP-045 Excavator</option></select></div>
-                <div class="form-group"><label class="form-label">Service Type</label><select class="form-input"><option>Preventive (Scheduled)</option><option>Corrective (Repair)</option></select></div>
-                <div class="form-group"><label class="form-label">Service Provider</label><input type="text" class="form-input" value="Malawi Equip. Services"></div>
-                <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input"></div>
-            </div>
-        `;
-                footer.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Create Work Order</button>`;
-            } else if (type === 'add_asset') {
-                // --- ADD NEW ASSET ---
-                sub.innerText = "Registry";
-                title.innerText = "Register New Asset";
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="form-group"><label class="form-label">Equipment Name</label><input type="text" class="form-input" placeholder="e.g. Komatsu Grader"></div>
-                <div class="form-group"><label class="form-label">Category</label><select class="form-input"><option>Heavy Machinery</option><option>Vehicle</option><option>Generator</option></select></div>
-                <div class="form-group"><label class="form-label">Serial Number</label><input type="text" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Purchase Cost (MWK)</label><input type="number" class="form-input"></div>
-            </div>
-        `;
-                footer.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Save to Registry</button>`;
-            }
-        }
-
-        function closeDrawer() { document.getElementById('drawer-overlay').classList.remove('show'); }
-        document.getElementById('drawer-overlay').addEventListener('click', (e) => { if (e.target.id === 'drawer-overlay') closeDrawer(); });
-        // --- NOTIFICATION LOGIC ---
-        let notificationCount = 1; 
-        
-        function updateBadge() {
-            const badge = document.getElementById('notify-badge');
-            if(notificationCount > 0) {
-                badge.classList.add('active');
-                badge.innerText = notificationCount > 10 ? '10+' : notificationCount;
-            } else {
-                badge.classList.remove('active');
-            }
-        }
-        
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notify-dropdown');
-            dropdown.classList.toggle('show');
-            const list = document.getElementById('notify-list');
-            if(list.children.length === 0) list.innerHTML = '<div class="notify-item unread"><div class="notify-icon"><i class="fas fa-tools"></i></div><div class="notify-content"><div class="notify-title">Maintenance Due</div><div class="notify-desc">Excavator EQP-045 due for service.</div></div></div>';
-        }
-        
-        document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.notification-wrapper');
-            if (!wrapper.contains(e.target)) document.getElementById('notify-dropdown').classList.remove('show');
-        });
-        updateBadge();
-    </script>
-
-
-<!-- Global Notification Modal -->
-<div class="modal-overlay" id="notificationOverlay">
-            <div class="modal-icon" id="modalIcon"><i class="fas fa-check"></i></div>
-            <h3 class="modal-title" id="modalTitle">Success</h3>
-            <p class="modal-message" id="modalMessage">Operation completed successfully.</p>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="closeNotification()">Dismiss</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function showNotification(type, title, message) {
-        const overlay = document.getElementById('notificationOverlay');
-        const icon = document.getElementById('modalIcon');
-        const titleEl = document.getElementById('modalTitle');
-        const msgEl = document.getElementById('modalMessage');
-
-        overlay.classList.add('active');
-        titleEl.textContent = title;
-        msgEl.textContent = message;
-
-        icon.className = 'modal-icon ' + type;
-        icon.innerHTML = type === 'success' ? '<i class="fas fa-check"></i>' :
-                        type === 'error' ? '<i class="fas fa-times"></i>' :
-                        '<i class="fas fa-info"></i>';
-    }
-
-    function closeNotification() {
-        document.getElementById('notificationOverlay').classList.remove('active');
-    }
-
-    // Wire up bell
-    document.addEventListener('DOMContentLoaded', () => {
-        const bell = document.querySelector('.fa-bell');
-        if(bell) {
-            bell.parentElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                showNotification('info', 'Notifications', 'No new alerts for Equipment Coordinator.');
-            });
-        }
-    });
-    </script>
-    
-    <!-- User Profile Drawer -->
+    <!-- Profile Drawer -->
     <div class="drawer-overlay" id="profile-overlay">
         <div class="drawer">
             <div class="drawer-header">
@@ -1293,34 +404,21 @@
             </div>
             <div class="drawer-content">
                 <div style="padding: 24px; text-align: center; border-bottom: 1px solid var(--slate-200);">
-                    <div style="width: 80px; height: 80px; background: var(--orange); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 16px auto;">EC</div>
-                    <h2 style="margin-bottom: 4px;">Equip. Coordinator</h2>
-                    <p style="color: var(--slate-500);">Logistics Department</p>
+                    <div style="width: 80px; height: 80px; background: var(--indigo); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 16px auto;">EC</div>
+                    <h2 style="margin-bottom: 4px;">Blessings Phiri</h2>
+                    <p style="color: var(--slate-500);">Equipment Coordinator</p>
                 </div>
-                <div style="padding: 24px;">
-                    <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Account Settings</h4>
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-input" value="logistics@mkaka.com" readonly>
-                    </div>
+                 <div style="padding: 24px;">
                      <div style="margin-top: 32px;">
-                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--slate-200);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        function openProfileDrawer() {
-            document.getElementById('profile-overlay').classList.add('show');
-        }
-        function closeProfileDrawer() {
-            document.getElementById('profile-overlay').classList.remove('show');
-        }
-        document.querySelectorAll('.user-profile').forEach(el => {
-            el.addEventListener('click', openProfileDrawer);
-        });
-    </script>
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/pages/fleet.js"></script>
 </body>
 </html>

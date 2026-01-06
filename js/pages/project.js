@@ -1,28 +1,27 @@
 /**
- * Dashboard Page Logic
+ * Project Manager Workspace Logic
  * Handles View Switching, Charts, Drawer Interaction, and Gantt
  */
 
 // --- IMPORTS ---
-import { notificationService } from '../services/notification.service.js';
+import { toastService } from '../services/toast.service.js';
 import { initGantt, switchGanttView, addTask } from '../features/gantt.js';
 import { showConfirmationModal } from '../features/modals.js';
 
 // --- GANTT BRIDGES ---
 export function addTaskToGantt() {
     const name = document.getElementById('gantt-name').value;
-// ... (rest same)
     const start = document.getElementById('gantt-start').value;
     const duration = document.getElementById('gantt-duration').value;
-    const unit = document.getElementById('gantt-unit').value; // New field
+    const unit = document.getElementById('gantt-unit').value;
 
     if(!name || !start || !duration) {
-        notificationService.add('error', 'Validation Error', 'Please fill all fields');
+        toastService.add('error', 'Validation Error', 'Please fill all fields');
         return;
     }
 
     addTask(name, start, duration, unit);
-    notificationService.add('success', 'Task Created', 'Gantt chart updated.');
+    toastService.add('success', 'Task Created', 'Gantt chart updated.');
     closeDrawer();
 }
 
@@ -30,7 +29,6 @@ export function setGanttView(mode) {
     switchGanttView(mode);
 }
 
-// ... rest of dashboard logic ...
 const views = {
     'portfolio': { title: 'Project Controls', context: '4 Active Projects' },
     'gantt': { title: 'Master Schedule', context: 'Timeline View (CEN-01 Focus)' },
@@ -157,7 +155,7 @@ export function openDrawer(id) {
     } else if (id === 'create_report') {
         if(dTitle) dTitle.innerText = "Generate New Report";
         if(dId) dId.innerText = "RPT-NEW";
-        if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer(); notificationService.add('success', 'Report Generated', 'PDF report has been created.');">Generate & Download</button>`;
+        if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer(); toastService.add('success', 'Report Generated', 'PDF report has been created.');">Generate & Download</button>`;
         dBody.innerHTML = `
             <div class="drawer-section">
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Report Title</label><input class="form-input" type="text" placeholder="e.g. Monthly Progress Report"></div>
@@ -192,7 +190,6 @@ export function openDrawer(id) {
                 <div class="form-group"><label class="form-label">Mitigation Strategy</label><input class="form-input" type="text" placeholder="Plan to reduce impact"></div>
             </div>`;
     } else if (id === 'request_budget') {
-        // ... (Omitting full copy for brevity, same pattern)
         if(dTitle) dTitle.innerText = "Budget Reallocation Request";
         if(dId) dId.innerText = "REQ-NEW";
         if(dFooter) dFooter.innerHTML = `<button class="btn btn-primary" style="width:100%" onclick="closeDrawer()">Submit Request</button>`;
@@ -229,10 +226,7 @@ export function openDrawer(id) {
                 <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Variation Amount (MWK)</label><input class="form-input" type="number" placeholder="5,000,000"></div>
                 <div class="form-group"><label class="form-label">Reason</label><textarea class="form-input" rows="3" placeholder="Explain cost overrun..."></textarea></div>
             </div>`;
-// --- GANTT & ACTIONS ---
-// (ganttTasks defined above)
 
-// (openDrawer update)
      } else if (id === 'gantt_add') {
         if(dTitle) dTitle.innerText = "Add Schedule Task";
         if(dId) dId.innerText = "TSK-NEW";
@@ -265,15 +259,6 @@ export function openDrawer(id) {
                 </div>
             </div>`;
     } else if (id === 'request_review') {
-// ...
-
-// (Initialization update)
-    // Init Logic
-    updateBudgetHealth();
-    // initGantt() is called in DOMContentLoaded at bottom, so we don't need renderGantt here.
-    
-    // Seed Dummy Notifications
-// ...
         if(dTitle) dTitle.innerText = "Review Request";
         if(dId) dId.innerText = "REQ-REVIEW";
         if(dFooter) dFooter.innerHTML = `
@@ -399,12 +384,8 @@ export function placePin(e) {
     document.getElementById('wiz-long').value = long;
 }
 
-// --- GANTT & ACTIONS ---
-// Gantt logic now in features/gantt.js
-// Bridges defined above.
-
 export function submitVariation() {
-    notificationService.add('success', 'Request Sent', 'Variation Request (VAR-REQ) forwarded to Finance Director.');
+    toastService.add('success', 'Request Sent', 'Variation Request (VAR-REQ) forwarded to Finance Director.');
     closeDrawer();
 }
 
@@ -432,15 +413,15 @@ export function showRejectReason() {
 export function submitRejection() {
     const reason = document.getElementById('reject-reason').value;
     if(!reason) {
-        notificationService.add('info', 'Input Required', 'Please provide a reason for rejection.');
+        toastService.add('info', 'Input Required', 'Please provide a reason for rejection.');
         return;
     }
-    notificationService.add('error', 'Request Rejected', 'The request has been returned to the originator.');
+    toastService.add('error', 'Request Rejected', 'The request has been returned to the originator.');
     closeDrawer();
 }
 
 export function approveRequest() {
-    notificationService.add('success', 'Request Approved', 'Budget transfer authorized and processed.');
+    toastService.add('success', 'Request Approved', 'Budget transfer authorized and processed.');
     closeDrawer();
 }
 
@@ -466,16 +447,14 @@ window.confirmAction = showConfirmationModal; // Expose as confirmAction
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // ...
     updateBudgetHealth();
     initGantt(); // New Init
 
-
     // Seed Dummy Notifications
     setTimeout(() => {
-        notificationService.add('info', 'System Update', 'Maintenance scheduled for tonight at 2 AM.');
-        notificationService.add('warning', 'Budget Alert', 'CEN-01 is approaching 90% budget utilization.');
-        notificationService.add('success', 'Report Generated', 'Weekly Progress Report is ready for review.');
+        toastService.add('info', 'System Update', 'Maintenance scheduled for tonight at 2 AM.');
+        toastService.add('warning', 'Budget Alert', 'CEN-01 is approaching 90% budget utilization.');
+        toastService.add('success', 'Report Generated', 'Weekly Progress Report is ready for review.');
     }, 500);
 });
 

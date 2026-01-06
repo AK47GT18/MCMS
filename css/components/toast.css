@@ -1,0 +1,90 @@
+/* Toast Notification Styles */
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none; /* Allow clicks through container */
+}
+
+.toast-item {
+    pointer-events: auto;
+    background: white;
+    min-width: 300px;
+    max-width: 400px;
+    padding: 16px;
+    border-radius: var(--radius, 8px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 4px solid transparent;
+}
+
+.toast-item.show {
+    transform: translateX(0);
+}
+
+.toast-item.leaving {
+    transform: translateX(120%);
+    opacity: 0;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--slate-900);
+    margin-bottom: 2px;
+}
+
+.toast-message {
+    font-size: 12px;
+    color: var(--slate-600);
+    line-height: 1.4;
+}
+
+.toast-close {
+    color: var(--slate-400);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 14px;
+    padding: 2px;
+}
+
+.toast-close:hover {
+    color: var(--slate-600);
+}
+
+/* Variants */
+.toast-success { border-left-color: var(--emerald); }
+.toast-success .toast-icon { background: #DCFCE7; color: var(--emerald); }
+
+.toast-error { border-left-color: var(--red); }
+.toast-error .toast-icon { background: #FEE2E2; color: var(--red); }
+
+.toast-info { border-left-color: var(--blue); }
+.toast-info .toast-icon { background: #DBEAFE; color: var(--blue); }
+
+.toast-warning { border-left-color: var(--amber, #F59E0B); }
+.toast-warning .toast-icon { background: #FEF3C7; color: var(--amber, #F59E0B); }

@@ -9,756 +9,18 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* --- 1. EXACT PM DASHBOARD DESIGN TOKENS --- */
-        :root {
-            --orange: #F97316;
-            --orange-light: #FFF7ED;
-            --slate-50: #F8FAFC;
-            --slate-100: #F1F5F9;
-            --slate-200: #E2E8F0;
-            --slate-300: #CBD5E1;
-            --slate-400: #94A3B8;
-            --slate-500: #64748B;
-            --slate-600: #475569;
-            --slate-700: #334155;
-            --slate-800: #1E293B;
-            --slate-900: #0F172A;
-            --white: #FFFFFF;
-            
-            --emerald: #10B981;
-            --red: #EF4444;
-            --blue: #3B82F6;
-
-            --radius: 8px;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-drawer: -5px 0 25px rgba(0, 0, 0, 0.15);
-            --transition: all 0.2s ease-in-out;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--slate-50);
-            color: var(--slate-900);
-            overflow: hidden;
-            font-size: 14px;
-        }
-
-        h1,
-        h2,
-        h3 {
-            letter-spacing: -0.025em;
-        }
-
-        .app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        /* --- 2. LAYOUT COMPONENTS --- */
-        .top-bar {
-            height: 56px;
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            gap: 16px;
-            z-index: 40;
-        }
-
-        .workspace {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid var(--slate-200);
-            display: flex;
-            flex-direction: column;
-            z-index: 30;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        /* --- 3. SIDEBAR STYLES --- */
-        .logo {
-            font-weight: 800;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--slate-900);
-            letter-spacing: -0.5px;
-        }
-
-        .logo i {
-            color: var(--orange);
-            font-size: 20px;
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--slate-200);
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-
-        .profile-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--slate-800);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .profile-info {
-            flex: 1;
-        }
-
-        .profile-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--slate-800);
-        }
-
-        .profile-role {
-            font-size: 11px;
-            color: var(--slate-500);
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 12px;
-        }
-
-        .nav-section {
-            margin-bottom: 24px;
-        }
-
-        .nav-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--slate-400);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
-            padding-left: 10px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            color: var(--slate-600);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: var(--transition);
-            margin-bottom: 2px;
-            cursor: pointer;
-        }
-
-        .nav-link:hover {
-            background: var(--slate-100);
-            color: var(--slate-900);
-        }
-
-        .nav-link.active {
-            background: var(--orange-light);
-            color: var(--orange);
-            font-weight: 600;
-        }
-
-        .nav-link.active i {
-            color: var(--orange);
-        }
-
-        .nav-link i {
-            width: 18px;
-            text-align: center;
-        }
-
-        .nav-badge {
-            margin-left: auto;
-            background: var(--red);
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-        }
-            /* --- NOTIFICATION SYSTEM (Refined) --- */
-    .notification-wrapper { position: relative; display: inline-block; }
-    .notification-badge {
-        position: absolute;
-        top: -5px; right: -5px;
-        background: var(--red); color: white;
-        font-size: 9px; font-weight: 800;
-        height: 16px; min-width: 16px;
-        padding: 0 4px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        border: 2px solid white;
-        opacity: 0; transform: scale(0.8);
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .notification-badge.active { opacity: 1; transform: scale(1); }
-    .notification-dropdown {
-        position: absolute; top: 100%; right: 0;
-        width: 320px; background: white;
-        border: 1px solid var(--slate-200); border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        z-index: 1000; margin-top: 12px;
-        display: none; overflow: hidden;
-        animation: slideDown 0.2s ease-out;
-    }
-    .notification-dropdown.show { display: block; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .notify-header { padding: 12px 16px; border-bottom: 1px solid var(--slate-100); font-weight: 700; color: var(--slate-800); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-    /* Toast Card Item Style - Updated */
-    .notify-item {
-        background: white;
-        border-left: 4px solid var(--slate-300);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        padding: 12px;
-        border-radius: 6px;
-        display: flex;
-        gap: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin: 8px 12px;
-    }
-
-    .notify-item:hover { transform: translateX(2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
     
-    .notify-item.success { border-left-color: var(--emerald); }
-    .notify-item.error { border-left-color: var(--red); }
-    .notify-item.info { border-left-color: var(--blue); }
-    .notify-item.unread { background: white; }
-
-    .notify-icon {
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px;
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-    
-    .notify-item.success .notify-icon { background: #DCFCE7; color: var(--emerald); }
-    .notify-item.error .notify-icon { background: #FEE2E2; color: var(--red); }
-    .notify-item.info .notify-icon { background: #DBEAFE; color: var(--blue); }
-
-    .notify-content { flex: 1; }
-    .notify-title { font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 2px; }
-    .notify-msg { font-size: 11px; color: var(--slate-600); line-height: 1.4; }
-    .notify-time { font-size: 10px; color: var(--slate-400); margin-top: 4px; text-align: right; }
-    /* --- 4. CONTENT STYLES --- */
-        .page-header {
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            padding: 20px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .breadcrumb {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--slate-500);
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--slate-900);
-            margin-bottom: 4px;
-        }
-
-        .page-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .context-strip {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--slate-500);
-            font-weight: 500;
-        }
-
-        .context-dot {
-            width: 3px;
-            height: 3px;
-            background: var(--slate-300);
-            border-radius: 50%;
-        }
-
-        .context-value {
-            color: var(--slate-700);
-            font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .content {
-            padding: 24px 32px;
-            max-width: 1600px;
-        }
-
-        /* Buttons - EXACT PM DASHBOARD MATCH */
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-            border: 1px solid transparent;
-        }
-
-        .btn-primary {
-            background: var(--slate-900);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--slate-800);
-            transform: translateY(-1px);
-        }
-
-        .btn-action {
-            background: var(--orange);
-            color: white;
-        }
-
-        .btn-action:hover {
-            background: #ea580c;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--slate-700);
-            border-color: var(--slate-200);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--slate-300);
-            background: var(--slate-50);
-        }
-
-        .btn-danger {
-            background: white;
-            color: var(--red);
-            border-color: var(--red);
-        }
-
-        .btn-danger:hover {
-            background: #FEF2F2;
-        }
-
-        /* Stats & Tables */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: white;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            padding: 16px;
-            transition: var(--transition);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: var(--slate-200);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--slate-900);
-            font-family: 'Inter', sans-serif;
-            letter-spacing: -0.5px;
-        }
-
-        .stat-sub {
-            font-size: 11px;
-            margin-top: 4px;
-            color: var(--slate-500);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .data-card {
-            background: white;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .data-card-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title {
-            font-weight: 700;
-            color: var(--slate-900);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            background: var(--slate-50);
-            padding: 12px 20px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--slate-200);
-            position: sticky;
-            top: 0;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--slate-100);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        tbody tr:hover {
-            background: var(--slate-50);
-        }
-
-        tbody td {
-            padding: 12px 20px;
-            font-size: 13px;
-            color: var(--slate-700);
-            vertical-align: middle;
-        }
-
-        .project-id {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: var(--slate-600);
-            background: var(--slate-100);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-
-        .status.active {
-            background: #DCFCE7;
-            color: #166534;
-        }
-
-        .status.pending {
-            background: #FEF3C7;
-            color: #92400E;
-        }
-
-        .status.rejected {
-            background: #FEE2E2;
-            color: #991B1B;
-        }
-
-        .status.locked {
-            background: var(--slate-100);
-            color: var(--slate-600);
-            border: 1px solid var(--slate-300);
-        }
-
-        /* --- 5. FINANCE SPECIFIC VISUALS --- */
-        .budget-bar-bg {
-            width: 100%;
-            height: 8px;
-            background: var(--slate-200);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 4px;
-        }
-
-        .budget-bar-fill {
-            height: 100%;
-            background: var(--emerald);
-        }
-
-        .budget-bar-fill.warn {
-            background: #F59E0B;
-        }
-
-        .budget-bar-fill.danger {
-            background: var(--red);
-        }
-
-        .fraud-alert-card {
-            background: #FEF2F2;
-            border: 1px solid #FECACA;
-            padding: 16px;
-            border-radius: 8px;
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        /* --- 6. VIEW MANAGEMENT --- */
-        .view-section {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* --- 7. DRAWER --- */
-        .drawer-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(2px);
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .drawer-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .drawer {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 700px;
-            height: 100%;
-            background: white;
-            box-shadow: var(--shadow-drawer);
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .drawer-overlay.show .drawer {
-            transform: translateX(0);
-        }
-
-        .drawer-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--slate-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            background: white;
-        }
-
-        .drawer-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-            background: var(--slate-50);
-        }
-
-        .drawer-section {
-            background: white;
-            border-bottom: 1px solid var(--slate-200);
-            padding: 24px;
-            margin-bottom: 16px;
-        }
-
-        .drawer-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--slate-200);
-            background: white;
-            display: flex;
-            gap: 12px;
-        }
-
-        /* Tabs inside Drawer */
-        .tabs {
-            display: flex;
-            gap: 24px;
-        }
-
-        .tab {
-            padding: 0 0 12px 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--slate-500);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: var(--transition);
-        }
-
-        .tab:hover {
-            color: var(--slate-800);
-        }
-
-        .tab.active {
-            color: var(--orange);
-            border-bottom-color: var(--orange);
-        }
-
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--slate-500);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--slate-300);
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 13px;
-        }
-        /* --- 7. GLOBAL NOTIFICATIONS --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .notification-modal {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 400px;
-            overflow: hidden;
-            transform: scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .modal-overlay.active .notification-modal { transform: scale(1); }
-        .modal-content { padding: 32px; text-align: center; }
-        .modal-icon {
-            width: 64px; height: 64px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px auto; font-size: 32px;
-        }
-        .modal-icon.success { background: #DCFCE7; color: #166534; }
-        .modal-icon.error { background: #FEE2E2; color: #991B1B; }
-        .modal-icon.info { background: #DBEAFE; color: #1E40AF; }
-        .modal-title { font-size: 20px; font-weight: 700; color: var(--slate-900); margin-bottom: 8px; }
-        .modal-message { font-size: 14px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-    </style>
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/cards.css">
+    <link rel="stylesheet" href="css/components/tables.css">
+    <link rel="stylesheet" href="css/components/drawer.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/pages/finance.css">
 </head>
 
 <body>
@@ -769,36 +31,34 @@
                 <i class="fas fa-hard-hat"></i>
                 <span>MKAKA FINANCE</span>
             </div>
-            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
-                <div
-                    style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
-                    <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
-                </div>
-                <div style="display: flex; gap: 20px; align-items: center;">
-                    <div style="position: relative;">
-                        <input type="text" placeholder="Search..."
-                            style="padding: 8px 12px 8px 36px; border-radius: 6px; border: 1px solid var(--slate-200); font-size: 13px; width: 200px; background: var(--slate-50);">
-                        <i class="fas fa-search"
-                            style="position: absolute; left: 12px; top: 10px; color: var(--slate-400); font-size: 13px;"></i>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search transactions...">
+            </div>
+            
+             <div class="header-alert">
+                <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
+            </div>
+
+            <div class="header-tools">
+                <div class="notification-wrapper">
+                    <div class="icon-btn" style="cursor: pointer; position: relative;">
+                        <i class="fas fa-bell text-slate-500" style="font-size: 18px;"></i>
+                        <div class="notification-badge" id="notify-badge">0</div>
                     </div>
                     
-                     <!-- Notification Wrapper -->
-                    <div class="notification-wrapper">
-                        <div class="icon-btn" onclick="toggleNotifications()" style="cursor: pointer; position: relative;">
-                            <i class="fas fa-bell" style="color: var(--slate-500); font-size: 18px;"></i>
-                            <div class="notification-badge" id="notify-badge">0</div>
+                    <div class="notification-dropdown" id="notification-dropdown">
+                        <div class="notify-header">
+                            <h3>Notifications</h3>
+                            <span class="notify-action">Clear All</span>
                         </div>
-                        
-                        <!-- Dropdown -->
-                        <div class="notification-dropdown" id="notify-dropdown">
-                            <div class="notify-header">
-                                <span>Notifications</span>
-                            </div>
-                            <div id="notify-list"></div>
+                        <div class="notify-list" id="notify-list">
+                            <!-- JS Populated -->
                         </div>
                     </div>
+                </div>
 
-                    <div class="user-profile">
+                <div class="user-profile" onclick="window.openProfileDrawer()" style="cursor: pointer;">
                     <div class="profile-avatar">FD</div>
                 </div>
             </div>
@@ -818,9 +78,9 @@
 
                 <nav class="sidebar-nav">
                     <div class="nav-section">
-                        <div class="nav-label">Strategic</div>
+                        <div class="nav-label">Main</div>
                         <a class="nav-link active" onclick="navigateTo('dashboard', this)">
-                            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
                         </a>
                         <a class="nav-link" onclick="navigateTo('analytics', this)">
                             <i class="fas fa-chart-pie"></i> <span>Analytics</span>
@@ -892,15 +152,21 @@
                             <div class="context-strip" id="header-context">
                                 <span class="context-value">FY 2025-26</span>
                                 <div class="context-dot"></div>
-                                <span class="context-value" style="color: var(--emerald);">Cash Position: Strong</span>
+                                <span class="context-value text-emerald">Cash Position: Strong</span>
                                 <div class="context-dot"></div>
-                                <span style="color: var(--orange); font-weight: 600;">5 Items Pending</span>
+                                <span class="text-orange font-bold">5 Items Pending</span>
                             </div>
                         </div>
-                        <button class="btn btn-action" onclick="openDrawer('new_bcr')">
-                            <i class="fas fa-plus"></i>
-                            <span>New Budget Request</span>
-                        </button>
+                        <div style="display: flex; gap: 12px;">
+                             <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Search transactions...">
+                            </div>
+                            <button class="btn btn-action" onclick="openDrawer('new_bcr')">
+                                <i class="fas fa-plus"></i>
+                                <span>New Budget Request</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -909,27 +175,27 @@
                     <div id="view-dashboard" class="view-section active">
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-header"><span class="stat-label" style="color: var(--red);">Fraud
-                                        Alerts</span><i class="fas fa-shield-halved" style="color: var(--red);"></i>
+                                <div class="stat-header"><span class="stat-label text-red">Fraud
+                                        Alerts</span><i class="fas fa-shield-halved text-red"></i>
                                 </div>
-                                <div class="stat-value" style="color: var(--red);">1</div>
+                                <div class="stat-value text-red">1</div>
                                 <div class="stat-sub">Duplicate Payment Detected</div>
                             </div>
                             <div class="stat-card" onclick="navigateTo('approvals')">
-                                <div class="stat-header"><span class="stat-label" style="color: #F59E0B;">Pending
-                                        Approvals</span><i class="fas fa-clock" style="color: #F59E0B;"></i></div>
-                                <div class="stat-value" style="color: #F59E0B;">5</div>
+                                <div class="stat-header"><span class="stat-label text-orange">Pending
+                                        Approvals</span><i class="fas fa-clock text-orange"></i></div>
+                                <div class="stat-value text-orange">5</div>
                                 <div class="stat-sub">MWK 45M Total Value</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Contract Deadlines</span><i
-                                        class="fas fa-file-signature" style="color: var(--blue);"></i></div>
+                                        class="fas fa-file-signature text-blue"></i></div>
                                 <div class="stat-value">3</div>
                                 <div class="stat-sub">Expiring within 7 days</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Budget Overruns</span><i
-                                        class="fas fa-chart-bar" style="color: var(--slate-600);"></i></div>
+                                        class="fas fa-chart-bar text-slate-500"></i></div>
                                 <div class="stat-value">2</div>
                                 <div class="stat-sub">Projects exceeding 90%</div>
                             </div>
@@ -955,29 +221,26 @@
                                     <tr onclick="openDrawer('approval', 'REQ-089')">
                                         <td><span class="project-id">REQ-089</span></td>
                                         <td><span class="status pending">Approval</span></td>
-                                        <td style="font-weight: 600;">Materials - CEN-01</td>
-                                        <td style="font-family: 'JetBrains Mono';">4,500,000</td>
-                                        <td style="color: var(--slate-500);">Awaiting You</td>
-                                        <td><button class="btn btn-secondary"
-                                                style="padding: 4px 8px; font-size: 11px;">Review</button></td>
+                                        <td class="font-bold">Materials - CEN-01</td>
+                                        <td class="font-mono">4,500,000</td>
+                                        <td class="text-slate-500">Awaiting You</td>
+                                        <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Review</button></td>
                                     </tr>
-                                    <tr style="background: #FEF2F2;" onclick="openDrawer('fraud', 'REQ-095')">
-                                        <td><span class="project-id" style="background: #FECACA;">REQ-095</span></td>
+                                    <tr class="bg-red-light" onclick="openDrawer('fraud', 'REQ-095')">
+                                        <td><span class="project-id danger">REQ-095</span></td>
                                         <td><span class="status rejected">Fraud Flag</span></td>
-                                        <td style="font-weight: 600; color: var(--red);">Duplicate Payment Check</td>
-                                        <td style="font-family: 'JetBrains Mono';">850,000</td>
-                                        <td style="color: var(--red);">Investigation Req.</td>
-                                        <td><button class="btn btn-danger"
-                                                style="padding: 4px 8px; font-size: 11px;">Investigate</button></td>
+                                        <td class="font-bold text-red">Duplicate Payment Check</td>
+                                        <td class="font-mono">850,000</td>
+                                        <td class="text-red">Investigation Req.</td>
+                                        <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Investigate</button></td>
                                     </tr>
                                     <tr>
                                         <td><span class="project-id">BCR-102</span></td>
                                         <td><span class="status locked">Budget Lock</span></td>
                                         <td>Materials Budget Increase</td>
-                                        <td style="font-family: 'JetBrains Mono';">+20,000,000</td>
-                                        <td style="color: var(--slate-500);">Pending PM</td>
-                                        <td><button class="btn btn-secondary"
-                                                style="padding: 4px 8px; font-size: 11px;">Track</button></td>
+                                        <td class="font-mono">+20,000,000</td>
+                                        <td class="text-slate-500">Pending PM</td>
+                                        <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Track</button></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1001,7 +264,7 @@
                                         <th>Project</th>
                                         <th>Vendor</th>
                                         <th>Description</th>
-                                        <th style="text-align:right">Amount</th>
+                                        <th class="text-right">Amount</th>
                                         <th>Fraud Check</th>
                                         <th>Action</th>
                                     </tr>
@@ -1013,20 +276,19 @@
                                         <td>CEN-01 Unilia</td>
                                         <td>Malawi Cement</td>
                                         <td>600 Bags Portland Cement</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">4,500,000</td>
-                                        <td><span style="color: var(--emerald); font-weight: 600;"><i
+                                        <td class="text-right font-mono">4,500,000</td>
+                                        <td><span class="text-emerald font-bold"><i
                                                     class="fas fa-check-circle"></i> Clean</span></td>
-                                        <td><button class="btn btn-secondary"
-                                                style="padding:4px 8px; font-size:11px;">Review</button></td>
+                                        <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">Review</button></td>
                                     </tr>
-                                    <tr style="background-color: #F0FDF4;">
+                                    <tr class="bg-emerald-light">
                                         <td><input type="checkbox"></td>
                                         <td><span class="project-id">REQ-085</span></td>
                                         <td>HQ Ops</td>
                                         <td>ESCOM</td>
                                         <td>Utilities - January</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">1,200,000</td>
-                                        <td><span style="color: var(--emerald); font-weight: 600;"><i
+                                        <td class="text-right font-mono">1,200,000</td>
+                                        <td><span class="text-emerald font-bold"><i
                                                     class="fas fa-check-circle"></i> Clean</span></td>
                                         <td><button class="btn btn-action" style="padding:4px 8px; font-size:11px;"
                                                 onclick="event.stopPropagation(); openDrawer('payment_execution', 'REQ-085')">Pay
@@ -1050,9 +312,9 @@
                                         <th>BCR ID</th>
                                         <th>Project</th>
                                         <th>Category</th>
-                                        <th style="text-align:right">Current</th>
-                                        <th style="text-align:right">Proposed</th>
-                                        <th style="text-align:right">Variance</th>
+                                        <th class="text-right">Current</th>
+                                        <th class="text-right">Proposed</th>
+                                        <th class="text-right">Variance</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -1061,18 +323,18 @@
                                         <td><span class="project-id">BCR-102</span></td>
                                         <td>CEN-01 Unilia</td>
                                         <td>02-MAT Materials</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">200M</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">220M</td>
-                                        <td style="text-align:right; color: var(--emerald);">+20M</td>
+                                        <td class="text-right font-mono">200M</td>
+                                        <td class="text-right font-mono">220M</td>
+                                        <td class="text-right text-emerald">+20M</td>
                                         <td><span class="status locked">Locked (PM Pending)</span></td>
                                     </tr>
                                     <tr style="background:var(--slate-50);" onclick="openDrawer('bcr_proposal', 'VAR-REQ-01')">
-                                        <td><span class="project-id" style="background:var(--blue-light); color:var(--blue);">VAR-REQ-01</span></td>
+                                        <td><span class="project-id info">VAR-REQ-01</span></td>
                                         <td>CEN-01 Unilia</td>
                                         <td>Total Budget</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">450M</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">--</td>
-                                        <td style="text-align:right; color: var(--slate-500);">Requesting +5M</td>
+                                        <td class="text-right font-mono">450M</td>
+                                        <td class="text-right font-mono">--</td>
+                                        <td class="text-right text-slate-500">Requesting +5M</td>
                                         <td><span class="status pending">Action Req</span></td>
                                     </tr>
                                 </tbody>
@@ -1099,28 +361,28 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td style="color: var(--slate-500);">09:15:23</td>
-                                        <td style="font-weight: 600;">S. Mwale</td>
+                                        <td class="text-slate-500">09:15:23</td>
+                                        <td class="font-bold">S. Mwale</td>
                                         <td>Finance Dir</td>
                                         <td><span class="status active">Approved</span></td>
                                         <td>TRX-9901</td>
-                                        <td style="font-family: 'JetBrains Mono';">105.12.4.22</td>
+                                        <td class="font-mono">105.12.4.22</td>
                                     </tr>
                                     <tr>
-                                        <td style="color: var(--slate-500);">09:10:45</td>
-                                        <td style="font-weight: 600;">A. Kanjira</td>
+                                        <td class="text-slate-500">09:10:45</td>
+                                        <td class="font-bold">A. Kanjira</td>
                                         <td>PM</td>
                                         <td><span class="status pending">Submitted</span></td>
                                         <td>TRX-9901</td>
-                                        <td style="font-family: 'JetBrains Mono';">105.12.4.55</td>
+                                        <td class="font-mono">105.12.4.55</td>
                                     </tr>
                                     <tr style="background: #F8FAFC;">
-                                        <td style="color: var(--slate-500);">08:30:12</td>
-                                        <td style="color: var(--slate-400);">Unknown</td>
+                                        <td class="text-slate-500">08:30:12</td>
+                                        <td class="text-slate-400">Unknown</td>
                                         <td>-</td>
                                         <td><span class="status rejected">Login Fail</span></td>
                                         <td>Auth</td>
-                                        <td style="font-family: 'JetBrains Mono';">192.168.1.5</td>
+                                        <td class="font-mono">192.168.1.5</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1129,12 +391,12 @@
 
                     <div id="view-fraud" class="view-section">
                         <div class="fraud-alert-card">
-                            <div style="font-size: 24px; color: var(--red);"><i class="fas fa-triangle-exclamation"></i>
+                            <div style="font-size: 24px;" class="text-red"><i class="fas fa-triangle-exclamation"></i>
                             </div>
                             <div style="flex: 1;">
-                                <div style="font-weight: 700; color: var(--red); font-size: 16px;">Duplicate Payment
+                                <div style="font-size: 16px;" class="font-bold text-red">Duplicate Payment
                                     Detected</div>
-                                <div style="color: var(--slate-600); margin-top: 4px;">REQ-095 (MWK 850,000) matches
+                                <div style="margin-top: 4px;" class="text-slate-600">REQ-095 (MWK 850,000) matches
                                     TRX-9885 from 3 days ago. Vendor: Mzuzu Hardware.</div>
                                 <div style="margin-top: 12px; display: flex; gap: 8px;">
                                     <button class="btn btn-danger"
@@ -1149,19 +411,19 @@
                         <div class="stats-grid">
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Total Committed</span><i
-                                        class="fas fa-file-signature" style="color: var(--blue);"></i></div>
+                                        class="fas fa-file-signature text-blue"></i></div>
                                 <div class="stat-value">MWK 850M</div>
                                 <div class="stat-sub">Across 12 Active Contracts</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Retention Held</span><i
-                                        class="fas fa-piggy-bank" style="color: var(--emerald);"></i></div>
+                                        class="fas fa-piggy-bank text-emerald"></i></div>
                                 <div class="stat-value">MWK 42.5M</div>
                                 <div class="stat-sub">5% of Work Done</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Performance Bonds</span><i
-                                        class="fas fa-shield-alt" style="color: var(--orange);"></i></div>
+                                        class="fas fa-shield-alt text-orange"></i></div>
                                 <div class="stat-value">12 Valid</div>
                                 <div class="stat-sub">0 Expiring soon</div>
                             </div>
@@ -1178,9 +440,9 @@
                                         <th>Contract ID</th>
                                         <th>Project</th>
                                         <th>Vendor</th>
-                                        <th style="text-align:right">Total Value</th>
-                                        <th style="text-align:right">Paid</th>
-                                        <th style="text-align:right">Remaining</th>
+                                        <th class="text-right">Total Value</th>
+                                        <th class="text-right">Paid</th>
+                                        <th class="text-right">Remaining</th>
                                         <th>Retention</th>
                                         <th>Status</th>
                                     </tr>
@@ -1190,9 +452,9 @@
                                         <td><span class="project-id">CON-01</span></td>
                                         <td>CEN-01 Unilia</td>
                                         <td>Master Builders Ltd</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">120,000,000</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">45,000,000</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">75,000,000</td>
+                                        <td class="text-right font-mono">120,000,000</td>
+                                        <td class="text-right font-mono">45,000,000</td>
+                                        <td class="text-right font-mono">75,000,000</td>
                                         <td><span class="gps-badge"
                                                 style="color:var(--orange); background:var(--orange-light); border-color:var(--orange);">5%
                                                 Active</span></td>
@@ -1202,9 +464,9 @@
                                         <td><span class="project-id">CON-02</span></td>
                                         <td>CEN-01 Unilia</td>
                                         <td>Standard Electric</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">45,000,000</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">10,000,000</td>
-                                        <td style="text-align:right; font-family: 'JetBrains Mono';">35,000,000</td>
+                                        <td class="text-right font-mono">45,000,000</td>
+                                        <td class="text-right font-mono">10,000,000</td>
+                                        <td class="text-right font-mono">35,000,000</td>
                                         <td><span class="gps-badge"
                                                 style="color:var(--orange); background:var(--orange-light); border-color:var(--orange);">5%
                                                 Active</span></td>
@@ -1229,29 +491,29 @@
                                         <th>Tax ID / TPIN</th>
                                         <th>Compliance</th>
                                         <th>Rating</th>
-                                        <th style="text-align:right">YTD Spend</th>
+                                        <th class="text-right">YTD Spend</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td style="font-weight:600;">Malawi Cement Co.</td>
+                                        <td class="font-bold">Malawi Cement Co.</td>
                                         <td>Materials Supply</td>
-                                        <td style="font-family:'JetBrains Mono';">TPIN-992811</td>
+                                        <td class="font-mono">TPIN-992811</td>
                                         <td><span class="gps-badge"><i class="fas fa-check"></i> Verified</span></td>
                                         <td><i class="fas fa-star" style="color:#F59E0B"></i> 4.8</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">45,200,000</td>
+                                        <td class="text-right font-mono">45,200,000</td>
                                         <td><span class="status active">Approved</span></td>
                                     </tr>
                                     <tr>
-                                        <td style="font-weight:600;">Mzuzu Hardware</td>
+                                        <td class="font-bold">Mzuzu Hardware</td>
                                         <td>General Supplies</td>
-                                        <td style="font-family:'JetBrains Mono';">TPIN-112233</td>
+                                        <td class="font-mono">TPIN-112233</td>
                                         <td><span class="gps-badge"
                                                 style="color:var(--red); background:#FEF2F2; border-color:#FECACA;"><i
                                                     class="fas fa-times"></i> Expired</span></td>
                                         <td><i class="fas fa-star" style="color:#F59E0B"></i> 3.2</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">8,500,000</td>
+                                        <td class="text-right font-mono">8,500,000</td>
                                         <td><span class="status locked">Audit Pending</span></td>
                                     </tr>
                                 </tbody>
@@ -1276,45 +538,45 @@
                                         <th>TRX ID</th>
                                         <th>Account / Category</th>
                                         <th>Description</th>
-                                        <th style="text-align:right">Debit (Out)</th>
-                                        <th style="text-align:right">Credit (In)</th>
-                                        <th style="text-align:right">Balance</th>
+                                        <th class="text-right">Debit (Out)</th>
+                                        <th class="text-right">Credit (In)</th>
+                                        <th class="text-right">Balance</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td style="color:var(--slate-500);">Jan 03, 2026</td>
+                                        <td class="text-slate-500">Jan 03, 2026</td>
                                         <td><span class="project-id">TRX-1004</span></td>
-                                        <td>02-MAT <span style="color:var(--slate-400); font-size:10px;">></span> Cement
+                                        <td>02-MAT <span class="text-slate-400" style="font-size:10px;">></span> Cement
                                         </td>
                                         <td>Payment to Malawi Cement Co (INV-8821)</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono'; color:var(--red);">-
+                                        <td class="text-right font-mono text-red">-
                                             4,500,000</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">-</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">145,200,000</td>
+                                        <td class="text-right font-mono">-</td>
+                                        <td class="text-right font-mono">145,200,000</td>
                                     </tr>
                                     <tr>
-                                        <td style="color:var(--slate-500);">Jan 02, 2026</td>
+                                        <td class="text-slate-500">Jan 02, 2026</td>
                                         <td><span class="project-id">TRX-1003</span></td>
-                                        <td>10-INC <span style="color:var(--slate-400); font-size:10px;">></span> Client
+                                        <td>10-INC <span class="text-slate-400" style="font-size:10px;">></span> Client
                                             Pmt</td>
                                         <td>Milestone Payment 3 - CEN-01</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">-</td>
+                                        <td class="text-right font-mono">-</td>
                                         <td
-                                            style="text-align:right; font-family:'JetBrains Mono'; color:var(--emerald);">
+                                            class="text-right font-mono text-emerald">
                                             + 25,000,000</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">149,700,000</td>
+                                        <td class="text-right font-mono">149,700,000</td>
                                     </tr>
                                     <tr>
-                                        <td style="color:var(--slate-500);">Jan 01, 2026</td>
+                                        <td class="text-slate-500">Jan 01, 2026</td>
                                         <td><span class="project-id">TRX-1002</span></td>
-                                        <td>01-LAB <span style="color:var(--slate-400); font-size:10px;">></span> Wages
+                                        <td>01-LAB <span class="text-slate-400" style="font-size:10px;">></span> Wages
                                         </td>
                                         <td>Weekly Payroll - Site A</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono'; color:var(--red);">-
+                                        <td class="text-right font-mono text-red">-
                                             1,200,000</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">-</td>
-                                        <td style="text-align:right; font-family:'JetBrains Mono';">124,700,000</td>
+                                        <td class="text-right font-mono">-</td>
+                                        <td class="text-right font-mono">124,700,000</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1325,18 +587,18 @@
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Cash Position</span></div>
                                 <div class="stat-value">MWK 450M</div>
-                                <div class="stat-sub" style="color:var(--emerald);"><i class="fas fa-arrow-up"></i> 12%
+                                <div class="stat-sub text-emerald"><i class="fas fa-arrow-up"></i> 12%
                                     vs last month</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Monthly Burn Rate</span></div>
                                 <div class="stat-value">MWK 125M</div>
-                                <div class="stat-sub" style="color:var(--slate-500);">Avg over 3 months</div>
+                                <div class="stat-sub text-slate-500">Avg over 3 months</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Outstanding Receivables</span></div>
                                 <div class="stat-value">MWK 85M</div>
-                                <div class="stat-sub" style="color:var(--orange);">3 Invoices Overdue</div>
+                                <div class="stat-sub text-orange">3 Invoices Overdue</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-header"><span class="stat-label">Payables</span></div>
@@ -1353,37 +615,25 @@
                                 <div
                                     style="padding:24px; height:300px; display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
                                     <!-- Simple CSS Bar Chart -->
-                                    <div
-                                        style="width:100%; height:40%; background:var(--slate-200); border-radius:4px 4px 0 0; position:relative;">
-                                        <span
-                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Jan</span>
+                                    <div class="chart-bar-container" style="height:40%;">
+                                        <span class="chart-bar-label">Jan</span>
                                     </div>
-                                    <div
-                                        style="width:100%; height:55%; background:var(--slate-200); border-radius:4px 4px 0 0; position:relative;">
-                                        <span
-                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Feb</span>
+                                    <div class="chart-bar-container" style="height:55%;">
+                                        <span class="chart-bar-label">Feb</span>
                                     </div>
-                                    <div
-                                        style="width:100%; height:45%; background:var(--slate-200); border-radius:4px 4px 0 0; position:relative;">
-                                        <span
-                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Mar</span>
+                                    <div class="chart-bar-container" style="height:45%;">
+                                        <span class="chart-bar-label">Mar</span>
                                     </div>
-                                    <div
-                                        style="width:100%; height:70%; background:var(--emerald); border-radius:4px 4px 0 0; position:relative; opacity:0.8;">
-                                        <span
-                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Apr
+                                    <div class="chart-bar-forecast" style="height:70%; opacity:0.8;">
+                                        <span class="chart-bar-label">Apr
                                             (Fcst)</span>
                                     </div>
-                                    <div
-                                        style="width:100%; height:65%; background:var(--emerald); border-radius:4px 4px 0 0; position:relative; opacity:0.6;">
-                                        <span
-                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">May
+                                    <div class="chart-bar-forecast" style="height:65%; opacity:0.6;">
+                                        <span class="chart-bar-label">May
                                             (Fcst)</span>
                                     </div>
-                                    <div
-                                        style="width:100%; height:60%; background:var(--emerald); border-radius:4px 4px 0 0; position:relative; opacity:0.4;">
-                                        <span
-                                            style="position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px;">Jun
+                                    <div class="chart-bar-forecast" style="height:60%; opacity:0.4;">
+                                        <span class="chart-bar-label">Jun
                                             (Fcst)</span>
                                     </div>
                                 </div>
@@ -1397,7 +647,7 @@
                                         <div
                                             style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
                                             <span>Materials</span>
-                                            <span style="color:var(--red);">+12% Over</span>
+                                            <span class="text-red">+12% Over</span>
                                         </div>
                                         <div class="budget-bar-bg">
                                             <div class="budget-bar-fill danger" style="width:100%"></div>
@@ -1407,7 +657,7 @@
                                         <div
                                             style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
                                             <span>Labor</span>
-                                            <span style="color:var(--emerald);">-5% Under</span>
+                                            <span class="text-emerald">-5% Under</span>
                                         </div>
                                         <div class="budget-bar-bg">
                                             <div class="budget-bar-fill" style="width:95%"></div>
@@ -1417,7 +667,7 @@
                                         <div
                                             style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
                                             <span>Equipment</span>
-                                            <span style="color:var(--slate-600);">On Track</span>
+                                            <span class="text-slate-500">On Track</span>
                                         </div>
                                         <div class="budget-bar-bg">
                                             <div class="budget-bar-fill" style="width:88%"></div>
@@ -1494,24 +744,24 @@
                                         <tr>
                                             <th>Date</th>
                                             <th>Desc</th>
-                                            <th style="text-align:right">Amount</th>
+                                            <th class="text-right">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr style="background:#F0FDF4;">
+                                        <tr class="bg-emerald-light">
                                             <td>Jan 03</td>
                                             <td>MALAWI CEMENT CO</td>
-                                            <td style="text-align:right;">4,500,000</td>
+                                            <td class="text-right">4,500,000</td>
                                         </tr>
-                                        <tr style="background:#F0FDF4;">
+                                        <tr class="bg-emerald-light">
                                             <td>Jan 02</td>
                                             <td>ESCOM PREPAID</td>
-                                            <td style="text-align:right;">1,200,000</td>
+                                            <td class="text-right">1,200,000</td>
                                         </tr>
-                                        <tr style="background:#FEF2F2;">
+                                        <tr class="bg-red-light">
                                             <td>Jan 02</td>
                                             <td>UNKNOWN TRANSFER</td>
-                                            <td style="text-align:right;">50,000</td>
+                                            <td class="text-right">50,000</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1525,23 +775,23 @@
                                         <tr>
                                             <th>Date</th>
                                             <th>Desc</th>
-                                            <th style="text-align:right">Amount</th>
+                                            <th class="text-right">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr style="background:#F0FDF4;">
+                                        <tr class="bg-emerald-light">
                                             <td>Jan 03</td>
                                             <td>Inv #8821 Malawi Cem...</td>
-                                            <td style="text-align:right;">4,500,000</td>
+                                            <td class="text-right">4,500,000</td>
                                         </tr>
-                                        <tr style="background:#F0FDF4;">
+                                        <tr class="bg-emerald-light">
                                             <td>Jan 02</td>
                                             <td>Utils - Jan</td>
-                                            <td style="text-align:right;">1,200,000</td>
+                                            <td class="text-right">1,200,000</td>
                                         </tr>
                                         <tr>
                                             <td colspan="3"
-                                                style="text-align:center; color:var(--slate-400); padding:24px;">No
+                                                class="text-center text-slate-400" style="padding:24px;">No
                                                 match found for 50,000</td>
                                         </tr>
                                     </tbody>
@@ -1556,8 +806,8 @@
                                 <div class="card-title">Document Repository</div>
                                 <div style="display:flex; gap:12px;">
                                     <div style="position:relative;">
-                                        <i class="fas fa-search"
-                                            style="position:absolute; left:10px; top:10px; color:var(--slate-400);"></i>
+                                        <i class="fas fa-search text-slate-400"
+                                            style="position:absolute; left:10px; top:10px;"></i>
                                         <input type="text" placeholder="Search docs..." class="form-input"
                                             style="padding-left:32px; width:250px;">
                                     </div>
@@ -1570,19 +820,19 @@
                                     <div style="margin-top:8px; display:flex; flex-direction:column; gap:4px;">
                                         <div
                                             style="background:var(--slate-100); padding:6px 10px; border-radius:4px; font-weight:600; color:var(--slate-800); font-size:13px; cursor:pointer;">
-                                            <i class="fas fa-folder" style="color:var(--orange);"></i> Invoices
+                                            <i class="fas fa-folder text-orange"></i> Invoices
                                         </div>
                                         <div
                                             style="padding:6px 10px; border-radius:4px; font-weight:500; color:var(--slate-600); font-size:13px; cursor:pointer;">
-                                            <i class="fas fa-folder" style="color:var(--slate-400);"></i> Contracts
+                                            <i class="fas fa-folder text-slate-400"></i> Contracts
                                         </div>
                                         <div
                                             style="padding:6px 10px; border-radius:4px; font-weight:500; color:var(--slate-600); font-size:13px; cursor:pointer;">
-                                            <i class="fas fa-folder" style="color:var(--slate-400);"></i> Reports
+                                            <i class="fas fa-folder text-slate-400"></i> Reports
                                         </div>
                                         <div
                                             style="padding:6px 10px; border-radius:4px; font-weight:500; color:var(--slate-600); font-size:13px; cursor:pointer;">
-                                            <i class="fas fa-folder" style="color:var(--slate-400);"></i> Receipts
+                                            <i class="fas fa-folder text-slate-400"></i> Receipts
                                         </div>
                                     </div>
                                 </div>
@@ -1598,31 +848,31 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td style="font-weight:600;"><i class="fas fa-file-pdf"
-                                                        style="color:var(--red); margin-right:8px;"></i>
+                                                <td class="font-bold"><i class="fas fa-file-pdf text-red"
+                                                        style="margin-right:8px;"></i>
                                                     INV-8821_MalawiCement.pdf</td>
-                                                <td style="color:var(--slate-500);">Jan 03, 2026</td>
-                                                <td style="font-family:'JetBrains Mono';">245 KB</td>
-                                                <td><i class="fas fa-ellipsis-v"
-                                                        style="color:var(--slate-400); cursor:pointer;"></i></td>
+                                                <td class="text-slate-500">Jan 03, 2026</td>
+                                                <td class="font-mono">245 KB</td>
+                                                <td><i class="fas fa-ellipsis-v text-slate-400"
+                                                        style="cursor:pointer;"></i></td>
                                             </tr>
                                             <tr>
-                                                <td style="font-weight:600;"><i class="fas fa-file-excel"
-                                                        style="color:var(--emerald); margin-right:8px;"></i>
+                                                <td class="font-bold"><i class="fas fa-file-excel text-emerald"
+                                                        style="margin-right:8px;"></i>
                                                     Dec_2025_Payroll.xlsx</td>
-                                                <td style="color:var(--slate-500);">Dec 31, 2025</td>
-                                                <td style="font-family:'JetBrains Mono';">1.2 MB</td>
-                                                <td><i class="fas fa-ellipsis-v"
-                                                        style="color:var(--slate-400); cursor:pointer;"></i></td>
+                                                <td class="text-slate-500">Dec 31, 2025</td>
+                                                <td class="font-mono">1.2 MB</td>
+                                                <td><i class="fas fa-ellipsis-v text-slate-400"
+                                                        style="cursor:pointer;"></i></td>
                                             </tr>
                                             <tr>
-                                                <td style="font-weight:600;"><i class="fas fa-file-image"
-                                                        style="color:var(--blue); margin-right:8px;"></i>
+                                                <td class="font-bold"><i class="fas fa-file-image text-blue"
+                                                        style="margin-right:8px;"></i>
                                                     Receipt_Hardware.jpg</td>
-                                                <td style="color:var(--slate-500);">Dec 28, 2025</td>
-                                                <td style="font-family:'JetBrains Mono';">3.4 MB</td>
-                                                <td><i class="fas fa-ellipsis-v"
-                                                        style="color:var(--slate-400); cursor:pointer;"></i></td>
+                                                <td class="text-slate-500">Dec 28, 2025</td>
+                                                <td class="font-mono">3.4 MB</td>
+                                                <td><i class="fas fa-ellipsis-v text-slate-400"
+                                                        style="cursor:pointer;"></i></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1656,475 +906,32 @@
         </div>
     </div>
 
-    <script>
-        // --- NAVIGATION LOGIC ---
-        const views = {
-            'dashboard': { title: 'Financial Overview', context: 'FY 2025-26 | Cash Position: Strong' },
-            'analytics': { title: 'Analytics', context: 'Burn Rate & Forecasting' },
-            'approvals': { title: 'Requisition Queue', context: 'Operational Gatekeeping' },
-            'ledger': { title: 'General Ledger', context: 'Master Record' },
-            'reconciliation': { title: 'Bank Reconciliation', context: 'Statement Matching' },
-            'bcr': { title: 'Budget Control', context: 'Governance & Change Requests' },
-            'audit': { title: 'Audit Log', context: 'Immutable System Record' },
-            'fraud': { title: 'Fraud Detection', context: 'Active Alerts & Rules' },
-            'contracts': { title: 'Contract Management', context: 'Milestones & Deadlines' },
-            'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
-            'reports': { title: 'Reporting', context: 'Export & Print' },
-            'documents': { title: 'Document Repository', context: 'Centralized File Storage' }
-        };
-
-        function navigateTo(viewId, navElement) {
-            // 1. Sidebar Active State
-            if (navElement) {
-                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-                navElement.classList.add('active');
-            }
-
-            // 2. View Switching
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            const target = document.getElementById('view-' + viewId);
-            if (target) target.classList.add('active');
-
-            // 3. Header Text
-            if (views[viewId]) {
-                document.getElementById('header-title').innerText = views[viewId].title;
-                document.getElementById('header-breadcrumb').innerText = views[viewId].title;
-                document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
-            }
-        }
-
-        // --- DRAWER LOGIC ---
-        function openDrawer(type, id) {
-            const overlay = document.getElementById('drawer-overlay');
-            const title = document.getElementById('d-title');
-            const sub = document.getElementById('d-sub');
-            const body = document.getElementById('d-body');
-            const footer = document.getElementById('d-footer');
-
-            overlay.classList.add('show');
-
-            if (type === 'approval') {
-                // --- APPROVAL DRAWER ---
-                sub.innerText = "Requisition Review";
-                title.innerText = "REQ-089: Cement Purchase";
-
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
-                    <div><div class="stat-label">Project</div><div style="font-weight:600;">CEN-01 Unilia</div></div>
-                    <div><div class="stat-label">Vendor</div><div style="font-weight:600;">Malawi Cement Co.</div></div>
-                    <div><div class="stat-label">Category</div><div class="project-id">02-MAT</div></div>
-                    <div><div class="stat-label">Amount</div><div class="stat-value" style="font-size:16px;">MWK 4,500,000</div></div>
-                </div>
-            </div>
-
-            <div class="drawer-section">
-                <div class="stat-label" style="margin-bottom:8px;">Budget Impact Analysis</div>
-                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
-                   <span>Current Utilization</span>
-                   <span>92% -> <strong style="color:var(--red)">94.5%</strong></span>
-                </div>
-                <div class="budget-bar-bg">
-                   <div class="budget-bar-fill" style="width:92%; float:left; border-right:2px solid white;"></div>
-                   <div class="budget-bar-fill warn" style="width:2.5%; float:left;"></div>
-                </div>
-                <div style="font-size:11px; color:var(--slate-500); margin-top:8px;">
-                   Approving this will leave <strong>MWK 11.5M</strong> remaining in this category.
-                </div>
-            </div>
-            
-            <div class="drawer-section">
-                <div class="stat-label">Documents</div>
-                <button class="btn btn-secondary" style="width:100%; justify-content:flex-start; margin-top:8px;"><i class="fas fa-file-pdf"></i> View Invoice #8821</button>
-            </div>
-        `;
-
-                footer.innerHTML = `
-            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Request Info</button>
-            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Reject</button>
-            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Approve & Pay</button>
-        `;
-
-            } else if (type === 'new_bcr') {
-                // --- NEW BUDGET REQUEST ---
-                sub.innerText = "Governance";
-                title.innerText = "Initiate Budget Change";
-
-                body.innerHTML = `
-            <div class="drawer-section">
-                 <div style="background: #FFF7ED; border: 1px solid #FED7AA; color: #9A3412; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 20px;">
-                    <strong>System Enforcer:</strong> Finance cannot modify budgets directly. This request locks the budget line until PM Approval.
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Project</label>
-                    <select class="form-input"><option>CEN-01 Unilia Library</option></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Category</label>
-                    <select class="form-input"><option>02-MAT Materials</option></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Proposed Budget</label>
-                    <input class="form-input" type="number">
-                </div>
-                 <div class="form-group">
-                    <label class="form-label">Justification</label>
-                    <textarea class="form-input" rows="3"></textarea>
-                </div>
-            </div>
-        `;
-
-                footer.innerHTML = `
-            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
-            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Submit for Approval</button>
-        `;
-
-            } else if (type === 'transaction') {
-                // --- TRANSACTION ENTRY ---
-                sub.innerText = "Accounting";
-                title.innerText = "Record Financial Transaction";
-
-                body.innerHTML = `
-            <div class="drawer-section">
-                 <div class="form-group">
-                    <label class="form-label">Transaction Type</label>
-                    <div style="display:flex; gap:12px;">
-                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="tt" checked> Expense</label>
-                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="tt"> Income</label>
-                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="tt"> Transfer</label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Date</label>
-                    <input class="form-input" type="date" value="2026-01-04">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Project / Cost Center</label>
-                    <select class="form-input"><option>CEN-01 Unilia Library</option><option>HQ Operations</option></select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Expense Category</label>
-                    <select class="form-input"><option>02-MAT Materials</option><option>05-EQUIP Equipment</option></select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Vendor / Payee</label>
-                    <select class="form-input"><option>Malawi Cement Co.</option><option>ESCOM</option><option>Lilongwe Water Board</option></select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <input class="form-input" type="text" placeholder="e.g. Invoice #9921 Payment">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Amount (MWK)</label>
-                    <input class="form-input" type="number" placeholder="0.00">
-                </div>
-                 
-                <div class="form-group">
-                    <label class="form-label">Supporting Documents (Invoice/Receipt)</label>
-                    <div class="photo-zone" style="padding:32px;">
-                        <i class="fas fa-cloud-upload-alt" style="font-size:24px; margin-bottom:8px;"></i>
-                        <div>Click to Upload or Drag Files</div>
-                        <div style="font-size:11px; margin-top:4px;">PDF, JPG, PNG accepted</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-                footer.innerHTML = `
-            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
-            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Record Transaction</button>
-        `;
-            } else if (type === 'fraud') {
-                // --- FRAUD INVESTIGATION ---
-                sub.innerText = "Fraud Detection";
-                title.innerText = "Investigation: Duplicate Payment";
-
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div style="background: #FEF2F2; padding:16px; border-radius:6px; margin-bottom:16px;">
-                    <div style="color:var(--red); font-weight:700; margin-bottom:4px;">High Risk Alert</div>
-                    <div style="color:var(--slate-700);">REQ-095 matches transaction TRX-9885 from 3 days ago exactly (Amount & Vendor).</div>
-                </div>
-                <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="data-card" style="margin:0; border:1px solid var(--red);">
-                        <div class="data-card-header">Current</div>
-                        <div style="padding:16px;">
-                            <div style="font-weight:700;">REQ-095</div>
-                            <div>MWK 850,000</div>
-                            <div>Jan 03, 2026</div>
-                        </div>
-                    </div>
-                     <div class="data-card" style="margin:0;">
-                        <div class="data-card-header">Previous</div>
-                        <div style="padding:16px;">
-                            <div style="font-weight:700;">TRX-9885</div>
-                            <div>MWK 850,000</div>
-                            <div>Dec 30, 2025</div>
-                        </div>
-                    </div>
-                </div>
-                 <div class="form-group" style="margin-top:16px;">
-                    <label class="form-label">Investigation Notes</label>
-                    <textarea class="form-input" rows="3"></textarea>
-                </div>
-            </div>
-        `;
-
-                footer.innerHTML = `
-            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">False Positive</button>
-            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Block Vendor</button>
-        `;
-            } else if (type === 'payment_execution') {
-                // --- PAYMENT EXECUTION ---
-                sub.innerText = "Treasury";
-                title.innerText = "Execute Payment: " + (id || 'REQ-085');
-
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="form-group">
-                    <label class="form-label">Payment Source</label>
-                    <select class="form-input">
-                        <option>Main Operating Account (FDH Bank - *9921)</option>
-                        <option>Project Account (Standard Bank - *4421)</option>
-                    </select>
-                </div>
-                 <div class="form-group">
-                    <label class="form-label">Beneficiary</label>
-                    <div style="background:var(--slate-50); padding:10px; border-radius:4px; font-size:13px; font-weight:600;">
-                        ESCOM CORPORATION<br>
-                        <span style="font-weight:400; color:var(--slate-500);">Acct: 1000299281 | National Bank</span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Amount</label>
-                    <input class="form-input" type="text" value="MWK 1,200,000" readonly style="background:var(--slate-100);">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Transaction Reference</label>
-                    <input class="form-input" type="text" value="UTIL-JAN-26">
-                </div>
-            </div>
-        `;
-                footer.innerHTML = `
-             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
-             <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()"><i class="fas fa-paper-plane"></i> Confirm Transfer</button>
-        `;
-            } else if (type === 'vendor_onboard') {
-                // --- VENDOR ONBOARDING ---
-                sub.innerText = "Vendor Management";
-                title.innerText = "New Vendor Registration";
-
-                body.innerHTML = `
-            <div class="drawer-section">
-                <div class="form-group">
-                    <label class="form-label">Business Name</label>
-                    <input class="form-input" type="text" placeholder="Registered Name">
-                </div>
-                 <div class="form-group">
-                    <label class="form-label">Trading As</label>
-                    <input class="form-input" type="text">
-                </div>
-                 <div class="form-group">
-                    <label class="form-label">Service Category</label>
-                    <select class="form-input"><option>Materials Supply</option><option>Construction Services</option><option>Transport</option></select>
-                </div>
-                 <div class="form-group">
-                    <label class="form-label">Tax ID (TPIN)</label>
-                    <input class="form-input" type="text">
-                </div>
-                 <div class="form-group">
-                    <label class="form-label">Compliance Documents</label>
-                     <div class="photo-zone" style="padding:20px;">
-                        <i class="fas fa-file-contract" style="font-size:24px; margin-bottom:8px;"></i>
-                        <div>Upload Certificate of Inc, TPIN, Tax Clearance</div>
-                    </div>
-                </div>
-            </div>
-        `;
-                footer.innerHTML = `
-             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
-             <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Register Vendor</button>
-        `;
-            } else if (type === 'contract_detail') {
-                // --- CONTRACT DETAILS ---
-                sub.innerText = "Contract Management";
-                title.innerText = "Contract: " + (id || 'CON-01');
-
-                body.innerHTML = `
-            <div class="drawer-section">
-               <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
-                   <div><div class="stat-label">Total Value</div><div style="font-weight:700;">120,000,000</div></div>
-                   <div><div class="stat-label">Paid</div><div style="color:var(--emerald); font-weight:700;">45,000,000</div></div>
-               </div>
-               <div style="margin-top:16px;">
-                   <div class="stat-label">Progress</div>
-                   <div class="budget-bar-bg" style="margin-bottom:4px;"><div class="budget-bar-fill" style="width:37%"></div></div>
-                   <div style="font-size:11px; color:var(--slate-500);">37% Financial Completion</div>
-               </div>
-            </div>
-             <div class="drawer-section">
-                <div class="card-title" style="font-size:14px; margin-bottom:12px;">Milestones</div>
-                <table style="font-size:12px;">
-                    <tbody>
-                        <tr>
-                            <td>Mobilization</td>
-                            <td style="text-align:right;">20%</td>
-                            <td><span class="status active" style="font-size:10px;">Paid</span></td>
-                        </tr>
-                         <tr>
-                            <td>Foundation</td>
-                            <td style="text-align:right;">25%</td>
-                            <td><span class="status active" style="font-size:10px;">Paid</span></td>
-                        </tr>
-                         <tr>
-                            <td>Superstructure</td>
-                            <td style="text-align:right;">30%</td>
-                            <td><span class="status pending" style="font-size:10px;">Pending</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-             </div>
-        `;
-                footer.innerHTML = `
-             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Close</button>
-             <button class="btn btn-primary" style="flex:1;" onclick="closeDrawer()">View Full Contract</button>
-        `;
-            }
-        }
-
-        function closeDrawer() {
-            document.getElementById('drawer-overlay').classList.remove('show');
-        }
-
-        // Close on click outside
-        document.getElementById('drawer-overlay').addEventListener('click', function (e) {
-            if (e.target === this) closeDrawer();
-        });
-    </script>
-</body>
-
-</html>
-
-<!-- Global Notification Modal -->
-<div class="modal-overlay" id="notificationOverlay">
-    <div class="notification-modal">
-        <div class="modal-content">
-            <div class="modal-icon" id="modalIcon"><i class="fas fa-check"></i></div>
-            <h3 class="modal-title" id="modalTitle">Success</h3>
-            <p class="modal-message" id="modalMessage">Operation completed successfully.</p>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="closeNotification()">Dismiss</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function showNotification(type, title, message) {
-        const overlay = document.getElementById('notificationOverlay');
-        const icon = document.getElementById('modalIcon');
-        const titleEl = document.getElementById('modalTitle');
-        const msgEl = document.getElementById('modalMessage');
-
-        overlay.classList.add('active');
-        titleEl.textContent = title;
-        msgEl.textContent = message;
-
-        icon.className = 'modal-icon ' + type;
-        icon.innerHTML = type === 'success' ? '<i class="fas fa-check"></i>' :
-                        type === 'error' ? '<i class="fas fa-times"></i>' :
-                        '<i class="fas fa-info"></i>';
-    }
-
-    function closeNotification() {
-        document.getElementById('notificationOverlay').classList.remove('active');
-    }
-
-    // Wire up bell
-    document.addEventListener('DOMContentLoaded', () => {
-        const bell = document.querySelector('.fa-bell');
-        if(bell) {
-            bell.parentElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                showNotification('info', 'Notifications', 'No new alerts for Finance Director.');
-            });
-        }
-    });
-      function submitProposal() {
-        showNotification('success', 'Proposal Sent', 'Budget Allocation Proposal sent back to Project Manager for final acceptance.');
-        closeDrawer();
-    }
-    
-            // --- NOTIFICATION LOGIC ---
-        let notificationCount = 5; 
-        
-        function updateBadge() {
-            const badge = document.getElementById('notify-badge');
-            if(notificationCount > 0) {
-                badge.classList.add('active');
-                badge.innerText = notificationCount > 10 ? '10+' : notificationCount;
-            } else {
-                badge.classList.remove('active');
-            }
-        }
-        
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notify-dropdown');
-            dropdown.classList.toggle('show');
-            const list = document.getElementById('notify-list');
-            if(list.children.length === 0) list.innerHTML = '<div class="notify-item unread"><div class="notify-icon"><i class="fas fa-file-invoice-dollar"></i></div><div class="notify-content"><div class="notify-title">Confirm Payment</div><div class="notify-desc">New invoice pending approval.</div></div></div>';
-        }
-        
-        document.addEventListener('click', function(e) {
-            const wrapper = document.querySelector('.notification-wrapper');
-            if (!wrapper.contains(e.target)) document.getElementById('notify-dropdown').classList.remove('show');
-        });
-        
-        updateBadge();
-    </script>
-    <!-- User Profile Drawer -->
+     <!-- Profile Drawer Overlay -->
     <div class="drawer-overlay" id="profile-overlay">
-        <div class="drawer">
+        <div class="drawer drawer-right" onclick="event.stopPropagation()">
             <div class="drawer-header">
-                <h3>User Profile</h3>
-                <button class="btn btn-secondary" onclick="closeProfileDrawer()"><i class="fas fa-times"></i></button>
+                <div class="drawer-title">User Profile</div>
+                <button class="drawer-close" onclick="closeProfileDrawer()"><i class="fas fa-times"></i></button>
             </div>
             <div class="drawer-content">
-                <div style="padding: 24px; text-align: center; border-bottom: 1px solid var(--slate-200);">
-                    <div style="width: 80px; height: 80px; background: var(--orange); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 16px auto;">FM</div>
-                    <h2 style="margin-bottom: 4px;">Finance Manager</h2>
-                    <p style="color: var(--slate-500);">Finance Department</p>
+                <div class="profile-section">
+                    <div class="profile-header-large">
+                        <div class="profile-avatar-large" style="background: var(--emerald);">SM</div>
+                        <div>
+                            <div class="profile-name-large">Sarah Mwale</div>
+                            <div class="profile-role-large">Finance Director</div>
+                        </div>
+                    </div>
                 </div>
-                <div style="padding: 24px;">
-                    <h4 style="margin-bottom: 16px; color: var(--slate-400); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Account Settings</h4>
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-input" value="finance@mkaka.com" readonly>
-                    </div>
-                     <div style="margin-top: 32px;">
-                         <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red);" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
-                    </div>
+                <div class="drawer-section">
+                    <button class="btn btn-secondary w-full" onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        function openProfileDrawer() {
-            document.getElementById('profile-overlay').classList.add('show');
-        }
-        function closeProfileDrawer() {
-            document.getElementById('profile-overlay').classList.remove('show');
-        }
-        document.querySelectorAll('.user-profile').forEach(el => {
-            el.addEventListener('click', openProfileDrawer);
-        });
-    </script>
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/pages/finance.js"></script>
 </body>
 </html>

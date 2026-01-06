@@ -20,7 +20,8 @@
     <link rel="stylesheet" href="css/components/tables.css">
     <link rel="stylesheet" href="css/components/drawer.css">
     <link rel="stylesheet" href="css/components/notifications.css">
-    <link rel="stylesheet" href="css/pages/dashboard.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/pages/project.css">
 </head>
 
 <body>
@@ -30,7 +31,12 @@
                 <i class="fas fa-hard-hat"></i>
                 <span>MKAKA</span>
             </div>
-            <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search projects...">
+            </div>
+            
+            <div class="header-tools">
                 <div class="notification-wrapper">
                     <div class="icon-btn" style="cursor: pointer; position: relative;">
                         <i class="fas fa-bell" style="color: var(--slate-500); font-size: 18px;"></i>
@@ -48,7 +54,7 @@
                     </div>
                 </div>
 
-                <div class="user-profile" onclick="openProfileDrawer()" style="cursor: pointer;">
+                <div class="user-profile" onclick="window.openProfileDrawer()" style="cursor: pointer;">
                     <div class="profile-avatar">AK</div>
                 </div>
             </div>
@@ -70,7 +76,7 @@
                     <div class="nav-section">
                         <div class="nav-label">Main</div>
                         <a class="nav-link active" onclick="navigateTo('portfolio', this)">
-                            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+                            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
                         </a>
                         <a class="nav-link" onclick="navigateTo('analytics', this)">
                             <i class="fas fa-chart-pie"></i> <span>Analytics</span>
@@ -88,15 +94,16 @@
                         <a class="nav-link" onclick="navigateTo('teams', this)">
                             <i class="fas fa-users"></i> <span>Field Teams</span>
                         </a>
-                        <div class="nav-section">
-                            <div class="nav-label">Risk & Issues</div>
-                            <a class="nav-link" onclick="navigateTo('risks', this)">
-                                <i class="fas fa-exclamation-triangle"></i> <span>Risk Register</span>
-                            </a>
-                            <a class="nav-link" onclick="navigateTo('requests', this)">
-                                <i class="fas fa-clipboard-list"></i> <span>Requests</span>
-                            </a>
-                        </div>
+                    </div>
+                    
+                    <div class="nav-section">
+                        <div class="nav-label">Risk & Issues</div>
+                        <a class="nav-link" onclick="navigateTo('risks', this)">
+                            <i class="fas fa-exclamation-triangle"></i> <span>Risk Register</span>
+                        </a>
+                        <a class="nav-link" onclick="navigateTo('requests', this)">
+                            <i class="fas fa-clipboard-list"></i> <span>Requests</span>
+                        </a>
                     </div>
 
                     <div class="nav-section">
@@ -119,17 +126,16 @@
                         <div>
                             <h1 class="page-title" id="header-title">Project Controls</h1>
                             <div class="context-strip" id="header-context">
-                                <span class="context-value">4</span> Active Projects
-                                <div class="context-dot"></div>
-                                <span class="context-value">MWK 450M</span> Total Value
-                                <div class="context-dot"></div>
-                                <span style="color: var(--orange); font-weight: 600;">3 Pending Logs</span>
+                                <span class="context-value">4 Active Projects | MWK 450M Value</span>
                             </div>
                         </div>
-                        <button class="btn btn-action" onclick="openDrawer('new_project')">
-                            <i class="fas fa-plus"></i>
-                            <span>New Project</span>
-                        </button>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Search projects...">
+                             </div>
+                            <button class="btn btn-primary" onclick="openDrawer('new_project')"><i class="fas fa-plus"></i> New Project</button>
+                        </div>
                     </div>
                 </div>
 
@@ -253,11 +259,12 @@
                                     <button class="btn btn-secondary btn-view-mode" data-mode="month" onclick="setGanttView('month')">Month</button>
                                 </div>
                             </div>
-                            <div class="gantt-container" id="gantt-chart-area" style="position:relative;">
-                                <svg id="gantt-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;"></svg>
+                            
+                            <!-- Gantt Injection Container -->
+                            <div class="gantt-container" id="gantt-chart-area">
+                                <!-- JS will populate this -->
                                 <div class="gantt-header">
-                                    <div class="gantt-header-cell" style="text-align:left; padding-left:16px;">Task Name
-                                    </div>
+                                    <div class="gantt-header-cell">Task Name</div>
                                     <div class="gantt-header-cell">W1</div>
                                     <div class="gantt-header-cell">W2</div>
                                     <div class="gantt-header-cell">W3</div>
@@ -267,6 +274,7 @@
                                     <div class="gantt-header-cell">W7</div>
                                     <div class="gantt-header-cell">W8</div>
                                     <div class="gantt-header-cell">W9</div>
+                                    <div class="gantt-header-cell">W10</div>
                                     <div class="gantt-header-cell">W11</div>
                                     <div class="gantt-header-cell">W12</div>
                                 </div>
@@ -299,8 +307,10 @@
                         <div class="data-card">
                             <div class="data-card-header">
                                 <div class="card-title">Budget Line Items (CEN-01)</div>
-                                <button class="btn btn-secondary" onclick="openDrawer('request_budget')">Request Reallocation</button>
-                                <button class="btn btn-action" style="margin-left:8px;" onclick="openDrawer('budget_variation')"><i class="fas fa-paper-plane"></i> Request Variation (FM)</button>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-secondary" onclick="openDrawer('request_budget')">Request Reallocation</button>
+                                    <button class="btn btn-action" onclick="openDrawer('budget_variation')"><i class="fas fa-paper-plane"></i> Request Variation (FM)</button>
+                                </div>
                             </div>
                             <table>
                                 <thead>
@@ -391,198 +401,196 @@
                         </div>
                     </div>
 
-                </div>
-
-                <div id="view-risks" class="view-section">
-                    <div class="data-card">
-                        <div class="data-card-header">
-                            <div class="card-title">Project Risk Register</div>
-                            <button class="btn btn-action" onclick="openDrawer('risk_log')">
-                                <i class="fas fa-plus"></i> Log Risk
-                            </button>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Risk ID</th>
-                                    <th>Description</th>
-                                    <th>Impact</th>
-                                    <th>Probability</th>
-                                    <th>Status</th>
-                                    <th>Owner</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span class="project-id">RSK-001</span></td>
-                                    <td style="font-weight: 600;">Delayed Cement Delivery <div
-                                            style="font-size:11px; color:var(--slate-500);">Supplier transport strike
-                                            expected</div>
-                                    </td>
-                                    <td style="color:var(--red);">High</td>
-                                    <td style="color:var(--orange);">Medium</td>
-                                    <td><span class="status active">Active</span></td>
-                                    <td>P. Phiri</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="project-id">RSK-002</span></td>
-                                    <td style="font-weight: 600;">Heavy Cost Overrun on Labour <div
-                                            style="font-size:11px; color:var(--slate-500);">Overtime required to meet
-                                            deadline</div>
-                                    </td>
-                                    <td style="color:var(--orange);">Medium</td>
-                                    <td style="color:var(--emerald);">Low</td>
-                                    <td><span class="status review">Monitored</span></td>
-                                    <td>J. Banda</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="view-requests" class="view-section">
-                    <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
-                        <div class="stat-card" onclick="openDrawer('request_budget')">
-                            <div class="stat-header"><span class="stat-label">Budget Reallocation</span><i
-                                    class="fas fa-coins" style="color: var(--blue);"></i></div>
-                            <div class="stat-value" style="font-size:16px; margin-top:8px;">New Request</div>
-                            <div class="stat-sub">Transfer funds between lines</div>
-                        </div>
-                        <div class="stat-card" onclick="openDrawer('request_equipment')">
-                            <div class="stat-header"><span class="stat-label">Equipment Need</span><i
-                                    class="fas fa-truck-moving" style="color: var(--orange);"></i></div>
-                            <div class="stat-value" style="font-size:16px; margin-top:8px;">Request Machinery</div>
-                            <div class="stat-sub">Schedule fleet for site</div>
+                    <div id="view-risks" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Project Risk Register</div>
+                                <button class="btn btn-action" onclick="openDrawer('risk_log')">
+                                    <i class="fas fa-plus"></i> Log Risk
+                                </button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Risk ID</th>
+                                        <th>Description</th>
+                                        <th>Impact</th>
+                                        <th>Probability</th>
+                                        <th>Status</th>
+                                        <th>Owner</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="project-id">RSK-001</span></td>
+                                        <td style="font-weight: 600;">Delayed Cement Delivery <div
+                                                style="font-size:11px; color:var(--slate-500);">Supplier transport strike
+                                                expected</div>
+                                        </td>
+                                        <td style="color:var(--red);">High</td>
+                                        <td style="color:var(--orange);">Medium</td>
+                                        <td><span class="status active">Active</span></td>
+                                        <td>P. Phiri</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">RSK-002</span></td>
+                                        <td style="font-weight: 600;">Heavy Cost Overrun on Labour <div
+                                                style="font-size:11px; color:var(--slate-500);">Overtime required to meet
+                                                deadline</div>
+                                        </td>
+                                        <td style="color:var(--orange);">Medium</td>
+                                        <td style="color:var(--emerald);">Low</td>
+                                        <td><span class="status review">Monitored</span></td>
+                                        <td>J. Banda</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <div class="data-card" style="margin-top:24px;">
-                        <div class="data-card-header">
-                            <div class="card-title">Active Requests</div>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Req ID</th>
-                                    <th>Type</th>
-                                    <th>Project</th>
-                                    <th>Details</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr onclick="openDrawer('request_review')" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='var(--slate-50)'" onmouseout="this.style.background='transparent'">
-                                    <td><span class="project-id">REQ-102</span></td>
-                                    <td>Budget</td>
-                                    <td>CEN-01</td>
-                                    <td>Move 2M from Materials to Labor</td>
-                                    <td><span class="status review">Pending Approval</span></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="project-id">REQ-101</span></td>
-                                    <td>Equipment</td>
-                                    <td>MZ-05</td>
-                                    <td>Excavator for 3 days</td>
-                                    <td><span class="status active">Approved</span></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="project-id">REQ-105</span></td>
-                                    <td>Payment</td>
-                                    <td>LIL-02</td>
-                                    <td>Vendor Payment > 50M MWK</td>
-                                    <td>
-                                        <div style="display:flex; flex-direction:column; gap:2px;">
-                                            <span class="status locked"><i class="fas fa-route"></i> Routed to Director</span>
-                                            <span style="font-size:10px; color:var(--red);">Exceeds Limit</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="view-reports" class="view-section">
-                    <div class="data-card">
-                        <div class="data-card-header">
-                            <div class="card-title">Generated Reports</div>
-                             <button class="btn btn-action" onclick="openDrawer('create_report')"><i class="fas fa-plus"></i> Generate Report</button>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Report Name</th>
-                                    <th>Date Generated</th>
-                                    <th>Type</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="font-weight: 600;"><i class="fas fa-file-pdf"
-                                            style="color: var(--red); margin-right: 8px;"></i> Weekly Progress
-                                        Report - Week 42</td>
-                                    <td>Jan 02, 2026</td>
-                                    <td><span class="project-id">Progress</span></td>
-                                    <td><button class="btn btn-secondary" style="padding: 4px 8px;">Download</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;"><i class="fas fa-file-excel"
-                                            style="color: var(--emerald); margin-right: 8px;"></i> Financial
-                                        Variance Analysis</td>
-                                    <td>Dec 30, 2025</td>
-                                    <td><span class="project-id">Financial</span></td>
-                                    <td><button class="btn btn-secondary" style="padding: 4px 8px;">Download</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="view-analytics" class="view-section">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-header"><span class="stat-label">Total Budget vs Actual</span></div>
-                            <div style="height: 200px; position: relative;">
-                                <canvas id="chart-budget"></canvas>
+                    <div id="view-requests" class="view-section">
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="stat-card" onclick="openDrawer('request_budget')">
+                                <div class="stat-header"><span class="stat-label">Budget Reallocation</span><i
+                                        class="fas fa-coins" style="color: var(--blue);"></i></div>
+                                <div class="stat-value" style="font-size:16px; margin-top:8px;">New Request</div>
+                                <div class="stat-sub">Transfer funds between lines</div>
+                            </div>
+                            <div class="stat-card" onclick="openDrawer('request_equipment')">
+                                <div class="stat-header"><span class="stat-label">Equipment Need</span><i
+                                        class="fas fa-truck-moving" style="color: var(--orange);"></i></div>
+                                <div class="stat-value" style="font-size:16px; margin-top:8px;">Request Machinery</div>
+                                <div class="stat-sub">Schedule fleet for site</div>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-header"><span class="stat-label">Project Progress (Avg)</span></div>
-                             <div style="height: 200px; position: relative; display: flex; justify-content: center;">
-                                <canvas id="chart-progress"></canvas>
+
+                        <div class="data-card" style="margin-top:24px;">
+                            <div class="data-card-header">
+                                <div class="card-title">Active Requests</div>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Req ID</th>
+                                        <th>Type</th>
+                                        <th>Project</th>
+                                        <th>Details</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr onclick="openDrawer('request_review')" style="cursor:pointer;">
+                                        <td><span class="project-id">REQ-102</span></td>
+                                        <td>Budget</td>
+                                        <td>CEN-01</td>
+                                        <td>Move 2M from Materials to Labor</td>
+                                        <td><span class="status review">Pending Approval</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">REQ-101</span></td>
+                                        <td>Equipment</td>
+                                        <td>MZ-05</td>
+                                        <td>Excavator for 3 days</td>
+                                        <td><span class="status active">Approved</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="project-id">REQ-105</span></td>
+                                        <td>Payment</td>
+                                        <td>LIL-02</td>
+                                        <td>Vendor Payment > 50M MWK</td>
+                                        <td>
+                                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                                <span class="status locked"><i class="fas fa-route"></i> Routed to Director</span>
+                                                <span style="font-size:10px; color:var(--red);">Exceeds Limit</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-reports" class="view-section">
+                        <div class="data-card">
+                            <div class="data-card-header">
+                                <div class="card-title">Generated Reports</div>
+                                 <button class="btn btn-action" onclick="openDrawer('create_report')"><i class="fas fa-plus"></i> Generate Report</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Report Name</th>
+                                        <th>Date Generated</th>
+                                        <th>Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: 600;"><i class="fas fa-file-pdf"
+                                                style="color: var(--red); margin-right: 8px;"></i> Weekly Progress
+                                            Report - Week 42</td>
+                                        <td>Jan 02, 2026</td>
+                                        <td><span class="project-id">Progress</span></td>
+                                        <td><button class="btn btn-secondary" style="padding: 4px 8px;">Download</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 600;"><i class="fas fa-file-excel"
+                                                style="color: var(--emerald); margin-right: 8px;"></i> Financial
+                                            Variance Analysis</td>
+                                        <td>Dec 30, 2025</td>
+                                        <td><span class="project-id">Financial</span></td>
+                                        <td><button class="btn btn-secondary" style="padding: 4px 8px;">Download</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="view-analytics" class="view-section">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Total Budget vs Actual</span></div>
+                                <div style="height: 200px; position: relative;">
+                                    <canvas id="chart-budget"></canvas>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Project Progress (Avg)</span></div>
+                                 <div style="height: 200px; position: relative; display: flex; justify-content: center;">
+                                    <canvas id="chart-progress"></canvas>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Resource Allocation</span></div>
+                                 <div style="height: 200px; position: relative;">
+                                     <canvas id="chart-resources"></canvas>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-header"><span class="stat-label">Risk Distribution</span></div>
+                                 <div style="height: 200px; position: relative;">
+                                    <canvas id="chart-risks"></canvas>
+                                </div>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-header"><span class="stat-label">Resource Allocation</span></div>
-                             <div style="height: 200px; position: relative;">
-                                 <canvas id="chart-resources"></canvas>
+
+                        <div class="data-card" style="margin-top: 24px;">
+                            <div class="data-card-header">
+                                <div class="card-title">Performance Trends (Last 6 Months)</div>
+                                 <button class="btn btn-secondary">Export Data</button>
                             </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-header"><span class="stat-label">Risk Distribution</span></div>
-                             <div style="height: 200px; position: relative;">
-                                <canvas id="chart-risks"></canvas>
+                            <div style="padding: 24px; height: 300px;">
+                                <canvas id="chart-trends"></canvas>
                             </div>
                         </div>
                     </div>
 
-                    <div class="data-card" style="margin-top: 24px;">
-                        <div class="data-card-header">
-                            <div class="card-title">Performance Trends (Last 6 Months)</div>
-                             <button class="btn btn-secondary">Export Data</button>
-                        </div>
-                        <div style="padding: 24px; height: 300px;">
-                            <canvas id="chart-trends"></canvas>
-                        </div>
-                    </div>
                 </div>
-
+            </main>
         </div>
-        </main>
-    </div>
     </div>
 
     <!-- Main Drawer -->
@@ -590,32 +598,23 @@
         <div class="drawer" onclick="event.stopPropagation()">
             <div class="drawer-header">
                 <div>
-                    <span class="project-id" id="d-id">CEN-01</span>
-                    <h2 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
-                        id="d-title">Site Log Verification</h2>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;" id="d-sub">Subtitle</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;"
+                        id="d-title">Title</div>
+                    <span class="project-id" id="d-id" style="display:none; margin-top:4px;">ID</span>
                 </div>
                 <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
                     <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
                 </div>
             </div>
 
-            <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
-                <div class="tabs" style="margin-bottom: 0;">
-                    <div class="tab active" onclick="switchTab(this)">Verify Log</div>
-                    <div class="tab" onclick="switchTab(this)">Budget Check</div>
-                    <div class="tab" onclick="switchTab(this)">Tasks</div>
-                </div>
-            </div>
+            <!-- Optional Tabs Header for certain drawers - can be dynamically injected but keeping structure generic -->
+            <div id="drawer-tabs-area"></div>
 
             <div class="drawer-content" id="drawer-body">
             </div>
 
-            <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px;"
-                id="drawer-footer">
-                <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);">Reject
-                    Log</button>
-                <button class="btn btn-primary" style="flex: 1; background: var(--emerald);">Confirm & Update
-                    Gantt</button>
+            <div class="drawer-footer" id="drawer-footer">
             </div>
         </div>
     </div>
@@ -650,15 +649,11 @@
                             <label class="form-label">Current Password</label>
                             <input type="password" class="form-input" placeholder="••••••••">
                         </div>
-                        <div class="form-group" style="margin-bottom: 16px;">
+                         <div class="form-group" style="margin-bottom: 24px;">
                             <label class="form-label">New Password</label>
                             <input type="password" class="form-input" placeholder="New password">
                         </div>
-                         <div class="form-group" style="margin-bottom: 24px;">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" class="form-input" placeholder="Confirm new password">
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="notificationService.add('success', 'Password Updated', 'Your password has been changed successfully.')">Update Password</button>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="toastService.add('success', 'Password Updated', 'Your password has been changed successfully.')">Update Password</button>
                     </div>
 
                     <div style="margin-top: 32px;">
@@ -669,8 +664,8 @@
         </div>
     </div>
 
-    <!-- Modules -->
+    <!-- Scripts -->
     <script type="module" src="js/app.js"></script>
-    <script type="module" src="js/pages/dashboard.js"></script>
+    <script type="module" src="js/pages/project.js"></script>
 </body>
 </html>
