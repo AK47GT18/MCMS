@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Director | Mkaka CMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* --- 1. EXACT PM DASHBOARD DESIGN TOKENS --- */
+:root {
+  --orange: #F97316;
+  --orange-light: #FFF7ED;
+  --slate-50: #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1;
+  --slate-400: #94A3B8;
+  --slate-500: #64748B;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1E293B;
+  --slate-900: #0F172A;
+  --white: #FFFFFF;
+  
+  --emerald: #10B981;
+  --red: #EF4444;
+  --blue: #3B82F6;
+  
+  --radius: 8px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --shadow-drawer: -5px 0 25px rgba(0,0,0,0.15);
+  --transition: all 0.2s ease-in-out;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--slate-50);
+  color: var(--slate-900);
+  overflow: hidden;
+  font-size: 14px;
+}
+
+h1, h2, h3 { letter-spacing: -0.025em; }
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* --- 2. LAYOUT COMPONENTS --- */
+.top-bar {
+  height: 56px;
+  background: white;
+  border-bottom: 1px solid var(--slate-200);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  z-index: 40;
+}
+
+.workspace { display: flex; flex: 1; overflow: hidden; }
+
+.sidebar {
+  width: 260px;
+  background: white;
+  border-right: 1px solid var(--slate-200);
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* --- 3. SIDEBAR STYLES --- */
+.logo {
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--slate-900);
+  letter-spacing: -0.5px;
+}
+.logo i { color: var(--orange); font-size: 20px; }
+
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--slate-200); }
+.user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.profile-avatar { width: 36px; height: 36px; background: var(--slate-800); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; }
+.profile-info { flex: 1; }
+.profile-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+.profile-role { font-size: 11px; color: var(--slate-500); }
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; }
+.nav-section { margin-bottom: 24px; }
+.nav-label { font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; padding-left: 10px; }
+
+.nav-link {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  color: var(--slate-600); font-size: 13px; font-weight: 500;
+  border-radius: 6px; text-decoration: none; transition: var(--transition);
+  margin-bottom: 2px; cursor: pointer;
+}
+.nav-link:hover { background: var(--slate-100); color: var(--slate-900); }
+.nav-link.active { background: var(--orange-light); color: var(--orange); font-weight: 600; }
+.nav-link.active i { color: var(--orange); }
+.nav-link i { width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+/* --- 4. CONTENT STYLES --- */
+.page-header {
+  background: white; border-bottom: 1px solid var(--slate-200);
+  padding: 20px 32px; position: sticky; top: 0; z-index: 20;
+}
+.breadcrumb { font-size: 11px; font-weight: 500; color: var(--slate-500); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.page-title { font-size: 24px; font-weight: 800; color: var(--slate-900); margin-bottom: 4px; }
+.page-title-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.context-strip { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-500); font-weight: 500; }
+.context-dot { width: 3px; height: 3px; background: var(--slate-300); border-radius: 50%; }
+.context-value { color: var(--slate-700); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+.content { padding: 24px 32px; max-width: 1600px; }
+
+/* Buttons - EXACT PM DASHBOARD MATCH */
+.btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: var(--transition); border: 1px solid transparent; }
+.btn-primary { background: var(--slate-900); color: white; }
+.btn-primary:hover { background: var(--slate-800); transform: translateY(-1px); }
+.btn-action { background: var(--orange); color: white; }
+.btn-action:hover { background: #ea580c; }
+.btn-secondary { background: white; color: var(--slate-700); border-color: var(--slate-200); }
+.btn-secondary:hover { border-color: var(--slate-300); background: var(--slate-50); }
+.btn-danger { background: white; color: var(--red); border-color: var(--red); }
+.btn-danger:hover { background: #FEF2F2; }
+
+/* Stats & Tables */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: white; border: 1px solid var(--slate-200); border-radius: 8px; padding: 16px; transition: var(--transition); cursor: pointer; }
+.stat-card:hover { border-color: var(--orange); box-shadow: var(--shadow-sm); }
+.stat-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.stat-label { font-size: 11px; font-weight: 600; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--slate-900); font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
+.stat-sub { font-size: 11px; margin-top: 4px; color: var(--slate-500); display: flex; align-items: center; gap: 4px; }
+
+.data-card { background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden; margin-bottom: 24px; }
+.data-card-header { padding: 16px 20px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
+.card-title { font-weight: 700; color: var(--slate-900); }
+
+table { width: 100%; border-collapse: collapse; }
+thead th { background: var(--slate-50); padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--slate-200); position: sticky; top: 0; }
+tbody tr { border-bottom: 1px solid var(--slate-100); transition: var(--transition); cursor: pointer; }
+tbody tr:hover { background: var(--slate-50); }
+tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertical-align: middle; }
+
+.project-id { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--slate-600); background: var(--slate-100); padding: 2px 6px; border-radius: 4px; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+.status.active { background: #DCFCE7; color: #166534; }
+.status.pending { background: #FEF3C7; color: #92400E; }
+.status.rejected { background: #FEE2E2; color: #991B1B; }
+.status.locked { background: var(--slate-100); color: var(--slate-600); border: 1px solid var(--slate-300); }
+
+/* --- 5. FINANCE SPECIFIC VISUALS --- */
+.budget-bar-bg { width: 100%; height: 8px; background: var(--slate-200); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.budget-bar-fill { height: 100%; background: var(--emerald); }
+.budget-bar-fill.warn { background: #F59E0B; }
+.budget-bar-fill.danger { background: var(--red); }
+
+.fraud-alert-card { background: #FEF2F2; border: 1px solid #FECACA; padding: 16px; border-radius: 8px; display: flex; gap: 16px; margin-bottom: 16px; }
+
+/* --- 6. VIEW MANAGEMENT --- */
+.view-section { display: none; animation: fadeIn 0.3s ease; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- 7. DRAWER --- */
+.drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.drawer-overlay.show { opacity: 1; pointer-events: auto; }
+.drawer { position: absolute; top: 0; right: 0; width: 700px; height: 100%; background: white; box-shadow: var(--shadow-drawer); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
+.drawer-overlay.show .drawer { transform: translateX(0); }
+.drawer-header { padding: 20px 24px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: flex-start; background: white; }
+.drawer-content { flex: 1; overflow-y: auto; padding: 0; background: var(--slate-50); }
+.drawer-section { background: white; border-bottom: 1px solid var(--slate-200); padding: 24px; margin-bottom: 16px; }
+.drawer-footer { padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px; }
+
+/* Tabs inside Drawer */
+.tabs { display: flex; gap: 24px; }
+.tab { padding: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--slate-500); cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition); }
+.tab:hover { color: var(--slate-800); }
+.tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+/* Form Elements */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase; }
+.form-input { width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top-bar">
+    <div class="logo">
+      <i class="fas fa-hard-hat"></i>
+      <span>MKAKA FINANCE</span>
+    </div>
+    <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
+      <div style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
+        <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
+      </div>
+      <button class="btn btn-secondary" style="border: none; padding: 8px;">
+        <i class="fas fa-bell" style="color: var(--slate-500);"></i>
+      </button>
+      <div class="user-profile">
+        <div class="profile-avatar">FD</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="user-profile">
+          <div class="profile-avatar" style="background: var(--emerald);">SM</div>
+          <div class="profile-info">
+            <div class="profile-name">Sarah Mwale</div>
+            <div class="profile-role">Finance Director</div>
+          </div>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-label">Strategic</div>
+          <a class="nav-link active" onclick="navigateTo('dashboard', this)">
+             <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+          </a>
+          <a class="nav-link" onclick="navigateTo('analytics', this)">
+             <i class="fas fa-chart-pie"></i> <span>Analytics</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-label">Operations</div>
+          <a class="nav-link" onclick="openDrawer('transaction')">
+             <i class="fas fa-plus-circle"></i> <span>Transaction Entry</span>
+          </a>
+          <a class="nav-link" onclick="navigateTo('approvals', this)">
+             <i class="fas fa-check-to-slot"></i> <span>Approvals</span>
+             <span class="nav-badge">5</span>
+          </a>
+          <a class="nav-link" onclick="navigateTo('ledger', this)">
+             <i class="fas fa-book"></i> <span>General Ledger</span>
+          </a>
+           <a class="nav-link" onclick="navigateTo('reconciliation', this)">
+             <i class="fas fa-scale-balanced"></i> <span>Reconciliation</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-label">Governance</div>
+          <a class="nav-link" onclick="navigateTo('bcr', this)">
+             <i class="fas fa-sliders"></i> <span>Budget Control</span>
+          </a>
+          <a class="nav-link" onclick="navigateTo('audit', this)">
+             <i class="fas fa-fingerprint"></i> <span>Audit Log</span>
+          </a>
+          <a class="nav-link" onclick="navigateTo('fraud', this)">
+             <i class="fas fa-shield-cat"></i> <span>Fraud Detection</span>
+          </a>
+          <a class="nav-link" onclick="navigateTo('contracts', this)">
+             <i class="fas fa-file-contract"></i> <span>Contracts</span>
+          </a>
+           <a class="nav-link" onclick="navigateTo('vendors', this)">
+             <i class="fas fa-store"></i> <span>Vendor Registry</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-label">Reporting</div>
+          <a class="nav-link" onclick="navigateTo('reports', this)">
+             <i class="fas fa-file-pdf"></i> <span>Reports Generator</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div class="breadcrumb">
+          <span>Finance Workspace</span>
+          <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
+          <span id="header-breadcrumb">Financial Overview</span>
+        </div>
+        <div class="page-title-row">
+          <div>
+            <h1 class="page-title" id="header-title">Financial Dashboard</h1>
+            <div class="context-strip" id="header-context">
+              <span class="context-value">FY 2025-26</span>
+              <div class="context-dot"></div>
+              <span class="context-value" style="color: var(--emerald);">Cash Position: Strong</span>
+              <div class="context-dot"></div>
+              <span style="color: var(--orange); font-weight: 600;">5 Items Pending</span>
+            </div>
+          </div>
+          <button class="btn btn-action" onclick="openDrawer('new_bcr')">
+            <i class="fas fa-plus"></i>
+            <span>New Budget Request</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <div id="view-dashboard" class="view-section active">
+            <div class="stats-grid">
+               <div class="stat-card" style="border-left: 4px solid var(--red);">
+                  <div class="stat-header"><span class="stat-label" style="color: var(--red);">Fraud Alerts</span><i class="fas fa-shield-halved" style="color: var(--red);"></i></div>
+                  <div class="stat-value" style="color: var(--red);">1</div>
+                  <div class="stat-sub">Duplicate Payment Detected</div>
+               </div>
+               <div class="stat-card" style="border-left: 4px solid #F59E0B; cursor: pointer;" onclick="navigateTo('approvals')">
+                  <div class="stat-header"><span class="stat-label" style="color: #F59E0B;">Pending Approvals</span><i class="fas fa-clock" style="color: #F59E0B;"></i></div>
+                  <div class="stat-value" style="color: #F59E0B;">5</div>
+                  <div class="stat-sub">MWK 45M Total Value</div>
+               </div>
+               <div class="stat-card">
+                  <div class="stat-header"><span class="stat-label">Contract Deadlines</span><i class="fas fa-file-signature" style="color: var(--blue);"></i></div>
+                  <div class="stat-value">3</div>
+                  <div class="stat-sub">Expiring within 7 days</div>
+               </div>
+               <div class="stat-card">
+                  <div class="stat-header"><span class="stat-label">Budget Overruns</span><i class="fas fa-chart-bar" style="color: var(--slate-600);"></i></div>
+                  <div class="stat-value">2</div>
+                  <div class="stat-sub">Projects exceeding 90%</div>
+               </div>
+            </div>
+
+            <div class="data-card">
+               <div class="data-card-header">
+                  <div class="card-title">Priority Action Items</div>
+                  <button class="btn btn-secondary">View All</button>
+               </div>
+               <table>
+                  <thead>
+                     <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr onclick="openDrawer('approval', 'REQ-089')">
+                        <td><span class="project-id">REQ-089</span></td>
+                        <td><span class="status pending">Approval</span></td>
+                        <td style="font-weight: 600;">Materials - CEN-01</td>
+                        <td style="font-family: 'JetBrains Mono';">4,500,000</td>
+                        <td style="color: var(--slate-500);">Awaiting You</td>
+                        <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Review</button></td>
+                     </tr>
+                     <tr style="background: #FEF2F2;" onclick="openDrawer('fraud', 'REQ-095')">
+                        <td><span class="project-id" style="background: #FECACA;">REQ-095</span></td>
+                        <td><span class="status rejected">Fraud Flag</span></td>
+                        <td style="font-weight: 600; color: var(--red);">Duplicate Payment Check</td>
+                        <td style="font-family: 'JetBrains Mono';">850,000</td>
+                        <td style="color: var(--red);">Investigation Req.</td>
+                        <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Investigate</button></td>
+                     </tr>
+                     <tr>
+                        <td><span class="project-id">BCR-102</span></td>
+                        <td><span class="status locked">Budget Lock</span></td>
+                        <td>Materials Budget Increase</td>
+                        <td style="font-family: 'JetBrains Mono';">+20,000,000</td>
+                        <td style="color: var(--slate-500);">Pending PM</td>
+                        <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Track</button></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+        </div>
+
+        <div id="view-approvals" class="view-section">
+           <div class="data-card">
+              <div class="data-card-header">
+                 <div class="card-title">Requisition Queue</div>
+                 <button class="btn btn-primary">Bulk Approve</button>
+              </div>
+              <table>
+                 <thead>
+                    <tr><th><input type="checkbox"></th><th>Req ID</th><th>Project</th><th>Vendor</th><th>Description</th><th style="text-align:right">Amount</th><th>Fraud Check</th></tr>
+                 </thead>
+                 <tbody>
+                    <tr onclick="openDrawer('approval', 'REQ-089')">
+                       <td><input type="checkbox"></td>
+                       <td><span class="project-id">REQ-089</span></td>
+                       <td>CEN-01 Unilia</td>
+                       <td>Malawi Cement</td>
+                       <td>600 Bags Portland Cement</td>
+                       <td style="text-align:right; font-family: 'JetBrains Mono';">4,500,000</td>
+                       <td><span style="color: var(--emerald); font-weight: 600;"><i class="fas fa-check-circle"></i> Clean</span></td>
+                    </tr>
+                 </tbody>
+              </table>
+           </div>
+        </div>
+
+        <div id="view-bcr" class="view-section">
+           <div class="data-card">
+              <div class="data-card-header">
+                 <div class="card-title">Budget Change Requests (Governance)</div>
+                 <button class="btn btn-action" onclick="openDrawer('new_bcr')"><i class="fas fa-plus"></i> Initiate Change</button>
+              </div>
+              <table>
+                 <thead>
+                    <tr><th>BCR ID</th><th>Project</th><th>Category</th><th style="text-align:right">Current</th><th style="text-align:right">Proposed</th><th style="text-align:right">Variance</th><th>Status</th></tr>
+                 </thead>
+                 <tbody>
+                    <tr>
+                       <td><span class="project-id">BCR-102</span></td>
+                       <td>CEN-01 Unilia</td>
+                       <td>02-MAT Materials</td>
+                       <td style="text-align:right; font-family: 'JetBrains Mono';">200M</td>
+                       <td style="text-align:right; font-family: 'JetBrains Mono';">220M</td>
+                       <td style="text-align:right; color: var(--emerald);">+20M</td>
+                       <td><span class="status locked">Locked (PM Pending)</span></td>
+                    </tr>
+                 </tbody>
+              </table>
+           </div>
+        </div>
+
+        <div id="view-audit" class="view-section">
+           <div class="data-card">
+              <div class="data-card-header">
+                 <div class="card-title"><i class="fas fa-lock"></i> Immutable System Log</div>
+                 <button class="btn btn-secondary">Export Audit Report</button>
+              </div>
+              <table>
+                 <thead>
+                    <tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Target</th><th>IP Address</th></tr>
+                 </thead>
+                 <tbody>
+                    <tr>
+                       <td style="color: var(--slate-500);">09:15:23</td>
+                       <td style="font-weight: 600;">S. Mwale</td>
+                       <td>Finance Dir</td>
+                       <td><span class="status active">Approved</span></td>
+                       <td>TRX-9901</td>
+                       <td style="font-family: 'JetBrains Mono';">105.12.4.22</td>
+                    </tr>
+                    <tr>
+                       <td style="color: var(--slate-500);">09:10:45</td>
+                       <td style="font-weight: 600;">A. Kanjira</td>
+                       <td>PM</td>
+                       <td><span class="status pending">Submitted</span></td>
+                       <td>TRX-9901</td>
+                       <td style="font-family: 'JetBrains Mono';">105.12.4.55</td>
+                    </tr>
+                    <tr style="background: #F8FAFC;">
+                       <td style="color: var(--slate-500);">08:30:12</td>
+                       <td style="color: var(--slate-400);">Unknown</td>
+                       <td>-</td>
+                       <td><span class="status rejected">Login Fail</span></td>
+                       <td>Auth</td>
+                       <td style="font-family: 'JetBrains Mono';">192.168.1.5</td>
+                    </tr>
+                 </tbody>
+              </table>
+           </div>
+        </div>
+        
+        <div id="view-fraud" class="view-section">
+            <div class="fraud-alert-card">
+                <div style="font-size: 24px; color: var(--red);"><i class="fas fa-triangle-exclamation"></i></div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; color: var(--red); font-size: 16px;">Duplicate Payment Detected</div>
+                    <div style="color: var(--slate-600); margin-top: 4px;">REQ-095 (MWK 850,000) matches TRX-9885 from 3 days ago. Vendor: Mzuzu Hardware.</div>
+                    <div style="margin-top: 12px; display: flex; gap: 8px;">
+                        <button class="btn btn-danger" onclick="openDrawer('fraud', 'REQ-095')">Investigate</button>
+                        <button class="btn btn-secondary">Mark False Positive</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-contracts" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Contracts Module</div></div><div style="padding: 24px;">Contract Table Placeholder</div></div></div>
+        <div id="view-vendors" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Vendor Registry</div></div><div style="padding: 24px;">Vendor Table Placeholder</div></div></div>
+        <div id="view-ledger" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">General Ledger</div></div><div style="padding: 24px;">Ledger Table Placeholder</div></div></div>
+        <div id="view-analytics" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Financial Analytics</div></div><div style="padding: 24px;">Charts Placeholder</div></div></div>
+        <div id="view-reports" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Reports Generator</div></div><div style="padding: 24px;">Report Config Placeholder</div></div></div>
+        <div id="view-reconciliation" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Bank Reconciliation</div></div><div style="padding: 24px;">Recon Tools Placeholder</div></div></div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-header">
+      <div>
+        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;" id="d-sub">Subtitle</div>
+        <div style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-top: 4px;" id="d-title">Title</div>
+      </div>
+      <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+        <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
+      </div>
+    </div>
+    
+    <div class="drawer-content" id="d-body"></div>
+    
+    <div class="drawer-footer" id="d-footer"></div>
+  </div>
+</div>
+
+<script>
+// --- NAVIGATION LOGIC ---
+const views = {
+    'dashboard': { title: 'Financial Overview', context: 'FY 2025-26 | Cash Position: Strong' },
+    'analytics': { title: 'Analytics', context: 'Burn Rate & Forecasting' },
+    'approvals': { title: 'Requisition Queue', context: 'Operational Gatekeeping' },
+    'ledger': { title: 'General Ledger', context: 'Master Record' },
+    'reconciliation': { title: 'Bank Reconciliation', context: 'Statement Matching' },
+    'bcr': { title: 'Budget Control', context: 'Governance & Change Requests' },
+    'audit': { title: 'Audit Log', context: 'Immutable System Record' },
+    'fraud': { title: 'Fraud Detection', context: 'Active Alerts & Rules' },
+    'contracts': { title: 'Contract Management', context: 'Milestones & Deadlines' },
+    'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
+    'reports': { title: 'Reporting', context: 'Export & Print' }
+};
+
+function navigateTo(viewId, navElement) {
+    // 1. Sidebar Active State
+    if(navElement) {
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        navElement.classList.add('active');
+    }
+
+    // 2. View Switching
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('view-' + viewId);
+    if(target) target.classList.add('active');
+
+    // 3. Header Text
+    if(views[viewId]) {
+        document.getElementById('header-title').innerText = views[viewId].title;
+        document.getElementById('header-breadcrumb').innerText = views[viewId].title;
+        document.getElementById('header-context').innerHTML = `<span class="context-value">${views[viewId].context}</span>`;
+    }
+}
+
+// --- DRAWER LOGIC ---
+function openDrawer(type, id) {
+    const overlay = document.getElementById('drawer-overlay');
+    const title = document.getElementById('d-title');
+    const sub = document.getElementById('d-sub');
+    const body = document.getElementById('d-body');
+    const footer = document.getElementById('d-footer');
+    
+    overlay.classList.add('show');
+
+    if (type === 'approval') {
+        // --- APPROVAL DRAWER ---
+        sub.innerText = "Requisition Review";
+        title.innerText = "REQ-089: Cement Purchase";
+        
+        body.innerHTML = `
+            <div class="drawer-section">
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+                    <div><div class="stat-label">Project</div><div style="font-weight:600;">CEN-01 Unilia</div></div>
+                    <div><div class="stat-label">Vendor</div><div style="font-weight:600;">Malawi Cement Co.</div></div>
+                    <div><div class="stat-label">Category</div><div class="project-id">02-MAT</div></div>
+                    <div><div class="stat-label">Amount</div><div class="stat-value" style="font-size:16px;">MWK 4,500,000</div></div>
+                </div>
+            </div>
+
+            <div class="drawer-section">
+                <div class="stat-label" style="margin-bottom:8px;">Budget Impact Analysis</div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                   <span>Current Utilization</span>
+                   <span>92% -> <strong style="color:var(--red)">94.5%</strong></span>
+                </div>
+                <div class="budget-bar-bg">
+                   <div class="budget-bar-fill" style="width:92%; float:left; border-right:2px solid white;"></div>
+                   <div class="budget-bar-fill warn" style="width:2.5%; float:left;"></div>
+                </div>
+                <div style="font-size:11px; color:var(--slate-500); margin-top:8px;">
+                   Approving this will leave <strong>MWK 11.5M</strong> remaining in this category.
+                </div>
+            </div>
+            
+            <div class="drawer-section">
+                <div class="stat-label">Documents</div>
+                <button class="btn btn-secondary" style="width:100%; justify-content:flex-start; margin-top:8px;"><i class="fas fa-file-pdf"></i> View Invoice #8821</button>
+            </div>
+        `;
+        
+        footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Request Info</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Reject</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Approve & Pay</button>
+        `;
+
+    } else if (type === 'new_bcr') {
+        // --- NEW BUDGET REQUEST ---
+        sub.innerText = "Governance";
+        title.innerText = "Initiate Budget Change";
+        
+        body.innerHTML = `
+            <div class="drawer-section">
+                 <div style="background: #FFF7ED; border: 1px solid #FED7AA; color: #9A3412; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 20px;">
+                    <strong>System Enforcer:</strong> Finance cannot modify budgets directly. This request locks the budget line until PM Approval.
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project</label>
+                    <select class="form-input"><option>CEN-01 Unilia Library</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input"><option>02-MAT Materials</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Proposed Budget</label>
+                    <input class="form-input" type="number">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Justification</label>
+                    <textarea class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+        `;
+        
+        footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Submit for Approval</button>
+        `;
+
+    } else if (type === 'transaction') {
+        // --- TRANSACTION ENTRY ---
+        sub.innerText = "Operations";
+        title.innerText = "Record Transaction";
+        
+        body.innerHTML = `
+            <div class="drawer-section">
+                <div class="form-group">
+                    <label class="form-label">Project</label>
+                    <select class="form-input"><option>CEN-01 Unilia Library</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vendor</label>
+                    <select class="form-input"><option>Malawi Cement Co.</option></select>
+                    <div style="font-size:11px; color:var(--emerald); margin-top:4px;"><i class="fas fa-check-circle"></i> Registered</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <input class="form-input" type="number">
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Uploads</label>
+                    <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:6px; color:var(--slate-500);">Drag Invoice Here</div>
+                </div>
+            </div>
+        `;
+        
+        footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="closeDrawer()">Submit</button>
+        `;
+    } else if (type === 'fraud') {
+        // --- FRAUD INVESTIGATION ---
+        sub.innerText = "Fraud Detection";
+        title.innerText = "Investigation: Duplicate Payment";
+        
+        body.innerHTML = `
+            <div class="drawer-section">
+                <div style="background: #FEF2F2; padding:16px; border-radius:6px; margin-bottom:16px;">
+                    <div style="color:var(--red); font-weight:700; margin-bottom:4px;">High Risk Alert</div>
+                    <div style="color:var(--slate-700);">REQ-095 matches transaction TRX-9885 from 3 days ago exactly (Amount & Vendor).</div>
+                </div>
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="data-card" style="margin:0; border:1px solid var(--red);">
+                        <div class="data-card-header">Current</div>
+                        <div style="padding:16px;">
+                            <div style="font-weight:700;">REQ-095</div>
+                            <div>MWK 850,000</div>
+                            <div>Jan 03, 2026</div>
+                        </div>
+                    </div>
+                     <div class="data-card" style="margin:0;">
+                        <div class="data-card-header">Previous</div>
+                        <div style="padding:16px;">
+                            <div style="font-weight:700;">TRX-9885</div>
+                            <div>MWK 850,000</div>
+                            <div>Dec 30, 2025</div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="form-group" style="margin-top:16px;">
+                    <label class="form-label">Investigation Notes</label>
+                    <textarea class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+        `;
+        
+        footer.innerHTML = `
+            <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">False Positive</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Block Vendor</button>
+        `;
+    }
+}
+
+function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('show');
+}
+
+// Close on click outside
+document.getElementById('drawer-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDrawer();
+});
+</script>
+</body>
+</html>

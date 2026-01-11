@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Field Supervisor | Mkaka CMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* --- 1. ENTERPRISE DESIGN TOKENS (STRICT UNIFIED SYSTEM) --- */
+:root {
+  --orange: #F97316; --orange-light: #FFF7ED;
+  --slate-50: #F8FAFC; --slate-100: #F1F5F9; --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1; --slate-400: #94A3B8; --slate-500: #64748B;
+  --slate-600: #475569; --slate-700: #334155; --slate-800: #1E293B; --slate-900: #0F172A;
+  --white: #FFFFFF;
+  --emerald: #10B981; --red: #EF4444; --blue: #3B82F6; --amber: #F59E0B;
+  --radius: 8px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --shadow-drawer: -5px 0 25px rgba(0,0,0,0.15);
+  --transition: all 0.2s ease-in-out;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--slate-50);
+  color: var(--slate-900);
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  font-size: 13px;
+}
+
+/* --- 2. LAYOUT SHELL --- */
+.app { display: flex; flex-direction: column; height: 100vh; }
+.top-bar { height: 56px; background: white; border-bottom: 1px solid var(--slate-200); display: flex; align-items: center; padding: 0 20px; z-index: 40; position: sticky; top: 0; }
+.workspace { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 260px; background: white; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; z-index: 30; transition: transform 0.3s; }
+.main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+
+/* --- 3. RESPONSIVE NAVIGATION LOGIC --- */
+.bottom-nav { display: none; } /* Hidden on Desktop */
+
+@media (max-width: 768px) {
+  .sidebar { display: none; } /* Hide Sidebar on Mobile */
+  
+  .bottom-nav {
+    display: flex; justify-content: space-around; align-items: center;
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: white; border-top: 1px solid var(--slate-200);
+    padding: 10px 0; z-index: 100;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05);
+  }
+  
+  .main-content { padding-bottom: 80px; } /* Space for bottom nav */
+  .stats-grid { grid-template-columns: 1fr 1fr !important; } /* Mobile Grid */
+  .content { padding: 16px !important; }
+}
+
+/* Bottom Nav Item Styling */
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--slate-400); text-decoration: none; font-size: 10px; font-weight: 500; }
+.nav-item i { font-size: 20px; }
+.nav-item.active { color: var(--orange); }
+.nav-fab { background: var(--orange); color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -24px; box-shadow: 0 4px 6px rgba(249, 115, 22, 0.4); border: 4px solid var(--slate-50); }
+
+/* --- 4. SIDEBAR STYLING (Desktop) --- */
+.logo { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 10px; color: var(--slate-900); }
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--slate-200); }
+.user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.profile-avatar { width: 36px; height: 36px; background: var(--slate-800); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; }
+.profile-info { flex: 1; }
+.profile-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+.profile-role { font-size: 11px; color: var(--slate-500); }
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; }
+.nav-section { margin-bottom: 24px; }
+.nav-label { font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; padding-left: 10px; }
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 8px 10px; color: var(--slate-600); font-size: 13px; font-weight: 500; border-radius: 6px; text-decoration: none; transition: var(--transition); margin-bottom: 2px; cursor: pointer; }
+.nav-link:hover { background: var(--slate-100); color: var(--slate-900); }
+.nav-link.active { background: var(--orange-light); color: var(--orange); font-weight: 600; }
+.nav-link i { width: 18px; text-align: center; }
+
+/* --- 5. CONTENT STYLES --- */
+.page-header { background: white; border-bottom: 1px solid var(--slate-200); padding: 20px 32px; position: sticky; top: 0; z-index: 20; }
+.breadcrumb { font-size: 11px; font-weight: 500; color: var(--slate-500); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.page-title { font-size: 24px; font-weight: 800; color: var(--slate-900); margin-bottom: 4px; }
+.context-strip { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-500); font-weight: 500; flex-wrap: wrap; }
+.content { padding: 24px 32px; max-width: 1600px; }
+
+/* Components */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: white; border: 1px solid var(--slate-200); border-radius: 8px; padding: 16px; transition: var(--transition); }
+.stat-label { font-size: 11px; font-weight: 600; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+.stat-sub { font-size: 11px; margin-top: 4px; color: var(--slate-500); display: flex; align-items: center; gap: 4px; }
+
+.data-card { background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden; margin-bottom: 24px; }
+.data-card-header { padding: 16px 20px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
+.card-title { font-weight: 700; color: var(--slate-900); }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+thead th { background: var(--slate-50); padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--slate-200); }
+tbody tr { border-bottom: 1px solid var(--slate-100); transition: var(--transition); cursor: pointer; }
+tbody tr:hover { background: var(--slate-50); }
+tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertical-align: middle; }
+
+/* Buttons */
+.btn { padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition); border: 1px solid transparent; width: 100%; }
+.btn-primary { background: var(--orange); color: white; }
+.btn-secondary { background: white; color: var(--slate-700); border-color: var(--slate-300); }
+.btn-secondary:hover { background: var(--slate-50); }
+
+/* Field Specifics */
+.gps-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); color: var(--emerald); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2); }
+.photo-zone { border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 24px; text-align: center; border-radius: 8px; color: var(--slate-500); margin-bottom: 16px; cursor: pointer; transition: 0.2s; }
+.photo-zone:active { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+
+/* Drawer */
+.drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.drawer-overlay.show { opacity: 1; pointer-events: auto; }
+.drawer { position: absolute; bottom: 0; left: 0; width: 100%; height: auto; max-height: 90vh; background: white; border-radius: 16px 16px 0 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; z-index: 1001; }
+/* Desktop Drawer Override */
+@media(min-width: 769px) {
+    .drawer { bottom: 0; right: 0; left: auto; width: 500px; height: 100%; border-radius: 0; transform: translateX(100%); }
+    .drawer-overlay.show .drawer { transform: translateX(0); }
+}
+.drawer-overlay.show .drawer { transform: translateY(0); } /* Mobile Slide Up */
+@media(min-width: 769px) { .drawer-overlay.show .drawer { transform: translateX(0); } } /* Desktop Slide Left */
+
+.drawer-header { padding: 16px 24px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
+.drawer-content { flex: 1; overflow-y: auto; padding: 24px; }
+.drawer-handle { width: 40px; height: 4px; background: var(--slate-300); border-radius: 2px; margin: 0 auto 12px auto; display: block; }
+@media(min-width: 769px) { .drawer-handle { display: none; } }
+
+/* Inputs */
+.form-label { display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase; }
+.form-input { width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 14px; background: white; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top-bar">
+    <div class="logo">
+      <i class="fas fa-hard-hat" style="color: var(--orange);"></i>
+      <span style="font-weight: 800; font-size: 16px; margin-left: 10px; color: var(--slate-900);">MKAKA FIELD</span>
+    </div>
+    <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+      <div class="gps-badge">
+        <i class="fas fa-satellite-dish"></i> GPS LOCKED
+      </div>
+      <div class="user-profile">
+        <div class="profile-avatar" style="background: var(--blue);">FS</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-profile">
+          <div class="profile-avatar" style="background: var(--blue);">FS</div>
+          <div class="profile-info">
+            <div class="profile-name">John Banda</div>
+            <div class="profile-role">Field Supervisor</div>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-label">Field Operations</div>
+          <a class="nav-link active" href="#"><i class="fas fa-home"></i> <span>Site Dashboard</span></a>
+          <a class="nav-link" href="#"><i class="fas fa-list-check"></i> <span>Tasks</span></a>
+          <a class="nav-link" href="#"><i class="fas fa-camera"></i> <span>Daily Reports</span></a>
+          <a class="nav-link" href="#"><i class="fas fa-truck-moving"></i> <span>Equipment</span></a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <h1 class="page-title">CEN-01 Unilia Library</h1>
+            <div class="context-strip">
+              <span>Sat, Jan 03</span>
+              <span style="color: var(--slate-400);">•</span>
+              <span><i class="fas fa-cloud-sun"></i> 28°C Sunny</span>
+              <span style="color: var(--slate-400);">•</span>
+              <span style="color: var(--emerald); font-weight: 600;">14 Workers Present</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        
+        <div class="stats-grid">
+           <div class="stat-card" style="border-left: 4px solid var(--orange); cursor: pointer;" onclick="openDrawer('report')">
+              <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Daily Log</span><i class="fas fa-plus-circle" style="color: var(--orange);"></i></div>
+              <div class="stat-value" style="font-size: 18px; color: var(--orange);">Submit Report</div>
+              <div class="stat-sub">Geotagging Active</div>
+           </div>
+           <div class="stat-card" onclick="openDrawer('attendance')">
+              <div class="stat-header"><span class="stat-label">Workforce</span><i class="fas fa-users" style="color: var(--blue);"></i></div>
+              <div class="stat-value">14</div>
+              <div class="stat-sub">12 Gen / 2 Skilled</div>
+           </div>
+           <div class="stat-card" onclick="openDrawer('material')">
+              <div class="stat-header"><span class="stat-label">Materials</span><i class="fas fa-cubes" style="color: var(--emerald);"></i></div>
+              <div class="stat-value">15 Bags</div>
+              <div class="stat-sub">Cement Delivered</div>
+           </div>
+           <div class="stat-card" onclick="openDrawer('incident')">
+              <div class="stat-header"><span class="stat-label">Incidents</span><i class="fas fa-triangle-exclamation" style="color: var(--slate-400);"></i></div>
+              <div class="stat-value">0</div>
+              <div class="stat-sub">Safe Day</div>
+           </div>
+        </div>
+
+        <div class="data-card">
+           <div class="data-card-header">
+              <div class="card-title">Today's Activity Log</div>
+           </div>
+           <table>
+              <thead>
+                 <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Detail</th>
+                    <th>GPS</th>
+                    <th>Status</th>
+                 </tr>
+              </thead>
+              <tbody>
+                 <tr>
+                    <td style="color: var(--slate-500);">14:30</td>
+                    <td style="font-weight: 600;"><i class="fas fa-truck" style="color: var(--emerald); margin-right: 6px;"></i> Delivery</td>
+                    <td>15 Bags Cement</td>
+                    <td><span class="gps-badge" style="font-size: 9px; padding: 2px 4px;">-13.98, 33.78</span></td>
+                    <td><span class="status active">Synced</span></td>
+                 </tr>
+                 <tr>
+                    <td style="color: var(--slate-500);">12:15</td>
+                    <td style="font-weight: 600;"><i class="fas fa-camera" style="color: var(--blue); margin-right: 6px;"></i> Progress</td>
+                    <td>Foundation Trench (15m)</td>
+                    <td><span class="gps-badge" style="font-size: 9px; padding: 2px 4px;">-13.98, 33.78</span></td>
+                    <td><span class="status active">Synced</span></td>
+                 </tr>
+                 <tr>
+                    <td style="color: var(--slate-500);">08:00</td>
+                    <td style="font-weight: 600;"><i class="fas fa-users" style="color: var(--slate-600); margin-right: 6px;"></i> Labor</td>
+                    <td>Attendance Check</td>
+                    <td><span class="gps-badge" style="font-size: 9px; padding: 2px 4px;">-13.98, 33.78</span></td>
+                    <td><span class="status active">Synced</span></td>
+                 </tr>
+              </tbody>
+           </table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="#" class="nav-item active">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-list-check"></i>
+      <span>Tasks</span>
+    </a>
+    <div class="nav-item" onclick="openDrawer('report')">
+      <div class="nav-fab">
+        <i class="fas fa-plus" style="margin: 0; font-size: 24px;"></i>
+      </div>
+    </div>
+    <a href="#" class="nav-item">
+      <i class="fas fa-truck-moving"></i>
+      <span>Assets</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-user"></i>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-handle"></div> <div class="drawer-header">
+      <h2 style="font-size: 18px; font-weight: 800; color: var(--slate-900);" id="d-title">New Entry</h2>
+      <div style="cursor: pointer; padding: 8px;" onclick="closeDrawer()">
+        <i class="fas fa-times" style="font-size: 18px; color: var(--slate-400);"></i>
+      </div>
+    </div>
+    
+    <div class="drawer-content" id="d-body">
+       </div>
+  </div>
+</div>
+
+<script>
+// --- DRAWER LOGIC ---
+function openDrawer(type) {
+    const overlay = document.getElementById('drawer-overlay');
+    const title = document.getElementById('d-title');
+    const body = document.getElementById('d-body');
+    
+    overlay.classList.add('show');
+
+    if(type === 'report') {
+        title.innerText = "Daily Site Report";
+        body.innerHTML = `
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: var(--slate-600); font-size: 12px;">GPS Location Verified</span>
+                <span class="gps-badge"><i class="fas fa-check"></i> -13.98, 33.78</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Work Completed Today</label>
+                <textarea class="form-input" rows="4" placeholder="Describe progress (e.g., Excavated 15m)..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Photo Evidence (Required)</label>
+                <div class="photo-zone" onclick="alert('Camera Launched')">
+                    <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600;">Tap to Take Photo</div>
+                    <div style="font-size: 11px;">Geotagging Enabled</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Completion %</label>
+                <input type="range" style="width: 100%; margin-top: 8px;">
+            </div>
+
+            <button class="btn btn-primary" onclick="closeDrawer()">Submit Daily Log</button>
+        `;
+    } else if (type === 'material') {
+        title.innerText = "Material Log";
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Action Type</label>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-primary" style="flex:1;">Usage (Consumed)</button>
+                    <button class="btn btn-secondary" style="flex:1;">Delivery (Received)</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Material Category</label>
+                <select class="form-input"><option>Cement (Bags)</option><option>Sand (Tons)</option></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-input" placeholder="0">
+            </div>
+            <button class="btn btn-primary" onclick="closeDrawer()">Save Record</button>
+        `;
+    } else if (type === 'attendance') {
+        title.innerText = "Worker Attendance";
+        body.innerHTML = `
+            <div class="form-group"><label class="form-label">General Labor</label><input type="number" class="form-input" value="12"></div>
+            <div class="form-group"><label class="form-label">Skilled Labor</label><input type="number" class="form-input" value="2"></div>
+            <div class="form-group"><label class="form-label">Absentee Notes</label><input type="text" class="form-input" placeholder="Name/Reason"></div>
+            <button class="btn btn-primary" onclick="closeDrawer()">Update Register</button>
+        `;
+    } else if (type === 'incident') {
+        title.innerText = "Report Incident";
+        body.innerHTML = `
+            <div style="background: #FEF2F2; color: #B91C1C; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 16px;">
+                <i class="fas fa-triangle-exclamation"></i> This will immediately alert the Project Manager and Safety Officer.
+            </div>
+            <div class="form-group"><label class="form-label">Type</label><select class="form-input"><option>Injury</option><option>Near Miss</option><option>Property Damage</option></select></div>
+            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" rows="3"></textarea></div>
+            <div class="photo-zone"><i class="fas fa-camera"></i> Capture Scene</div>
+            <button class="btn btn-primary" style="background: var(--red); border-color: var(--red);" onclick="closeDrawer()">Submit Alert</button>
+        `;
+    }
+}
+
+function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('show');
+}
+</script>
+</body>
+</html>
