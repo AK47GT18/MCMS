@@ -141,5 +141,51 @@ export const NAV_ITEMS = {
                  { label: 'Operator Logs', icon: '<i class="fas fa-id-card"></i>', id: 'operators' }
              ]
         }
+    ],
+    [ROLES.OPERATIONS_MANAGER]: [
+        {
+            section: 'Oversight',
+            items: [
+                { label: 'Ops Dashboard', icon: '<i class="fas fa-tower-control"></i>', id: 'dashboard', active: true },
+                { label: 'Site Performance', icon: '<i class="fas fa-building-user"></i>', id: 'sites' },
+                { label: 'Resource Efficiency', icon: '<i class="fas fa-users-gear"></i>', id: 'resources' }
+            ]
+        },
+        {
+            section: 'Logistics',
+            items: [
+                { label: 'Supply Chain', icon: '<i class="fas fa-truck-fast"></i>', id: 'supply' },
+                { label: 'Global Inventory', icon: '<i class="fas fa-warehouse"></i>', id: 'inventory' }
+            ]
+        },
+        {
+            section: 'Safety',
+            items: [
+                { label: 'Safety Audits', icon: '<i class="fas fa-clipboard-list"></i>', id: 'safety', badge: 1 }
+            ]
+        }
+    ],
+    [ROLES.MANAGING_DIRECTOR]: [
+        {
+            section: 'Executive',
+            items: [
+                { label: 'Board View', icon: '<i class="fas fa-chess-king"></i>', id: 'dashboard', active: true },
+                { label: 'Strategy Map', icon: '<i class="fas fa-compass"></i>', id: 'strategy' }
+            ]
+        },
+        {
+            section: 'Performance',
+            items: [
+                { label: 'P&L Overview', icon: '<i class="fas fa-file-invoice-dollar"></i>', id: 'pnl' },
+                { label: 'Risk Heatmap', icon: '<i class="fas fa-fire"></i>', id: 'risk' }
+            ]
+        },
+        {
+            section: 'Portfolio',
+            items: [
+                { label: 'All Projects', icon: '<i class="fas fa-globe"></i>', id: 'portfolio' },
+                { label: 'Top Clients', icon: '<i class="fas fa-handshake"></i>', id: 'clients' }
+            ]
+        }
     ]
 };

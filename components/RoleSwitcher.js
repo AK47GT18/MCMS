@@ -107,6 +107,8 @@ export class RoleSwitcher {
         if (role.toLowerCase().includes('field')) return '#10B981'; // Green
         if (role.toLowerCase().includes('contract')) return '#7C3AED'; // Purple
         if (role.toLowerCase().includes('equipment')) return '#6366F1'; // Indigo
+        if (role.toLowerCase().includes('operations')) return '#EC4899'; // Pink
+        if (role.toLowerCase().includes('managing')) return '#111827'; // Black/Dark
         return '#64748B'; // Slate
     }
 }

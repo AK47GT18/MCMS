@@ -82,6 +82,22 @@ class App {
                  }
                  this.ecModule.currentView = pageId;
                  content = this.ecModule.render();
+            } else if (currentUser.role === 'Operations Manager') {
+                 // Lazy load Operations Module
+                 if (!this.omModule) {
+                    const { OperationsManagerDashboard } = await import('./components/modules/OperationsManagerDashboard.js');
+                    this.omModule = new OperationsManagerDashboard();
+                 }
+                 this.omModule.currentView = pageId;
+                 content = this.omModule.render();
+            } else if (currentUser.role === 'Managing Director') {
+                 // Lazy load MD Module
+                 if (!this.mdModule) {
+                    const { ManagingDirectorDashboard } = await import('./components/modules/ManagingDirectorDashboard.js');
+                    this.mdModule = new ManagingDirectorDashboard();
+                 }
+                 this.mdModule.currentView = pageId;
+                 content = this.mdModule.render();
             } else {
                 // Fallback / Other Roles Mock
                 content = this.getMockContent(pageId);

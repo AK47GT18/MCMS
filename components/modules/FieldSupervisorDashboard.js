@@ -4,27 +4,37 @@ export class FieldSupervisorDashboard {
     }
 
     render() {
-        return this.getTemplate();
-    }
+        let contentHTML = '';
+        
+        switch(this.currentView) {
+            case 'dashboard': contentHTML = this.getDashboardView(); break;
+            case 'tasks': contentHTML = this.getTasksView(); break;
+            case 'equipment': contentHTML = this.getEquipmentView(); break;
+            default: contentHTML = this.getDashboardView();
+        }
 
-    getTemplate() {
         return `
             <div id="fs-module" class="animate-fade-in">
                 ${this.getHeaderHTML()}
                 <div class="content">
-                    ${this.getStatsGridHTML()}
-                    ${this.getDataCardHTML()}
+                    ${contentHTML}
                 </div>
             </div>
         `;
     }
 
     getHeaderHTML() {
+        const titleMap = {
+            'dashboard': 'Site Dashboard',
+            'tasks': 'Daily Tasks',
+            'equipment': 'Site Equipment'
+        };
+
         return `
             <div class="page-header">
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                   <div>
-                    <h1 class="page-title">CEN-01 Unilia Library</h1>
+                    <h1 class="page-title">${titleMap[this.currentView] || 'Site Overview'}</h1>
                     <div class="context-strip">
                       <span>Sat, Jan 03</span>
                       <span style="color: var(--slate-400);">•</span>
@@ -35,6 +45,13 @@ export class FieldSupervisorDashboard {
                   </div>
                 </div>
             </div>
+        `;
+    }
+
+    getDashboardView() {
+        return `
+            ${this.getStatsGridHTML()}
+            ${this.getDataCardHTML()}
         `;
     }
 
@@ -96,15 +113,38 @@ export class FieldSupervisorDashboard {
                         <td><span class="gps-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); color: var(--emerald); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 9px; padding: 2px 4px;">-13.98, 33.78</span></td>
                         <td><span class="status active" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: #DCFCE7; color: #166534;">Synced</span></td>
                      </tr>
-                     <tr>
-                        <td style="color: var(--slate-500);">08:00</td>
-                        <td style="font-weight: 600;"><i class="fas fa-users" style="color: var(--slate-600); margin-right: 6px;"></i> Labor</td>
-                        <td>Attendance Check</td>
-                        <td><span class="gps-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); color: var(--emerald); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 9px; padding: 2px 4px;">-13.98, 33.78</span></td>
-                        <td><span class="status active" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: #DCFCE7; color: #166534;">Synced</span></td>
-                     </tr>
                   </tbody>
                </table>
+            </div>
+        `;
+    }
+
+    getTasksView() {
+        return `
+            <div class="data-card">
+              <div class="data-card-header"><div class="card-title">Assigned Tasks</div></div>
+              <table>
+                <thead><tr><th>Task</th><th>Deadline</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Excavate Trench A</td><td>Today, 16:00</td><td><span class="status pending">In Progress</span></td><td><button class="btn btn-secondary">Update</button></td></tr>
+                    <tr><td>Compact Soil</td><td>Tomorrow</td><td><span class="status">Scheduled</span></td><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+        `;
+    }
+
+    getEquipmentView() {
+         return `
+            <div class="data-card">
+              <div class="data-card-header"><div class="card-title">On-Site Equipment</div></div>
+              <table>
+                <thead><tr><th>Asset</th><th>ID</th><th>Operator</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>Excavator CAT 320</td><td>EQ-001</td><td>J. Phir</td><td><span class="status active">Active</span></td></tr>
+                    <tr><td>Concrete Mixer</td><td>EQ-012</td><td>-</td><td><span class="status">Idle</span></td></tr>
+                </tbody>
+              </table>
             </div>
         `;
     }

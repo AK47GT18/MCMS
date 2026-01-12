@@ -38,6 +38,18 @@ export const USERS = {
         role: ROLES.EQUIPMENT_COORDINATOR,
         avatar: 'https://ui-avatars.com/api/?name=Blessings+Phiri&background=6366F1&color=fff',
         permissions: ['read_fleet', 'write_maintenance']
+    },
+    ops_manager: {
+        name: 'Grace Chibwe',
+        role: ROLES.OPERATIONS_MANAGER,
+        avatar: 'https://ui-avatars.com/api/?name=Grace+Chibwe&background=EC4899&color=fff',
+        permissions: ['read_all', 'write_operations']
+    },
+    md: {
+        name: 'David Mkaka',
+        role: ROLES.MANAGING_DIRECTOR,
+        avatar: 'https://ui-avatars.com/api/?name=David+Mkaka&background=111827&color=fff',
+        permissions: ['read_all', 'approve_high_value']
     }
     // Add other mocks as needed
 };

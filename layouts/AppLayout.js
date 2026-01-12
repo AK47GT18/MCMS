@@ -83,23 +83,35 @@ export class AppLayout {
     }
 
     generateTopBar() {
+        // Generic Breadcrumb - Title is updated by main.js
+        const breadcrumbTitle = currentUser.role.toUpperCase();
+        
+        // Notifications & Alerts Logic
+        let alertHTML = '';
+        if (currentUser.role === 'Finance Director') {
+             alertHTML = `
+                <div style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
+                    <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
+                </div>
+             `;
+        }
+
+        // Notification Badge Count
+        const notifCount = this.getNotificationCountForRole(currentUser.role);
+
         return `
             <header class="top-bar hidden-mobile">
-                 <div class="breadcrumb">
-                    <span>Finance Workspace</span>
-                    <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
-                    <span id="header-breadcrumb">Financial Overview</span>
+                <div class="breadcrumb">
+                    <span>Workspace</span>
                  </div>
                 <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
-                    <div style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
-                        <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
-                    </div>
+                    ${alertHTML}
                     
                     <!-- Notification Bell Wrapper -->
                     <div style="position: relative;">
                         <button id="notification-bell" class="btn btn-secondary" style="border: none; padding: 8px; position: relative;" onclick="window.app.layout.toggleNotifications(event)">
                             <i class="fas fa-bell" style="color: var(--slate-500); font-size: 16px;"></i>
-                            ${this.getNotificationBadgeHTML(12)}
+                            ${this.getNotificationBadgeHTML(notifCount)}
                         </button>
                         
                         <!-- Dropdown -->
@@ -118,21 +130,53 @@ export class AppLayout {
                     </div>
 
                     <div class="user-profile">
-                        <div class="profile-avatar">FD</div>
+                        <div class="profile-avatar" style="background: var(--slate-800);">${this.getInitials(currentUser.name)}</div>
                     </div>
                 </div>
             </header>
         `;
     }
 
+    getInitials(name) {
+        return name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'UR';
+    }
+
+    getNotificationCountForRole(role) {
+        if (role === 'Finance Director') return 12;
+        if (role === 'Project Manager') return 5;
+        if (role === 'Field Supervisor') return 2;
+        return 3;
+    }
+
     getRecentNotificationsHTML() {
-        // Mock Data as requested (4 items)
-        const notifications = [
-             { type: 'info', icon: 'fa-wrench', title: 'System Maintenance', desc: 'Scheduled maintenance for tomorrow at 02:00 AM.', time: '10 mins ago' },
-             { type: 'success', icon: 'fa-check', title: 'Requisition Approved', desc: 'REQ-089 has been final approved.', time: '1 hour ago' },
-             { type: 'warning', icon: 'fa-exclamation', title: 'Budget Alert', desc: 'Project CEN-01 is approaching 90% budget utilization.', time: '2 hours ago' },
-             { type: 'info', icon: 'fa-comment', title: 'New Comment', desc: 'Sarah replied to your note on BCR-102.', time: '4 hours ago' }
-        ];
+        const role = currentUser.role;
+        let notifications = [];
+
+        if (role === 'Finance Director') {
+            notifications = [
+                 { type: 'info', icon: 'fa-wrench', title: 'System Maintenance', desc: 'Scheduled maintenance for tomorrow at 02:00 AM.', time: '10 mins ago' },
+                 { type: 'success', icon: 'fa-check', title: 'Requisition Approved', desc: 'REQ-089 has been final approved.', time: '1 hour ago' },
+                 { type: 'warning', icon: 'fa-exclamation', title: 'Budget Alert', desc: 'Project CEN-01 is approaching 90% budget utilization.', time: '2 hours ago' },
+                 { type: 'info', icon: 'fa-comment', title: 'New Comment', desc: 'Sarah replied to your note on BCR-102.', time: '4 hours ago' }
+            ];
+        } else if (role === 'Project Manager') {
+            notifications = [
+                 { type: 'warning', icon: 'fa-clock', title: 'Schedule Slippage', desc: 'Task 2.4 in CEN-01 is 2 days behind.', time: '30 mins ago' },
+                 { type: 'success', icon: 'fa-file-signature', title: 'Log Verified', desc: 'Field Supervisor submitted daily log for MZ-05.', time: '2 hours ago' },
+                 { type: 'info', icon: 'fa-comment', title: 'Client Message', desc: 'New message from Ministry Rep regarding milestones.', time: '5 hours ago' }
+            ];
+        } else if (role === 'Field Supervisor') {
+            notifications = [
+                 { type: 'info', icon: 'fa-truck', title: 'Delivery Incoming', desc: 'Cement truck for CEN-01 arriving at 14:00.', time: '15 mins ago' },
+                 { type: 'info', icon: 'fa-cloud-sun', title: 'Weather Alert', desc: 'Rain expected tomorrow. Secure loose materials.', time: '1 hour ago' }
+            ];
+        } else {
+             // Generic for other roles
+             notifications = [
+                 { type: 'info', icon: 'fa-info-circle', title: 'System Update', desc: 'New features available.', time: '1 day ago' },
+                 { type: 'warning', icon: 'fa-user-clock', title: 'Timesheet Due', desc: 'Please submit your weekly timesheet.', time: '2 days ago' }
+             ];
+        }
 
         return notifications.map(n => `
             <div class="notification-item">

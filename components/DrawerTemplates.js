@@ -417,5 +417,368 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Date</label><input type="date" class="form-input" style="width:100%; padding:10px;"></div>
             <button class="btn btn-primary" style="width:100%; border:none; padding:12px;" onclick="window.drawer.close(); window.toast.show('Work Order Created', 'success')">Create Work Order</button>
         </div>
+    `,
+
+    // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
+
+    vendorProfile: `
+        <div class="drawer-section">
+            <div style="display:flex; gap:16px; align-items:center; margin-bottom:16px;">
+                <div style="width:60px; height:60px; background:var(--slate-200); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:24px; color:var(--slate-600);">MC</div>
+                <div>
+                     <div style="font-size:18px; font-weight:700;">Malawi Cement Ltd</div>
+                     <div style="color:var(--slate-500); font-size:13px;">Reg: #TPIN-998273</div>
+                </div>
+            </div>
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:0;">
+                 <div class="stat-card" style="padding:12px;">
+                    <div class="stat-label">Performance</div>
+                    <div class="stat-value" style="font-size:18px; color:var(--emerald);">4.8/5.0</div>
+                 </div>
+                 <div class="stat-card" style="padding:12px;">
+                    <div class="stat-label">Active Contracts</div>
+                    <div class="stat-value" style="font-size:18px;">3</div>
+                 </div>
+            </div>
+        </div>
+        <div class="drawer-section">
+            <div class="stat-label" style="margin-bottom:12px;">Compliance Documents</div>
+            <div style="display:flex; justify-content:space-between; padding:10px; border:1px solid var(--slate-200); border-radius:6px; margin-bottom:8px; align-items:center;">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <i class="fas fa-file-pdf" style="color:var(--red);"></i>
+                    <div style="font-size:13px; font-weight:600;">Tax Clearance Certificate</div>
+                </div>
+                <span class="status active" style="font-size:10px;">Valid 2025</span>
+            </div>
+             <div style="display:flex; justify-content:space-between; padding:10px; border:1px solid var(--slate-200); border-radius:6px; align-items:center;">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <i class="fas fa-file-pdf" style="color:var(--red);"></i>
+                    <div style="font-size:13px; font-weight:600;">NCIC Registration (Cat A)</div>
+                </div>
+                <span class="status active" style="font-size:10px;">Valid 2026</span>
+            </div>
+        </div>
+         <div class="drawer-section">
+            <div class="stat-label" style="margin-bottom:12px;">Contact Information</div>
+            <div style="font-size:13px; margin-bottom:8px;"><i class="fas fa-user-tie" style="width:20px; color:var(--slate-400);"></i> John Phiri (Sales Mgr)</div>
+            <div style="font-size:13px; margin-bottom:8px;"><i class="fas fa-envelope" style="width:20px; color:var(--slate-400);"></i> sales@malawicement.mW</div>
+            <div style="font-size:13px;"><i class="fas fa-phone" style="width:20px; color:var(--slate-400);"></i> +265 999 123 456</div>
+        </div>
+    `,
+
+    onboardVendor: `
+        <div class="drawer-section">
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Company Name</label>
+                <input type="text" class="form-input" style="width:100%; padding:10px;">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Category</label>
+                <select class="form-input" style="width:100%; padding:10px;">
+                    <option>Materials Supply</option>
+                    <option>Subcontractor (Labor)</option>
+                    <option>Equipment Hire</option>
+                    <option>Consultancy</option>
+                </select>
+             </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Tax Payer ID (TPIN)</label>
+                <input type="text" class="form-input" style="width:100%; padding:10px;">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Required Documents Upload</label>
+                 <div style="border:2px dashed var(--slate-300); padding:20px; background:var(--slate-50); text-align:center; border-radius:6px; font-size:12px;">
+                    Tax Clearance, NCIC Cert, Incorporation Cert
+                 </div>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Vendor onboarding request submitted for approval', 'success')">Submit Application</button>
+        </div>
+    `,
+
+    certifyMilestone: `
+        <div class="drawer-section" style="background:#F0FDF4; border-bottom:1px solid #BBF7D0;">
+            <div style="font-size:12px; color:#166534; font-weight:700;">Milestone Details</div>
+            <div style="font-size:16px; font-weight:700; color:#15803D; margin:4px 0;">Foundation Completion</div>
+            <div style="font-size:13px; color:#166534;">Contract: CEN-01 Main Works</div>
+        </div>
+        <div class="drawer-section">
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Valuation Amount (MWK)</label>
+                <input type="number" class="form-input" style="width:100%; padding:10px; font-family:'JetBrains Mono';" value="120000000">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Completion Verification</label>
+                <div style="display:flex; gap:10px; margin-bottom:8px;">
+                     <input type="checkbox" checked> <span style="font-size:13px;">Site inspection passed</span>
+                </div>
+                 <div style="display:flex; gap:10px;">
+                     <input type="checkbox" checked> <span style="font-size:13px;">Quality tests (Cubes) passed</span>
+                </div>
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Attach Certificate</label>
+                 <input type="file" class="form-input" style="width:100%; padding:10px;">
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Payment Certificate Generated', 'success')">Issue Certificate</button>
+        </div>
+    `,
+
+    complianceAction: `
+         <div class="drawer-section">
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:700; font-size:14px;">Insurance Policy Renewal</div>
+                <div style="font-size:12px; color:var(--slate-500);">Ref: INS-882 (All Risk)</div>
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Action</label>
+                <select class="form-input" style="width:100%; padding:10px;">
+                    <option>Request Renewal from Vendor</option>
+                    <option>Log Breach of Contract</option>
+                    <option>Upload New Policy</option>
+                </select>
+             </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Message to Vendor</label>
+                <textarea class="form-input" rows="4" style="width:100%; padding:10px;">Please submit the renewed 'All Risk' policy for the Unilia project by Friday to avoid payment holds.</textarea>
+             </div>
+             <button class="btn btn-action" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Notice sent to Vendor', 'success')">Send Notice</button>
+         </div>
+    `,
+
+    completeMaintenance: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Asset</label><input type="text" class="form-input" value="CAT 320D (EQP-045)" readonly style="width:100%; padding:10px; background:#f1f5f9;"></div>
+            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Work Done</label><textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="Describe repairs..."></textarea></div>
+            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Parts Replaced</label><input type="text" class="form-input" style="width:100%; padding:10px;" placeholder="e.g., Oil Filter, Hydraulic Hose"></div>
+            <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                 <div class="form-group"><label class="form-label">Parts Cost</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
+                 <div class="form-group"><label class="form-label">Labor Cost</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top:16px; padding:12px;" onclick="window.drawer.close(); window.toast.show('Maintenance Logged', 'success')">Close Order</button>
+        </div>
+    `,
+
+    newAudit: `
+        <div class="drawer-section">
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Site</label>
+                <select class="form-input" style="width:100%; padding:10px;"><option>CEN-01 Unilia Library</option><option>MZ-05 Clinic</option></select>
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Audit Checklist</label>
+                <div style="max-height:150px; overflow-y:auto; border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox"> PPE Compliance</label>
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox"> Scaffolding Safety</label>
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox"> Electrical Hazards</label>
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox"> Waste Management</label>
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox"> Signage & Hoarding</label>
+                </div>
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Overall Score (%)</label>
+                 <input type="number" class="form-input" style="width:100%; padding:10px;" max="100">
+             </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Major Findings / Violations</label>
+                 <textarea class="form-input" rows="3" style="width:100%; padding:10px;"></textarea>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Safety Score updated', 'success')">Submit Audit</button>
+        </div>
+    `,
+
+    shiftPlan: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Select Site</label>
+                <select class="form-input" style="width:100%; padding:10px;"><option>CEN-01 Unilia Library</option></select>
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Shift Date</label>
+                <input type="date" class="form-input" style="width:100%; padding:10px;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:700; font-size:12px; margin-bottom:8px;">Resource Demand</div>
+                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:13px;">General Labor</span>
+                    <input type="number" value="15" style="width:60px; padding:4px; text-align:center;">
+                 </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:13px;">Carpenters</span>
+                    <input type="number" value="4" style="width:60px; padding:4px; text-align:center;">
+                 </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:13px;">Steel Fixers</span>
+                    <input type="number" value="6" style="width:60px; padding:4px; text-align:center;">
+                 </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Shift Plan Broadcasted to Site', 'success')">Publish Plan</button>
+        </div>
+    `,
+    
+    projectDetails: `
+        <div class="drawer-section">
+            <div style="font-size:18px; font-weight:700; margin-bottom:4px;">MZ-05 Mzuzu Clinic Extension</div>
+            <div style="font-size:13px; color:var(--slate-500); margin-bottom:16px;">Project Manager: Peter Phiri</div>
+            
+            <div class="stats-grid" style="grid-template-columns:1fr 1fr; margin:0 0 16px 0;">
+                <div class="stat-card" style="padding:10px;">
+                    <div class="stat-label">Budget</div>
+                    <div class="stat-value" style="font-size:16px;">MWK 450M</div>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                    <div class="stat-label">Progress</div>
+                    <div class="stat-value" style="font-size:16px; color:var(--emerald);">92%</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <div class="stat-label" style="margin-bottom:8px;">Project Health</div>
+                <div style="display:flex; gap:8px;">
+                     <span class="status active" style="flex:1; text-align:center;">Schedule: On Time</span>
+                     <span class="status active" style="flex:1; text-align:center;">Safety: 100%</span>
+                </div>
+            </div>
+
+             <div class="stat-label" style="margin-bottom:8px;">Recent Activity</div>
+             <div style="font-size:12px; color:var(--slate-600); border-left:2px solid var(--slate-200); padding-left:10px; margin-bottom:8px;">
+                <strong>Today:</strong> Material Delivery (Cement) confirmed.
+             </div>
+             <div style="font-size:12px; color:var(--slate-600); border-left:2px solid var(--slate-200); padding-left:10px;">
+                <strong>Yesterday:</strong> Painting gang A completed 2nd coat.
+             </div>
+        </div>
+        <div style="padding:16px 24px; border-top:1px solid var(--slate-200); display:flex; gap:12px;">
+            <button class="btn btn-secondary" style="flex:1;">View Gantt</button>
+            <button class="btn btn-primary" style="flex:1;">Open Dashboard</button>
+        </div>
+    `,
+
+    addTask: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Task Name</label>
+                <input type="text" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Foundation Pouring">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-input" style="width:100%; padding:10px;">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Duration (Days)</label>
+                <input type="number" class="form-input" style="width:100%; padding:10px;" placeholder="0">
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Assignee</label>
+                <select class="form-input" style="width:100%; padding:10px;">
+                    <option>John Banda (Supervisor)</option>
+                    <option>Davi Moyo (Foreman)</option>
+                </select>
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Dependencies</label>
+                <select class="form-input" style="width:100%; padding:10px;">
+                    <option>None</option>
+                    <option>1.1 Site Clearing</option>
+                    <option>1.2 Excavation</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Task Added to Schedule', 'success')">Save Task</button>
+        </div>
+    `,
+
+    initiateBCR: `
+        <div class="drawer-section">
+             <div class="stats-grid" style="grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                <div class="stat-card" style="padding:12px;">
+                    <div class="stat-label">Current Budget</div>
+                    <div class="stat-value" style="font-size:16px;">MWK 200M</div>
+                </div>
+                <div class="stat-card" style="padding:12px;">
+                    <div class="stat-label">Variance</div>
+                    <div class="stat-value" style="font-size:16px; color:var(--red);">+10%</div>
+                </div>
+             </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project Code</label>
+                <select style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;">
+                    <option>CEN-01 Unilia Construction</option>
+                    <option>NOR-04 Mzuzu Bridge</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Budget Category</label>
+                <select style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;">
+                    <option>02-MAT Materials</option>
+                    <option>03-LAB Labor</option>
+                    <option>04-EQU Equipment</option>
+                </select>
+            </div>
+             <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Proposed New Amount (MWK)</label>
+                <input type="number" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px; border-color: var(--orange);">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification</label>
+                <textarea style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;" rows="3" placeholder="Explain the reason for budget increase..."></textarea>
+            </div>
+            <button class="btn btn-action" style="width: 100%; justify-content: center; padding:12px;" onclick="window.drawer.close(); window.toast.show('Budget Change Request Initiated', 'success')">Submit Request</button>
+        </div>
+    `,
+
+    matchTransaction: `
+        <div class="drawer-section">
+            <div style="background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom:16px;">
+                <div style="font-size:11px; color:var(--slate-500); font-weight:700; text-transform:uppercase;">Bank Transaction</div>
+                <div style="font-weight:700; color:var(--slate-800); margin-top:4px;">Direct Deposit - Client Pymt (DEP-992)</div>
+                <div style="font-family:'JetBrains Mono'; color:var(--emerald); font-weight:700; margin-top:4px;">+ MWK 5,000,000</div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label class="form-label">Match with System Entry</label>
+                <div style="border:1px solid var(--slate-300); border-radius:6px; overflow:hidden; margin-top:8px;">
+                     <div style="padding:10px; border-bottom:1px solid var(--slate-200); background:var(--blue-light); display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:12px; font-weight:600;">INV-2024-001 (Partial)</div>
+                            <div style="font-size:11px; color:var(--slate-600);">Client: Ministry of Health</div>
+                        </div>
+                        <div style="font-family:'JetBrains Mono'; font-weight:700;">5,000,000</div>
+                        <i class="fas fa-check-circle" style="color:var(--blue);"></i>
+                    </div>
+                </div>
+                <div style="margin-top:8px; text-align:right;">
+                    <button class="btn btn-secondary" style="font-size:11px;">Search Other Entries</button>
+                </div>
+            </div>
+             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding:12px;" onclick="window.drawer.close(); window.toast.show('Transaction Matched', 'success')">Confirm Match</button>
+        </div>
+    `,
+
+    createJournalEntry: `
+        <div class="drawer-section">
+            <div style="background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom:16px;">
+                <div style="font-size:11px; color:var(--slate-500); font-weight:700; text-transform:uppercase;">Source (Bank Stmt)</div>
+                <div style="font-weight:700; color:var(--slate-800); margin-top:4px;">Bank Service Charge (SVC-001)</div>
+                <div style="font-family:'JetBrains Mono'; color:var(--red); font-weight:700; margin-top:4px;">- MWK 150,000</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Expense Account</label>
+                <select class="form-input" style="width:100%; padding:10px;">
+                    <option>6900 - Bank Charges</option>
+                    <option>6905 - Interest Expense</option>
+                </select>
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Contra Account</label>
+                 <input type="text" class="form-input" style="width:100%; padding:10px;" value="1010 - National Bank Ops" readonly>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Notes</label>
+                <input type="text" class="form-input" style="width:100%; padding:10px;" value="Monthly Service Fee - Oct">
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding:12px;" onclick="window.drawer.close(); window.toast.show('Journal Entry Posted', 'success')">Post Entry</button>
+        </div>
     `
 };
