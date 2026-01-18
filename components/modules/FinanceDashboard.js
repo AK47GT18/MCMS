@@ -85,6 +85,14 @@ export class FinanceDashboard {
                         <td style="color: var(--red);">Investigation Req.</td>
                         <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Investigate</button></td>
                      </tr>
+                     <tr onclick="window.drawer.open('Purchase Approval', window.DrawerTemplates.approveVehiclePurchase)">
+                        <td><span class="project-id" style="background:var(--blue-light); color:var(--blue);">PROC-882</span></td>
+                        <td><span class="status pending" style="background:var(--blue-light); color:var(--blue);">Procurement</span></td>
+                        <td style="font-weight: 600;">Toyota Hilux 4x4 (CEN-01)</td>
+                        <td style="font-family: 'JetBrains Mono';">45,000,000</td>
+                        <td style="color: var(--blue);">Awaiting P.O.</td>
+                        <td><button class="btn btn-action" style="padding: 4px 8px; font-size: 11px;">Approve</button></td>
+                     </tr>
                      <tr>
                         <td><span class="project-id">BCR-102</span></td>
                         <td><span class="status locked">Budget Lock</span></td>

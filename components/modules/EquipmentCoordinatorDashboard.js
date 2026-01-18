@@ -61,10 +61,16 @@ export class EquipmentCoordinatorDashboard {
                       ` : ''}
                     </div>
                   </div>
-                  <button class="btn btn-action" onclick="window.drawer.open('Assign Equipment', window.DrawerTemplates.assignEquipment)">
-                    <i class="fas fa-key"></i>
-                    <span>Assign Equipment</span>
-                  </button>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-secondary" onclick="window.drawer.open('Request New Vehicle', window.DrawerTemplates.requestNewVehicle)">
+                        <i class="fas fa-truck-pickup"></i>
+                        <span>Request Vehicle</span>
+                    </button>
+                    <button class="btn btn-action" onclick="window.drawer.open('Assign Equipment', window.DrawerTemplates.assignEquipment)">
+                        <i class="fas fa-key"></i>
+                        <span>Assign Equipment</span>
+                    </button>
+                  </div>
                 </div>
             </div>
         `;

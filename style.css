@@ -763,3 +763,26 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
     justify-content: center;
     padding: 12px 24px;
 }
+
+/* --- GANTT OVERRIDES --- */
+.gantt .today-button { 
+    display: none !important; 
+}
+
+.gantt .bar { fill: #a3a3a3; }
+.gantt .bar-progress { fill: var(--orange) !important; }
+.gantt-item-emerald .bar-progress { fill: #10b981 !important; }
+.gantt-item-orange .bar-progress { fill: #f59e0b !important; }
+.gantt-item-red .bar-progress { fill: #ef4444 !important; }
+.gantt .grid-header { font-family: 'Inter', sans-serif !important; }
+.gantt .grid-row { fill: #ffffff !important; }
+.gantt .row-line { stroke: #f1f5f9 !important; }
+.gantt .holiday-highlight { fill: #f8fafc !important; }
+.gantt-container .side-header { display: none !important; }
+.gantt-container { 
+    border-radius: 8px; 
+    border: 1px solid var(--slate-200); 
+    min-height: 450px !important; 
+    height: auto !important;
+}
+

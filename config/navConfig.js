@@ -70,6 +70,7 @@ export const NAV_ITEMS = {
             section: 'Execution',
             items: [
                 { label: 'Gantt Schedule', icon: '<i class="fas fa-stream"></i>', id: 'gantt' },
+                { label: 'Asset Registry', icon: '<i class="fas fa-truck-pickup"></i>', id: 'fleet' },
                 { label: 'Budget Control', icon: '<i class="fas fa-coins"></i>', id: 'budget' },
                 { label: 'Field Teams', icon: '<i class="fas fa-users"></i>', id: 'teams' }
             ]
@@ -89,6 +90,7 @@ export const NAV_ITEMS = {
             items: [
                 { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
                 { label: 'Tasks', icon: '<i class="fas fa-list-check"></i>', id: 'tasks' },
+                { label: 'Execution Schedule', icon: '<i class="fas fa-stream"></i>', id: 'gantt' },
                 { label: 'Daily Reports', icon: '<i class="fas fa-camera"></i>', id: 'reports', action: 'drawer', drawerId: 'dailyReport' }, 
                 { label: 'Equipment', icon: '<i class="fas fa-truck-moving"></i>', id: 'equipment' },
                 { label: 'Report Safety Incident', icon: '<i class="fas fa-helmet-safety"></i>', id: 'safety_incident', action: 'drawer', drawerId: 'safetyIncident' }

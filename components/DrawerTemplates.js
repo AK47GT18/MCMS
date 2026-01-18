@@ -385,47 +385,248 @@ export const DrawerTemplates = {
             </div>
 
             <div style="margin-bottom: 16px;">
+                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Workforce Headcount</label>
+                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="font-size:11px; color:var(--slate-500);">General Labor</label>
+                        <input type="number" class="form-input" value="12">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:var(--slate-500);">Skilled / Trades</label>
+                         <input type="number" class="form-input" value="2">
+                    </div>
+                 </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Work Completed Today</label>
-                <textarea style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" rows="4" placeholder="Describe progress (e.g., Excavated 15m)..."></textarea>
+                <textarea style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" rows="3" placeholder="Describe progress..."></textarea>
+            </div>
+
+            <!-- Financial Section -->
+            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
+                <label class="form-label" style="color:var(--slate-700); font-weight:700;"><i class="fas fa-coins"></i> Daily Expense Log</label>
+                
+                <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Total Spent Today (MWK)</label>
+                    <input type="number" class="form-input" placeholder="0.00">
+                </div>
+
+                <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Expense Category</label>
+                    <select class="form-input">
+                        <option value="">Select Category...</option>
+                        <option value="Labor">Casual Labor / Wages</option>
+                        <option value="Materials">Materials Purchase</option>
+                        <option value="Fuel">Fuel / Transport</option>
+                        <option value="Equipment">Equipment Rental</option>
+                        <option value="Other">Other / Miscellaneous</option>
+                    </select>
+                </div>
+
+                 <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Details / Justification</label>
+                    <input type="text" class="form-input" placeholder="e.g. Paid 3 casuals, bought 200L diesel...">
+                </div>
             </div>
 
             <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Photo Evidence (Required)</label>
-                <div style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 24px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; transition: 0.2s;" onclick="window.toast.show('Camera launched (mock)', 'info')">
-                    <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
-                    <div style="font-weight: 600;">Tap to Take Photo</div>
-                    <div style="font-size: 11px;">Geotagging Enabled</div>
+                <div style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 20px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;" onclick="window.toast.show('Camera launched', 'info')">
+                    <i class="fas fa-camera" style="font-size: 20px; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600; font-size: 12px;">Tap to Take Photo</div>
                 </div>
             </div>
 
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Completion %</label>
-                <input type="range" style="width: 100%; margin-top: 8px;">
-            </div>
-
-            <button class="btn btn-primary" style="width:100%" onclick="window.drawer.close(); window.toast.show('Daily Log Submitted', 'success')">Submit Daily Log</button>
+            <button class="btn btn-primary" style="width:100%" onclick="window.drawer.close(); window.toast.show('Daily Log & Expenses Submitted', 'success')">Submit Daily Log</button>
         </div>
     `,
 
-    materialLog: `
-        <div class="drawer-section">
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Action Type</label>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-primary" style="flex:1;">Usage (Consumed)</button>
-                    <button class="btn btn-secondary" style="flex:1;">Delivery (Received)</button>
+    confirmArrival: `
+         <div class="drawer-section">
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:700; font-size:14px; color:var(--blue);">Incoming Asset Verification</div>
+                <div style="font-size:12px; color:var(--slate-500);">Ref: DISPATCH-882</div>
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Asset Details</label>
+                 <input type="text" class="form-input" value="CAT 320D Excavator (EQ-001)" readonly style="width:100%; padding:10px; background:#f1f5f9;">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Responsible Person (Receiver)</label>
+                <input type="text" class="form-input" placeholder="Enter Name..." style="width:100%; padding:10px;">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Photo Evidence (Location Verification)</label>
+                <div style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 20px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;" onclick="window.toast.show('Camera launched', 'info')">
+                    <i class="fas fa-camera" style="font-size: 20px; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600; font-size: 12px;">Capture Asset at Location</div>
                 </div>
             </div>
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Material Category</label>
-                <select style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;"><option>Cement (Bags)</option><option>Sand (Tons)</option></select>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Condition Check</label>
+                <div style="display:flex; gap:10px; margin-bottom:8px;">
+                     <input type="checkbox" checked> <span style="font-size:13px;">Received in Good Order</span>
+                </div>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Arrival Confirmed & Coordinator Notified', 'success')">Confirm Receipt</button>
+         </div>
+    `,
+
+    updateTask: `
+        <div class="drawer-section">
+            <div style="margin-bottom:16px;">
+                 <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Task Update</div>
+                 <div style="font-size:16px; font-weight:700; margin-top:4px;">Excavate Trench A</div>
+                 <div style="font-size:12px; color:var(--red); margin-top:4px;"><i class="fas fa-clock"></i> Deadline: Today, 16:00</div>
             </div>
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Quantity</label>
-                <input type="number" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="0">
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Completion Percentage</label>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <input type="range" class="form-input" style="flex:1;" min="0" max="100" value="45" oninput="this.nextElementSibling.innerText = this.value + '%'">
+                    <span style="font-weight:700; font-size:14px; width:40px;">45%</span>
+                </div>
             </div>
-            <button class="btn btn-primary" style="width:100%" onclick="window.drawer.close(); window.toast.show('Material record saved', 'success')">Save Record</button>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Notes / Obstacles</label>
+                 <textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="e.g. Hit rock layer, slower progress..."></textarea>
+            </div>
+            
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Task Progress Updated', 'success')">Update Progress</button>
         </div>
+    `,
+
+    dailyProgressLog: `
+        <div class="drawer-section">
+            <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining
+            </div>
+
+            <!-- Workflow Wallet Card -->
+            <div style="background:var(--slate-900); color:white; padding:16px; border-radius:8px; margin-bottom:20px;">
+                <div style="font-size:11px; text-transform:uppercase; color:var(--slate-400); font-weight:700;">Project Wallet</div>
+                <div style="font-size:24px; font-weight:700; margin:4px 0;">MWK <span id="wallet-balance">800,000</span></div>
+                <div style="font-size:11px; color:var(--slate-400);">of MWK 5,000,000 Allocated</div>
+                <div style="height:4px; background:rgba(255,255,255,0.1); margin-top:12px; border-radius:2px;">
+                    <div style="width:16%; height:100%; background:var(--emerald);"></div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Narrative / Progress Log</label>
+                 <textarea class="form-input" rows="2" placeholder="Describe work done today... (e.g. Finished north section)"></textarea>
+            </div>
+
+            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
+                <label class="form-label" style="color:var(--slate-700); font-weight:700;"><i class="fas fa-coins"></i> Daily Spending Logic</label>
+                
+                <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Amount Spent (MWK)</label>
+                    <input type="number" id="daily-expense" class="form-input" placeholder="0" oninput="
+                        const bal = 800000 - (this.value || 0);
+                        document.getElementById('wallet-balance').innerText = bal.toLocaleString();
+                        document.getElementById('wallet-balance').style.color = bal < 0 ? '#ef4444' : 'white';
+                    ">
+                </div>
+
+                <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Expense Category</label>
+                    <select id="expense-category" class="form-input">
+                        <option value="">Select Category...</option>
+                        <option value="Labor">Casual Labor / Wages</option>
+                        <option value="Materials">Materials Purchase</option>
+                        <option value="Fuel">Fuel / Transport</option>
+                        <option value="Equipment">Equipment Rental</option>
+                        <option value="Other">Other / Miscellaneous</option>
+                    </select>
+                </div>
+
+                 <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Expense Details (What was it used for?)</label>
+                    <input type="text" id="expense-details" class="form-input" placeholder="e.g. 50 bags of cement, day labor for 3 men...">
+                </div>
+            </div>
+
+             <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Progress Completion</label>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <input type="range" class="form-input" style="flex:1;" min="0" max="100" value="45" oninput="this.nextElementSibling.innerText = this.value + '%'">
+                    <span style="font-weight:700; font-size:14px; width:40px;">45%</span>
+                </div>
+            </div>
+
+            <div style="border-top:1px solid var(--slate-200); margin: 0 -24px 20px; padding: 16px 24px; background:var(--slate-50);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <label style="font-weight:700; font-size:13px; color:var(--slate-700);">Request Additional Funds?</label>
+                    <input type="checkbox" id="sos-toggle" style="width:20px; height:20px; accent-color:var(--red);" onchange="document.getElementById('sos-fields').style.display = this.checked ? 'block' : 'none'">
+                </div>
+                
+                <div id="sos-fields" style="display:none; animation: fadeIn 0.3s ease;">
+                    <div class="form-group" style="margin-bottom:12px;">
+                         <label class="form-label" style="color:var(--red);">Amount Needed (MWK)</label>
+                         <input type="number" class="form-input" placeholder="e.g. 500,000" style="border-color:var(--red-light);">
+                    </div>
+                     <div class="form-group">
+                         <label class="form-label" style="color:var(--red);">Reason</label>
+                         <select class="form-input" style="border-color:var(--red-light);">
+                            <option>Material Price Increase</option>
+                            <option>Unforeseen Labor Costs</option>
+                            <option>Emergency Repair</option>
+                         </select>
+                    </div>
+                    <div style="font-size:11px; color:var(--red); margin-top:8px;"> <i class="fas fa-bolt"></i> Triggers instant alert to Finance Director</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); window.app.fsModule.handleDailyLogSubmit({ 
+                expense: document.getElementById('daily-expense').value, 
+                category: document.getElementById('expense-category').value,
+                details: document.getElementById('expense-details').value,
+                sos: document.getElementById('sos-toggle').checked 
+            })">Submit Update</button>
+        </div>
+    `,
+
+    logEquipmentUsage: `
+         <div class="drawer-section">
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Task Description</label>
+                <textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="What was the equipment used for?"></textarea>
+             </div>
+             <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                  <div class="form-group"><label class="form-label">Hours Operated</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
+                  <div class="form-group"><label class="form-label">Fuel (L)</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Usage Logged', 'success')">Log Usage</button>
+         </div>
+    `,
+
+    returnEquipment: `
+         <div class="drawer-section">
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:700; font-size:14px; color:var(--orange);">Return Asset to Yard</div>
+                <div style="font-size:12px; color:var(--slate-500);">Action: Release form site</div>
+            </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Asset</label>
+                 <input type="text" class="form-input" value="Excavator CAT 320 (EQ-001)" readonly style="width:100%; padding:10px; background:#f1f5f9;">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Condition on Release</label>
+                <select class="form-input" style="width:100%; padding:10px;">
+                    <option>Functional / Good</option>
+                    <option>Needs Service</option>
+                    <option>Damaged</option>
+                </select>
+             </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Notes</label>
+                <textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="Any issues during operation?"></textarea>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Return Request Sent to Coordinator', 'info')">Confirm Return</button>
+         </div>
     `,
 
     attendanceLog: `
@@ -642,8 +843,8 @@ export const DrawerTemplates = {
             </div>
 
             <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex:1; padding: 12px;" onclick="window.drawer.open('Maintenance Log', window.DrawerTemplates.completeMaintenance)">Log Maintenance</button>
                 <button class="btn btn-secondary" style="flex:1; padding: 12px;">Full History</button>
-                <button class="btn btn-primary" style="flex:1; padding: 12px;">Live Track</button>
             </div>
         </div>
     `,
@@ -1430,9 +1631,133 @@ Contract Admin</textarea>
                     </button>
                 </div>
                 <button class="btn btn-action" style="width:100%; margin-top:12px; justify-content:center;">
-                    <i class="fas fa-paper-plane"></i> Send Notification to PM
-                </button>
+                </div>
+        </div>
+    `,
+
+    // --- VEHICLE PROCUREMENT WORKFLOW ---
+    requestNewVehicle: `
+        <div class="drawer-section">
+            <div style="background:var(--blue-light); padding:16px; border-radius:8px; border:1px solid var(--blue); margin-bottom:24px; display:flex; gap:12px; align-items:center;">
+                <i class="fas fa-truck-pickup" style="color:var(--blue); font-size:20px;"></i>
+                <div style="font-weight:700; color:var(--blue-dark); font-size:14px;">Vehicle Procurement Request</div>
             </div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Vehicle Type / Name</label>
+                <input type="text" class="form-input" placeholder="e.g. Toyota Hilux 4x4, JCB Backhoe..." id="proc_veh_name">
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Estimated Cost (MWK)</label>
+                <input type="number" class="form-input" placeholder="0.00" id="proc_veh_cost">
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Justification / Project Need</label>
+                <textarea class="form-input" rows="3" placeholder="Why is this vehicle needed? Which project?" id="proc_veh_reason"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">Priority</label>
+                <select class="form-input" id="proc_veh_priority">
+                    <option>Standard</option>
+                    <option>Urgent (Project Delay Risk)</option>
+                    <option>Critical (Safety/Breakdown)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); window.toast.show('Request sent to Project Manager for review', 'success')">Submit Request to PM</button>
+        </div>
+    `,
+
+    reviewVehicleRequest: `
+        <div class="drawer-section">
+            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:20px;">
+                <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Procurement Request #PROC-882</div>
+                <div style="font-size:18px; font-weight:800; color:var(--slate-900); margin-top:4px;" id="rev_veh_name">Toyota Hilux 4x4</div>
+                <div style="font-size:14px; color:var(--slate-600); font-weight:600; margin-top:2px;">Target Cost: MWK 45,000,000</div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label class="form-label" style="color:var(--slate-400);">EC Justification</label>
+                <p style="font-size:13px; color:var(--slate-700); line-height:1.5;">"Current site vehicle for CEN-01 is frequently breaking down. Need a reliable 4x4 for supervisor site visits and urgent small material deliveries."</p>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">PM Review Comments</label>
+                <textarea class="form-input" rows="3" placeholder="Enter your review notes for Finance..."></textarea>
+            </div>
+
+            <div style="display:flex; gap:12px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="window.drawer.close(); window.toast.show('Request sent back to EC for clarification', 'info')">Need Info</button>
+                <button class="btn btn-primary" style="flex:2;" onclick="window.drawer.close(); window.toast.show('Request recommended to Finance Director', 'success')">Recommend to Finance</button>
+            </div>
+        </div>
+    `,
+
+    approveVehiclePurchase: `
+        <div class="drawer-section">
+            <div style="background:var(--emerald-light); padding:16px; border-radius:8px; border:1px solid var(--emerald); margin-bottom:24px; display:flex; gap:12px; align-items:center;">
+                <i class="fas fa-check-circle" style="color:var(--emerald); font-size:20px;"></i>
+                <div style="font-weight:700; color:var(--emerald-dark); font-size:14px;">Final Procurement Approval</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                <div style="background:var(--slate-50); padding:12px; border-radius:8px;">
+                    <div style="font-size:10px; color:var(--slate-500);">ASSET</div>
+                    <div style="font-weight:700;">Toyota Hilux</div>
+                </div>
+                <div style="background:var(--slate-50); padding:12px; border-radius:8px;">
+                    <div style="font-size:10px; color:var(--slate-500);">BUDGET IMPACT</div>
+                    <div style="font-weight:700;">MWK 45M</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label">GL Code / Account</label>
+                <select class="form-input">
+                    <option>Capital Expenditure (CAPEX-01)</option>
+                    <option>Project Operations (OPEX-FS)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; background:var(--emerald); border-color:var(--emerald); padding:14px;" onclick="window.drawer.close(); window.toast.show('Purchase Order Approved. EC notified to execute.', 'success')">Approve & Release Funds</button>
+        </div>
+    `,
+
+    addNewVehicle: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Asset ID (Auto-generated)</label>
+                <input type="text" class="form-input" value="EQP-088" readonly>
+            </div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Make / Model</label>
+                <input type="text" class="form-input" placeholder="e.g. Toyota Hilux 2024">
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                <div class="form-group">
+                    <label class="form-label">Serial Number / VIN</label>
+                    <input type="text" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Initial Engine Hours / KM</label>
+                    <input type="number" class="form-input" value="0">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label">Upload Proof of Purchase / License</label>
+                <div style="border:2px dashed var(--slate-300); border-radius:8px; padding:20px; text-align:center; color:var(--slate-500); cursor:pointer;">
+                    <i class="fas fa-file-contract" style="font-size:24px; margin-bottom:8px;"></i>
+                    <div style="font-size:12px;">Drag documents here</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); window.toast.show('Asset successfully added to fleet registry', 'success')">Add to Fleet</button>
         </div>
     `
 };

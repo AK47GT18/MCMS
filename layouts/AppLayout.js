@@ -353,6 +353,9 @@ export class AppLayout {
                         </button>
                     </div>
                 </div>
+                 <button class="btn" style="width: 100%; justify-content: center; gap: 8px; font-weight: 600; margin-top: 16px; color: var(--red); border: 1px solid var(--red-light); background: #FEF2F2;" onclick="window.app.layout.handleLogout()">
+                    <i class="fas fa-right-from-bracket"></i> Sign Out
+                </button>
             </div>
         `;
 
@@ -363,5 +366,14 @@ export class AppLayout {
         // Mock update
         toast.success('Success', 'Password has been updated successfully.');
         window.drawer.close();
+    }
+
+    handleLogout() {
+        if(confirm('Are you sure you want to sign out?')) {
+            window.toast.show('Signing out...', 'info');
+            setTimeout(() => {
+                window.location.reload(); // Simulates logout for now
+            }, 800);
+        }
     }
 }

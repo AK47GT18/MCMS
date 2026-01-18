@@ -26,6 +26,7 @@ export class ProjectManagerDashboard {
             case 'analytics': contentHTML = this.getAnalyticsView(); break;
             case 'reviews': contentHTML = this.getReviewsView(); break;
             case 'issues': contentHTML = this.getIssuesView(); break;
+            case 'fleet': contentHTML = this.getFleetView(); break;
             default: contentHTML = this.getPortfolioView();
         }
 
@@ -51,7 +52,8 @@ export class ProjectManagerDashboard {
             'reports': 'Reports Center',
             'analytics': 'Performance Analytics',
             'reviews': 'Approvals & Reviews',
-            'issues': 'Issues Resolution Center'
+            'issues': 'Issues Resolution Center',
+            'fleet': 'Asset Registry'
         };
 
         return `
@@ -1034,6 +1036,67 @@ export class ProjectManagerDashboard {
                         </table>
                     </div>
                 </div>
+            </div>
+        `;
+    }
+    getFleetView() {
+        return `
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header"><span class="stat-label">Total Assets</span><i class="fas fa-truck-pickup" style="color: var(--blue);"></i></div>
+                    <div class="stat-value">45</div>
+                    <div class="stat-sub">Across all sites</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;">
+                    <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Pending Requests</span><i class="fas fa-clock" style="color: var(--orange);"></i></div>
+                    <div class="stat-value" style="color: var(--orange);">2</div>
+                    <div class="stat-sub">Awaiting PM Review</div>
+                </div>
+            </div>
+
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title">Asset Registry & Procurement</div>
+                    <button class="btn btn-primary" onclick="window.drawer.open('Add New Asset', window.DrawerTemplates.addNewVehicle)">
+                        <i class="fas fa-plus"></i> Manual Add
+                    </button>
+                </div>
+                <div style="padding:0 20px;">
+                    <div class="tabs">
+                        <div class="tab active">Full Registry</div>
+                        <div class="tab">Pending Approvals</div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset ID</th>
+                            <th>Equipment Name</th>
+                            <th>Status</th>
+                            <th>Current Project</th>
+                            <th>Utilization</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="mono-val">EQP-045</span></td>
+                            <td><strong>Caterpillar 320D Excavator</strong></td>
+                            <td><span class="status active">Active</span></td>
+                            <td>CEN-01 Unilia</td>
+                            <td>92%</td>
+                            <td><button class="btn btn-secondary" onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)"><i class="fas fa-eye"></i></button></td>
+                        </tr>
+                        <tr style="background:var(--blue)05;">
+                            <td><span class="status pending" style="background:var(--blue-light); color:var(--blue);">PROC-882</span></td>
+                            <td><strong>Toyota Hilux 4x4</strong></td>
+                            <td><span class="status pending">PM REVIEW</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td><button class="btn btn-action" onclick="window.drawer.open('Review Request', window.DrawerTemplates.reviewVehicleRequest)">Review</button></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         `;
     }
