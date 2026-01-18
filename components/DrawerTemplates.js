@@ -2,12 +2,12 @@ export const DrawerTemplates = {
     transactionEntry: `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Transaction Type</label>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Transaction Type</label>
                 <div style="display: flex; gap: 12px;">
-                     <label style="flex: 1; border: 1px solid var(--orange); background: var(--orange-light); padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--orange); cursor: pointer;">
+                     <label style="flex: 1; border: 1px solid var(--orange); background: var(--orange-light); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--orange); cursor: pointer;">
                         <input type="radio" name="trx_type" checked style="accent-color: var(--orange);"> Expense
                      </label>
-                     <label style="flex: 1; border: 1px solid var(--slate-200); padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-600); cursor: pointer;">
+                     <label style="flex: 1; border: 1px solid var(--slate-200); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-600); cursor: pointer;">
                         <input type="radio" name="trx_type" style="accent-color: var(--slate-400);"> Invoice
                      </label>
                 </div>
@@ -15,43 +15,146 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Amount (MWK)</label>
-                <input type="number" class="form-input" placeholder="0.00" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 16px; font-weight: 600;">
+                <input type="number" class="form-input" value="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
             </div>
 
-            <div class="grid md:grid-cols-2 gap-4" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project</label>
-                    <select class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;">
-                        <option>Select Project</option>
-                        <option>CEN-01 Unilia Construction</option>
-                        <option>NOR-04 Mzuzu Bridge</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Budget Line</label>
-                    <select class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;">
-                        <option>Select Category</option>
-                        <option>Materials</option>
-                        <option>Labor</option>
-                        <option>Equipment</option>
-                    </select>
-                </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project</label>
+                <select class="form-input" style="width: 100%;">
+                    <option selected>CEN-01 Unilia Library Complex</option>
+                    <option>MZ-05 Mzimba Clinic Extension</option>
+                    <option>NOR-04 Mzuzu Bridge Repair</option>
+                    <option>LIL-02 Lilongwe Mall Access Road</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Budget Line</label>
+                <select class="form-input" style="width: 100%;">
+                    <option selected>Materials (02-MAT)</option>
+                    <option>Labor (03-LAB)</option>
+                    <option>Equipment (04-EQU)</option>
+                    <option>Overheads (05-OVH)</option>
+                    <option>Subcontractors (06-SUB)</option>
+                </select>
             </div>
 
              <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Description</label>
-                <textarea class="form-input" rows="3" placeholder="Enter transaction details..." style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;"></textarea>
+                <textarea class="form-input" rows="3" placeholder="Enter transaction details..." style="width: 100%;"></textarea>
             </div>
 
-             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Receipt / Invoice Upload</label>
-                <div style="border: 2px dashed var(--slate-300); border-radius: 6px; padding: 20px; text-align: center; color: var(--slate-500); font-size: 13px; background: var(--slate-50);">
-                    <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 8px; color: var(--slate-400);"></i>
-                    <p>Drag files here or click to upload</p>
+             <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Receipt / Invoice Upload</label>
+                <div style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 32px; text-align: center; color: var(--slate-500); font-size: 13px; background: var(--slate-50); cursor: pointer;" onclick="window.toast.show('File explorer opened', 'info')">
+                    <i class="fas fa-cloud-arrow-up" style="font-size: 28px; margin-bottom: 8px; color: var(--slate-400);"></i>
+                    <p style="margin: 0; font-weight: 500;">Drag files here or <span style="color: var(--orange);">click to upload</span></p>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">Process Transaction</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Transaction Processed', 'success'); window.drawer.close();">Process Transaction</button>
+        </div>
+    `,
+
+    whistleblowerPortal: `
+        <div style="padding: 24px;">
+            <div style="background: var(--red-light); padding: 16px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-shield-halved" style="color: var(--red); font-size: 20px;"></i>
+                <div style="font-weight: 700; color: var(--red); font-size: 14px;">Anti-Corruption & Integrity Portal</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px; background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">Anonymous Mode</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Your identity will not be recorded</div>
+                </div>
+                <input type="checkbox" id="anon_mode" style="width: 20px; height: 20px; accent-color: var(--orange);" checked>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Report Category</label>
+                <select class="form-input">
+                    <option>Material Theft / Diversion</option>
+                    <option>Bribery / Kickbacks</option>
+                    <option>False Invoicing</option>
+                    <option>Payroll Fraud</option>
+                    <option>Safety Violation Cover-up</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project / Department Involved</label>
+                <select class="form-input">
+                    <option>None Specific</option>
+                    <option>CEN-01 Unilia Construction</option>
+                    <option>Supply Chain / Logistics</option>
+                    <option>Human Resources</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Evidence / Narrative</label>
+                <textarea class="form-input" rows="5" placeholder="Please provide details, dates, and names if known..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Supporting Documents (Secure Upload)</label>
+                <div style="border: 2px dashed var(--slate-300); padding: 20px; text-align: center; border-radius: 8px; background: var(--slate-50); color: var(--slate-500);">
+                    <i class="fas fa-lock" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <p style="font-size: 12px;">Files are encrypted on upload</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
+        </div>
+    `,
+
+    safetyIncident: `
+        <div style="padding: 24px;">
+            <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; border: 1px solid var(--orange-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-helmet-safety" style="color: var(--orange); font-size: 20px;"></i>
+                <div style="font-weight: 700; color: var(--orange-hover); font-size: 14px;">HSE Safety Incident Report</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Incident Type</label>
+                    <select class="form-input">
+                        <option>Injury / First Aid</option>
+                        <option>Near Miss</option>
+                        <option>Hazard Identified</option>
+                        <option>Equipment Failure (Safety)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Site Area</label>
+                    <select class="form-input">
+                        <option>Sector 1: Foundation</option>
+                        <option>Sector 2: Warehouse</option>
+                        <option>Sector 3: Main Block</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Person(s) Involved</label>
+                <input type="text" class="form-input" placeholder="Name or Staff ID...">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Incident Description</label>
+                <textarea class="form-input" rows="4" placeholder="Describe what happened and immediate actions taken..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Scene Photos</label>
+                <div style="border: 2px dashed var(--slate-300); padding: 24px; text-align: center; border-radius: 8px; background: var(--slate-50); color: var(--slate-500); cursor: pointer;" onclick="window.toast.show('Camera launched', 'info')">
+                    <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <p style="font-size: 13px; margin: 0;">Tap to Capture Site Condition</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; background: var(--orange); border-color: var(--orange); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('HSE Report Filed. SMS Alert sent to Safety Officer.', 'info'); window.drawer.close();">Log Incident</button>
         </div>
     `,
     
@@ -153,21 +256,58 @@ export const DrawerTemplates = {
         <div class="drawer-section">
             <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                <input type="text" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                <input type="text" id="proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
+                <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
             </div>
              <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                <input type="number" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                <input type="number" id="proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
             </div>
-             <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Supervisor</label>
-                <select style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                    <option>John Banda</option>
-                    <option>Peter Phiri</option>
-                    <option>Davi Moyo</option>
-                </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
+                    <input type="date" id="proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
+                    <input type="date" id="proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                </div>
             </div>
-            <button class="btn btn-primary" style="width:100%" onclick="window.toast.show('Project created successfully', 'success')">Create Project</button>
+             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Supervisor</label>
+                    <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                        <option>Sarah Jenkins</option>
+                        <option>John Banda</option>
+                        <option>Blessings Phiri</option>
+                        <option>Peter Phiri</option>
+                        <option>Davi Moyo</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Radius (m)</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="number" id="proj_radius_input" value="500" class="form-input" style="width:70px; padding:6px; border:1px solid var(--slate-300); border-radius:6px;" oninput="document.getElementById('proj_radius_slider').value = this.value; window.app.pmModule.updateMapRadius(this.value)">
+                        <input type="range" id="proj_radius_slider" value="500" min="50" max="5000" step="50" style="flex: 1; accent-color: var(--orange);" oninput="document.getElementById('proj_radius_input').value = this.value; window.app.pmModule.updateMapRadius(this.value)">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
+                <div id="project-map" style="height: 200px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Loading Map...</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="proj_lat">-13.9626</span></div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Long: <span id="proj_lng">33.7741</span></div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%" onclick="window.toast.show('Project created successfully', 'success'); window.drawer.close();">Create Project</button>
         </div>
     `,
 
@@ -372,41 +512,124 @@ export const DrawerTemplates = {
     // --- EQUIPMENT COORDINATOR TEMPLATES ---
     assignEquipment: `
         <div class="drawer-section">
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Select Equipment</label><select class="form-input" style="width:100%; padding:10px;"><option>EQP-045 Excavator</option><option>EQP-012 Tipper</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Assign To (Project)</label><select class="form-input" style="width:100%; padding:10px;"><option>CEN-01 Unilia Library</option><option>MZ-05 Clinic</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Responsible User</label><select class="form-input" style="width:100%; padding:10px;"><option>John Banda (PM)</option><option>Peter Phiri</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Expected Return</label><input type="date" class="form-input" style="width:100%; padding:10px;"></div>
-        </div>
-        <div class="drawer-section" style="background: #F8FAFC; border:1px solid var(--slate-200);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 600; color: var(--slate-700);">GPS Validation</span>
-                <span class="status active" style="font-size:11px; font-weight:600; color:var(--emerald); background:#DCFCE7; padding:4px 8px; border-radius:20px;"><i class="fas fa-satellite-dish"></i> Signal Locked</span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover);">
+                <i class="fas fa-key" style="color: var(--orange); font-size: 20px;"></i>
+                <div>
+                    <div style="font-weight: 700; color: var(--orange); font-size: 14px;">Asset Allocation</div>
+                    <div style="font-size: 11px; color: var(--orange-hover);">Formal handover and location lock</div>
+                </div>
             </div>
-            <div style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">Current Loc: -13.9626, 33.7741 (HQ Yard)</div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Equipment ID/Name</label>
+                <select class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                    <option>EQP-045: Caterpillar 320D Excavator</option>
+                    <option>EQP-012: Tata Tipper 10T</option>
+                    <option>EQP-008: Winget Concrete Mixer</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Assign To Project</label>
+                <select class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                    <option>CEN-01: Unilia Library Complex</option>
+                    <option>MZ-05: Mzimba Clinic Extension</option>
+                    <option>NOR-04: Mzuzu Bridge Repair</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Responsible Person</label>
+                    <select class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                        <option>John Banda (PM)</option>
+                        <option>Peter Phiri (Sup)</option>
+                        <option>Davi Moyo (Foreman)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Expected Return</label>
+                    <input type="date" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Special Instructions</label>
+                <textarea class="form-input" rows="3" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="Operator requirements, fuel level, attachments..."></textarea>
+            </div>
+            
+            <div style="background: #F8FAFC; border:1px solid var(--slate-200); padding: 12px; border-radius: 8px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; color: var(--slate-700); font-size: 13px;">GPS Signal Status</span>
+                    <span class="status active" style="font-size:10px; font-weight:700; color:var(--emerald); background:#DCFCE7; padding:4px 10px; border-radius:20px; text-transform: uppercase;"><i class="fas fa-satellite-dish"></i> Lock Acquired</span>
+                </div>
+                <div style="font-size: 11px; color: var(--slate-500); margin-top: 6px; font-family: 'JetBrains Mono';">Current: -13.9626, 33.7741 (HQ Storage)</div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight: 700; border: none;" onclick="window.drawer.close(); window.toast.show('Equipment Assigned Successfully', 'success')">Process Handover</button>
         </div>
-        <button class="btn btn-primary" style="width:100%; margin-top:16px; border:none; padding:12px;" onclick="window.drawer.close(); window.toast.show('Equipment Assigned', 'success')">Confirm Handover</button>
     `,
 
     assetDetails: `
         <div class="drawer-section">
-            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
-                <div><div class="stat-label">Serial Number</div><div class="mono-val">CAT-8892-XJ</div></div>
-                <div><div class="stat-label">Purchase Date</div><div style="font-weight:600;">Jan 2024</div></div>
-                <div><div class="stat-label">Hours</div><div class="mono-val">248 Hrs</div></div>
-                <div><div class="stat-label">Status</div><span class="status active" style="background:#DCFCE7; color:#166534; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">In Use</span></div>
+            <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center;">
+                <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--slate-600); border: 1px solid var(--slate-200);">
+                    <i class="fas fa-truck-front"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--slate-900);">Caterpillar 320D</h3>
+                    <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center;">
+                        <span class="project-id">EQP-045</span>
+                        <span class="status active" style="font-size: 10px; padding: 2px 8px;">In Use</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+                <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
+                    <div class="stat-label" style="font-size: 9px;">Engine Hours</div>
+                    <div style="font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono'; margin-top: 4px;">2,450h</div>
+                </div>
+                <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
+                    <div class="stat-label" style="font-size: 9px;">Fuel Level</div>
+                    <div style="font-size: 14px; font-weight: 700; color: var(--emerald); margin-top: 4px;">85%</div>
+                </div>
+                <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
+                    <div class="stat-label" style="font-size: 9px;">Utilization</div>
+                    <div style="font-size: 14px; font-weight: 700; color: var(--blue); margin-top: 4px;">92%</div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display:block; font-size:11px; font-weight:700; color:var(--slate-400); text-transform:uppercase; margin-bottom:10px; letter-spacing: 0.5px;">Fleet Information</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Current Location</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">Unilia Site (CEN-01)</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Assigned To</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">John Banda (PM)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display:block; font-size:11px; font-weight:700; color:var(--slate-400); text-transform:uppercase; margin-bottom:10px; letter-spacing: 0.5px;">Maintenance Health</label>
+                <div style="padding: 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-200);">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+                        <span>Next Service Due</span>
+                        <span style="font-weight: 700; color: var(--orange);">50h remaining</span>
+                    </div>
+                    <div class="budget-bar-bg" style="height: 6px;"><div class="budget-bar-fill" style="width: 90%; background: var(--orange);"></div></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex:1; padding: 12px;">Full History</button>
+                <button class="btn btn-primary" style="flex:1; padding: 12px;">Live Track</button>
             </div>
         </div>
-        <div class="drawer-section">
-            <div class="stat-label" style="margin-bottom: 8px;">Maintenance History</div>
-            <table style="font-size: 11px; width:100%;">
-                <thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Type</th><th style="text-align:left;">Cost</th></tr></thead>
-                <tbody>
-                    <tr><td style="padding:4px 0;">Dec 10, 2025</td><td>Hydraulic Check</td><td>MWK 150,000</td></tr>
-                    <tr><td style="padding:4px 0;">Oct 05, 2025</td><td>500hr Service</td><td>MWK 450,000</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <button class="btn btn-secondary" style="width:100%; border:1px solid var(--slate-200); padding:10px;" onclick="window.drawer.close()">View Full History</button>
     `,
 
     scheduleMaintenance: `
@@ -554,7 +777,156 @@ export const DrawerTemplates = {
                  <div class="form-group"><label class="form-label">Parts Cost</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
                  <div class="form-group"><label class="form-label">Labor Cost</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
             </div>
-            <button class="btn btn-primary" style="width:100%; margin-top:16px; padding:12px;" onclick="window.drawer.close(); window.toast.show('Maintenance Logged', 'success')">Close Order</button>
+             <button class="btn btn-primary" style="width:100%; margin-top:16px; padding:12px;" onclick="window.drawer.close(); window.toast.show('Audit evidence logged', 'success')">Submit Audit</button>
+        </div>
+    `,
+
+    newUser: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" placeholder="e.g., John Doe" style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Role</label>
+                <select class="form-input" style="width: 100%;">
+                    <option>Project Manager</option>
+                    <option>Finance Director</option>
+                    <option>Field Supervisor</option>
+                    <option>Contract Administrator</option>
+                    <option>Equipment Coordinator</option>
+                    <option>System Technician</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" placeholder="j.doe@mkaka.mw" style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" class="form-input" placeholder="+265..." style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Initial Password</label>
+                <input type="password" class="form-input" placeholder="••••••••" style="width: 100%;">
+                <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">User will be prompted to change this on first login.</p>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('User account created successfully', 'success')">Create User Account</button>
+        </div>
+    `,
+
+    editUser: `
+        <div class="drawer-section">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
+                <div style="width: 48px; height: 48px; background: var(--slate-800); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">SJ</div>
+                <div>
+                    <div style="font-weight: 700; color: var(--slate-900);">Sarah Jenkins</div>
+                    <div style="font-size: 13px; color: var(--slate-500);">Project Manager</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" value="Sarah Jenkins" style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Role</label>
+                <select class="form-input" style="width: 100%;">
+                    <option selected>Project Manager</option>
+                    <option>Finance Director</option>
+                    <option>Field Supervisor</option>
+                    <option>System Technician</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-input" value="s.jenkins@mkaka.mw" style="width: 100%;">
+            </div>
+            
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--slate-100); display: flex; flex-direction: column; gap: 12px;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase;">Administrative Actions</div>
+                
+                <button class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px;" onclick="window.toast.show('Password reset email sent to user', 'info')">
+                    <i class="fas fa-key" style="color: var(--slate-400);"></i> Force Password Reset
+                </button>
+                
+                <button class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="if(confirm('Are you sure you want to delete this user? This action cannot be undone.')) { window.drawer.close(); window.toast.show('User account deleted', 'error'); }">
+                    <i class="fas fa-user-slash"></i> Deactivate & Delete User
+                </button>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 24px; padding: 12px;" onclick="window.drawer.close(); window.toast.show('User details updated', 'success')">Save Changes</button>
+        </div>
+    `,
+
+    editVAT: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Standard VAT Rate (%)</label>
+                <input type="number" class="form-input" value="16.5" step="0.1" style="width: 100%; padding: 12px;">
+                <p style="font-size: 11px; color: var(--slate-500); margin-top: 6px;">Applies to all taxable transactions.</p>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('VAT Rate updated', 'success')">Update Rate</button>
+        </div>
+    `,
+
+    editCurrency: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">System Currency Symbol</label>
+                <select class="form-input" style="width: 100%; padding: 12px;">
+                    <option value="MWK" selected>MWK (Malawian Kwacha)</option>
+                    <option value="USD">USD (US Dollar)</option>
+                    <option value="GBP">GBP (British Pound)</option>
+                    <option value="ZAR">ZAR (South African Rand)</option>
+                </select>
+            </div>
+             <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('Currency updated', 'success')">Update Currency</button>
+        </div>
+    `,
+
+    editCompany: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Legal Company Name</label>
+                <input type="text" class="form-input" value="Mkaka Construction Ltd" style="width: 100%; padding: 12px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Tax ID (TPIN)</label>
+                <input type="text" class="form-input" value="10029384" style="width: 100%; padding: 12px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Registered Address</label>
+                <textarea class="form-input" style="width: 100%; padding: 12px; height: 80px;">P.O. Box 30456, Capital City, Lilongwe 3</textarea>
+            </div>
+             <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('Company details updated', 'success')">Update Details</button>
+        </div>
+    `,
+
+    editSMTP: `
+        <div class="drawer-section">
+             <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">SMTP Host</label>
+                <input type="text" class="form-input" value="smtp.gmail.com" style="width: 100%; padding: 12px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">SMTP Port</label>
+                <input type="text" class="form-input" value="587" style="width: 100%; padding: 12px;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" value="system@mkaka.mw" style="width: 100%; padding: 12px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" value="secure_password" style="width: 100%; padding: 12px;">
+                </div>
+            </div>
+            <div style="background: var(--slate-50); padding: 12px; border-radius: 6px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                <button class="btn btn-secondary" style="width: 100%; font-size: 11px;">Test Connection</button>
+            </div>
+             <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('SMTP Settings updated', 'success')">Save Connection</button>
         </div>
     `,
 
@@ -779,6 +1151,166 @@ export const DrawerTemplates = {
             </div>
             
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding:12px;" onclick="window.drawer.close(); window.toast.show('Journal Entry Posted', 'success')">Post Entry</button>
+        </div>
+    `,
+
+    submitComplaint: `
+        <div class="drawer-section">
+            <div style="background:var(--red-light); padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid var(--red-hover);">
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <i class="fas fa-exclamation-circle" style="color:var(--red); font-size:20px;"></i>
+                    <div style="font-weight:700; color:var(--red); font-size:14px;">Log New Project Issue</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Issue Category</label>
+                    <select class="form-input">
+                        <option selected>Subcontractor Delay</option>
+                        <option>Site Operational Issue</option>
+                        <option>Safety/HSE Hazard</option>
+                        <option>Equipment Failure</option>
+                        <option>Material Shortage/Quality</option>
+                        <option>Labor Dispute</option>
+                        <option>Weather Delay</option>
+                        <option>Other / General Complaint</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project Affected</label>
+                    <select class="form-input">
+                        <option selected>CEN-01 Unilia Library</option>
+                        <option>MZ-05 Clinic Extension</option>
+                        <option>NOR-04 Mzuzu Bridge</option>
+                        <option>LIL-02 Mall Access Road</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Site Location / Block</label>
+                    <input type="text" class="form-input" value="Block B - North Face">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date Identified</label>
+                    <input type="date" class="form-input" value="2026-01-16">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Priority Level</label>
+                <div style="display:flex; gap:8px;">
+                    <label style="flex:1; border:1px solid var(--slate-200); padding:10px; border-radius:6px; text-align:center; cursor:pointer; font-size:12px; font-weight:600;">
+                        <input type="radio" name="priority" value="Low"> Low
+                    </label>
+                    <label style="flex:1; border:1px solid var(--orange); background:var(--orange-light); color:var(--orange); padding:10px; border-radius:6px; text-align:center; cursor:pointer; font-size:12px; font-weight:600;">
+                        <input type="radio" name="priority" value="Medium"> Medium
+                    </label>
+                    <label style="flex:1; border:1px solid var(--red); background:var(--red-light); color:var(--red); padding:10px; border-radius:6px; text-align:center; cursor:pointer; font-size:12px; font-weight:600;">
+                        <input type="radio" name="priority" value="High" checked> Urgent
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Issue Description / Narrative</label>
+                <textarea class="form-input" rows="4">Subcontractor for plumbing has failed to show up for 3 days. This is delaying the screeding process in Block B. Need immediate intervention to avoid project lag.</textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Assign To (Initial)</label>
+                <select class="form-input">
+                    <option selected>Sarah Jenkins (PM)</option>
+                    <option>John Banda (PM)</option>
+                    <option>Mike Banda (Supervisor)</option>
+                    <option>Grace Chibwe (Ops Manager)</option>
+                    <option>Stefan Mwale (Finance)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label">Photo Evidence (Optional)</label>
+                <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:8px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;" onclick="window.toast.show('Camera launched', 'info')">
+                    <i class="fas fa-camera" style="font-size:24px; margin-bottom:8px;"></i>
+                    <div style="font-weight:600; font-size:13px;">Snap or Upload photo</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.drawer.close(); window.toast.show('Issue #CMP-443 logged. Ops Manager notified.', 'success');">Submit Issue Report</button>
+        </div>
+    `,
+
+    complaintDetails: `
+        <div class="drawer-section">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
+                <div>
+                    <div style="font-size:18px; font-weight:800; color:var(--slate-900);">Issue #CMP-442</div>
+                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by John Banda (PM) • 3h ago</div>
+                </div>
+                <span class="status pending" id="drawer_complaint_status" style="font-weight:700;">In Progress</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
+                <div style="background:var(--slate-50); padding:12px; border-radius:8px; border:1px solid var(--slate-100);">
+                    <div class="stat-label" style="font-size:10px;">Project</div>
+                    <div style="font-size:13px; font-weight:700; margin-top:4px;">CEN-01 Unilia</div>
+                </div>
+                <div style="background:var(--red-light); padding:12px; border-radius:8px; border:1px solid var(--red-hover);">
+                    <div class="stat-label" style="font-size:10px; color:var(--red);">Priority</div>
+                    <div style="font-size:13px; font-weight:700; color:var(--red); margin-top:4px;">Urgent</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label class="form-label" style="color:var(--slate-400);">Narrative</label>
+                <p style="font-size:13px; line-height:1.6; color:var(--slate-700); background:var(--white); border:1px solid var(--slate-200); padding:16px; border-radius:8px;">
+                    "Subcontractor for plumbing has failed to show up for 3 days. This is delaying the screeding process in Block B. Need immediate intervention to avoid project lag."
+                </p>
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label class="form-label" style="color:var(--slate-400);">Attachment</label>
+                <div style="width:100%; height:150px; background:var(--slate-200); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--slate-500);">
+                    <i class="fas fa-image" style="font-size:32px;"></i>
+                </div>
+            </div>
+
+            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
+                <label class="form-label" style="margin-bottom:12px; font-weight:700;">Resolution Management</label>
+                
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label" style="font-size:11px;">ASSIGNED TO</label>
+                    <select class="form-input">
+                        <option>Sarah Jenkins (PM)</option>
+                        <option>Mike Banda (SV)</option>
+                        <option>John Banda (PM)</option>
+                        <option>Stefan Mwale (Finance)</option>
+                        <option>Grace Chibwe (Ops)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="font-size:11px;">INTERNAL RESOLUTION NOTES</label>
+                    <textarea class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."></textarea>
+                </div>
+            </div>
+
+            <div style="border-top:1px solid var(--slate-200); padding-top:24px;">
+                <label class="form-label" style="margin-bottom:12px;">Resolution Actions</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <button class="btn btn-secondary" style="justify-content:center;" onclick="document.getElementById('drawer_complaint_status').className='status pending'; document.getElementById('drawer_complaint_status').innerText='In Progress'; window.toast.show('Status set to In Progress', 'info');">
+                        Set In Progress
+                    </button>
+                    <button class="btn btn-primary" style="justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="document.getElementById('drawer_complaint_status').className='status active'; document.getElementById('drawer_complaint_status').innerText='Resolved'; window.toast.show('Issue marked as Resolved', 'success');">
+                        Mark Resolved
+                    </button>
+                </div>
+                <button class="btn btn-action" style="width:100%; margin-top:12px; justify-content:center;">
+                    <i class="fas fa-paper-plane"></i> Send Notification to PM
+                </button>
+            </div>
         </div>
     `
 };

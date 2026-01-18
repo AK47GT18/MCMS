@@ -693,7 +693,7 @@ export class FinanceDashboard {
     getHeaderHTML() {
         // Headers per view
         const headers = {
-            'dashboard': { title: 'Financial Overview', context: 'FY 2025-26 | Cash Position: Strong' },
+            'dashboard': { title: 'Dashboard', context: 'FY 2025-26 | Cash Position: Strong' },
             'analytics': { title: 'Analytics', context: 'Burn Rate & Forecasting' },
             'approvals': { title: 'Requisition Queue', context: 'Operational Gatekeeping' },
             'ledger': { title: 'General Ledger', context: 'Master Record' },

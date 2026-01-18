@@ -2,6 +2,7 @@ import { AppLayout } from './layouts/AppLayout.js';
 import { currentUser } from './config/roles.js';
 import { drawer } from './components/DrawerManager.js';
 import './components/ui/ToastManager.js';
+import './components/ui/ModalManager.js';
 
 class App {
     constructor() {
@@ -98,6 +99,14 @@ class App {
                  }
                  this.mdModule.currentView = pageId;
                  content = this.mdModule.render();
+            } else if (currentUser.role === 'System Technician') {
+                 // Lazy load Technician Module
+                 if (!this.techModule) {
+                    const { SystemTechnicianDashboard } = await import('./components/modules/SystemTechnicianDashboard.js');
+                    this.techModule = new SystemTechnicianDashboard();
+                 }
+                 this.techModule.currentView = pageId;
+                 content = this.techModule.render();
             } else {
                 // Fallback / Other Roles Mock
                 content = this.getMockContent(pageId);
@@ -109,6 +118,13 @@ class App {
 
         // Inject the content into the Main Layout
         this.layout.injectContent(content);
+
+        // Initialization Hooks for Maps/Plots
+        if (pageId === 'portfolio' && this.pmModule) {
+            this.pmModule.initializeProjectMap();
+        } else if (pageId === 'tracking' && this.ecModule) {
+            this.ecModule.initializeTrackingMap();
+        }
     }
 
     getMockContent(pageId) {

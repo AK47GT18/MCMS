@@ -1,37 +1,46 @@
 export function StatCard({ title, value, subtext, trend, alertColor }) {
     // trend: 'up' | 'down' | 'neutral'
-    // alertColor: 'red' | 'green' | 'blue' | 'none'
+    // alertColor: 'red' | 'amber' | 'none'
     
     let iconHTML = '';
-    let trendClass = 'text-slate-500';
-    let iconClass = 'text-slate-400';
-    let borderStyle = '';
+    let cardStyle = '';
+    let titleStyle = '';
+    let valueStyle = '';
+    let iconColor = 'var(--slate-500)';
     
     // Icon Logic matching Legacy
     if (title.includes('Fraud')) {
         iconHTML = '<i class="fas fa-shield-halved"></i>';
-        iconClass = 'text-red-500';
+        iconColor = 'var(--red)';
     } else if (title.includes('Pending')) {
         iconHTML = '<i class="fas fa-clock"></i>';
-        iconClass = 'text-amber-500';
+        iconColor = 'var(--orange)';
     } else if (title.includes('Contract')) {
         iconHTML = '<i class="fas fa-file-signature"></i>';
-        iconClass = 'text-blue-500';
+        iconColor = 'var(--blue)';
     } else if (title.includes('Budget')) {
         iconHTML = '<i class="fas fa-chart-bar"></i>';
+        iconColor = 'var(--orange)';
     }
 
-    if (alertColor === 'red') borderStyle = 'border-left: 4px solid var(--red);';
-    if (alertColor === 'amber') borderStyle = 'border-left: 4px solid #F59E0B;';
+    // Updated card styling - match PM pattern (border-color + background)
+    if (alertColor === 'red') {
+        cardStyle = 'border-color: var(--red-light); background: #fff5f5;';
+        titleStyle = 'color: var(--red);';
+        valueStyle = 'color: var(--red);';
+    } else if (alertColor === 'amber') {
+        cardStyle = 'border-color: var(--orange-light); background: #fffbf7;';
+        titleStyle = 'color: var(--orange);';
+        valueStyle = 'color: var(--orange);';
+    }
 
-    // Exact Legacy HTML Structure for StatCard
     return `
-        <div class="stat-card" style="${borderStyle}">
+        <div class="stat-card" style="${cardStyle}">
             <div class="stat-header">
-                <span class="stat-label" style="${alertColor ? `color: var(--${alertColor === 'amber' ? 'orange' : alertColor});` : ''}">${title}</span>
-                <span style="${iconClass}">${iconHTML}</span>
+                <span class="stat-label" style="${titleStyle}">${title}</span>
+                <span style="color: ${iconColor};">${iconHTML}</span>
             </div>
-            <div class="stat-value" style="${alertColor ? `color: var(--${alertColor === 'amber' ? 'orange' : alertColor});` : ''}">${value}</div>
+            <div class="stat-value" style="${valueStyle}">${value}</div>
             <div class="stat-sub">${subtext}</div>
         </div>
     `;

@@ -34,7 +34,7 @@ export class ContractAdminDashboard {
     getHeaderHTML() {
         // Dynamic Header Content
         const headers = {
-            'dashboard': { title: 'Contract Overview', context: '4 Active Contracts | 98% Compliance' },
+            'dashboard': { title: 'Dashboard', context: '4 Active Contracts | 98% Compliance' },
             'repository': { title: 'Contract Repository', context: 'Centralized Document Store' },
             'milestones': { title: 'Milestone Tracking', context: 'Deliverables & Deadlines' },
             'amendments': { title: 'Amendments & Variations', context: 'Change Control Log' },
@@ -83,7 +83,7 @@ export class ContractAdminDashboard {
     getStatsGridHTML() {
         return `
             <div class="stats-grid">
-               <div class="stat-card" style="border-left: 4px solid var(--orange);">
+               <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;">
                   <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Upcoming Deadlines</span><i class="fas fa-clock" style="color: var(--orange);"></i></div>
                   <div class="stat-value" style="color: var(--orange);">3</div>
                   <div class="stat-sub">Milestones due < 7 days</div>
@@ -98,7 +98,7 @@ export class ContractAdminDashboard {
                   <div class="stat-value">1</div>
                   <div class="stat-sub">Awaiting PM Approval</div>
                </div>
-               <div class="stat-card" style="border-left: 4px solid var(--red);">
+               <div class="stat-card" style="border-color: var(--red-light); background: #fff5f5;">
                   <div class="stat-header"><span class="stat-label" style="color: var(--red);">Compliance Alerts</span><i class="fas fa-triangle-exclamation" style="color: var(--red);"></i></div>
                   <div class="stat-value" style="color: var(--red);">1</div>
                   <div class="stat-sub">Expired Insurance (VEN-012)</div>

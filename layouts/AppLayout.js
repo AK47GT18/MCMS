@@ -1,6 +1,8 @@
 import { currentUser } from '../config/roles.js';
 import { NAV_ITEMS } from '../config/navConfig.js';
 import { DrawerTemplates } from '../components/DrawerTemplates.js';
+import { modal } from '../components/ui/ModalManager.js';
+import { toast } from '../components/ui/ToastManager.js';
 
 export class AppLayout {
     constructor() {
@@ -36,7 +38,7 @@ export class AppLayout {
             <div class="nav-section">
                 <div class="nav-label">${section.section}</div>
                 ${section.items.map(item => `
-                    <a href="#" class="nav-link ${item.active ? 'active' : ''}" data-id="${item.id}" ${item.action ? `data-action="${item.action}"` : ''}>
+                    <a href="#" class="nav-link ${item.active ? 'active' : ''}" data-id="${item.id}" ${item.action ? `data-action="${item.action}"` : ''} ${item.drawerId ? `data-drawer-id="${item.drawerId}"` : ''}>
                         <span class="nav-icon">${item.icon}</span>
                         <span>${item.label}</span>
                         ${item.badge ? `<span class="nav-badge" style="margin-left:auto; background:var(--red); color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">${item.badge}</span>` : ''}
@@ -53,7 +55,7 @@ export class AppLayout {
                 </div>
                 <div class="sidebar-header">
                      <div class="user-profile">
-                        <div class="profile-avatar" style="background: var(--emerald);">SM</div>
+                        <div class="profile-avatar" style="background: var(--slate-800);">${this.getInitials(currentUser.name)}</div>
                         <div class="profile-info">
                             <div class="profile-name">${currentUser.name}</div>
                             <div class="profile-role">${currentUser.role}</div>
@@ -145,6 +147,7 @@ export class AppLayout {
         if (role === 'Finance Director') return 12;
         if (role === 'Project Manager') return 5;
         if (role === 'Field Supervisor') return 2;
+        if (role === 'System Technician') return 4;
         return 3;
     }
 
@@ -169,6 +172,13 @@ export class AppLayout {
             notifications = [
                  { type: 'info', icon: 'fa-truck', title: 'Delivery Incoming', desc: 'Cement truck for CEN-01 arriving at 14:00.', time: '15 mins ago' },
                  { type: 'info', icon: 'fa-cloud-sun', title: 'Weather Alert', desc: 'Rain expected tomorrow. Secure loose materials.', time: '1 hour ago' }
+            ];
+        } else if (role === 'System Technician') {
+            notifications = [
+                 { type: 'error', icon: 'fa-shield-virus', title: 'Multiple Login Failures', desc: 'S. Mwale account flagged for security review.', time: '5 mins ago' },
+                 { type: 'warning', icon: 'fa-database', title: 'Sync Warning', desc: 'M. Banda daily report failed to sync (File size limit).', time: '1 hour ago' },
+                 { type: 'success', icon: 'fa-cloud-arrow-up', title: 'Backup Successful', desc: 'Nightly database snapshot stored to S3.', time: '2 hours ago' },
+                 { type: 'info', icon: 'fa-server', title: 'System Patch', desc: 'v2.4.1 available for staging deployment.', time: '6 hours ago' }
             ];
         } else {
              // Generic for other roles
@@ -210,13 +220,34 @@ export class AppLayout {
     }
 
     attachEventListeners() {
+        // Toggle Profile Drawer on avatar/info click
+        document.querySelectorAll('.user-profile').forEach(profile => {
+            profile.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showProfileDrawer();
+            });
+        });
+
         // ... (existing)
         document.querySelectorAll('.nav-link, .mobile-nav-item').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const target = link.closest('a');
                 if (target.dataset.action === 'drawer') {
-                    window.drawer.open('Transaction Entry', DrawerTemplates.transactionEntry);
+                    const drawerId = target.dataset.drawerId || 'transactionEntry';
+                    const drawerTitles = {
+                        'transactionEntry': 'Transaction Entry',
+                        'submitComplaint': 'Report Issue',
+                        'whistleblowerPortal': 'Whistleblower Portal',
+                        'safetyIncident': 'Report Safety Incident',
+                        'dailyReport': 'Daily Report',
+                        'assignEquipment': 'Assign Equipment'
+                    };
+                    const title = drawerTitles[drawerId] || 'Details';
+                    const template = DrawerTemplates[drawerId];
+                    if (template) {
+                        window.drawer.open(title, template);
+                    }
                 } else {
                     const id = target.dataset.id;
                     this.setActiveNavItem(id);
@@ -263,5 +294,74 @@ export class AppLayout {
 
     injectContent(html) {
         document.getElementById('main-content').innerHTML = html;
+    }
+
+    showProfileDrawer() {
+        const contentHTML = `
+            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); text-align: center;">
+                <div style="width: 64px; height: 64px; background: var(--white); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
+                    <i class="fas fa-id-card-clip"></i>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 700; color: var(--slate-900); margin: 0;">${currentUser.name}</h3>
+                <p style="color: var(--slate-500); font-size: 13px; margin: 4px 0 0;">${currentUser.role}</p>
+            </div>
+
+            <div class="drawer-section">
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-user-tag" style="color: var(--slate-400); width: 16px;"></i> Full Name
+                        </label>
+                        <div class="form-input" style="background: var(--slate-50); border-color: var(--slate-200); color: var(--slate-600); font-weight: 500;">${currentUser.name}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-envelope" style="color: var(--slate-400); width: 16px;"></i> Email Address
+                        </label>
+                        <div class="form-input" style="background: var(--slate-50); border-color: var(--slate-200); color: var(--slate-600); font-weight: 500;">${currentUser.email || 'N/A'}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-phone" style="color: var(--slate-400); width: 16px;"></i> Phone Number
+                        </label>
+                        <div class="form-input" style="background: var(--slate-50); border-color: var(--slate-200); color: var(--slate-600); font-weight: 500;">${currentUser.phone || 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="drawer-section" style="border-bottom: none;">
+                <div id="password-section">
+                    <button class="btn btn-secondary" style="width: 100%; justify-content: center; gap: 8px; font-weight: 600;" onclick="document.getElementById('password-form').style.display='flex'; this.style.display='none';">
+                        <i class="fas fa-shield-halved"></i> Privacy & Password
+                    </button>
+                    
+                    <div id="password-form" style="display: none; flex-direction: column; gap: 16px; margin-top: 12px; padding: 20px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-input" placeholder="••••••••" style="background: var(--white);">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-input" placeholder="••••••••" style="background: var(--white);">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-input" placeholder="••••••••" style="background: var(--white);">
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center; font-weight: 700; margin-top: 8px;" onclick="window.app.layout.handlePasswordUpdate()">
+                            Update Securely
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        window.drawer.open('User Profile', contentHTML);
+    }
+
+    handlePasswordUpdate() {
+        // Mock update
+        toast.success('Success', 'Password has been updated successfully.');
+        window.drawer.close();
     }
 }

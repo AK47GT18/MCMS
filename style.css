@@ -234,6 +234,54 @@ input, select, textarea { font-family: inherit; }
 .btn-danger { background: var(--white); color: var(--red); border-color: var(--red); }
 .btn-danger:hover { background: var(--red-light); }
 
+/* Forms & Inputs */
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--white);
+    border: 1px solid var(--slate-200);
+    border-radius: 6px;
+    color: var(--slate-900);
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition);
+    outline: none;
+    display: block;
+}
+
+select.form-input {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+    appearance: none;
+}
+
+.form-input:hover {
+    border-color: var(--slate-300);
+}
+
+.form-input:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px var(--orange-light);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
 /* Tables */
 table { width: 100%; border-collapse: collapse; }
 thead th {
@@ -313,7 +361,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.4);
-    z-index: 900;
+    z-index: 2000;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -333,7 +381,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
     height: 100%;
     background: var(--white);
     box-shadow: -5px 0 30px rgba(0,0,0,0.15);
-    z-index: 950;
+    z-index: 2001;
     transform: translateX(100%); /* Start off-screen right */
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); /* "Professional" ease-out from the right */
     display: flex;
@@ -641,4 +689,77 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
     align-items: center;
     justify-content: center;
     flex-direction: column;
+}
+
+/* --- MODAL OVERLAY (Centered Confirmation/Error Modals) --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-container {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 400px;
+    width: 90%;
+    padding: 32px;
+    text-align: center;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.25s ease;
+}
+
+.modal-container.active {
+    transform: scale(1) translateY(0);
+}
+
+.modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--slate-900);
+    margin-bottom: 8px;
+}
+
+.modal-message {
+    font-size: 14px;
+    color: var(--slate-500);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-actions .btn {
+    min-width: 120px;
+    justify-content: center;
+    padding: 12px 24px;
 }

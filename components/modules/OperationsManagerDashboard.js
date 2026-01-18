@@ -13,6 +13,7 @@ export class OperationsManagerDashboard {
             case 'supply': contentHTML = this.getSupplyView(); break;
             case 'inventory': contentHTML = this.getInventoryView(); break;
             case 'safety': contentHTML = this.getSafetyView(); break;
+            case 'complaints': contentHTML = this.getComplaintsView(); break;
             default: contentHTML = this.getDashboardView();
         }
 
@@ -28,12 +29,13 @@ export class OperationsManagerDashboard {
 
     getHeaderHTML() {
         const titleMap = {
-            'dashboard': 'Operations Overview',
+            'dashboard': 'Dashboard',
             'sites': 'Site Performance Metrics',
             'resources': 'Resource & Labor Efficiency',
             'supply': 'Supply Chain Logistics',
             'inventory': 'Global Inventory',
-            'safety': 'Safety & Compliance Audits'
+            'safety': 'Safety & Compliance Audits',
+            'complaints': 'Complaint Lodger & Action Center'
         };
 
         return `
@@ -389,6 +391,74 @@ export class OperationsManagerDashboard {
                 </table>
             </div>
         `; 
+    }
+
+    getComplaintsView() {
+        return `
+            <div class="data-card animate-fade-in">
+                <div class="data-card-header">
+                    <div class="card-title">Project Issues & Complaints</div>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary"><i class="fas fa-filter"></i> All Projects</button>
+                        <button class="btn btn-secondary" onclick="window.drawer.open('Submit Complaint', window.DrawerTemplates.submitComplaint)">
+                            <i class="fas fa-plus"></i> Manual Log
+                        </button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Complaint ID</th>
+                            <th>Project</th>
+                            <th>Issue Type</th>
+                            <th>Reporter</th>
+                            <th>Priority</th>
+                            <th>Age</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="mono-val">#CMP-442</td>
+                            <td style="font-weight: 600;">CEN-01 Unilia</td>
+                            <td>Labor Dispute</td>
+                            <td>John Banda (PM)</td>
+                            <td><span class="badge badge-red" style="background: var(--red-light); color: var(--red); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">URGENT</span></td>
+                            <td>3h ago</td>
+                            <td><span class="status pending" style="background: #FEF3C7; color: #92400E;">In Progress</span></td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.drawer.open('Issue Detail', window.DrawerTemplates.complaintDetails)">Handle</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="mono-val">#CMP-439</td>
+                            <td style="font-weight: 600;">MZ-05 Clinic Extension</td>
+                            <td>Material Quality</td>
+                            <td>Mike Banda (SV)</td>
+                            <td><span style="font-weight: 600; color: var(--orange);">Medium</span></td>
+                            <td>12h ago</td>
+                            <td><span class="status active">Resolved</span></td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.drawer.open('Issue Detail', window.DrawerTemplates.complaintDetails)">View</button>
+                            </td>
+                        </tr>
+                         <tr>
+                            <td class="mono-val">#CMP-435</td>
+                            <td style="font-weight: 600;">LIL-02 Mall Access</td>
+                            <td>Equipment Failure</td>
+                            <td>Mike Banda (SV)</td>
+                            <td><span style="font-weight: 600; color: var(--orange);">High</span></td>
+                            <td>1d ago</td>
+                            <td><span class="status alert" style="background: var(--red-light); color: var(--red);">Lagging</span></td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.drawer.open('Issue Detail', window.DrawerTemplates.complaintDetails)">Handle</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
     }
 
 }

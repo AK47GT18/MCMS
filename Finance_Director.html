@@ -235,7 +235,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
         <div class="nav-section">
           <div class="nav-label">Strategic</div>
           <a class="nav-link active" onclick="navigateTo('dashboard', this)">
-             <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+             <i class="fas fa-chart-simple"></i> <span>Dashboard</span>
           </a>
           <a class="nav-link" onclick="navigateTo('analytics', this)">
              <i class="fas fa-chart-pie"></i> <span>Analytics</span>
@@ -292,11 +292,11 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
         <div class="breadcrumb">
           <span>Finance Workspace</span>
           <i class="fas fa-chevron-right" style="font-size: 9px;"></i>
-          <span id="header-breadcrumb">Financial Overview</span>
+          <span id="header-breadcrumb">Dashboard</span>
         </div>
         <div class="page-title-row">
           <div>
-            <h1 class="page-title" id="header-title">Financial Dashboard</h1>
+            <h1 class="page-title" id="header-title">Dashboard</h1>
             <div class="context-strip" id="header-context">
               <span class="context-value">FY 2025-26</span>
               <div class="context-dot"></div>
@@ -521,7 +521,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
 <script>
 // --- NAVIGATION LOGIC ---
 const views = {
-    'dashboard': { title: 'Financial Overview', context: 'FY 2025-26 | Cash Position: Strong' },
+    'dashboard': { title: 'Dashboard', context: 'FY 2025-26 | Cash Position: Strong' },
     'analytics': { title: 'Analytics', context: 'Burn Rate & Forecasting' },
     'approvals': { title: 'Requisition Queue', context: 'Operational Gatekeeping' },
     'ledger': { title: 'General Ledger', context: 'Master Record' },

@@ -33,7 +33,7 @@ export class EquipmentCoordinatorDashboard {
 
     getHeaderHTML() {
         const headers = {
-            'dashboard': { title: 'Fleet Overview', context: '45 Total Assets | 85% Available' },
+            'dashboard': { title: 'Dashboard', context: '45 Total Assets | 85% Available' },
             'registry': { title: 'Asset Registry', context: 'Master Equipment List' },
             'tracking': { title: 'GPS Tracking', context: 'Live Location Data' },
             'maintenance': { title: 'Service Schedule', context: 'Preventative Maintenance' },
@@ -81,24 +81,24 @@ export class EquipmentCoordinatorDashboard {
         return `
             <div class="stats-grid">
                <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Utilization Rate</span><i class="fas fa-gauge-high" style="color: var(--blue);"></i></div>
-                  <div class="stat-value">78%</div>
-                  <div class="stat-sub">35 Assets Deployed</div>
+                  <div class="stat-header"><span class="stat-label">Fleet Utilization</span><i class="fas fa-gauge-high" style="color: var(--blue);"></i></div>
+                  <div class="stat-value">78.4%</div>
+                  <div class="stat-sub"><span style="color: var(--emerald); font-weight: 700;"><i class="fas fa-caret-up"></i> 5.2%</span> vs last month</div>
                </div>
-               <div class="stat-card warn" style="cursor: pointer;" onclick="window.drawer.open('Schedule Maintenance', window.DrawerTemplates.scheduleMaintenance)">
-                  <div class="stat-header"><span class="stat-label" style="color: var(--amber);">Maintenance Due</span><i class="fas fa-wrench" style="color: var(--amber);"></i></div>
-                  <div class="stat-value" style="color: var(--amber);">2</div>
-                  <div class="stat-sub">Scheduled Next 48h</div>
+               <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;" onclick="window.app.loadPage('maintenance')">
+                  <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Maintenance Due</span><i class="fas fa-wrench" style="color: var(--orange);"></i></div>
+                  <div class="stat-value" style="color: var(--orange);">02</div>
+                  <div class="stat-sub">Critical service required next 48h</div>
                </div>
-               <div class="stat-card alert">
-                  <div class="stat-header"><span class="stat-label" style="color: var(--red);">Security Alerts</span><i class="fas fa-lock-open" style="color: var(--red);"></i></div>
-                  <div class="stat-value" style="color: var(--red);">1</div>
-                  <div class="stat-sub">Geo-Fence Breach (EQP-023)</div>
+               <div class="stat-card" style="border-color: var(--red-light); background: #fff5f5;">
+                  <div class="stat-header"><span class="stat-label" style="color: var(--red);">Low Fuel Alerts</span><i class="fas fa-gas-pump" style="color: var(--red);"></i></div>
+                  <div class="stat-value" style="color: var(--red);">01</div>
+                  <div class="stat-sub">EQP-023 needs refuel</div>
                </div>
                <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Total Fleet</span><i class="fas fa-truck-front" style="color: var(--slate-600);"></i></div>
-                  <div class="stat-value">45</div>
-                  <div class="stat-sub">Value: MWK 3.5B</div>
+                  <div class="stat-header"><span class="stat-label">Total Fleet Value</span><i class="fas fa-coins" style="color: var(--slate-600);"></i></div>
+                  <div class="stat-value">MWK 3.52B</div>
+                  <div class="stat-sub">45 Registered Assets</div>
                </div>
             </div>
         `;
@@ -107,48 +107,124 @@ export class EquipmentCoordinatorDashboard {
     getDataCardHTML() {
         return `
             <div class="data-card">
-              <div class="data-card-header">
-                <div class="card-title">Real-Time Fleet Status</div>
-                <button class="btn btn-secondary">Map View</button>
+              <div class="data-card-header" style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; background: white; border-radius: 6px; border: 1px solid var(--slate-200); display: flex; align-items: center; justify-content: center; color: var(--slate-600);">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div>
+                        <div class="card-title" style="font-size: 14px; font-weight: 700;">Asset Check-In / Check-Out Log</div>
+                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">Track equipment usage, returns, and refuel status</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="window.app.loadPage('registry')">
+                    <i class="fas fa-list"></i> Full Registry
+                </button>
               </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Asset ID</th>
-                    <th>Equipment Name</th>
-                    <th>Current Location</th>
-                    <th>Assigned To</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
-                    <td><span class="mono-val">EQP-045</span></td>
-                    <td style="font-weight: 600;">Caterpillar 320D Excavator</td>
-                    <td><span class="gps-tag" style="background: var(--slate-800); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: 'JetBrains Mono';">-13.96, 33.77</span> CEN-01</td>
-                    <td>John Banda (PM)</td>
-                    <td><span class="status active" style="background: #DCFCE7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">In Use</span></td>
-                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Asset Tracking', window.DrawerTemplates.assetDetails)">Track</button></td>
-                  </tr>
-                  <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
-                    <td><span class="mono-val">EQP-012</span></td>
-                    <td style="font-weight: 600;">Tipper Truck 10T</td>
-                    <td><span class="gps-tag" style="background: var(--slate-800); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: 'JetBrains Mono';">-13.98, 33.75</span> Transit</td>
-                    <td>Davi Moyo</td>
-                    <td><span class="status transit" style="background: #E0E7FF; color: #3730A3; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">Moving</span></td>
-                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Asset Tracking', window.DrawerTemplates.assetDetails)">Track</button></td>
-                  </tr>
-                  <tr style="background: #FEF2F2;" onclick="window.toast.show('GPS Trace Opened (Mock)', 'error')">
-                    <td><span class="mono-val">EQP-023</span></td>
-                    <td style="font-weight: 600; color: var(--red);">Honda Generator 5kVA</td>
-                    <td><span class="gps-tag" style="background: var(--red); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: 'JetBrains Mono';">-14.12, 33.56</span> UNKNOWN</td>
-                    <td>-</td>
-                    <td><span class="status alert" style="background: #FEE2E2; color: #991B1B; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">THEFT ALERT</span></td>
-                    <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Security Lock', window.DrawerTemplates.investigation)">Lock</button></td>
-                  </tr>
-                </tbody>
-              </table>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: white;">
+                      <th style="padding: 16px 20px;">Asset ID</th>
+                      <th>Equipment Name</th>
+                      <th>Last Location</th>
+                      <th>Last Checked Out By</th>
+                      <th>Fuel Level</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                      <td style="padding: 16px 20px;"><span class="mono-val" style="background: var(--slate-100); padding: 2px 6px; border-radius: 4px; font-weight: 600;">EQP-045</span></td>
+                      <td>
+                        <div style="font-weight: 700; color: var(--slate-900);">Caterpillar 320D Excavator</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Heavy Earthmoving • S/N: CAT-8892</div>
+                      </td>
+                      <td>
+                        <div style="font-weight: 600; color: var(--slate-700);">CEN-01 Unilia Site</div>
+                        <div style="font-size: 10px; color: var(--slate-400);">Checked in: Jan 15, 08:30</div>
+                      </td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 24px; height: 24px; background: var(--slate-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">JB</div>
+                            <span style="font-weight: 500;">John Banda (PM)</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 50px; height: 6px; background: var(--slate-200); border-radius: 3px;"><div style="width: 85%; height: 100%; background: var(--emerald); border-radius: 3px;"></div></div>
+                            <span style="font-size: 11px; font-weight: 600; color: var(--emerald);">85%</span>
+                        </div>
+                      </td>
+                      <td><span class="status active" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Checked Out</span></td>
+                      <td style="text-align: right; padding-right: 20px;">
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; border-radius: 4px; font-weight: 700;">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                      <td style="padding: 16px 20px;"><span class="mono-val" style="background: var(--slate-100); padding: 2px 6px; border-radius: 4px; font-weight: 600;">EQP-012</span></td>
+                      <td>
+                        <div style="font-weight: 700; color: var(--slate-900);">Tata Tipper Truck 10T</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Logistics • S/N: TATA-Prima-12</div>
+                      </td>
+                      <td>
+                        <div style="font-weight: 600; color: var(--slate-700);">MZ-05 Mzimba Clinic</div>
+                        <div style="font-size: 10px; color: var(--slate-400);">Checked out: Jan 16, 06:00</div>
+                      </td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 24px; height: 24px; background: var(--slate-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">DM</div>
+                            <span style="font-weight: 500;">Davi Moyo</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 50px; height: 6px; background: var(--slate-200); border-radius: 3px;"><div style="width: 45%; height: 100%; background: var(--orange); border-radius: 3px;"></div></div>
+                            <span style="font-size: 11px; font-weight: 600; color: var(--orange);">45%</span>
+                        </div>
+                      </td>
+                      <td><span class="status transit" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">In Transit</span></td>
+                      <td style="text-align: right; padding-right: 20px;">
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; border-radius: 4px; font-weight: 700;">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr style="background: #FFFBEB;" onclick="window.drawer.open('Refuel Required', window.DrawerTemplates.assetDetails)">
+                      <td style="padding: 16px 20px;"><span class="mono-val" style="background: var(--orange); color: white; padding: 2px 6px; border-radius: 4px; font-weight: 600;">EQP-023</span></td>
+                      <td>
+                        <div style="font-weight: 700; color: var(--orange-hover);">Honda Generator 5kVA</div>
+                        <div style="font-size: 11px; color: #92400E;">Power Gen • S/N: HON-GEN-23</div>
+                      </td>
+                      <td>
+                        <div style="font-weight: 600; color: var(--slate-700);">CEN-01 Block A Store</div>
+                        <div style="font-size: 10px; color: var(--slate-400);">Returned: Jan 14, 17:00</div>
+                      </td>
+                       <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 24px; height: 24px; background: var(--slate-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">PP</div>
+                            <span style="font-weight: 500;">Peter Phiri</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 50px; height: 6px; background: var(--slate-200); border-radius: 3px;"><div style="width: 15%; height: 100%; background: var(--red); border-radius: 3px;"></div></div>
+                            <span style="font-size: 11px; font-weight: 600; color: var(--red);">15%</span>
+                        </div>
+                      </td>
+                      <td><span class="status" style="font-size: 10px; font-weight: 800; text-transform: uppercase; background: #FEF3C7; color: #92400E;">Needs Refuel</span></td>
+                      <td style="text-align: right; padding-right: 20px;">
+                        <button class="btn btn-action" style="padding: 6px 12px; font-size: 11px; border-radius: 4px; font-weight: 700;">
+                            <i class="fas fa-gas-pump"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
         `;
     }
@@ -211,29 +287,121 @@ export class EquipmentCoordinatorDashboard {
 
     getTrackingView() {
          return `
-            <div class="data-card" style="height:500px; display:flex; flex-direction:column;">
+            <div class="data-card">
                 <div class="data-card-header">
-                    <div class="card-title">Live GPS Map</div>
-                    <div style="font-size:12px; color:var(--slate-500);">Last Update: Just now</div>
+                    <div class="card-title"><i class="fas fa-clipboard-list"></i> Asset Movement Log</div>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-input" style="padding: 8px 12px; font-size: 12px; border-radius: 6px;">
+                            <option>All Equipment</option>
+                            <option>Excavators</option>
+                            <option>Trucks</option>
+                            <option>Generators</option>
+                        </select>
+                        <button class="btn btn-secondary btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                    </div>
                 </div>
-                <div style="flex:1; background:#e2e8f0; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--slate-500); font-weight:600;">
-                     <div style="position:absolute; top:20%; left:30%; transform:translate(-50%, -50%); text-align:center;">
-                        <i class="fas fa-map-marker-alt" style="color:var(--blue); font-size:24px; animation: bounce 2s infinite;"></i>
-                        <div style="background:white; padding:4px 8px; border-radius:4px; font-size:11px; margin-top:4px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">CEN-01: Excavator</div>
-                     </div>
-                      <div style="position:absolute; top:60%; left:70%; transform:translate(-50%, -50%); text-align:center;">
-                        <i class="fas fa-truck" style="color:var(--orange); font-size:20px;"></i>
-                        <div style="background:white; padding:4px 8px; border-radius:4px; font-size:11px; margin-top:4px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">Transit: Tipper (Speed: 65km/h)</div>
-                     </div>
-                      <div style="position:absolute; top:80%; left:20%; transform:translate(-50%, -50%); text-align:center;">
-                        <i class="fas fa-triangle-exclamation" style="color:var(--red); font-size:20px; animation: pulse 1s infinite;"></i>
-                        <div style="background:var(--red); color:white; padding:4px 8px; border-radius:4px; font-size:11px; margin-top:4px; box-shadow:0 2px 4px rgba(0,0,0,0.2);">ALERT: Generator Move</div>
-                     </div>
-                     <!-- Placeholder Map Background -->
-                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/ec/USA_location_map_scheme.svg" style="opacity:0.1; width:100%; height:100%; object-fit:cover; position:absolute; z-index:0;">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Asset</th>
+                                <th>Action</th>
+                                <th>Location</th>
+                                <th>User</th>
+                                <th>Fuel (Before / After)</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-family: 'JetBrains Mono'; font-size: 11px; color: var(--slate-500);">Jan 16, 06:00</td>
+                                <td><span class="mono-val">EQP-012</span> Tipper Truck</td>
+                                <td><span class="status active" style="font-size: 10px;">CHECK OUT</span></td>
+                                <td style="font-weight: 600;">MZ-05 Mzimba Clinic</td>
+                                <td>Davi Moyo</td>
+                                <td><span style="color: var(--orange);">60%</span> → <span style="color: var(--orange);">45%</span></td>
+                                <td style="color: var(--slate-500); font-size: 11px;">Material delivery run</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: 'JetBrains Mono'; font-size: 11px; color: var(--slate-500);">Jan 15, 08:30</td>
+                                <td><span class="mono-val">EQP-045</span> CAT Excavator</td>
+                                <td><span class="status active" style="font-size: 10px;">CHECK OUT</span></td>
+                                <td style="font-weight: 600;">CEN-01 Unilia Site</td>
+                                <td>John Banda (PM)</td>
+                                <td><span style="color: var(--emerald);">100%</span> → <span style="color: var(--emerald);">85%</span></td>
+                                <td style="color: var(--slate-500); font-size: 11px;">Foundation excavation</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: 'JetBrains Mono'; font-size: 11px; color: var(--slate-500);">Jan 14, 17:00</td>
+                                <td><span class="mono-val">EQP-023</span> Generator 5kVA</td>
+                                <td><span class="status pending" style="font-size: 10px;">RETURN</span></td>
+                                <td style="font-weight: 600;">CEN-01 Block A Store</td>
+                                <td>Peter Phiri</td>
+                                <td><span style="color: var(--red);">15%</span> → <span style="color: var(--red);">15%</span></td>
+                                <td style="color: var(--red); font-size: 11px; font-weight: 600;">⚠ Needs Refuel</td>
+                            </tr>
+                             <tr>
+                                <td style="font-family: 'JetBrains Mono'; font-size: 11px; color: var(--slate-500);">Jan 14, 07:00</td>
+                                <td><span class="mono-val">EQP-023</span> Generator 5kVA</td>
+                                <td><span class="status active" style="font-size: 10px;">CHECK OUT</span></td>
+                                <td style="font-weight: 600;">CEN-01 Block B</td>
+                                <td>Peter Phiri</td>
+                                <td><span style="color: var(--emerald);">80%</span> → <span style="color: var(--red);">15%</span></td>
+                                <td style="color: var(--slate-500); font-size: 11px;">Power for welding</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         `;
+    }
+
+    initializeTrackingMap() {
+        setTimeout(() => {
+            const mapContainer = document.getElementById('fleet-tracking-map');
+            if (!mapContainer) return;
+
+            if (typeof L === 'undefined') {
+                mapContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--red);">Leaflet JS not found. Please refresh.</div>';
+                return;
+            }
+
+            // Clear loading placeholder
+            mapContainer.innerHTML = '';
+
+            // Center on Malawi
+            const center = [-13.9626, 33.7741];
+            const map = L.map('fleet-tracking-map').setView(center, 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            const assets = [
+                { id: 'EQP-045', name: 'CAT Excavator', coords: [-13.9626, 33.7741], status: 'In Use', icon: 'truck-front', color: 'var(--emerald)' },
+                { id: 'EQP-012', name: 'Tipper Truck', coords: [-13.9800, 33.7500], status: 'Moving', icon: 'truck', color: 'var(--blue)' },
+                { id: 'EQP-023', name: 'Generator 5kVA', coords: [-14.1200, 33.5600], status: 'Alert', icon: 'triangle-exclamation', color: 'var(--red)' }
+            ];
+
+            assets.forEach(asset => {
+                const marker = L.marker(asset.coords).addTo(map);
+                marker.bindPopup(`
+                    <div style="font-family: inherit; font-size: 12px;">
+                        <div style="font-weight: 700; color: var(--slate-900); margin-bottom: 4px;">${asset.name}</div>
+                        <div style="color: var(--slate-500); margin-bottom: 8px;">ID: ${asset.id}</div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span class="status active" style="font-size: 10px; background: ${asset.color}20; color: ${asset.color}">${asset.status}</span>
+                            <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">Details</button>
+                        </div>
+                    </div>
+                `);
+            });
+
+            // Force recalculation
+            map.invalidateSize();
+            setTimeout(() => map.invalidateSize(), 200);
+        }, 300);
     }
 
     getMaintenanceView() {

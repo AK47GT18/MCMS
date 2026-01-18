@@ -1,7 +1,7 @@
 import { ROLES } from './roles.js';
 
 const ICONS = {
-    dashboard: '<i class="fas fa-chart-line"></i>',
+    dashboard: '<i class="fas fa-chart-simple"></i>',
     projects: '<i class="fas fa-chart-pie"></i>', // Mapping 'projects' to analytics/pie for now or chart
     finance: '<i class="fas fa-coins"></i>',
     team: '<i class="fas fa-users"></i>',
@@ -42,8 +42,8 @@ export const NAV_ITEMS = {
             section: 'Governance', 
             items: [
                 { label: 'Budget Control', icon: ICONS.sliders, id: 'bcr' },
+                { label: 'Whistleblower Portal', icon: ICONS.shield, id: 'whistleblower', action: 'drawer', drawerId: 'whistleblowerPortal' },
                 { label: 'Audit Log', icon: ICONS.fingerprint, id: 'audit' },
-                { label: 'Fraud Detection', icon: ICONS.shield, id: 'fraud' },
                 { label: 'Contracts', icon: ICONS.contract, id: 'contracts' },
                 { label: 'Vendor Registry', icon: ICONS.store, id: 'vendors' }
             ]
@@ -51,7 +51,8 @@ export const NAV_ITEMS = {
          { 
             section: 'Reporting', 
             items: [
-                { label: 'Reports Generator', icon: ICONS.reports, id: 'reports' }
+                { label: 'Reports Generator', icon: ICONS.reports, id: 'reports' },
+                { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
             ]
         }
     ],
@@ -60,7 +61,7 @@ export const NAV_ITEMS = {
         {
             section: 'Main',
             items: [
-                { label: 'Portfolio', icon: '<i class="fas fa-th-large"></i>', id: 'portfolio', active: true },
+                { label: 'Dashboard', icon: '<i class="fas fa-chart-simple"></i>', id: 'portfolio', active: true },
                 { label: 'Log Reviews', icon: '<i class="fas fa-check-double"></i>', id: 'reviews', badge: 3 },
                 { label: 'Analytics', icon: '<i class="fas fa-chart-pie"></i>', id: 'analytics' }
             ]
@@ -77,7 +78,8 @@ export const NAV_ITEMS = {
             section: 'Documents',
             items: [
                 { label: 'Contracts', icon: '<i class="fas fa-file-contract"></i>', id: 'contracts' },
-                { label: 'Reports', icon: '<i class="fas fa-file-pdf"></i>', id: 'reports' }
+                { label: 'Reports', icon: '<i class="fas fa-file-pdf"></i>', id: 'reports' },
+                { label: 'Issues Center', icon: '<i class="fas fa-headset"></i>', id: 'issues' }
             ]
         }
     ],
@@ -85,11 +87,11 @@ export const NAV_ITEMS = {
         {
             section: 'Field Operations',
             items: [
-                { label: 'Site Dashboard', icon: '<i class="fas fa-home"></i>', id: 'dashboard', active: true },
+                { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
                 { label: 'Tasks', icon: '<i class="fas fa-list-check"></i>', id: 'tasks' },
-                // Special FAB item for Mobile, or just standard link for Desktop
                 { label: 'Daily Reports', icon: '<i class="fas fa-camera"></i>', id: 'reports', action: 'drawer', drawerId: 'dailyReport' }, 
-                { label: 'Equipment', icon: '<i class="fas fa-truck-moving"></i>', id: 'equipment' }
+                { label: 'Equipment', icon: '<i class="fas fa-truck-moving"></i>', id: 'equipment' },
+                { label: 'Report Safety Incident', icon: '<i class="fas fa-helmet-safety"></i>', id: 'safety_incident', action: 'drawer', drawerId: 'safetyIncident' }
             ]
         }
     ],
@@ -97,7 +99,7 @@ export const NAV_ITEMS = {
         {
             section: 'Lifecycle',
             items: [
-                 { label: 'Dashboard', icon: '<i class="fas fa-chart-line"></i>', id: 'dashboard', active: true },
+                 { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
                  { label: 'Repository', icon: '<i class="fas fa-folder-open"></i>', id: 'repository' },
                  { label: 'Milestones', icon: '<i class="fas fa-flag"></i>', id: 'milestones', badge: 3 },
                  { label: 'Amendments', icon: '<i class="fas fa-pen-to-square"></i>', id: 'amendments' }
@@ -113,7 +115,8 @@ export const NAV_ITEMS = {
         {
             section: 'Reporting',
             items: [
-                { label: 'Performance', icon: '<i class="fas fa-file-invoice"></i>', id: 'reports' }
+                { label: 'Performance', icon: '<i class="fas fa-file-invoice"></i>', id: 'reports' },
+                { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
             ]
         }
     ],
@@ -123,7 +126,7 @@ export const NAV_ITEMS = {
             items: [
                 { label: 'Dashboard', icon: '<i class="fas fa-chart-simple"></i>', id: 'dashboard', active: true },
                 { label: 'Asset Registry', icon: '<i class="fas fa-list"></i>', id: 'registry' },
-                { label: 'GPS Tracking', icon: '<i class="fas fa-map-location-dot"></i>', id: 'tracking' },
+                { label: 'Asset Log', icon: '<i class="fas fa-clipboard-list"></i>', id: 'tracking' },
                 { label: 'Check-Out Asset', icon: '<i class="fas fa-right-from-bracket"></i>', id: 'checkout', action: 'drawer', drawerId: 'assignEquipment' }
             ]
         },
@@ -138,7 +141,8 @@ export const NAV_ITEMS = {
              section: 'Reporting',
              items: [
                  { label: 'Utilization Reports', icon: '<i class="fas fa-chart-pie"></i>', id: 'utilization' },
-                 { label: 'Operator Logs', icon: '<i class="fas fa-id-card"></i>', id: 'operators' }
+                 { label: 'Operator Logs', icon: '<i class="fas fa-id-card"></i>', id: 'operators' },
+                 { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
              ]
         }
     ],
@@ -146,9 +150,10 @@ export const NAV_ITEMS = {
         {
             section: 'Oversight',
             items: [
-                { label: 'Ops Dashboard', icon: '<i class="fas fa-tower-control"></i>', id: 'dashboard', active: true },
+                { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
                 { label: 'Site Performance', icon: '<i class="fas fa-building-user"></i>', id: 'sites' },
-                { label: 'Resource Efficiency', icon: '<i class="fas fa-users-gear"></i>', id: 'resources' }
+                { label: 'Resource Efficiency', icon: '<i class="fas fa-users-gear"></i>', id: 'resources' },
+                { label: 'Complaint Lodger', icon: '<i class="fas fa-headset"></i>', id: 'complaints', badge: 2 }
             ]
         },
         {
@@ -169,7 +174,8 @@ export const NAV_ITEMS = {
         {
             section: 'Executive',
             items: [
-                { label: 'Board View', icon: '<i class="fas fa-chess-king"></i>', id: 'dashboard', active: true },
+                { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
+                { label: 'Whistleblower Portal', icon: '<i class="fas fa-shield-halved"></i>', id: 'whistleblower', action: 'drawer', drawerId: 'whistleblowerPortal' },
                 { label: 'Strategy Map', icon: '<i class="fas fa-compass"></i>', id: 'strategy' }
             ]
         },
@@ -181,10 +187,27 @@ export const NAV_ITEMS = {
             ]
         },
         {
-            section: 'Portfolio',
+            section: 'Project Dashboard',
             items: [
-                { label: 'All Projects', icon: '<i class="fas fa-globe"></i>', id: 'portfolio' },
-                { label: 'Top Clients', icon: '<i class="fas fa-handshake"></i>', id: 'clients' }
+                { label: 'All Projects', icon: '<i class="fas fa-chart-simple"></i>', id: 'portfolio' },
+                { label: 'Top Clients', icon: '<i class="fas fa-handshake"></i>', id: 'clients' },
+                { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
+            ]
+        }
+    ],
+    [ROLES.SYSTEM_TECHNICIAN]: [
+        {
+            section: 'System Admin',
+            items: [
+                { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
+                { label: 'Global Config', icon: ICONS.settings, id: 'config' }
+            ]
+        },
+        {
+            section: 'Management',
+            items: [
+                { label: 'User Registry', icon: ICONS.team, id: 'users' },
+                { label: 'Audit Logs', icon: ICONS.fingerprint, id: 'audit' }
             ]
         }
     ]

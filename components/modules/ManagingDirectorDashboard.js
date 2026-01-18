@@ -33,11 +33,11 @@ export class ManagingDirectorDashboard {
 
     getHeaderHTML() {
         const headers = {
-            'dashboard': { title: 'Executive Dashboard', context: 'Q1 2025 Performance' },
+            'dashboard': { title: 'Dashboard', context: 'Strategic Summary' },
             'strategy': { title: 'Strategy Map', context: 'Long Term Vision' },
             'pnl': { title: 'P&L Overview', context: 'Financial Health' },
             'risk': { title: 'Risk Management', context: 'Enterprise Risk Matrix' },
-            'portfolio': { title: 'Project Portfolio', context: 'All Active Projects' },
+            'portfolio': { title: 'Dashboard', context: 'All Active Projects' },
             'clients': { title: 'Key Accounts', context: 'Client Relationships' }
         };
         const current = headers[this.currentView] || { title: 'Executive View', context: '' };
@@ -97,10 +97,10 @@ export class ManagingDirectorDashboard {
                   <div class="stat-sub">Runway: 8 Months</div>
                </div>
 
-               <div class="stat-card">
+                <div class="stat-card">
                   <div class="stat-header">
-                    <span class="stat-label">Project Portfolio</span>
-                    <i class="fas fa-briefcase" style="color: var(--slate-600);"></i>
+                    <span class="stat-label">Project Dashboard</span>
+                    <i class="fas fa-chart-simple" style="color: var(--slate-600);"></i>
                   </div>
                   <div class="stat-value">4 Active</div>
                   <div class="stat-sub">1 Pending Contract</div>

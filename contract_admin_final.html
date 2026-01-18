@@ -176,7 +176,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
         <div class="nav-section">
           <div class="nav-label">Lifecycle</div>
           <a class="nav-link active" onclick="navigateTo('dashboard', this)">
-             <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+             <i class="fas fa-chart-simple"></i> <span>Dashboard</span>
           </a>
           <a class="nav-link" onclick="navigateTo('repository', this)">
              <i class="fas fa-folder-open"></i> <span>Repository</span>
@@ -218,7 +218,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
         </div>
         <div class="page-title-row">
           <div>
-            <h1 class="page-title" id="header-title">Contract Overview</h1>
+            <h1 class="page-title" id="header-title">Dashboard</h1>
             <div class="context-strip" id="header-context">
               <span class="context-value">4</span> Active Contracts
               <div class="context-dot"></div>
@@ -413,7 +413,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
 <script>
 // --- NAVIGATION LOGIC ---
 const views = {
-    'dashboard': { title: 'Overview', context: 'Active Contracts: 4 | Deadlines: 3' },
+    'dashboard': { title: 'Dashboard', context: 'Active Contracts: 4 | Deadlines: 3' },
     'repository': { title: 'Contract Repository', context: 'Centralized Document Store' },
     'milestones': { title: 'Milestone Tracker', context: 'Critical Path Deadlines' },
     'amendments': { title: 'Amendments', context: 'Change Control Log' },

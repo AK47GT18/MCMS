@@ -25,7 +25,7 @@ export class FieldSupervisorDashboard {
 
     getHeaderHTML() {
         const titleMap = {
-            'dashboard': 'Site Dashboard',
+            'dashboard': 'Dashboard',
             'tasks': 'Daily Tasks',
             'equipment': 'Site Equipment'
         };
@@ -58,7 +58,7 @@ export class FieldSupervisorDashboard {
     getStatsGridHTML() {
         return `
             <div class="stats-grid">
-               <div class="stat-card" style="border-left: 4px solid var(--orange); cursor: pointer;" onclick="window.drawer.open('Daily Site Report', window.DrawerTemplates.dailyReport)">
+               <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7; cursor: pointer;" onclick="window.drawer.open('Daily Site Report', window.DrawerTemplates.dailyReport)">
                   <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Daily Log</span><i class="fas fa-plus-circle" style="color: var(--orange);"></i></div>
                   <div class="stat-value" style="font-size: 18px; color: var(--orange);">Submit Report</div>
                   <div class="stat-sub">Geotagging Active</div>
@@ -74,9 +74,9 @@ export class FieldSupervisorDashboard {
                   <div class="stat-sub">Cement Delivered</div>
                </div>
                <div class="stat-card" style="cursor: pointer;" onclick="window.drawer.open('Report Incident', window.DrawerTemplates.incidentReport)">
-                  <div class="stat-header"><span class="stat-label">Incidents</span><i class="fas fa-triangle-exclamation" style="color: var(--slate-400);"></i></div>
+                  <div class="stat-header"><span class="stat-label">Incidents</span><i class="fas fa-triangle-exclamation" style="color: var(--emerald);"></i></div>
                   <div class="stat-value">0</div>
-                  <div class="stat-sub">Safe Day</div>
+                  <div class="stat-sub" style="color: var(--emerald);">Safe Day</div>
                </div>
             </div>
         `;
