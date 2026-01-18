@@ -3,30 +3,833 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mkaka Construction Management System</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Mkaka Construction - Official Site</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&family=Material+Symbols+Outlined" rel="stylesheet">
     
-    <!-- Gantt Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <link rel="stylesheet" href="vendor/frappe-gantt/frappe-gantt.css">
-    <script src="vendor/frappe-gantt/frappe-gantt.min.js"></script>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script type="module" src="main.js" defer></script>
+    <style>
+        /* --- 1. CSS Variables & Reset --- */
+        :root {
+            --primary: #f97415;
+            --primary-hover: #d65d0a;
+            --dark: #0f1729;
+            --dark-secondary: #1e293b;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --text-main: #334155;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --container-width: 1200px;
+            --radius: 8px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            color: var(--text-main);
+            background-color: var(--light);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        ul { list-style: none; }
+        img { max-width: 100%; display: block; }
+        
+        /* --- 2. Layout Utilities --- */
+        .container {
+            max-width: var(--container-width);
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .flex { display: flex; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+        .grid { display: grid; gap: 2rem; }
+        
+        /* Blueprint Pattern Background */
+        .blueprint-bg {
+            background-color: var(--dark);
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- 3. Header & Nav --- */
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover { color: var(--primary); }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-name {
+            font-weight: 800;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 24px;
+            border-radius: var(--radius);
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        
+        .btn-outline { 
+            background: transparent; 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        .btn-login {
+            background: var(--dark);
+            color: white;
+            margin-left: 15px;
+        }
+
+        /* --- 4. Hero Section --- */
+        .hero {
+            position: relative;
+            min-height: 85vh;
+            display: flex;
+            align-items: center;
+            color: white;
+            background: #0f1729; /* Fallback */
+            overflow: hidden;
+        }
+        
+        /* Placeholder for Hero Image - triggering the logic */
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(90deg, #0f1729 0%, rgba(15,23,41,0.6) 100%), url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+        }
+
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(249, 116, 21, 0.2);
+            color: var(--primary);
+            border: 1px solid rgba(249, 116, 21, 0.3);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            line-height: 1.1;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 40px;
+        }
+
+        /* --- 5. About Section --- */
+        .section-padding { padding: 100px 0; }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .subtitle {
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .feature-card h5 { font-size: 1.1rem; margin-bottom: 5px; }
+        .feature-card span { color: var(--primary); font-size: 2rem; margin-bottom: 10px; display: block; }
+        .feature-card p { font-size: 0.85rem; color: var(--text-light); }
+
+        .about-img-wrapper {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .about-img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+        }
+
+        /* --- 6. Services Grid --- */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .service-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 40px 30px;
+            border-radius: var(--radius);
+            transition: 0.3s;
+        }
+
+        .service-card:hover { border-color: var(--primary); transform: translateY(-5px); }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            background: var(--dark-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .service-card:hover .icon-box { background: var(--primary); }
+        
+        .service-title { color: white; font-size: 1.3rem; margin-bottom: 10px; }
+        .service-desc { color: #94a3b8; font-size: 0.9rem; }
+
+        /* --- 7. Stats Bar --- */
+        .stats-section {
+            background: var(--primary);
+            padding: 80px 0;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            text-align: center;
+        }
+
+        .stat-number { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+        .stat-label { text-transform: uppercase; font-size: 0.75rem; font-weight: 700; opacity: 0.8; margin-top: 10px; letter-spacing: 1px; }
+
+        /* --- 8. Projects Table --- */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 20px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .completed { color: #10b981; } .completed .status-dot { background: #10b981; }
+        .progress { color: var(--primary); } .progress .status-dot { background: var(--primary); }
+        
+        .tag-sector {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        /* --- 9. Contact Section --- */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: #f8fafc;
+            font-family: inherit;
+            outline: none;
+        }
+
+        input:focus, textarea:focus { border-color: var(--primary); background: white; }
+
+        .map-card {
+            background: var(--dark);
+            height: 300px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            background-image: url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=1931&auto=format&fit=crop'); /* Map placeholder */
+            background-size: cover;
+        }
+
+        /* --- 10. Footer --- */
+        footer {
+            background: #020617;
+            color: white;
+            padding: 60px 0;
+            border-top: 1px solid #1e293b;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 40px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .social-btn {
+            width: 45px;
+            height: 45px;
+            background: #0f1729;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #1e293b;
+            color: white;
+        }
+        .social-btn:hover { background: var(--primary); border-color: var(--primary); }
+
+        .footer-bottom {
+            padding-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* --- 11. MODALS (Login / Forgot / Reset) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 41, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-box {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .modal-header { text-align: center; margin-bottom: 30px; }
+        .modal-header h3 { font-size: 1.5rem; margin-bottom: 5px; }
+        .modal-header p { color: var(--text-light); font-size: 0.9rem; }
+
+        .modal-link {
+            display: block;
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        
+        .modal-link-center { text-align: center; margin-top: 20px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .about-grid, .contact-grid, .footer-content, .footer-bottom, .stats-grid, .nav-links { 
+                grid-template-columns: 1fr;
+                flex-direction: column;
+                gap: 30px;
+            }
+            .nav-links { display: none; /* Simple hide for mobile for this demo */ }
+            .features { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <!-- App content injected here -->
-        <div class="flex items-center justify-center min-h-screen w-full">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+
+    <header>
+        <div class="container flex-between" style="width: 100%;">
+            <div class="logo-box">
+                <div class="logo-icon">
+                    <span class="material-symbols-outlined">architecture</span>
+                </div>
+                <div class="brand-name">Mkaka <span style="color: var(--primary);">Construction</span></div>
+            </div>
+            <nav class="nav-links">
+                <a href="#about">Company Profile</a>
+                <a href="#services">Services</a>
+                <a href="#projects">Projects</a>
+                <a href="#contact">Contact</a>
+            </nav>
+            <div class="flex-center">
+                <button class="btn btn-primary">Webmail</button>
+                <button class="btn btn-login" onclick="openModal('loginModal')">Login</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+            <div class="tag-pill">
+                <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+                Certified Engineering Excellence
+            </div>
+            <h1>Mkaka Construction: <br><span style="color: var(--primary);">Building Malawi</span> Since 1993</h1>
+            <p>Malawi's leader in civil works, bridge construction, and road development with over 17 years of specialized excellence.</p>
+            <div class="flex" style="gap: 15px;">
+                <button class="btn btn-primary">Learn More <span class="material-symbols-outlined">arrow_forward</span></button>
+                <button class="btn btn-outline">View Portfolio</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-padding" id="about">
+        <div class="container">
+            <div class="about-grid">
+                <div>
+                    <span class="subtitle">About Our Legacy</span>
+                    <h2 class="section-title">17+ Years of Engineering Precision</h2>
+                    <p style="color: #64748b; margin-bottom: 20px;">Founded in 1993, Mkaka Construction has evolved from a dedicated local contractor to a multi-disciplinary industry leader. We specialize in transforming complex engineering challenges into durable community assets.</p>
+                    
+                    <div class="features">
+                        <div class="feature-card">
+                            <span class="material-symbols-outlined">verified</span>
+                            <h5>Integrity</h5>
+                            <p>Highest ethical standards in every contract.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="material-symbols-outlined">groups</span>
+                            <h5>Teamwork</h5>
+                            <p>Collaborating to deliver complex projects.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="material-symbols-outlined">health_and_safety</span>
+                            <h5>Safety</h5>
+                            <p>Zero-harm priority for our workforce.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-img-wrapper">
+                    <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2031&auto=format&fit=crop" alt="Construction Site" class="about-img">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-padding blueprint-bg" id="services">
+        <div class="container">
+            <div style="text-align: center; max-width: 700px; margin: 0 auto 60px auto;">
+                <span class="subtitle">Our Expertise</span>
+                <h2 class="section-title" style="color: white;">Comprehensive Infrastructure Solutions</h2>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="icon-box"><span class="material-symbols-outlined">foundation</span></div>
+                    <h3 class="service-title">Civil Works</h3>
+                    <p class="service-desc">Specialized site preparations, earthmoving, and foundational engineering for large-scale developments.</p>
+                </div>
+                <div class="service-card">
+                    <div class="icon-box"><span class="material-symbols-outlined">link</span></div>
+                    <h3 class="service-title">Bridge Construction</h3>
+                    <p class="service-desc">Designing and building critical transportation links that connect communities and commerce.</p>
+                </div>
+                <div class="service-card">
+                    <div class="icon-box"><span class="material-symbols-outlined">engineering</span></div>
+                    <h3 class="service-title">Road Works</h3>
+                    <p class="service-desc">National highway development and urban road rehabilitation using cutting-edge paving technology.</p>
+                </div>
+                <div class="service-card">
+                    <div class="icon-box"><span class="material-symbols-outlined">apartment</span></div>
+                    <h3 class="service-title">Building Works</h3>
+                    <p class="service-desc">High-rise commercial construction and institutional facilities built to international safety standards.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div>
+                    <div class="stat-number">250+</div>
+                    <div class="stat-label">Equipment Fleet</div>
+                </div>
+                <div>
+                    <div class="stat-number">150</div>
+                    <div class="stat-label">Major Projects</div>
+                </div>
+                <div>
+                    <div class="stat-number">17</div>
+                    <div class="stat-label">Years Experience</div>
+                </div>
+                <div>
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Safety Compliance</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-padding" id="projects">
+        <div class="container">
+            <div class="flex-between" style="margin-bottom: 40px; align-items: flex-end;">
+                <div>
+                    <span class="subtitle">Project Showcase</span>
+                    <h2 class="section-title">Recent Milestones</h2>
+                </div>
+                <a href="#" style="color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                    Download Portfolio PDF <span class="material-symbols-outlined">download</span>
+                </a>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Client</th>
+                            <th>Sector</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Zomba Roads Rehabilitation</td>
+                            <td>Malawi Government</td>
+                            <td><span class="tag-sector">Infrastructure</span></td>
+                            <td class="status-pill completed"><div class="status-dot"></div> Completed</td>
+                            <td style="text-align: right;">MWK 12.4M</td>
+                        </tr>
+                        <tr>
+                            <td>Kamuzu Stadium Renovation</td>
+                            <td>Ministry of Sports</td>
+                            <td><span class="tag-sector">Building</span></td>
+                            <td class="status-pill completed"><div class="status-dot"></div> Completed</td>
+                            <td style="text-align: right;">MWK 8.2M</td>
+                        </tr>
+                        <tr>
+                            <td>Muona Irrigation Scheme</td>
+                            <td>World Bank Project</td>
+                            <td><span class="tag-sector">Civil Works</span></td>
+                            <td class="status-pill progress"><div class="status-dot"></div> In Progress</td>
+                            <td style="text-align: right;">MWK 15.7M</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-padding" id="contact" style="background: white;">
+        <div class="container">
+            <div class="contact-grid">
+                <div>
+                    <span class="subtitle">Contact Us</span>
+                    <h2 class="section-title">Start Your Project Today</h2>
+                    <p style="color: #64748b; margin-bottom: 30px;">Reach out to our technical team for tenders, inquiries, or site consultations.</p>
+                    
+                    <form>
+                        <div class="flex" style="gap: 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Full Name</label>
+                                <input type="text" placeholder="John Doe">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Email Address</label>
+                                <input type="email" placeholder="john@company.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <input type="text" placeholder="Project Tender / Inquiry">
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea rows="5" placeholder="How can we help you?"></textarea>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;">Send Message</button>
+                    </form>
+                </div>
+                
+                <div class="map-card">
+                    <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                        <span class="material-symbols-outlined" style="font-size: 32px; color: var(--primary);">location_on</span>
+                        <p style="font-weight: 700; margin-top: 5px;">Lilongwe Headquarters</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo-box">
+                    <div class="logo-icon">
+                        <span class="material-symbols-outlined">architecture</span>
+                    </div>
+                    <div class="brand-name">Mkaka <span style="color: var(--primary);">Construction</span></div>
+                </div>
+                <div class="flex" style="gap: 15px;">
+                    <a href="#" class="social-btn"><span class="material-symbols-outlined">public</span></a>
+                    <a href="#" class="social-btn"><span class="material-symbols-outlined">mail</span></a>
+                    <a href="#" class="social-btn"><span class="material-symbols-outlined">call</span></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 Mkaka Construction Company Limited. All rights reserved.</p>
+                <div class="flex" style="gap: 20px;">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">ISO 9002 Manual</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="loginModal" class="modal-overlay" onclick="handleOutsideClick(event, 'loginModal')">
+        <div class="modal-box">
+            <span class="material-symbols-outlined close-modal" onclick="closeModal('loginModal')">close</span>
+            <div class="modal-header">
+                <h3>Welcome Back</h3>
+                <p>Log in to access your employee portal.</p>
+            </div>
+            <form onsubmit="event.preventDefault(); window.location.href='dashboard.html';">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" placeholder="name@mkakaconstruction.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <span class="modal-link" onclick="switchModal('loginModal', 'forgotModal')">Forgot Password?</span>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;">Log In</button>
+            </form>
         </div>
     </div>
+
+    <div id="forgotModal" class="modal-overlay" onclick="handleOutsideClick(event, 'forgotModal')">
+        <div class="modal-box">
+            <span class="material-symbols-outlined close-modal" onclick="closeModal('forgotModal')">close</span>
+            <div class="modal-header">
+                <h3>Reset Password</h3>
+                <p>Enter your email to receive a reset link.</p>
+            </div>
+            <form onsubmit="event.preventDefault(); switchModal('forgotModal', 'resetModal')">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" placeholder="name@mkakaconstruction.com" required>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;">Send Reset Link</button>
+                <div class="modal-link-center">
+                    <span class="modal-link" onclick="switchModal('forgotModal', 'loginModal')">Back to Login</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="resetModal" class="modal-overlay" onclick="handleOutsideClick(event, 'resetModal')">
+        <div class="modal-box">
+            <span class="material-symbols-outlined close-modal" onclick="closeModal('resetModal')">close</span>
+            <div class="modal-header">
+                <h3>Set New Password</h3>
+                <p>Please enter your new credentials.</p>
+            </div>
+            <form onsubmit="event.preventDefault(); alert('Password successfully updated!'); closeModal('resetModal');">
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Open a specific modal
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        // Close a specific modal
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Switch from one modal to another (e.g. Login -> Forgot)
+        function switchModal(currentId, nextId) {
+            closeModal(currentId);
+            openModal(nextId);
+        }
+
+        // Close modal if clicking on the dark overlay background
+        function handleOutsideClick(event, id) {
+            if (event.target.id === id) {
+                closeModal(id);
+            }
+        }
+    </script>
 </body>
 </html>

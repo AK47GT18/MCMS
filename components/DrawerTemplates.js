@@ -488,8 +488,24 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Project</label><select class="form-input" style="width:100%; padding:10px;"><option>CEN-01 Unilia</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Vendor/Client</label><select class="form-input" style="width:100%; padding:10px;"><option>Mkaka Ltd</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Contract Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Main Works</option><option>Supply</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Value (MWK)</label><input class="form-input" type="number" style="width:100%; padding:10px;"></div>
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Contract Value</label>
+                 <div style="position:relative;">
+                      <input class="form-input" type="text" value="MWK 450,000,000" readonly style="width:100%; padding:10px; background:var(--slate-50); padding-right:30px; font-weight:600; color:var(--slate-700);">
+                      <i class="fas fa-lock" style="position:absolute; right:12px; top:12px; color:var(--slate-400); font-size:12px;"></i>
+                 </div>
+                 <div style="font-size:11px; color:var(--slate-500); margin-top:4px; display:flex; align-items:center; gap:4px;">
+                     <i class="fas fa-info-circle"></i> Linked to Project Budget (PM Approved)
+                 </div>
+            </div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Start Date</label><input class="form-input" type="date" style="width:100%; padding:10px;"></div>
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Contract Document (v1.0)</label>
+                 <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:6px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;">
+                    <i class="fas fa-file-pdf" style="font-size:24px; margin-bottom:8px;"></i><br>
+                    <span style="font-size:12px;">Drage Original Contract Here</span>
+                 </div>
+            </div>
             <button class="btn btn-primary" style="width:100%; border:none; padding:12px;" onclick="window.drawer.close(); window.toast.show('New Contract Created', 'success')">Create Record</button>
         </div>
     `,
@@ -746,26 +762,132 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    complianceAction: `
+    viewPolicy: `
+        <div class="drawer-section">
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:700; font-size:18px;">Performance Bond</div>
+                <div style="font-size:13px; color:var(--slate-500);">Unilia Construction • NB-BND-2024-889</div>
+            </div>
+             <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+                 <div class="stat-card" style="padding:12px;">
+                    <div class="stat-label">Coverage Limit</div>
+                    <div class="stat-value" style="font-size:16px; color:var(--slate-800);">MWK 120,000,000</div>
+                 </div>
+                 <div class="stat-card" style="padding:12px;">
+                    <div class="stat-label">Expiry Date</div>
+                    <div class="stat-value" style="font-size:16px; color:var(--emerald);">Jun 30, 2026</div>
+                 </div>
+            </div>
+             <div class="drawer-section" style="background:var(--slate-50); border:1px solid var(--slate-200); padding:16px;">
+                 <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Provider Details</div>
+                 <div style="font-size:13px; margin-bottom:4px;">National Bank of Malawi</div>
+                 <div style="font-size:13px; margin-bottom:4px;">Ref: NBM/GUA/889/24</div>
+                 <div style="font-size:13px; color:var(--slate-500);">Verified by: J. Kaira (Jan 02, 2025)</div>
+            </div>
+             <button class="btn btn-secondary" style="width:100%; padding:12px; margin-top:16px;" onclick="window.drawer.close();"><i class="fas fa-download"></i> Download Certificate</button>
+        </div>
+    `,
+
+    requestRenewal: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
-                <div style="font-weight:700; font-size:14px;">Insurance Policy Renewal</div>
-                <div style="font-size:12px; color:var(--slate-500);">Ref: INS-882 (All Risk)</div>
+                <div style="font-weight:700; font-size:14px; color:var(--orange);">Insurance Renewal Required</div>
+                <div style="font-size:12px; color:var(--slate-500);">Ref: NICO-CAR-992 (All Risk)</div>
             </div>
              <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Action</label>
+                <label class="form-label">Current Status</label>
+                <div style="padding:10px; background:var(--orange-light); color:var(--orange-dark); border-radius:6px; font-size:13px; font-weight:600;">Expiring in 45 Days (Feb 28, 2025)</div>
+             </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Recipient</label>
+                 <input type="text" class="form-input" value="Unilia Admin (compliance@unilia.mw)" readonly style="width:100%; padding:10px; background:#f1f5f9;">
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Reminder Message</label>
+                <textarea class="form-input" rows="12" style="width:100%; padding:10px;">Attention,
+
+Your 'Contractors All Risk' policy for the Unilia Library Complex is due for renewal. Please submit valid proof of renewal before Feb 28, 2025 to avoid certification holds.
+
+Regards,
+Contract Admin</textarea>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Renewal Reminder Sent', 'success')">Send Request</button>
+         </div>
+    `,
+
+    flagBreach: `
+         <div class="drawer-section">
+            <div style="background:var(--red-light); padding:16px; border-radius:8px; display:flex; gap:12px; align-items:center; margin-bottom:24px;">
+                <i class="fas fa-gavel" style="color:var(--red); font-size:20px;"></i>
+                <div>
+                    <div style="font-weight:700; color:var(--red); font-size:14px;">Regulatory Breach Alert</div>
+                    <div style="font-size:11px; color:var(--red);">Apex Security • Workers Comp</div>
+                </div>
+            </div>
+            
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Breach Type</label>
                 <select class="form-input" style="width:100%; padding:10px;">
-                    <option>Request Renewal from Vendor</option>
-                    <option>Log Breach of Contract</option>
-                    <option>Upload New Policy</option>
+                    <option>Coverage Lapsed</option>
+                    <option>Insufficient Limit</option>
+                    <option>Provider Insolvency</option>
                 </select>
              </div>
               <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Message to Vendor</label>
-                <textarea class="form-input" rows="4" style="width:100%; padding:10px;">Please submit the renewed 'All Risk' policy for the Unilia project by Friday to avoid payment holds.</textarea>
+                <label class="form-label">Impact Assessment</label>
+                <div style="display:flex; gap:10px; margin-bottom:8px;">
+                     <input type="checkbox" checked> <span style="font-size:13px;">Suspend Payment Certificates</span>
+                </div>
+                 <div style="display:flex; gap:10px;">
+                     <input type="checkbox" checked> <span style="font-size:13px;">Notify Regulatory Authority</span>
+                </div>
              </div>
-             <button class="btn btn-action" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Notice sent to Vendor', 'success')">Send Notice</button>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Breach Notice</label>
+                <textarea class="form-input" rows="3" style="width:100%; padding:10px;">Worker's Compensation policy WCA-221-002 expired on Dec 31, 2024. Immediate suspension of services required until rectified.</textarea>
+             </div>
+             <button class="btn btn-danger" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Breach Logged & Legal Notified', 'error')">Confirm Breach</button>
          </div>
+    `,
+
+    sendReminders: `
+        <div class="drawer-section">
+            <div style="margin-bottom:16px;">
+                <div style="font-weight:700; font-size:14px; color:var(--blue);">Bulk Reminder Action</div>
+                <div style="font-size:12px; color:var(--slate-500);">Target: Vendors with expiring documents</div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" style="display:block; margin-bottom:8px;">Select Recipients</label>
+                <div style="background:white; border:1px solid var(--slate-200); border-radius:6px; overflow:hidden;">
+                    <div style="padding:10px; border-bottom:1px solid var(--slate-100); display:flex; gap:10px; align-items:center;">
+                        <input type="checkbox" checked>
+                        <div style="font-size:13px;">
+                            <div style="font-weight:600;">Unilia Construction</div>
+                            <div style="font-size:11px; color:var(--orange);">All Risk Policy (Exp: Feb 28)</div>
+                        </div>
+                    </div>
+                    <div style="padding:10px; border-bottom:1px solid var(--slate-100); display:flex; gap:10px; align-items:center;">
+                        <input type="checkbox" checked>
+                        <div style="font-size:13px;">
+                            <div style="font-weight:600;">Apex Security</div>
+                            <div style="font-size:11px; color:var(--red);">Workers Comp (Expired: Dec 31)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Message Template</label>
+                 <select class="form-input" style="width:100%; padding:10px;">
+                    <option>Standard Expiry Warning</option>
+                    <option>Urgent Compliance Notice</option>
+                    <option>Final Breach Notification</option>
+                 </select>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Reminders Sent to 2 Vendors', 'success')">Send Bulk Reminders</button>
+        </div>
     `,
 
     completeMaintenance: `

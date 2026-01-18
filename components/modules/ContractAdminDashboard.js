@@ -259,7 +259,7 @@ export class ContractAdminDashboard {
                             <td>Site Establishment</td>
                             <td class="mono-val">45,000,000 MWK</td>
                             <td><span class="status active">Paid</span></td>
-                            <td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Milestone Certificate', '<div class=\\'p-4\\'>Certificate View Placeholder</div>')">View Cert</button></td>
+                            <td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Milestone Certificate', window.DrawerTemplates.milestoneCertificate)">View Cert</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -325,7 +325,7 @@ export class ContractAdminDashboard {
             <div class="data-card">
                 <div class="data-card-header">
                     <div class="card-title">Insurance & Bonds Tracking</div>
-                    <button class="btn btn-secondary"><i class="fas fa-envelope"></i> Send Reminders</button>
+                    <button class="btn btn-secondary" onclick="window.drawer.open('Send Reminders', window.DrawerTemplates.sendReminders)"><i class="fas fa-envelope"></i> Send Reminders</button>
                 </div>
                 <table>
                     <thead>
@@ -345,7 +345,7 @@ export class ContractAdminDashboard {
                             <td>NB-BND-2024-889</td>
                             <td class="mono-val">Jun 30, 2026</td>
                             <td><span class="status active">Valid</span></td>
-                            <td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Compliance Action', window.DrawerTemplates.complianceAction)">View</button></td>
+                            <td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Policy Details', window.DrawerTemplates.viewPolicy)">View</button></td>
                         </tr>
                         <tr>
                             <td style="font-weight:600;">Unilia Construction</td>
@@ -353,7 +353,7 @@ export class ContractAdminDashboard {
                             <td>NICO-CAR-992</td>
                             <td class="mono-val" style="color:var(--orange);">Feb 28, 2025</td>
                             <td><span class="status expiring" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 10px; border-radius:12px;">Expiring Soon</span></td>
-                            <td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Compliance Action', window.DrawerTemplates.complianceAction)">Request Renewal</button></td>
+                            <td><button class="btn btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Request Renewal', window.DrawerTemplates.requestRenewal)">Request Renewal</button></td>
                         </tr>
                          <tr>
                             <td style="font-weight:600;">Apex Security</td>
@@ -361,7 +361,7 @@ export class ContractAdminDashboard {
                             <td>WCA-221-002</td>
                             <td class="mono-val" style="color:var(--red);">Dec 31, 2024</td>
                             <td><span class="status rejected">Expired</span></td>
-                            <td><button class="btn btn-danger" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Compliance Action', window.DrawerTemplates.complianceAction)">Flag Breach</button></td>
+                            <td><button class="btn btn-danger" style="padding:2px 8px; font-size:11px;" onclick="window.drawer.open('Regulatory Breach', window.DrawerTemplates.flagBreach)">Flag Breach</button></td>
                         </tr>
                     </tbody>
                 </table>
