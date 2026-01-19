@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - MCMS Notification</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 25px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 600;">MCMS Notification</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 30px;">
+              <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">Hi {{name}},</h2>
+              
+              <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px 20px; border-radius: 0 6px 6px 0; margin: 20px 0;">
+                <h3 style="color: #1e40af; margin: 0 0 10px 0; font-size: 16px;">{{title}}</h3>
+                <p style="color: #3b82f6; margin: 0; font-size: 15px; line-height: 1.5;">{{message}}</p>
+              </div>
+              
+              <table role="presentation" style="margin: 25px 0;">
+                <tr>
+                  <td style="background-color: #3b82f6; border-radius: 6px;">
+                    <a href="{{actionUrl}}" style="display: inline-block; padding: 12px 25px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px;">
+                      View Details →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 15px 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+                © {{year}} MCMS | This is an automated notification
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

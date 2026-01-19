@@ -1,0 +1,12 @@
+MCMS Notification
+=================
+
+Hi {{name}},
+
+{{title}}
+{{message}}
+
+View details: {{actionUrl}}
+
+---
+© {{year}} MCMS | This is an automated notification

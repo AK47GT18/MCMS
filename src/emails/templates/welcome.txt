@@ -1,0 +1,18 @@
+Welcome to MCMS
+================
+
+Hello, {{name}}!
+
+Your account has been successfully created. You can now access the MCMS platform to manage construction projects, track resources, and collaborate with your team.
+
+Account Details:
+- Email: {{email}}
+- Role: {{role}}
+
+Login at: {{loginUrl}}
+
+If you have any questions, please contact your system administrator.
+
+---
+© 2026 MCMS - Construction Management System
+This is an automated message, please do not reply.

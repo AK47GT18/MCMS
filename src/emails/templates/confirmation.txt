@@ -1,0 +1,15 @@
+MCMS Confirmation
+=================
+
+Hi {{name}},
+
+The following action has been successfully completed:
+
+ACTION: {{action}}
+DETAILS: {{details}}
+COMPLETED AT: {{timestamp}}
+
+This email serves as confirmation of the action. No further action is required unless stated otherwise.
+
+---
+© {{year}} MCMS | This is an automated confirmation

@@ -1,0 +1,570 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUM TYPES
+// ============================================
+
+enum RoleEnum {
+  Project_Manager        @map("Project Manager")
+  Finance_Director       @map("Finance Director")
+  Field_Supervisor       @map("Field Supervisor")
+  Contract_Administrator @map("Contract Administrator")
+  Equipment_Coordinator  @map("Equipment Coordinator")
+  Operations_Manager     @map("Operations Manager")
+  Managing_Director      @map("Managing Director")
+  System_Technician      @map("System Technician")
+
+  @@map("role_enum")
+}
+
+enum ProjectStatusEnum {
+  active
+  planning
+  on_hold
+  completed
+  cancelled
+
+  @@map("project_status_enum")
+}
+
+enum ContractStatusEnum {
+  active
+  draft
+  expired
+  cancelled
+
+  @@map("contract_status_enum")
+}
+
+enum MilestoneStatusEnum {
+  scheduled
+  pending
+  certified
+  paid
+
+  @@map("milestone_status_enum")
+}
+
+enum VendorStatusEnum {
+  approved
+  pending
+  suspended
+
+  @@map("vendor_status_enum")
+}
+
+enum AssetConditionEnum {
+  Good
+  Fair
+  Poor
+
+  @@map("asset_condition_enum")
+}
+
+enum AssetStatusEnum {
+  available
+  checked_out
+  in_transit
+  maintenance
+  decommissioned
+
+  @@map("asset_status_enum")
+}
+
+enum RequisitionStatusEnum {
+  pending
+  approved
+  rejected
+  fraud_flag
+
+  @@map("requisition_status_enum")
+}
+
+enum ProcurementStatusEnum {
+  pending_pm
+  pending_finance
+  approved
+  rejected
+  purchased
+
+  @@map("procurement_status_enum")
+}
+
+// ============================================
+// TABLE: users
+// ============================================
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(255)
+  phone        String?  @db.VarChar(20)
+  role         RoleEnum
+  avatarUrl    String?  @map("avatar_url")
+  permissions  String[]
+  passwordHash String?  @map("password_hash") @db.VarChar(255)
+  lastLoginIp  String?  @map("last_login_ip") @db.Inet
+  isLocked     Boolean  @default(false) @map("is_locked")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  managedProjects       Project[]             @relation("ProjectManager")
+  assetLogs             AssetLog[]
+  requisitionsSubmitted Requisition[]         @relation("SubmittedBy")
+  requisitionsReviewed  Requisition[]         @relation("ReviewedBy")
+  transactionsCreated   Transaction[]
+  dailyLogs             DailyLog[]
+  safetyIncidents       SafetyIncident[]
+  auditLogs             AuditLog[]
+  procurementRequests   ProcurementRequest[]
+  whistleblowerReported WhistleblowerReport[] @relation("Reporter")
+  whistleblowerAssigned WhistleblowerReport[] @relation("AssignedTo")
+  budgetChangeRequests  BudgetChangeRequest[]
+  issuesReported        Issue[]               @relation("ReportedBy")
+  issuesAssigned        Issue[]               @relation("AssignedTo")
+
+  @@map("users")
+}
+
+// ============================================
+// TABLE: vendors
+// ============================================
+model Vendor {
+  id                 Int              @id @default(autoincrement())
+  name               String           @db.VarChar(255)
+  category           String?          @db.VarChar(50)
+  taxClearanceValid  Boolean          @default(false) @map("tax_clearance_valid")
+  taxClearanceExpiry DateTime?        @map("tax_clearance_expiry") @db.Date
+  ncicGrade          String?          @map("ncic_grade") @db.VarChar(20)
+  performanceRating  Int?             @map("performance_rating") @db.SmallInt
+  status             VendorStatusEnum @default(pending)
+  contactEmail       String?          @map("contact_email") @db.VarChar(255)
+  contactPhone       String?          @map("contact_phone") @db.VarChar(20)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  contracts    Contract[]
+  requisitions Requisition[]
+
+  @@map("vendors")
+}
+
+// ============================================
+// TABLE: projects
+// ============================================
+model Project {
+  id            Int               @id @default(autoincrement())
+  code          String            @unique @db.VarChar(20)
+  name          String            @db.VarChar(255)
+  managerId     Int?              @map("manager_id")
+  status        ProjectStatusEnum @default(planning)
+  contractValue Decimal?          @map("contract_value") @db.Decimal(18, 2)
+  budgetTotal   Decimal?          @map("budget_total") @db.Decimal(18, 2)
+  budgetSpent   Decimal?          @default(0) @map("budget_spent") @db.Decimal(18, 2)
+  startDate     DateTime?         @map("start_date") @db.Date
+  endDate       DateTime?         @map("end_date") @db.Date
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  manager              User?                 @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  tasks                Task[]
+  contracts            Contract[]
+  assets               Asset[]
+  assetLogs            AssetLog[]
+  requisitions         Requisition[]
+  transactions         Transaction[]
+  dailyLogs            DailyLog[]
+  safetyIncidents      SafetyIncident[]
+  whistleblowerReports WhistleblowerReport[]
+  budgetChangeRequests BudgetChangeRequest[]
+  issues               Issue[]
+
+  @@map("projects")
+}
+
+// ============================================
+// TABLE: tasks (Gantt Chart)
+// ============================================
+model Task {
+  id           Int      @id @default(autoincrement())
+  projectId    Int      @map("project_id")
+  name         String   @db.VarChar(255)
+  startDate    DateTime @map("start_date") @db.Date
+  endDate      DateTime @map("end_date") @db.Date
+  progress     Int      @default(0) @db.SmallInt
+  dependencyId Int?     @map("dependency_id")
+  statusClass  String?  @map("status_class") @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  dependency Task?   @relation("TaskDependency", fields: [dependencyId], references: [id], onDelete: SetNull)
+  dependents Task[]  @relation("TaskDependency")
+
+  @@index([projectId])
+  @@index([startDate, endDate])
+  @@map("tasks")
+}
+
+// ============================================
+// TABLE: contracts
+// ============================================
+model Contract {
+  id          Int                @id @default(autoincrement())
+  refCode     String             @unique @map("ref_code") @db.VarChar(30)
+  projectId   Int?               @map("project_id")
+  vendorId    Int?               @map("vendor_id")
+  title       String             @db.VarChar(255)
+  value       Decimal?           @db.Decimal(18, 2)
+  startDate   DateTime?          @map("start_date") @db.Date
+  endDate     DateTime?          @map("end_date") @db.Date
+  status      ContractStatusEnum @default(draft)
+  documentUrl String?            @map("document_url")
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  project    Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  vendor     Vendor?     @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  milestones Milestone[]
+
+  @@index([projectId])
+  @@index([vendorId])
+  @@map("contracts")
+}
+
+// ============================================
+// TABLE: milestones
+// ============================================
+model Milestone {
+  id             Int                 @id @default(autoincrement())
+  contractId     Int                 @map("contract_id")
+  refCode        String?             @map("ref_code") @db.VarChar(20)
+  description    String?             @db.VarChar(255)
+  dueDate        DateTime?           @map("due_date") @db.Date
+  value          Decimal?            @db.Decimal(18, 2)
+  status         MilestoneStatusEnum @default(scheduled)
+  certificateUrl String?             @map("certificate_url")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("milestones")
+}
+
+// ============================================
+// TABLE: assets (Fleet)
+// ============================================
+model Asset {
+  id               Int                @id @default(autoincrement())
+  assetCode        String             @unique @map("asset_code") @db.VarChar(20)
+  name             String             @db.VarChar(255)
+  serialNumber     String?            @map("serial_number") @db.VarChar(100)
+  category         String?            @db.VarChar(50)
+  modelYear        Int?               @map("model_year") @db.SmallInt
+  hoursOrKm        Int?               @map("hours_or_km")
+  condition        AssetConditionEnum @default(Good)
+  fuelLevel        Int?               @map("fuel_level") @db.SmallInt
+  currentProjectId Int?               @map("current_project_id")
+  status           AssetStatusEnum    @default(available)
+  estimatedValue   Decimal?           @map("estimated_value") @db.Decimal(18, 2)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  currentProject Project?   @relation(fields: [currentProjectId], references: [id], onDelete: SetNull)
+  assetLogs      AssetLog[]
+
+  @@index([currentProjectId])
+  @@index([status])
+  @@map("assets")
+}
+
+// ============================================
+// TABLE: asset_logs (Check-in/Check-out)
+// ============================================
+model AssetLog {
+  id                Int      @id @default(autoincrement())
+  assetId           Int      @map("asset_id")
+  userId            Int?     @map("user_id")
+  projectId         Int?     @map("project_id")
+  action            String   @db.VarChar(20)
+  fuelLevelAtAction Int?     @map("fuel_level_at_action") @db.SmallInt
+  timestamp         DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  asset   Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([assetId])
+  @@map("asset_logs")
+}
+
+// ============================================
+// TABLE: requisitions
+// ============================================
+model Requisition {
+  id          Int                   @id @default(autoincrement())
+  reqCode     String                @unique @map("req_code") @db.VarChar(20)
+  projectId   Int?                  @map("project_id")
+  vendorId    Int?                  @map("vendor_id")
+  submittedBy Int?                  @map("submitted_by")
+  description String?
+  totalAmount Decimal               @map("total_amount") @db.Decimal(18, 2)
+  budgetLine  String?               @map("budget_line") @db.VarChar(20)
+  status      RequisitionStatusEnum @default(pending)
+  fraudCheck  Boolean               @default(false) @map("fraud_check")
+  reviewedBy  Int?                  @map("reviewed_by")
+  reviewedAt  DateTime?             @map("reviewed_at") @db.Timestamptz
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  project      Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  vendor       Vendor?           @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  submitter    User?             @relation("SubmittedBy", fields: [submittedBy], references: [id], onDelete: SetNull)
+  reviewer     User?             @relation("ReviewedBy", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  items        RequisitionItem[]
+  transactions Transaction[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("requisitions")
+}
+
+// ============================================
+// TABLE: requisition_items
+// ============================================
+model RequisitionItem {
+  id            Int     @id @default(autoincrement())
+  requisitionId Int     @map("requisition_id")
+  itemName      String  @map("item_name") @db.VarChar(255)
+  quantity      Int
+  unitPrice     Decimal @map("unit_price") @db.Decimal(18, 2)
+
+  // Relations
+  requisition Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+
+  @@map("requisition_items")
+}
+
+// ============================================
+// TABLE: transactions (General Ledger)
+// ============================================
+model Transaction {
+  id            Int      @id @default(autoincrement())
+  entryCode     String?  @unique @map("entry_code") @db.VarChar(20)
+  requisitionId Int?     @map("requisition_id")
+  projectId     Int?     @map("project_id")
+  accountCode   String?  @map("account_code") @db.VarChar(20)
+  description   String?
+  debit         Decimal  @default(0) @db.Decimal(18, 2)
+  credit        Decimal  @default(0) @db.Decimal(18, 2)
+  createdBy     Int?     @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  requisition Requisition? @relation(fields: [requisitionId], references: [id], onDelete: SetNull)
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  creator     User?        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@map("transactions")
+}
+
+// ============================================
+// TABLE: daily_logs (Field Supervisor)
+// ============================================
+model DailyLog {
+  id              Int       @id @default(autoincrement())
+  projectId       Int       @map("project_id")
+  submittedBy     Int?      @map("submitted_by")
+  logDate         DateTime  @map("log_date") @db.Date
+  headcount       Int?
+  weather         String?   @db.VarChar(50)
+  narrative       String?
+  expenseAmount   Decimal?  @map("expense_amount") @db.Decimal(18, 2)
+  expenseCategory String?   @map("expense_category") @db.VarChar(50)
+  expenseReason   String?   @map("expense_reason")
+  photos          Json?
+  isSos           Boolean   @default(false) @map("is_sos")
+  pmApproved      Boolean   @default(false) @map("pm_approved")
+  pmApprovedAt    DateTime? @map("pm_approved_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submitter User?   @relation(fields: [submittedBy], references: [id], onDelete: SetNull)
+
+  @@index([projectId, logDate])
+  @@map("daily_logs")
+}
+
+// ============================================
+// TABLE: safety_incidents
+// ============================================
+model SafetyIncident {
+  id              Int       @id @default(autoincrement())
+  projectId       Int?      @map("project_id")
+  reportedBy      Int?      @map("reported_by")
+  incidentType    String?   @map("incident_type") @db.VarChar(50)
+  siteArea        String?   @map("site_area") @db.VarChar(100)
+  personsInvolved String?   @map("persons_involved")
+  description     String?
+  photoUrl        String?   @map("photo_url")
+  status          String    @default("open") @db.VarChar(20)
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  reporter User?    @relation(fields: [reportedBy], references: [id], onDelete: SetNull)
+
+  @@map("safety_incidents")
+}
+
+// ============================================
+// TABLE: audit_logs (Immutable)
+// ============================================
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  userName   String?  @map("user_name") @db.VarChar(100)
+  userRole   String?  @map("user_role") @db.VarChar(50)
+  action     String   @db.VarChar(50)
+  targetType String?  @map("target_type") @db.VarChar(50)
+  targetId   Int?     @map("target_id")
+  targetCode String?  @map("target_code") @db.VarChar(50)
+  ipAddress  String?  @map("ip_address") @db.Inet
+  details    Json?
+  timestamp  DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// TABLE: procurement_requests
+// ============================================
+model ProcurementRequest {
+  id                Int                   @id @default(autoincrement())
+  reqCode           String                @unique @map("req_code") @db.VarChar(20)
+  vehicleName       String                @map("vehicle_name") @db.VarChar(255)
+  estimatedCost     Decimal?              @map("estimated_cost") @db.Decimal(18, 2)
+  justification     String?
+  priority          String                @default("Standard") @db.VarChar(20)
+  requestedBy       Int?                  @map("requested_by")
+  pmComments        String?               @map("pm_comments")
+  pmReviewedAt      DateTime?             @map("pm_reviewed_at") @db.Timestamptz
+  financeComments   String?               @map("finance_comments")
+  financeReviewedAt DateTime?             @map("finance_reviewed_at") @db.Timestamptz
+  status            ProcurementStatusEnum @default(pending_pm)
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  requester User? @relation(fields: [requestedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("procurement_requests")
+}
+
+// ============================================
+// TABLE: whistleblower_reports
+// ============================================
+model WhistleblowerReport {
+  id          Int      @id @default(autoincrement())
+  isAnonymous Boolean  @default(true) @map("is_anonymous")
+  reporterId  Int?     @map("reporter_id")
+  category    String?  @db.VarChar(100)
+  projectId   Int?     @map("project_id")
+  evidence    String?
+  documentUrl String?  @map("document_url")
+  status      String   @default("submitted") @db.VarChar(20)
+  assignedTo  Int?     @map("assigned_to")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  reporter User?    @relation("Reporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  assignee User?    @relation("AssignedTo", fields: [assignedTo], references: [id], onDelete: SetNull)
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@map("whistleblower_reports")
+}
+
+// ============================================
+// TABLE: budget_change_requests
+// ============================================
+model BudgetChangeRequest {
+  id                Int       @id @default(autoincrement())
+  bcrCode           String    @unique @map("bcr_code") @db.VarChar(20)
+  projectId         Int       @map("project_id")
+  budgetCategory    String?   @map("budget_category") @db.VarChar(50)
+  currentAmount     Decimal?  @map("current_amount") @db.Decimal(18, 2)
+  proposedAmount    Decimal?  @map("proposed_amount") @db.Decimal(18, 2)
+  justification     String?
+  requestedBy       Int?      @map("requested_by")
+  status            String    @default("pending") @db.VarChar(20)
+  pmApproved        Boolean?  @map("pm_approved")
+  pmApprovedAt      DateTime? @map("pm_approved_at") @db.Timestamptz
+  financeApproved   Boolean?  @map("finance_approved")
+  financeApprovedAt DateTime? @map("finance_approved_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requester User?   @relation(fields: [requestedBy], references: [id], onDelete: SetNull)
+
+  @@map("budget_change_requests")
+}
+
+// ============================================
+// TABLE: issues (Complaints)
+// ============================================
+model Issue {
+  id              Int       @id @default(autoincrement())
+  issueCode       String    @unique @map("issue_code") @db.VarChar(20)
+  category        String?   @db.VarChar(100)
+  projectId       Int?      @map("project_id")
+  siteLocation    String?   @map("site_location") @db.VarChar(100)
+  priority        String    @default("Medium") @db.VarChar(20)
+  description     String?
+  photoUrl        String?   @map("photo_url")
+  reportedBy      Int?      @map("reported_by")
+  assignedTo      Int?      @map("assigned_to")
+  status          String    @default("open") @db.VarChar(20)
+  resolutionNotes String?   @map("resolution_notes")
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  reporter User?    @relation("ReportedBy", fields: [reportedBy], references: [id], onDelete: SetNull)
+  assignee User?    @relation("AssignedTo", fields: [assignedTo], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([status])
+  @@map("issues")
+}
