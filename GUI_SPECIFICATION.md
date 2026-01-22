@@ -9,51 +9,64 @@ The UI follows a consistent layout with a side navigation menu, a breadcrumb-led
 ### 8.1.1 Screen Images (Textual Representations)
 
 #### 1. Authentication Center
-*   **Login Screen:** A clean, centralized card interface with Mkaka branding. It features fields for Email and Password, a "Forgot Password" link, and a prominent "Log In" button.
-*   **Password Reset Screen:** A series of modals for initiating a reset via email and subsequently setting a new password with confirmation fields.
+*   **Login Screen:** A clean, centralized card interface with Mkaka branding. Features fields for Email, Password, and a "Log In" button.
+*   **Password Reset:** Modals for email-based reset links and new password configuration.
 
 #### 2. Project Manager (PM) Workspace
-*   **Portfolio Dashboard:** A high-level overview featuring aggregate stats (Budget Health, Pending Reviews) and a table of active projects with progress bars.
-*   **Execution Schedule (Gantt):** A full-width interactive Gantt chart displaying task dependencies, milestones, and completion percentages.
-*   **Report Center:** A filtered grid view of report cards (Project Status, Financial, Site Activity) with export options.
-*   **Issue Resolution Center:** A tracking table for safety hazards and governance alerts (whistleblower reports).
+*   **Portfolio Dashboard:** Aggregate stats (Budget Health, Pending Reviews) and project progress tables.
+*   **Gantt Execution View:** Interactive timeline for scheduling and dependency management.
+*   **Review Center:** A list of submitted site logs and requisitions awaiting PM validation.
 
 #### 3. Finance Director (FM) Workspace
-*   **Priority Action Dashboard:** Highlighted cards for Fraud Alerts and Pending Approvals, leading to investigation workflows.
-*   **Reconciliation Center:** A dual-pane view comparing bank statement records against system ledger entries.
-*   **Governance Ledger:** An immutable audit trail of all financial transactions with user and timestamp metadata.
+*   **Action Dashboard:** Alerts for fraud, budget overruns, and high-value requisitions.
+*   **Reconciliation:** Comparative view of bank statements vs. system records.
+*   **Vendor Compliance:** Registry of approved suppliers and their tax/NCIC status.
 
 #### 4. Equipment Coordinator (EQ) Workspace
-*   **Asset Registry:** A master list of machinery showing current location, fuel levels, and utilization metrics.
-*   **GPS Tracking Map:** An integrated Leaflet map showing the last known position of all geotagged equipment.
-*   **Service Center:** A maintenance schedule tracking engine hours and upcoming service intervals.
+*   **Fleet Dashboard:** Stats on utilization, fuel alerts, and maintenance due.
+*   **GPS Map:** Live tracking of geotagged assets across all sites.
 
 #### 5. Contract Administrator (CM) Workspace
-*   **Contract Repository:** A version-controlled storage area for all legal agreements and project variations.
-*   **Compliance Dashboard:** A risk-focused view highlighting expiring insurance policies and performance bonds.
-*   **Milestone Certification View:** A tabular list of project milestones requiring verification and certificate issuance.
+*   **Document Repository:** Version-controlled storage for contracts and amendments.
+*   **Compliance Tracker:** Monitoring for insurance expiries and performance bonds.
 
-#### 6. Field Supervisor (FS) Workspace
-*   **Mobile Dashboard:** A vertically optimized view for site use, featuring large touch-friendly buttons for "Daily Log" and "Report Incident".
-*   **Task List:** A simplified list of daily assignments with a completion slider.
-*   **Site Equipment Log:** A verification screen for equipment arrival and usage tracking.
+#### 6. Field Supervisor (FS) Workspace (Mobile-First)
+*   **Site Portal:** Large-button interface for daily reporting, attendance, and safety.
+*   **Live Task List:** Real-time assignments and progress update sliders.
 
-#### 7. System Technician (SA) Workspace
-*   **Configuration Portal:** A tabular interface for managing global system variables (VAT, Currency, SMTP).
-*   **User Registry:** A comprehensive management table for user accounts, roles, and security status.
+---
 
 ### 8.1.2 Objects and Actions
+This section identifies major screen objects, their controls, and the specific events or methods that manage them.
 
-| Form/Object Name | Controls and Fields | Display Trigger (Method) | Control Trigger (Method) |
+| Form Name | Controls and Fields | Display Method | Control Triggered Method(s) |
 | :--- | :--- | :--- | :--- |
-| **Login Form** | Email (Input), Password (Input), Log In (Button) | `openModal('loginModal')` | `handleLogin()` |
-| **Initialize New Project** | Project Name, Client, Budget, Start/End Date, Supervisor, Radius, Map Marker | `window.drawer.open('Initialize New Project', ...)` | `updateMapRadius()`, `createProjectRecord()` |
-| **Daily Site Report** | Headcount, Work Description, Expense Amount, Category, Photo Upload | `window.drawer.open('Daily Site Report', ...)` | `syncSiteLog()`, `deductProjectWallet()` |
-| **Budget Change Request** | Project Code, Category, New Amount, Justification | `window.drawer.open('Initiate Budget Change', ...)` | `logGovernanceAlert()`, `notifyFinance()` |
-| **Assign Equipment** | Equipment ID (Select), Project (Select), Responsible Person, Return Date | `window.drawer.open('Assign Equipment', ...)` | `lockAssetToGeofence()`, `updateAssetStatus()` |
-| **Upload Amendment** | Amendment Type, Change Description, Financial Impact, PDF Upload | `window.drawer.open('Upload Amendment', ...)` | `versionContract()`, `updateContractValue()` |
-| **Fraud Investigation** | Investigation Notes, Confirm Fraud (Button), Clear Alert (Button) | `window.drawer.open('Investigation', ...)` | `freezeVendor()`, `resolveFraudAlert()` |
-| **User Account Form** | Full Name, Role (Select), Email, Phone, Initial Password | `window.drawer.open('Add New User', ...)` | `createAccount()`, `sendWelcomeEmail()` |
+| **Login Form** | Email (Input), Password (Input), Login (Btn) | `openModal('loginModal')` | `handleLogin()`, `onTextChange()` |
+| **Reset Password** | New Password, Confirm Password | `switchModal('resetModal')` | `updatePassword()`, `closeModal()` |
+| **New Project Form** | Project Name, Client, Budget, Dates, Radius | `window.drawer.open('newProject')` | `createProject()`, `updateMapRadius()` |
+| **Daily Progress Log** | Narrative, Expense Amount, Category, SOS | `window.drawer.open('dailyProgressLog')`| `handleDailyLogSubmit()`, `updateWallet()` |
+| **Site Log Verification**| Verify/Reject buttons, Narrative review | `window.drawer.open('siteLogVerification')` | `confirmLog()`, `updateGantt()`, `rejectLog()` |
+| **Safety Incident** | Incident Type, Site Area, Description, Photo | `window.drawer.open('safetyIncident')` | `logIncident()`, `triggerAlert()` |
+| **Request New Vehicle** | Vehicle Name, Cost, Justification, Priority | `window.drawer.open('requestNewVehicle')` | `submitProcurementRequest()` |
+| **Review Vehicle Req** | Review Comments, Recommend/Info buttons | `window.drawer.open('reviewVehicleRequest')` | `recommendToFinance()`, `requestInfo()` |
+| **Approve Purchase** | GL Code, Final Cost, Approve (Btn) | `window.drawer.open('approveVehiclePurchase')` | `approvePO()`, `releaseFunds()` |
+| **Requisition Review** | Item List, Valuation, Budget Check, Approve | `window.drawer.open('requisitionReview')` | `approveRequisition()`, `rejectRequisition()` |
+| **Flag Regulatory Breach**| Breach Type, Impact, Confirm (Btn) | `window.drawer.open('flagBreach')` | `logBreach()`, `suspendPayments()` |
+| **Certify Milestone** | Valuation, Inspection Checklist, Certificate | `window.drawer.open('certifyMilestone')` | `issueCertificate()`, `generateValuation()` |
+| **Fraud Investigation** | Investigation Notes, Confirm/Clear buttons | `window.drawer.open('investigation')` | `freezeVendor()`, `clearFraudAlert()` |
+| **User Management** | Full Name, Role, Email, Permission sets | `window.drawer.open('newUser')` | `createAccount()`, `forcePasswordReset()` |
+
+---
+
+### 8.1.3 Key System Workflows & Interconnections
+The MCMS platform is built on an asynchronous event-driven architecture where field-level actions propagate through the management hierarchy:
+
+1.  **Field-to-Project Workflow:** When a Field Supervisor (FS) submits a *Daily Progress Log*, the data is held for PM review. Once the PM uses the *Site Log Verification* drawer to confirm, the system automatically updates the project's Gantt Chart progress and deducts materials/costs from the project budget.
+2.  **Procurement Hierarchy:** Equipment Coordinator (EQ) initiates a vehicle request via the *Request New Vehicle* drawer. The Project Manager (PM) receives an alert, reviews it via the *Review Vehicle Request* drawer, and adds a recommendation. Finally, the Finance Director (FM) uses the *Approve Purchase* drawer to release funds and generate a PO.
+3.  **Compliance-Finance Link:** If a Contract Administrator (CM) identifies an expired insurance policy and uses the *Flag Breach* drawer, the system automatically places a "Compliance Hold" on that vendor in the Finance Dashboard, preventing the FM from accidentally approving new requisitions for that vendor until rectified.
+4.  **Integrity Workflow:** Reports filed through the *Whistleblower Portal* are routed to the *Issue Resolution Center*. The PM handles the narrative, but all resolution actions are logged in the FM's *Immutable Audit Trail* for oversight.
+
+---
 
 ## 8.2 Description of Reports
 
@@ -61,8 +74,8 @@ The UI follows a consistent layout with a side navigation menu, a breadcrumb-led
 | :--- | :--- | :--- |
 | **Project Status Summary** | Evaluates timeline adherence and critical path risks. | PDF; RAG Status Gauges + Gantt Snapshot. |
 | **Financial Expenditure** | Tracks real-time budget utilization vs. planned costs. | XLSX; Pivot-table ready line-item ledger. |
-| **Site Activity Log** | Provides a permanent record of field progress and evidence. | PDF; Chronological feed with integrated photos and GPS. |
+| **Site Activity Log** | Permanent record of field progress and evidence. | PDF; Feed with integrated photos and GPS. |
 | **Asset Utilization** | Identifies idle vs. productive equipment hours. | CSV/Charts; Bar graphs by equipment category. |
-| **Compliance Audit** | Tracks legal document history and regulatory breaches. | PDF; Tabular immutable trail with user IDs. |
+| **Compliance Audit** | Tracks legal document history and regulatory breaches. | PDF; Tabular immutable trail with actor IDs. |
 | **Labor Productivity** | Analyzes man-hour efficiency per project phase. | PDF; Tabular data with productivity trend lines. |
-| **Monthly Financials** | Executive summary of cash flow and P&L position. | PDF; Standard accounting balance sheet layout. |
+| **Monthly Financials** | Executive summary of cash flow and P&L position. | PDF; Standard balance sheet layout. |
