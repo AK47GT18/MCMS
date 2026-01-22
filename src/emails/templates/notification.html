@@ -1,55 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{title}} - MCMS Notification</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - MCMS Notification</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
-  <table role="presentation" style="width: 100%; border-collapse: collapse;">
-    <tr>
-      <td align="center" style="padding: 40px 0;">
-        <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 25px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 600;">MCMS Notification</h1>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: separate; border-spacing: 0; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 0; text-align: center;">
+                            <div style="background-color: rgba(255, 255, 255, 0.15); width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 32px; color: #ffffff;">🔔</span>
+                            </div>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">New Notification</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 48px;">
+                            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                                <strong>Hello {{name}},</strong>
+                            </p>
+                            
+                            <!-- Notification Card -->
+                            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 4px; padding: 24px; margin-bottom: 32px;">
+                                <h3 style="color: #1e40af; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">{{title}}</h3>
+                                <p style="color: #1e3a8a; margin: 0; font-size: 16px; line-height: 1.6;">{{message}}</p>
+                            </div>
+
+                            <!-- Action Button -->
+                            <table role="presentation" style="width: 100%; margin: 0 0 32px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{actionUrl}}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); letter-spacing: 0.3px; transition: all 0.2s;">
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 0;">
+                                You can change your notification preferences in your account settings.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0 0 8px;">
+                                © {{year}} MCMS Construction Management System
+                            </p>
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                                Sent securely from our system. <a href="#" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a> or <a href="#" style="color: #6b7280; text-decoration: underline;">Privacy Policy</a>.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                 <!-- Company Address / Extra Footer Info -->
+                 <table role="presentation" style="width: 100%; max-width: 600px; margin-top: 20px;">
+                    <tr>
+                        <td align="center">
+                            <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+                                MCMS Global Headquarters • 123 Builder Lane, Construct City
+                            </p>
+                        </td>
+                    </tr>
+                </table>
             </td>
-          </tr>
-          
-          <!-- Content -->
-          <tr>
-            <td style="padding: 30px;">
-              <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">Hi {{name}},</h2>
-              
-              <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px 20px; border-radius: 0 6px 6px 0; margin: 20px 0;">
-                <h3 style="color: #1e40af; margin: 0 0 10px 0; font-size: 16px;">{{title}}</h3>
-                <p style="color: #3b82f6; margin: 0; font-size: 15px; line-height: 1.5;">{{message}}</p>
-              </div>
-              
-              <table role="presentation" style="margin: 25px 0;">
-                <tr>
-                  <td style="background-color: #3b82f6; border-radius: 6px;">
-                    <a href="{{actionUrl}}" style="display: inline-block; padding: 12px 25px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px;">
-                      View Details →
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f9fafb; padding: 15px 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
-              <p style="color: #9ca3af; font-size: 11px; margin: 0;">
-                © {{year}} MCMS | This is an automated notification
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+        </tr>
+    </table>
 </body>
 </html>

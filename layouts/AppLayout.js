@@ -1,4 +1,4 @@
-import { currentUser } from '../config/roles.js';
+import { currentUser, ROLES } from '../config/roles.js';
 import { NAV_ITEMS } from '../config/navConfig.js';
 import { DrawerTemplates } from '../components/DrawerTemplates.js';
 import { modal } from '../components/ui/ModalManager.js';
@@ -7,6 +7,16 @@ import { toast } from '../components/ui/ToastManager.js';
 export class AppLayout {
     constructor() {
         this.appContainer = document.getElementById('app');
+        this.roleTitles = {
+            [ROLES.FINANCE_DIRECTOR]: 'FINANCE',
+            [ROLES.PROJECT_MANAGER]: 'PROJECTS',
+            [ROLES.FIELD_SUPERVISOR]: 'OPERATIONS',
+            [ROLES.CONTRACT_ADMIN]: 'CONTRACTS',
+            [ROLES.EQUIPMENT_COORDINATOR]: 'FLEET',
+            [ROLES.OPERATIONS_MANAGER]: 'OPERATIONS',
+            [ROLES.MANAGING_DIRECTOR]: 'EXECUTIVE',
+            [ROLES.SYSTEM_TECHNICIAN]: 'SYSTEM'
+        };
     }
 
     render() {
@@ -34,6 +44,8 @@ export class AppLayout {
     }
 
     generateSidebar(sections) {
+        const dashboardTitle = this.roleTitles[currentUser.role] || 'DASHBOARD';
+        
         const sectionsHTML = sections.map(section => `
             <div class="nav-section">
                 <div class="nav-label">${section.section}</div>
@@ -50,8 +62,12 @@ export class AppLayout {
         return `
             <aside class="sidebar hidden-mobile">
                 <div class="logo">
-                    <i class="fas fa-hard-hat"></i>
-                    <span>MKAKA FINANCE</span>
+                     <div class="logo-icon">
+                        <span class="material-symbols-outlined">architecture</span>
+                    </div>
+                    <div class="logo-text">
+                        MKAKA <span style="color: var(--orange);">${dashboardTitle}</span>
+                    </div>
                 </div>
                 <div class="sidebar-header">
                      <div class="user-profile">

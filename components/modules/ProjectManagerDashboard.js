@@ -865,17 +865,30 @@ export class ProjectManagerDashboard {
         `;
     }
 
-    initializeProjectMap() {
+    initializeProjectMap(retryCount = 0) {
         // Wait for drawer animation and DOM rendering
         setTimeout(() => {
             const mapContainer = document.getElementById('project-map');
             if (!mapContainer) return;
 
-            if (typeof L === 'undefined') {
-                mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--red);">Error: Leaflet library not loaded. Please check your internet connection and reload.</div>';
+            // Use the isolated Leaflet engine
+            const LeafletEngine = window.MKAKA_L || window.L;
+
+            if (!LeafletEngine || typeof LeafletEngine.map !== 'function') {
+                if (retryCount < 5) {
+                    console.log(`[Map] Leaflet engine (MKAKA_L) not ready (Attempt ${retryCount + 1}), retrying...`);
+                    return this.initializeProjectMap(retryCount + 1);
+                }
+                console.error("Leaflet engine failure.", { 
+                    MKAKA_L: !!window.MKAKA_L, 
+                    L: !!window.L,
+                    hasMap: LeafletEngine ? typeof LeafletEngine.map : 'engine missing'
+                });
+                mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--red);">Error: Map engine collision or load failure. Please reload.</div>';
                 return;
             }
 
+            console.log("[Map] Using isolated Leaflet engine:", LeafletEngine.version);
             // Clear loading state
             mapContainer.innerHTML = '';
 
@@ -883,22 +896,22 @@ export class ProjectManagerDashboard {
             const defaultCoords = [-13.9626, 33.7741];
             
             try {
-                // Initialize map
-                const map = L.map('project-map').setView(defaultCoords, 13);
+                // Initialize map using isolated engine
+                const map = LeafletEngine.map('project-map').setView(defaultCoords, 13);
 
                 // Add OpenStreetMap tiles
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                LeafletEngine.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 }).addTo(map);
 
                 // Add initial marker
-                let marker = L.marker(defaultCoords, {
+                let marker = LeafletEngine.marker(defaultCoords, {
                     draggable: true
                 }).addTo(map);
 
                 // Add Circle for Geofence/Radius
-                let circle = L.circle(defaultCoords, {
+                let circle = LeafletEngine.circle(defaultCoords, {
                     color: 'var(--orange)',
                     fillColor: 'var(--orange)',
                     fillOpacity: 0.15,
@@ -913,7 +926,7 @@ export class ProjectManagerDashboard {
                 };
 
                 // Add Search Control (Geocoder)
-                const geocoder = L.Control.geocoder({
+                const geocoder = LeafletEngine.Control.geocoder({
                     defaultMarkGeocode: false,
                     placeholder: "Search for a location...",
                     errorMessage: "Location not found."
