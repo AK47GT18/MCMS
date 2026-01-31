@@ -798,6 +798,75 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
 .gantt .grid-row { fill: #ffffff !important; }
 .gantt .row-line { stroke: #f1f5f9 !important; }
 .gantt .holiday-highlight { fill: #f8fafc !important; }
+
+/* --- SIMPLE CSS TOOLTIPS --- */
+/* Z-index hierarchy: Modals (10000) > Tooltips (9999) > Drawers (9998) */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: var(--slate-800);
+    color: var(--white);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 9999; /* Below modals (10000), above drawers (9998) */
+    box-shadow: var(--shadow-md);
+}
+[data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-8px); }
+[data-tooltip]::before { /* Arrow */
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    border: 6px solid transparent;
+    border-top-color: var(--slate-800);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 9999; /* Match tooltip */
+    margin-bottom: -11px; /* Adjust based on border size to position at bottom of tooltip */
+    pointer-events: none;
+}
+[data-tooltip]:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-4px); }
+
+/* --- Validation & Accessibility --- */
+.input-error {
+    border-color: #ef4444 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23ef4444'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linecap='round' d='M5.8 3.6h.4L6 6.5zM6 8.2af.4.4 0 010 .8.4.4 0 010-.8'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+}
+
+.error-message {
+    display: none;
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+/* Focus Visibility */
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.modal-box:focus {
+    outline: none;
+}
 .gantt-container .side-header { display: none !important; }
 .gantt-container { 
     border-radius: 8px; 

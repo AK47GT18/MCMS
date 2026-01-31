@@ -1106,35 +1106,38 @@ Contract Admin</textarea>
 
     newUser: `
         <div class="drawer-section">
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-input" placeholder="e.g., John Doe" style="width: 100%;">
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Role</label>
-                <select class="form-input" style="width: 100%;">
-                    <option>Project Manager</option>
-                    <option>Finance Director</option>
-                    <option>Field Supervisor</option>
-                    <option>Contract Administrator</option>
-                    <option>Equipment Coordinator</option>
-                    <option>System Technician</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-input" placeholder="j.doe@mkaka.mw" style="width: 100%;">
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" class="form-input" placeholder="+265..." style="width: 100%;">
-            </div>
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Initial Password</label>
-                <input type="password" class="form-input" placeholder="••••••••" style="width: 100%;">
-                <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">User will be prompted to change this on first login.</p>
-            </div>
-            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('User account created successfully', 'success')">Create User Account</button>
+            <form id="createUserForm" novalidate>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" for="new_user_name">Full Name</label>
+                    <input type="text" id="new_user_name" name="name" class="form-input" placeholder="e.g., John Doe" style="width: 100%;" required data-validate="name">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" for="new_user_role">Role</label>
+                    <select id="new_user_role" name="role" class="form-input" style="width: 100%;" required>
+                        <option value="">Select Role...</option>
+                        <option value="Project Manager">Project Manager</option>
+                        <option value="Finance Director">Finance Director</option>
+                        <option value="Field Supervisor">Field Supervisor</option>
+                        <option value="Contract Administrator">Contract Administrator</option>
+                        <option value="Equipment Coordinator">Equipment Coordinator</option>
+                        <option value="System Technician">System Technician</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" for="new_user_email">Email Address</label>
+                    <input type="email" id="new_user_email" name="email" class="form-input" placeholder="j.doe@mkaka.mw" style="width: 100%;" required data-validate="email">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" for="new_user_phone">Phone Number</label>
+                    <input type="tel" id="new_user_phone" name="phone" class="form-input" placeholder="+265..." style="width: 100%;" required data-validate="phone">
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" for="new_user_password">Initial Password</label>
+                    <input type="password" id="new_user_password" name="password" class="form-input" placeholder="••••••••" style="width: 100%;" required data-validate="password">
+                    <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">User will be prompted to change this on first login.</p>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">Create User Account</button>
+            </form>
         </div>
     `,
 
@@ -1173,7 +1176,7 @@ Contract Admin</textarea>
                     <i class="fas fa-key" style="color: var(--slate-400);"></i> Force Password Reset
                 </button>
                 
-                <button class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="if(confirm('Are you sure you want to delete this user? This action cannot be undone.')) { window.drawer.close(); window.toast.show('User account deleted', 'error'); }">
+                <button class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="window.modal.confirm('Delete User', 'Are you sure you want to delete this user? This action cannot be undone.', () => { window.drawer.close(); window.toast.show('User account deleted', 'error'); })">
                     <i class="fas fa-user-slash"></i> Deactivate & Delete User
                 </button>
             </div>

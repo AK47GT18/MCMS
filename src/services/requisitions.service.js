@@ -6,6 +6,8 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const handlers = require('../realtime/handlers');
+const emailService = require('../emails/email.service');
 
 async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, projectId }) {
   const skip = (page - 1) * limit;
@@ -69,8 +71,25 @@ async function approve(id, reviewerId) {
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
     },
+    include: {
+      submitter: { select: { id: true, name: true, email: true } },
+    },
   });
+  
   logger.info('Requisition approved', { reqId: id, reviewerId });
+  
+  // Emit realtime event
+  handlers.emitRequisitionStatus(requisition, 'approved', reviewerId);
+  
+  // Email notification to submitter
+  if (requisition.submitter) {
+    emailService.sendNotification(
+      requisition.submitter,
+      'Requisition Approved',
+      `Your requisition ${requisition.reqCode} has been approved.`,
+    ).catch(err => logger.error('Email notification failed', { error: err.message }));
+  }
+  
   return requisition;
 }
 
@@ -82,8 +101,25 @@ async function reject(id, reviewerId) {
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
     },
+    include: {
+      submitter: { select: { id: true, name: true, email: true } },
+    },
   });
+  
   logger.info('Requisition rejected', { reqId: id, reviewerId });
+  
+  // Emit realtime event
+  handlers.emitRequisitionStatus(requisition, 'rejected', reviewerId);
+  
+  // Email notification to submitter
+  if (requisition.submitter) {
+    emailService.sendNotification(
+      requisition.submitter,
+      'Requisition Rejected',
+      `Your requisition ${requisition.reqCode} has been rejected.`,
+    ).catch(err => logger.error('Email notification failed', { error: err.message }));
+  }
+  
   return requisition;
 }
 
@@ -96,8 +132,16 @@ async function flagFraud(id, reviewerId) {
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
     },
+    include: {
+      submitter: { select: { id: true, name: true, email: true } },
+    },
   });
+  
   logger.info('Requisition flagged for fraud', { reqId: id, reviewerId });
+  
+  // Emit realtime event (critical)
+  handlers.emitRequisitionStatus(requisition, 'fraud_flag', reviewerId);
+  
   return requisition;
 }
 

@@ -3,10 +3,12 @@
  * Handles user authentication and password management
  */
 
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { prisma } = require('../config/database');
 const { generateToken } = require('../utils/jwt');
 const { AppError } = require('../middlewares/error.middleware');
+const emailService = require('../emails/email.service');
 const logger = require('../utils/logger');
 
 /**
@@ -121,6 +123,11 @@ async function register(userData) {
   
   logger.info('User registered', { userId: user.id, email: user.email });
   
+  // Send welcome email (async, don't await)
+  emailService.sendWelcome(user).catch(err => {
+    logger.error('Failed to send welcome email', { userId: user.id, error: err.message });
+  });
+  
   return { user, token };
 }
 
@@ -158,6 +165,85 @@ async function changePassword(userId, currentPassword, newPassword) {
 }
 
 /**
+ * Request password reset (forgot password)
+ * @param {string} email - User email
+ */
+async function forgotPassword(email) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true },
+  });
+  
+  // Always return success to prevent email enumeration
+  if (!user) {
+    logger.info('Password reset requested for unknown email', { email });
+    return { message: 'If that email exists, a reset link has been sent.' };
+  }
+  
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetExpiryMinutes = parseInt(process.env.PASSWORD_RESET_EXPIRY_MINUTES || '10', 10);
+  const resetExpires = new Date(Date.now() + resetExpiryMinutes * 60 * 1000);
+  
+  // Save to database
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetToken: resetToken,
+      passwordResetExpires: resetExpires,
+    },
+  });
+  
+  // Send email
+  await emailService.sendPasswordReset(user, resetToken);
+  
+  logger.info('Password reset email sent', { userId: user.id });
+  
+  return { message: 'If that email exists, a reset link has been sent.' };
+}
+
+/**
+ * Reset password with token
+ * @param {string} token - Reset token
+ * @param {string} newPassword - New password
+ */
+async function resetPassword(token, newPassword) {
+  // Find user with valid token
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetToken: token,
+      passwordResetExpires: { gte: new Date() },
+    },
+    select: { id: true, email: true, name: true },
+  });
+  
+  if (!user) {
+    throw new AppError('Invalid or expired reset token', 400);
+  }
+  
+  // Hash new password
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  
+  // Update password and clear reset token
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+    },
+  });
+  
+  logger.info('Password reset successfully', { userId: user.id });
+  
+  // Send confirmation email
+  emailService.sendConfirmation(user, 'Password Reset', 'Your password has been successfully changed.').catch(err => {
+    logger.error('Failed to send password reset confirmation', { userId: user.id, error: err.message });
+  });
+  
+  return { message: 'Password reset successfully. You can now login.' };
+}
+
+/**
  * Get user profile by ID
  * @param {number} userId - User ID
  * @returns {Promise<Object>} User profile
@@ -189,5 +275,8 @@ module.exports = {
   login,
   register,
   changePassword,
+  forgotPassword,
+  resetPassword,
   getProfile,
 };
+

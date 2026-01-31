@@ -498,9 +498,7 @@
             .features { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
         }
-    </style>
-</head>
-<body>
+
 
     <header>
         <div class="container flex-between" style="width: 100%;">
@@ -686,26 +684,26 @@
                     <h2 class="section-title">Start Your Project Today</h2>
                     <p style="color: #64748b; margin-bottom: 30px;">Reach out to our technical team for tenders, inquiries, or site consultations.</p>
                     
-                    <form>
+                    <form id="contactForm" novalidate>
                         <div class="flex" style="gap: 20px;">
                             <div class="form-group" style="flex: 1;">
-                                <label>Full Name</label>
-                                <input type="text" placeholder="John Doe">
+                                <label for="contact-name">Full Name</label>
+                                <input type="text" id="contact-name" name="name" placeholder="John Doe" required data-validate="required">
                             </div>
                             <div class="form-group" style="flex: 1;">
-                                <label>Email Address</label>
-                                <input type="email" placeholder="john@company.com">
+                                <label for="contact-email">Email Address</label>
+                                <input type="email" id="contact-email" name="email" placeholder="john@company.com" required data-validate="email">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Subject</label>
-                            <input type="text" placeholder="Project Tender / Inquiry">
+                            <label for="contact-subject">Subject</label>
+                            <input type="text" id="contact-subject" name="subject" placeholder="Project Tender / Inquiry" required>
                         </div>
                         <div class="form-group">
-                            <label>Message</label>
-                            <textarea rows="5" placeholder="How can we help you?"></textarea>
+                            <label for="contact-msg">Message</label>
+                            <textarea id="contact-msg" name="message" rows="5" placeholder="How can we help you?" required></textarea>
                         </div>
-                        <button class="btn btn-primary" style="width: 100%; justify-content: center;">Send Message</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Send Message</button>
                     </form>
                 </div>
                 
@@ -752,17 +750,19 @@
                 <h3>Welcome Back</h3>
                 <p>Log in to access your employee portal.</p>
             </div>
-            <form onsubmit="event.preventDefault(); window.location.href='dashboard.html';">
+            <form id="loginForm" novalidate>
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="name@mkakaconstruction.com" required>
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" name="email" placeholder="name@mkakaconstruction.com" required data-validate="email">
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" placeholder="••••••••" required>
+                    <label for="login-pass">Password</label>
+                    <input type="password" id="login-pass" name="password" placeholder="••••••••" required>
                 </div>
-                <span class="modal-link" onclick="switchModal('loginModal', 'forgotModal')">Forgot Password?</span>
-                <button class="btn btn-primary" style="width: 100%; justify-content: center;">Log In</button>
+                <div style="text-align: right; margin-bottom: 20px;">
+                    <span class="modal-link" onclick="switchModal('loginModal', 'forgotModal')" role="button" tabindex="0">Forgot Password?</span>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Log In</button>
             </form>
         </div>
     </div>
@@ -774,14 +774,14 @@
                 <h3>Reset Password</h3>
                 <p>Enter your email to receive a reset link.</p>
             </div>
-            <form onsubmit="event.preventDefault(); switchModal('forgotModal', 'resetModal')">
+            <form id="forgotForm" novalidate>
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="name@mkakaconstruction.com" required>
+                    <label for="forgot-email">Email Address</label>
+                    <input type="email" id="forgot-email" name="email" placeholder="name@mkakaconstruction.com" required data-validate="email">
                 </div>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center;">Send Reset Link</button>
                 <div class="modal-link-center">
-                    <span class="modal-link" onclick="switchModal('forgotModal', 'loginModal')">Back to Login</span>
+                    <span class="modal-link" onclick="switchModal('forgotModal', 'loginModal')" role="button" tabindex="0">Back to Login</span>
                 </div>
             </form>
         </div>
@@ -794,43 +794,133 @@
                 <h3>Set New Password</h3>
                 <p>Please enter your new credentials.</p>
             </div>
-            <form onsubmit="event.preventDefault(); alert('Password successfully updated!'); closeModal('resetModal');">
+            <form id="resetForm" novalidate>
                 <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" placeholder="••••••••" required>
+                    <label for="reset-pass">New Password</label>
+                    <input type="password" id="reset-pass" name="password" placeholder="••••••••" required data-validate="password">
                 </div>
                 <div class="form-group">
-                    <label>Confirm Password</label>
-                    <input type="password" placeholder="••••••••" required>
+                    <label for="reset-confirm">Confirm Password</label>
+                    <input type="password" id="reset-confirm" name="confirmPassword" placeholder="••••••••" required data-match="reset-pass">
                 </div>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center;">Update Password</button>
             </form>
         </div>
     </div>
 
-    <script>
-        // Open a specific modal
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
-        }
+    <script type="module">
+        import { FormValidator } from './src/utils/FormValidator.js';
+        import { modal } from './components/ui/ModalManager.js';
+        import { toast } from './components/ui/ToastManager.js';
 
-        // Close a specific modal
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
+        // Expose to window for inline onclick handlers (legacy support)
+        window.modal = modal;
+        window.toast = toast;
 
-        // Switch from one modal to another (e.g. Login -> Forgot)
-        function switchModal(currentId, nextId) {
-            closeModal(currentId);
-            openModal(nextId);
-        }
-
-        // Close modal if clicking on the dark overlay background
-        function handleOutsideClick(event, id) {
-            if (event.target.id === id) {
-                closeModal(id);
+        // Modal Logic Helper
+        window.openModal = (id) => {
+            const modalEl = document.getElementById(id);
+            if (modalEl) {
+                modalEl.style.display = 'flex';
+                // A11y: Trap focus inside modal
+                modalEl.setAttribute('aria-hidden', 'false');
+                const focusable = modalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (focusable.length) focusable[0].focus();
             }
-        }
+        };
+
+        window.closeModal = (id) => {
+            const modalEl = document.getElementById(id);
+            if (modalEl) {
+                modalEl.style.display = 'none';
+                modalEl.setAttribute('aria-hidden', 'true');
+            }
+        };
+
+        window.switchModal = (closeId, openId) => {
+            window.closeModal(closeId);
+            window.openModal(openId);
+        };
+
+        window.handleOutsideClick = (e, id) => {
+            if (e.target.id === id) {
+                window.closeModal(id);
+            }
+        };
+
+        // Keyboard Navigation (Esc to close)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                ['loginModal', 'forgotModal', 'resetModal'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.style.display === 'flex') window.closeModal(id);
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Login Form
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                const validator = new FormValidator(loginForm);
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (validator.validate()) {
+                        // Simulate API Call
+                        const btn = loginForm.querySelector('button');
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Logging in...';
+                        btn.disabled = true;
+
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                    }
+                });
+            }
+
+            // 2. Forgot Password Form
+            const forgotForm = document.getElementById('forgotForm');
+            if (forgotForm) {
+                const validator = new FormValidator(forgotForm);
+                forgotForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (validator.validate()) {
+                        window.closeModal('forgotModal');
+                        // Show Success Modal via Manager
+                        modal.success('Check Your Email', 'We have sent password reset instructions to your email address.');
+                    }
+                });
+            }
+
+            // 3. Reset Password Form
+            const resetForm = document.getElementById('resetForm');
+            if (resetForm) {
+                const validator = new FormValidator(resetForm);
+                resetForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (validator.validate()) {
+                        window.closeModal('resetModal');
+                        modal.success('Password Updated', 'Your password has been securely reset. You may now login.');
+                    }
+                });
+            }
+
+            // 4. Contact Form
+            const contactForm = document.getElementById('contactForm');
+            if (contactForm) {
+                const validator = new FormValidator(contactForm);
+                contactForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (validator.validate()) {
+                        toast.success('Message Sent! We will contact you shortly.');
+                        contactForm.reset();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

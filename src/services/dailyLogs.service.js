@@ -6,6 +6,7 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const handlers = require('../realtime/handlers');
 
 async function getAll({ page = 1, limit = 20, projectId, startDate, endDate }) {
   const skip = (page - 1) * limit;
@@ -53,9 +54,18 @@ async function create(data, userId) {
     },
     include: {
       project: { select: { id: true, code: true } },
+      submitter: { select: { id: true, name: true } },
     },
   });
+  
   logger.info('Daily log created', { logId: log.id, projectId: data.projectId });
+  
+  // Emit SOS alert if flagged
+  if (log.isSos) {
+    handlers.emitSosAlert(log);
+    logger.warn('SOS alert triggered', { logId: log.id, projectId: log.projectId });
+  }
+  
   return log;
 }
 

@@ -1,29 +1,65 @@
 import { AppLayout } from './layouts/AppLayout.js';
 import { currentUser } from './config/roles.js';
 import { drawer } from './components/DrawerManager.js';
+import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
 import './components/ui/ToastManager.js';
 import './components/ui/ModalManager.js';
+
+// --- Global Error Boundary ---
+window.addEventListener('error', (event) => {
+    console.error('Global Error Caught:', event.error);
+    
+    // Send to error reporting service (e.g., Sentry)
+    if (typeof reportError === 'function') {
+        reportError(event.error, { type: 'uncaught_error', message: event.message });
+    }
+    
+    if (window.modal) {
+        window.modal.error('Application Error', `An unexpected error occurred: ${event.message}`);
+    } else {
+        alert(`Critical Error: ${event.message}`);
+    }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled Promise Rejection:', event.reason);
+    
+    // Send to error reporting service
+    if (typeof reportError === 'function') {
+        reportError(event.reason, { type: 'unhandled_rejection' });
+    }
+    
+    if (window.toast) {
+        window.toast.show(`Async Error: ${event.reason.message || 'Unknown network error'}`, 'error');
+    }
+});
 
 class App {
     constructor() {
         this.layout = new AppLayout();
+        this.moduleLoader = new ModuleLoaderStrategy();
         this.currentRoute = 'dashboard';
         this.init();
     }
 
-    init() {
-        console.log(`Starting MCMS as ${currentUser.role}`);
-        
-        // Render Shell
-        this.layout.render();
+    async init() {
+        try {
+            console.log(`Starting MCMS as ${currentUser.role}`);
+            
+            // Render Shell
+            this.layout.render();
 
-        // Initial Page Load
-        this.loadPage('dashboard');
+            // Initial Page Load
+            await this.loadPage('dashboard');
 
-        // Listen for navigation events
-        window.addEventListener('navigate', (e) => {
-            this.loadPage(e.detail.id);
-        });
+            // Listen for navigation events
+            window.addEventListener('navigate', (e) => {
+                this.loadPage(e.detail.id);
+            });
+        } catch (error) {
+            console.error('Initialization Failed:', error);
+            window.modal.error('Startup Failed', 'The application could not start. Please refresh.');
+        }
     }
 
     async loadPage(pageId) {
@@ -34,96 +70,40 @@ class App {
         }
 
         let content = '';
+        let module = null;
 
         try {
-            // Routing Logic
-            if (currentUser.role === 'Finance Director') {
-                // Lazy load the Finance Module if not already loaded
-                if (!this.financeModule) {
-                    const { FinanceDashboard } = await import('./components/modules/FinanceDashboard.js');
-                    this.financeModule = new FinanceDashboard();
-                }
-                
-                // Update the module's current view state
-                this.financeModule.currentView = pageId;
-                
-                // Render the module with the new view
-                content = this.financeModule.render(); 
-            } else if (currentUser.role === 'Project Manager') {
-                 // Lazy load the PM Module
-                 if (!this.pmModule) {
-                    const { ProjectManagerDashboard } = await import('./components/modules/ProjectManagerDashboard.js');
-                    this.pmModule = new ProjectManagerDashboard();
-                 }
+            // Strategy Pattern: Load module based on role
+            module = await this.moduleLoader.load(currentUser.role);
 
-                 this.pmModule.currentView = pageId;
-                 content = this.pmModule.render();
-            } else if (currentUser.role === 'Field Supervisor') {
-                // Lazy load the Field Module
-                if (!this.fsModule) {
-                   const { FieldSupervisorDashboard } = await import('./components/modules/FieldSupervisorDashboard.js');
-                   this.fsModule = new FieldSupervisorDashboard();
-                }
-
-                this.fsModule.currentView = pageId;
-                content = this.fsModule.render();
-            } else if (currentUser.role === 'Contract Administrator') {
-                 // Lazy load Contract Module
-                 if (!this.caModule) {
-                    const { ContractAdminDashboard } = await import('./components/modules/ContractAdminDashboard.js');
-                    this.caModule = new ContractAdminDashboard();
-                 }
-                 this.caModule.currentView = pageId;
-                 content = this.caModule.render();
-            } else if (currentUser.role === 'Equipment Coordinator') {
-                 // Lazy load Equipment Module
-                 if (!this.ecModule) {
-                    const { EquipmentCoordinatorDashboard } = await import('./components/modules/EquipmentCoordinatorDashboard.js');
-                    this.ecModule = new EquipmentCoordinatorDashboard();
-                 }
-                 this.ecModule.currentView = pageId;
-                 content = this.ecModule.render();
-            } else if (currentUser.role === 'Operations Manager') {
-                 // Lazy load Operations Module
-                 if (!this.omModule) {
-                    const { OperationsManagerDashboard } = await import('./components/modules/OperationsManagerDashboard.js');
-                    this.omModule = new OperationsManagerDashboard();
-                 }
-                 this.omModule.currentView = pageId;
-                 content = this.omModule.render();
-            } else if (currentUser.role === 'Managing Director') {
-                 // Lazy load MD Module
-                 if (!this.mdModule) {
-                    const { ManagingDirectorDashboard } = await import('./components/modules/ManagingDirectorDashboard.js');
-                    this.mdModule = new ManagingDirectorDashboard();
-                 }
-                 this.mdModule.currentView = pageId;
-                 content = this.mdModule.render();
-            } else if (currentUser.role === 'System Technician') {
-                 // Lazy load Technician Module
-                 if (!this.techModule) {
-                    const { SystemTechnicianDashboard } = await import('./components/modules/SystemTechnicianDashboard.js');
-                    this.techModule = new SystemTechnicianDashboard();
-                 }
-                 this.techModule.currentView = pageId;
-                 content = this.techModule.render();
+            if (module) {
+                module.currentView = pageId;
+                content = module.render();
             } else {
-                // Fallback / Other Roles Mock
+                // Fallback for roles without specific modules or testing
                 content = this.getMockContent(pageId);
             }
         } catch (error) {
             console.error('Error loading page:', error);
-            content = `<div class="p-4 text-red-500">Error loading content: ${error.message}</div>`;
+            content = `<div class="p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">
+                <h3 class="font-bold text-lg mb-2"><i class="fas fa-exclamation-circle"></i> Module Load Error</h3>
+                <p>Failed to load the dashboard module for <strong>${currentUser.role}</strong>.</p>
+                <div class="mt-4 text-sm text-slate-600 font-mono bg-white p-3 rounded border">${error.message}</div>
+            </div>`;
+            window.toast.show('Failed to load content', 'error');
         }
 
         // Inject the content into the Main Layout
         this.layout.injectContent(content);
 
         // Initialization Hooks for Maps/Plots
-        if (pageId === 'portfolio' && this.pmModule) {
-            this.pmModule.initializeProjectMap();
-        } else if (pageId === 'tracking' && this.ecModule) {
-            this.ecModule.initializeTrackingMap();
+        if (module) {
+             // Safe invocation of module-specific hooks
+            if (pageId === 'portfolio' && typeof module.initializeProjectMap === 'function') {
+                module.initializeProjectMap();
+            } else if (pageId === 'tracking' && typeof module.initializeTrackingMap === 'function') {
+                module.initializeTrackingMap();
+            }
         }
     }
 
@@ -137,18 +117,9 @@ class App {
                         <button class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors shadow-sm font-medium" onclick="window.drawer.open('Demo Drawer', '<div class=\\'p-4\\'>Hello from Drawer!</div>')">
                             Test Drawer
                         </button>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 h-32 flex items-center justify-center text-slate-400">
-                        Widget A Placeholder
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 h-32 flex items-center justify-center text-slate-400">
-                        Widget B Placeholder
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 h-32 flex items-center justify-center text-slate-400">
-                        Widget C Placeholder
+                         <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm font-medium" onclick="throw new Error('Test Global Error')">
+                            Test Error Boundary
+                        </button>
                     </div>
                 </div>
             </div>

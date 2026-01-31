@@ -164,6 +164,27 @@ async function sendConfirmation(user, action, details) {
 }
 
 /**
+ * Send password reset email
+ */
+async function sendPasswordReset(user, resetToken) {
+  const resetLink = `${env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  
+  const { html, text } = loadTemplate('password-reset', {
+    name: user.name,
+    resetLink,
+    expiryTime: '10 minutes',
+    year: new Date().getFullYear(),
+  });
+  
+  return send({
+    to: user.email,
+    subject: 'MCMS: Reset Your Password',
+    html,
+    text,
+  });
+}
+
+/**
  * Get email service status
  */
 function getStatus() {
@@ -181,5 +202,6 @@ module.exports = {
   sendWelcome,
   sendNotification,
   sendConfirmation,
+  sendPasswordReset,
   getStatus,
 };

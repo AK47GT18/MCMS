@@ -385,11 +385,11 @@ export class AppLayout {
     }
 
     handleLogout() {
-        if(confirm('Are you sure you want to sign out?')) {
+        modal.confirm('Sign Out', 'Are you sure you want to sign out?', () => {
             window.toast.show('Signing out...', 'info');
             setTimeout(() => {
                 window.location.reload(); // Simulates logout for now
             }, 800);
-        }
+        });
     }
 }

@@ -104,18 +104,20 @@ enum ProcurementStatusEnum {
 // TABLE: users
 // ============================================
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String   @db.VarChar(100)
-  email        String   @unique @db.VarChar(255)
-  phone        String?  @db.VarChar(20)
-  role         RoleEnum
-  avatarUrl    String?  @map("avatar_url")
-  permissions  String[]
-  passwordHash String?  @map("password_hash") @db.VarChar(255)
-  lastLoginIp  String?  @map("last_login_ip") @db.Inet
-  isLocked     Boolean  @default(false) @map("is_locked")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id                   Int       @id @default(autoincrement())
+  name                 String    @db.VarChar(100)
+  email                String    @unique @db.VarChar(255)
+  phone                String?   @db.VarChar(20)
+  role                 RoleEnum
+  avatarUrl            String?   @map("avatar_url")
+  permissions          String[]
+  passwordHash         String?   @map("password_hash") @db.VarChar(255)
+  lastLoginIp          String?   @map("last_login_ip") @db.Inet
+  isLocked             Boolean   @default(false) @map("is_locked")
+  passwordResetToken   String?   @map("password_reset_token") @db.VarChar(100)
+  passwordResetExpires DateTime? @map("password_reset_expires") @db.Timestamptz
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   managedProjects       Project[]             @relation("ProjectManager")

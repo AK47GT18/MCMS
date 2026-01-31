@@ -6,6 +6,7 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const handlers = require('../realtime/handlers');
 
 async function getAll({ page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc', status, category }) {
   const skip = (page - 1) * limit;
@@ -75,7 +76,16 @@ async function checkOut(id, userId, projectId) {
       },
     },
   });
+  
   logger.info('Asset checked out', { assetId: id, userId, projectId });
+  
+  // Emit realtime event (gracefully handle WS failures)
+  try {
+    handlers.emitAssetEvent(asset, 'check_out');
+  } catch (wsError) {
+    logger.warn('Failed to emit asset WebSocket event', { error: wsError.message });
+  }
+  
   return asset;
 }
 
@@ -95,7 +105,12 @@ async function checkIn(id, userId, fuelLevel) {
       },
     },
   });
+  
   logger.info('Asset checked in', { assetId: id, userId });
+  
+  // Emit realtime event
+  handlers.emitAssetEvent(asset, 'check_in');
+  
   return asset;
 }
 

@@ -67,4 +67,37 @@ const changePassword = asyncHandler(async (req, res) => {
   response.success(res, { message: 'Password changed successfully' });
 });
 
-module.exports = { login, register, getProfile, changePassword };
+/**
+ * POST /api/v1/auth/forgot-password
+ * Request password reset email
+ */
+const forgotPassword = asyncHandler(async (req, res) => {
+  const body = await parseBody(req);
+  const { email } = body;
+  
+  if (!email) {
+    return response.badRequest(res, 'Email is required');
+  }
+  
+  const result = await authService.forgotPassword(email);
+  response.success(res, result);
+});
+
+/**
+ * POST /api/v1/auth/reset-password
+ * Reset password with token
+ */
+const resetPassword = asyncHandler(async (req, res) => {
+  const body = await parseBody(req);
+  const { token, newPassword } = body;
+  
+  if (!token || !newPassword) {
+    return response.badRequest(res, 'Token and new password are required');
+  }
+  
+  const result = await authService.resetPassword(token, newPassword);
+  response.success(res, result);
+});
+
+module.exports = { login, register, getProfile, changePassword, forgotPassword, resetPassword };
+

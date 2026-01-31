@@ -291,7 +291,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
                     <td><span class="status transit">Moving</span></td>
                     <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Track</button></td>
                   </tr>
-                  <tr style="background: #FEF2F2;" onclick="alert('Opening GPS Trace...')">
+                  <tr style="background: #FEF2F2;" onclick="window.toast.show('Opening GPS Trace...', 'info')">
                     <td><span class="mono-val">EQP-023</span></td>
                     <td style="font-weight: 600; color: var(--red);">Honda Generator 5kVA</td>
                     <td><span class="gps-tag" style="background: var(--red);">-14.12, 33.56</span> UNKNOWN</td>
@@ -391,7 +391,10 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
   </div>
 </div>
 
-<script>
+<script type="module">
+import { toast } from './components/ui/ToastManager.js';
+window.toast = toast;
+
 // --- NAVIGATION LOGIC ---
 const views = {
     'dashboard': { title: 'Dashboard', context: '45 Assets | 85% Utilization' },
@@ -403,7 +406,7 @@ const views = {
     'operators': { title: 'Operator Management', context: 'Drivers & Licenses' }
 };
 
-function navigateTo(viewId, navElement) {
+window.navigateTo = function(viewId, navElement) {
     if(navElement) { document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active')); navElement.classList.add('active'); }
     document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
     
@@ -419,7 +422,7 @@ function navigateTo(viewId, navElement) {
 }
 
 // --- DRAWER LOGIC ---
-function openDrawer(type, id) {
+window.openDrawer = function(type, id) {
     const overlay = document.getElementById('drawer-overlay');
     const title = document.getElementById('d-title');
     const sub = document.getElementById('d-sub');
@@ -491,7 +494,7 @@ function openDrawer(type, id) {
     }
 }
 
-function closeDrawer() { document.getElementById('drawer-overlay').classList.remove('show'); }
+window.closeDrawer = function() { document.getElementById('drawer-overlay').classList.remove('show'); }
 document.getElementById('drawer-overlay').addEventListener('click', (e) => { if(e.target.id === 'drawer-overlay') closeDrawer(); });
 </script>
 </body>

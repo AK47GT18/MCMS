@@ -6,6 +6,8 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const handlers = require('../realtime/handlers');
+const emailService = require('../emails/email.service');
 
 async function getAll({ page = 1, limit = 20, status, priority, projectId }) {
   const skip = (page - 1) * limit;
@@ -49,8 +51,16 @@ async function create(data, userId) {
       ...data,
       reportedBy: userId,
     },
+    include: {
+      project: { select: { id: true, code: true } },
+    },
   });
+  
   logger.info('Issue created', { issueId: issue.id, issueCode: issue.issueCode });
+  
+  // Emit realtime alert
+  handlers.emitIssueAlert(issue, 'created');
+  
   return issue;
 }
 
@@ -81,8 +91,25 @@ async function assign(id, assigneeId) {
       assignedTo: assigneeId,
       status: 'investigating',
     },
+    include: {
+      assignee: { select: { id: true, name: true, email: true } },
+    },
   });
+  
   logger.info('Issue assigned', { issueId: id, assigneeId });
+  
+  // Send notification to assignee
+  if (issue.assignee) {
+    emailService.sendNotification(
+      issue.assignee,
+      'Issue Assigned to You',
+      `Issue ${issue.issueCode} has been assigned to you. Priority: ${issue.priority}`,
+    ).catch(err => logger.error('Email notification failed', { error: err.message }));
+    
+    // Realtime notification
+    handlers.sendNotification(assigneeId, 'Issue Assigned', `Issue ${issue.issueCode} assigned to you`);
+  }
+  
   return issue;
 }
 

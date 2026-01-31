@@ -304,9 +304,12 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
   </div>
 </div>
 
-<script>
+<script type="module">
+import { toast } from './components/ui/ToastManager.js';
+window.toast = toast;
+
 // --- DRAWER LOGIC ---
-function openDrawer(type) {
+window.openDrawer = function(type) {
     const overlay = document.getElementById('drawer-overlay');
     const title = document.getElementById('d-title');
     const body = document.getElementById('d-body');
@@ -328,7 +331,7 @@ function openDrawer(type) {
 
             <div class="form-group">
                 <label class="form-label">Photo Evidence (Required)</label>
-                <div class="photo-zone" onclick="alert('Camera Launched')">
+                <div class="photo-zone" onclick="window.toast.show('Camera Launched', 'info')">
                     <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
                     <div style="font-weight: 600;">Tap to Take Photo</div>
                     <div style="font-size: 11px;">Geotagging Enabled</div>
@@ -384,7 +387,7 @@ function openDrawer(type) {
     }
 }
 
-function closeDrawer() {
+window.closeDrawer = function() {
     document.getElementById('drawer-overlay').classList.remove('show');
 }
 </script>

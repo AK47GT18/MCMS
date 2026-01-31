@@ -14,6 +14,7 @@ const requisitionsController = require('../controllers/requisitions.controller')
 const dailyLogsController = require('../controllers/dailyLogs.controller');
 const issuesController = require('../controllers/issues.controller');
 const procurementController = require('../controllers/procurement.controller');
+const auditController = require('../controllers/audit.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 
@@ -59,6 +60,12 @@ async function router(req, res) {
     }
     if (method === 'POST' && id === 'change-password') {
       return authController.changePassword(req, res);
+    }
+    if (method === 'POST' && id === 'forgot-password') {
+      return authController.forgotPassword(req, res);
+    }
+    if (method === 'POST' && id === 'reset-password') {
+      return authController.resetPassword(req, res);
     }
     return response.notFound(res, 'Auth endpoint');
   }
@@ -272,6 +279,19 @@ async function router(req, res) {
       return procurementController.markPurchased(req, res, id);
     }
     if (method === 'GET') return procurementController.getById(req, res, id);
+    return methodNotAllowed(res, ['GET']);
+  }
+  
+  // ============================================
+  // AUDIT LOGS ROUTES
+  // ============================================
+  if (resource === 'audit-logs') {
+    if (id === 'recent' && method === 'GET') {
+      return auditController.getRecent(req, res);
+    }
+    if (!id && method === 'GET') {
+      return auditController.getAll(req, res);
+    }
     return methodNotAllowed(res, ['GET']);
   }
   
