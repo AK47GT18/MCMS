@@ -30,6 +30,8 @@ async function login(email, password) {
       passwordHash: true,
       isLocked: true,
       avatarUrl: true,
+      mustChangePassword: true,
+      mustChangeEmail: true,
     },
   });
   
@@ -109,6 +111,8 @@ async function register(userData) {
       role: true,
       permissions: true,
       avatarUrl: true,
+      mustChangePassword: true,
+      mustChangeEmail: true,
       createdAt: true,
     },
   });
@@ -158,7 +162,10 @@ async function changePassword(userId, currentPassword, newPassword) {
   
   await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash },
+    data: { 
+      passwordHash,
+      mustChangePassword: false 
+    },
   });
   
   logger.info('Password changed', { userId });
@@ -259,6 +266,8 @@ async function getProfile(userId) {
       role: true,
       permissions: true,
       avatarUrl: true,
+      mustChangePassword: true,
+      mustChangeEmail: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -271,10 +280,37 @@ async function getProfile(userId) {
   return user;
 }
 
+/**
+ * Change user email address
+ * @param {number} userId - User ID
+ * @param {string} newEmail - New email address
+ */
+async function changeEmail(userId, newEmail) {
+  // Check if email already in use
+  const existing = await prisma.user.findUnique({
+    where: { email: newEmail },
+  });
+  
+  if (existing && existing.id !== userId) {
+    throw new AppError('Email already in use', 400);
+  }
+  
+  await prisma.user.update({
+    where: { id: userId },
+    data: { 
+      email: newEmail,
+      mustChangeEmail: false 
+    },
+  });
+  
+  logger.info('Email changed', { userId, newEmail });
+}
+
 module.exports = {
   login,
   register,
   changePassword,
+  changeEmail,
   forgotPassword,
   resetPassword,
   getProfile,

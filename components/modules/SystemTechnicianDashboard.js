@@ -13,58 +13,106 @@ export class SystemTechnicianDashboard {
             smtp_user: 'system@mkaka.mw'
         };
 
-        // Define global handler for user creation form
-        window.initCreateUserForm = () => {
-            setTimeout(() => {
-                const form = document.getElementById('createUserForm');
-                if (form) {
-                    const validator = new FormValidator(form);
-                    
-                    // Password Generation Logic
-                    const generateBtn = document.getElementById('btn-generate-pass');
-                    if (generateBtn) {
-                        generateBtn.addEventListener('click', () => {
-                            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-                            let pass = '';
-                            // Ensure 8 chars minimum using typed array for better randomness (simulated here)
-                            for (let i = 0; i < 12; i++) {
-                                pass += chars.charAt(Math.floor(Math.random() * chars.length));
-                            }
-                            
-                            // Ensure complexity requirements
-                            if (!/[A-Z]/.test(pass)) pass += 'A';
-                            if (!/[0-9]/.test(pass)) pass += '1';
-                            if (!/[!@#$%^&*]/.test(pass)) pass += '!';
-                            
-                            const passInput = document.getElementById('new_user_password');
-                            if (passInput) {
-                                passInput.value = pass;
-                                passInput.type = 'text'; // Show it
-                                // Trigger input event for validation
-                                passInput.dispatchEvent(new Event('input'));
-                            }
-                        });
-                    }
+        window.techModule = this;
+        window.initCreateUserForm = this.initCreateUserForm.bind(this);
+        window.initEditUserForm = this.initEditUserForm.bind(this);
+    }
 
-                    form.addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        if (validator.validate()) {
-                            const btn = form.querySelector('button[type="submit"]');
-                            const originalText = btn.textContent;
-                            btn.textContent = 'Creating User...';
-                            btn.disabled = true;
-                            
-                            setTimeout(() => {
-                                window.drawer.close();
-                                window.toast.show('User account created successfully', 'success');
-                                btn.textContent = originalText;
-                                btn.disabled = false;
-                            }, 1000);
+    initCreateUserForm() {
+        setTimeout(() => {
+            const form = document.getElementById('createUserForm') || document.getElementById('newUserForm');
+            if (form) {
+                // Password Generation Logic
+                const generateBtn = document.getElementById('btn-generate-pass') || form.querySelector('.btn-generate-pass');
+                if (generateBtn) {
+                    generateBtn.addEventListener('click', () => {
+                        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+                        let pass = '';
+                        for (let i = 0; i < 12; i++) {
+                            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        if (!/[A-Z]/.test(pass)) pass += 'A';
+                        if (!/[0-9]/.test(pass)) pass += '1';
+                        if (!/[!@#$%^&*]/.test(pass)) pass += '!';
+                        
+                        const passInput = form.querySelector('input[type="password"]') || form.querySelector('input[name="password"]');
+                        if (passInput) {
+                            passInput.value = pass;
+                            passInput.type = 'text'; 
+                            passInput.dispatchEvent(new Event('input'));
                         }
                     });
                 }
-            }, 100);
-        };
+            }
+        }, 100);
+    }
+
+    async handleCreateUser(formData) {
+        const userData = Object.fromEntries(formData.entries());
+        const btn = document.querySelector('#newUserForm button[type="submit"]');
+        if (btn) btn.disabled = true;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(userData)
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error?.message || result.message || 'Failed to create user');
+            }
+            
+            window.drawer.close();
+            window.toast.show('User account created and welcome email sent', 'success');
+            this.loadUsersFromAPI();
+        } catch (error) {
+            window.toast.show(error.message, 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async handleUpdateUser(formData) {
+        const userData = Object.fromEntries(formData.entries());
+        userData.id = parseInt(userData.id);
+        const btn = document.querySelector('#editUserForm button[type="submit"]');
+        if (btn) btn.disabled = true;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch(`/api/v1/users/${userData.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name: userData.name,
+                    email: userData.email,
+                    role: userData.role
+                })
+            });
+            
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error?.message || result.message || 'Failed to update user');
+            }
+            
+            window.drawer.close();
+            window.toast.show('User updated and notified', 'success');
+            this.loadUsersFromAPI();
+        } catch (err) {
+            window.toast.show(err.message, 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
     }
 
     render() {
@@ -231,70 +279,217 @@ export class SystemTechnicianDashboard {
     }
 
     getUsersView() {
-        const isLoading = false; // Toggle to true to test loading
-        const users = [1]; // Toggle to [] to test empty state
-
-        if (isLoading) return this.renderLoadingState();
-        if (users.length === 0) return this.renderEmptyState('No users found in the system.');
-
+        // Show loading placeholder, then load users via API
+        setTimeout(() => this.loadUsersFromAPI(), 0);
+        
         return `
             <div class="data-card">
                 <div class="data-card-header">
                     <div class="card-title">User Registry & Permissions</div>
                     <button class="btn btn-primary" onclick="window.drawer.open('Add New User', window.DrawerTemplates.newUser); window.initCreateUserForm();" data-tooltip="Create a new system user"><i class="fas fa-plus"></i> New User</button>
                 </div>
-                <table>
-                    <thead>
-                        <tr><th>User</th><th>Role</th><th>Email</th><th>Phone</th><th>Permissions</th><th>Status</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--slate-800); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">SJ</div>
-                                    <div style="font-weight: 600;">Sarah Jenkins</div>
-                                </div>
-                            </td>
-                            <td>Project Manager</td>
-                            <td>s.jenkins@mkaka.mw</td>
-                            <td>+265 991 234 567</td>
-                            <td><span style="font-size: 11px; color: var(--slate-500);">read_all, write_project...</span></td>
-                            <td><span class="status active">Active</span></td>
-                            <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Edit User', window.DrawerTemplates.editUser)" data-tooltip="Edit user details">Edit</button></td>
-                        </tr>
-                        <!-- ... (Other rows truncated for brevity, would be dynamically generated in real app) ... -->
-                        <tr>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--orange); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">SM</div>
-                                    <div style="font-weight: 600;">Stefan Mwale</div>
-                                </div>
-                            </td>
-                            <td>Finance Director</td>
-                            <td>s.mwale@mkaka.mw</td>
-                            <td>+265 882 111 222</td>
-                            <td><span style="font-size: 11px; color: var(--slate-500);">read_all, write_finance...</span></td>
-                            <td><span class="status active">Active</span></td>
-                            <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Edit User', window.DrawerTemplates.editUser)" data-tooltip="Edit user details">Edit</button></td>
-                        </tr>
-                         <tr>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--red-light); color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">BZ</div>
-                                    <div style="font-weight: 600; color: var(--slate-400);">Brian Zulu</div>
-                                </div>
-                            </td>
-                            <td style="color: var(--slate-400);">Former Ops Manager</td>
-                            <td style="color: var(--slate-400);">b.zulu@mkaka.mw</td>
-                            <td style="color: var(--slate-400);">+265 994 777 999</td>
-                            <td><span style="font-size: 11px; color: var(--slate-400);">no_access</span></td>
-                            <td><span class="status inactive">Inactive</span></td>
-                            <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Edit User', window.DrawerTemplates.editUser)" data-tooltip="Reactivate or Delete">Edit</button></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div id="users-table-container">
+                    ${this.renderLoadingState()}
+                </div>
             </div>
         `;
+    }
+
+    async loadUsersFromAPI() {
+        const container = document.getElementById('users-table-container');
+        if (!container) return;
+        
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/users', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const result = await response.json().catch(() => ({}));
+            
+            if (!response.ok) {
+                const errorMessage = result.error?.message || result.message || `Server error: ${response.status}`;
+                throw new Error(errorMessage);
+            }
+            
+            const users = result.data || result.items || result || [];
+            
+            if (users.length === 0) {
+                container.innerHTML = this.renderEmptyState('No users found in the system.');
+                return;
+            }
+            
+            container.innerHTML = this.renderUsersTable(users);
+        } catch (error) {
+            console.error('Failed to load users:', error);
+            container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load users: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.loadPage('users')">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    renderUsersTable(users) {
+        const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const formatRole = (role) => role.replace(/_/g, ' ');
+        
+        const rows = users.map(user => `
+            <tr>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: ${user.isLocked ? 'var(--red-light)' : 'var(--slate-800)'}; color: ${user.isLocked ? 'var(--red)' : 'white'}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">${getInitials(user.name)}</div>
+                        <div style="font-weight: 600; ${user.isLocked ? 'color: var(--slate-400);' : ''}">${user.name}</div>
+                    </div>
+                </td>
+                <td>${formatRole(user.role)}</td>
+                <td>${user.email}</td>
+                <td>${user.phone || '-'}</td>
+                <td><span class="status ${user.isLocked ? 'inactive' : 'active'}">${user.isLocked ? 'Locked' : 'Active'}</span></td>
+                <td>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 600;" onclick="window.drawer.open('Edit User Details', window.DrawerTemplates.editUser); window.initEditUserForm(${JSON.stringify(user).replace(/"/g, '&quot;')})" data-tooltip="Manage account details and status">Edit User</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async lockUser(userId) {
+        window.modal.prompt(
+            'Deactivate Account', 
+            'Please provide a reason for deactivating this user account. The user will be notified via email.',
+            'Optional deactivation reason...',
+            async (reason) => {
+                if (reason === null) return;
+
+                try {
+                    const token = localStorage.getItem('mcms_auth_token');
+                    const response = await fetch(`/api/v1/users/${userId}/lock`, {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: reason || 'Account deactivated by administrator' })
+                    });
+                    if (!response.ok) throw new Error('Failed to lock user');
+                    
+                    window.toast.show('User account deactivated', 'success');
+                    window.drawer.close();
+                    this.loadUsersFromAPI();
+                } catch (error) {
+                    window.toast.show(error.message, 'error');
+                }
+            }
+        );
+    }
+
+    async unlockUser(userId) {
+        window.modal.prompt(
+            'Reactivate Account', 
+            'Are you sure you want to reactivate this account? Please provide a reason for the log.',
+            'Optional reactivation reason...',
+            async (reason) => {
+                try {
+                    const token = localStorage.getItem('mcms_auth_token');
+                    const response = await fetch(`/api/v1/users/${userId}/unlock`, {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: reason || 'Account reactivated by administrator' })
+                    });
+                    if (!response.ok) throw new Error('Failed to unlock user');
+                    
+                    window.toast.show('User account reactivated', 'success');
+                    window.drawer.close();
+                    this.loadUsersFromAPI();
+                } catch (error) {
+                    window.toast.show(error.message, 'error');
+                }
+            }
+        );
+    }
+
+    async deleteUser(userId) {
+        window.modal.prompt(
+            'CRITICAL: Delete Account', 
+            '<span style="color: var(--red); font-weight: 700;">WARNING:</span> This action is permanent and cannot be undone. Please enter the reason for deletion to confirm.',
+            'Required deletion reason...',
+            async (reason) => {
+                if (!reason || reason.trim().length < 5) {
+                    window.toast.show('A valid reason (min 5 chars) is required for deletion', 'warning');
+                    return;
+                }
+
+                try {
+                    const token = localStorage.getItem('mcms_auth_token');
+                    const response = await fetch(`/api/v1/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: reason })
+                    });
+                    if (!response.ok) throw new Error('Failed to delete user');
+                    
+                    window.toast.show('User account permanently deleted', 'success');
+                    window.drawer.close();
+                    this.loadUsersFromAPI();
+                } catch (error) {
+                    window.toast.show(error.message, 'error');
+                }
+            }
+        );
+    }
+
+    initCreateUserForm() {
+        // ... this will be handled by the existing initCreateUserForm logic which I'll move to a method
+    }
+
+    initEditUserForm(user) {
+        setTimeout(() => {
+            const form = document.getElementById('editUserForm');
+            if (form && user) {
+                form.querySelector('[name="id"]').value = user.id;
+                form.querySelector('[name="name"]').value = user.name;
+                form.querySelector('[name="email"]').value = user.email;
+                form.querySelector('[name="role"]').value = user.role.replace(' ', '_');
+                
+                // Toggle status buttons based on locked state
+                const lockBtn = document.getElementById('btn-deactivate-user');
+                const unlockBtn = document.getElementById('btn-unlock-user');
+                
+                if (lockBtn && unlockBtn) {
+                    if (user.isLocked) {
+                        lockBtn.style.display = 'none';
+                        unlockBtn.style.display = 'flex';
+                    } else {
+                        lockBtn.style.display = 'flex';
+                        unlockBtn.style.display = 'none';
+                    }
+                }
+            }
+        }, 100);
     }
 
     getAuditView() {

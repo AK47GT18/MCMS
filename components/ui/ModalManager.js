@@ -109,6 +109,26 @@ export class ModalManager {
         });
     }
 
+    prompt(title, message, placeholder = 'Enter reason...', onConfirm, onCancel) {
+        this.show({
+            type: 'confirm',
+            title,
+            message: `
+                <div style="margin-bottom: 16px;">${message}</div>
+                <div class="form-group">
+                    <textarea id="modal-prompt-input" class="form-input" placeholder="${placeholder}" rows="3" style="width: 100%; font-size: 13px;"></textarea>
+                </div>
+            `,
+            confirmText: 'Submit',
+            cancelText: 'Cancel',
+            onConfirm: () => {
+                const input = document.getElementById('modal-prompt-input');
+                if (onConfirm) onConfirm(input ? input.value : '');
+            },
+            onCancel
+        });
+    }
+
     close() {
         const overlay = document.getElementById('modal-overlay');
         const container = document.getElementById('modal-container');

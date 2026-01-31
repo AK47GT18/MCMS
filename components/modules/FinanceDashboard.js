@@ -489,7 +489,10 @@ export class FinanceDashboard {
     }
 
     getContractsView() {
-         return `
+        // Trigger async load
+        setTimeout(() => this.loadContractsFromAPI(), 0);
+        
+        return `
             <div class="data-card">
               <div class="data-card-header">
                 <div class="card-title">Contract Management</div>
@@ -498,114 +501,211 @@ export class FinanceDashboard {
                     <button class="btn btn-primary" onclick="window.drawer.open('New Contract', window.DrawerTemplates.newContract)"><i class="fas fa-plus"></i> New Contract</button>
                 </div>
               </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Contract ID</th>
-                    <th>Title</th>
-                    <th>Vendor/Party</th>
-                    <th>Value (MWK)</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><span class="project-id">CTR-2024-001</span></td>
-                    <td style="font-weight:600;">Unilia Main Works</td>
-                    <td>Unilia Construction Ltd</td>
-                    <td style="font-family:'JetBrains Mono';">1.2B</td>
-                    <td>Jan 01, 2025</td>
-                    <td>Jun 30, 2026</td>
-                    <td><span class="status active">Active</span></td>
-                  </tr>
-                  <tr>
-                     <td><span class="project-id">CTR-SUB-05</span></td>
-                    <td style="font-weight:600;">Plumbing Subcontract</td>
-                    <td>Flow Masters</td>
-                    <td style="font-family:'JetBrains Mono';">45M</td>
-                    <td>Feb 15, 2025</td>
-                    <td>Aug 15, 2025</td>
-                    <td><span class="status pending">Draft</span></td>
-                  </tr>
-                   <tr>
-                     <td><span class="project-id">CTR-SUP-88</span></td>
-                    <td style="font-weight:600;">Cement Supply Framework</td>
-                    <td>Malawi Cement</td>
-                    <td style="font-family:'JetBrains Mono';">Rate Based</td>
-                    <td>Jan 01, 2025</td>
-                    <td>Dec 31, 2025</td>
-                    <td><span class="status active">Active</span></td>
-                  </tr>
-                </tbody>
-              </table>
+              <div id="contracts-table-container">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div>Loading contracts...</div>
+                </div>
+              </div>
             </div>
         `;
     }
 
+    async loadContractsFromAPI() {
+        const container = document.getElementById('contracts-table-container');
+        if (!container) return;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/contracts', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load contracts');
+
+            const result = await response.json();
+            const contracts = result.data || result.items || result || [];
+
+            if (contracts.length === 0) {
+                container.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400); text-align: center;">
+                        <i class="fas fa-file-contract" style="font-size: 32px; margin-bottom: 12px;"></i>
+                        <div style="font-weight: 600; color: var(--slate-600);">No contracts found</div>
+                        <div style="font-size: 13px;">Create a new contract to get started</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = this.renderContractsTable(contracts);
+        } catch (error) {
+            console.error('Failed to load contracts:', error);
+            container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load contracts: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.loadPage('contracts')">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    renderContractsTable(contracts) {
+        const getStatusClass = (status) => {
+            const map = { 'active': 'active', 'draft': 'pending', 'expired': 'delayed', 'terminated': 'rejected' };
+            return map[status?.toLowerCase()] || 'pending';
+        };
+        const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }) : '-';
+        const formatValue = (v) => {
+            if (!v) return '-';
+            if (v >= 1000000000) return `${(v / 1000000000).toFixed(1)}B`;
+            if (v >= 1000000) return `${(v / 1000000).toFixed(0)}M`;
+            return v.toLocaleString();
+        };
+        const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
+
+        const rows = contracts.map(contract => `
+            <tr>
+                <td><span class="project-id">${contract.code || contract.id}</span></td>
+                <td style="font-weight:600;">${contract.title}</td>
+                <td>${contract.vendor?.name || contract.vendorName || '-'}</td>
+                <td style="font-family:'JetBrains Mono';">${formatValue(contract.totalValue)}</td>
+                <td>${formatDate(contract.startDate)}</td>
+                <td>${formatDate(contract.endDate)}</td>
+                <td><span class="status ${getStatusClass(contract.status)}">${formatStatus(contract.status)}</span></td>
+            </tr>
+        `).join('');
+
+        return `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contract ID</th>
+                        <th>Title</th>
+                        <th>Vendor/Party</th>
+                        <th>Value (MWK)</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+    }
+
     getVendorsView() {
-         return `
+        // Trigger async load
+        setTimeout(() => this.loadVendorsFromAPI(), 0);
+        
+        return `
             <div class="data-card">
               <div class="data-card-header">
                 <div class="card-title">Vendor Registry & Compliance</div>
                 <button class="btn btn-primary"><i class="fas fa-user-plus"></i> Onboard Vendor</button>
               </div>
-              <table>
+              <div id="vendors-table-container">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div>Loading vendors...</div>
+                </div>
+              </div>
+            </div>
+        `;
+    }
+
+    async loadVendorsFromAPI() {
+        const container = document.getElementById('vendors-table-container');
+        if (!container) return;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/vendors', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load vendors');
+
+            const result = await response.json();
+            const vendors = result.data || result.items || result || [];
+
+            if (vendors.length === 0) {
+                container.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400); text-align: center;">
+                        <i class="fas fa-users" style="font-size: 32px; margin-bottom: 12px;"></i>
+                        <div style="font-weight: 600; color: var(--slate-600);">No vendors found</div>
+                        <div style="font-size: 13px;">Onboard a new vendor to get started</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = this.renderVendorsTable(vendors);
+        } catch (error) {
+            console.error('Failed to load vendors:', error);
+            container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load vendors: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.loadPage('vendors')">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    renderVendorsTable(vendors) {
+        const getStatusClass = (status) => {
+            const map = { 'approved': 'active', 'active': 'active', 'suspended': 'locked', 'pending': 'pending' };
+            return map[status?.toLowerCase()] || 'pending';
+        };
+        const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
+        const renderStars = (rating) => {
+            const r = Math.min(5, Math.max(0, rating || 0));
+            return Array.from({length: 5}, (_, i) => 
+                `<i class="fa${i < Math.floor(r) ? 's' : i < r ? 's fa-star-half-alt' : 'r'} fa-star"></i>`
+            ).join('');
+        };
+
+        const rows = vendors.map(vendor => `
+            <tr>
+                <td style="font-weight:600;">${vendor.name}</td>
+                <td>${vendor.category || 'General'}</td>
+                <td><span style="color:${vendor.taxClearanceValid ? 'var(--emerald)' : 'var(--red)'};">
+                    <i class="fas fa-${vendor.taxClearanceValid ? 'check' : 'times'}-circle"></i> 
+                    ${vendor.taxClearanceValid ? 'Valid' : 'Invalid/Expired'}
+                </span></td>
+                <td>${vendor.ncicGrade || 'N/A'}</td>
+                <td><div style="display:flex; color:var(--orange);">${renderStars(vendor.performanceRating || 3)}</div></td>
+                <td><span class="status ${getStatusClass(vendor.status)}">${formatStatus(vendor.status)}</span></td>
+                <td><button class="btn btn-secondary open-drawer" style="padding:4px 8px;" onclick="window.drawer.open('Vendor Profile', window.DrawerTemplates.vendorProfile)">Profile</button></td>
+            </tr>
+        `).join('');
+
+        return `
+            <table>
                 <thead>
-                  <tr>
-                    <th>Vendor Name</th>
-                    <th>Category</th>
-                    <th>Tax Clearance</th>
-                    <th>NCIC Grade</th>
-                    <th>Performance</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
+                    <tr>
+                        <th>Vendor Name</th>
+                        <th>Category</th>
+                        <th>Tax Clearance</th>
+                        <th>NCIC Grade</th>
+                        <th>Performance</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td style="font-weight:600;">Malawi Cement Ltd</td>
-                    <td>Materials</td>
-                    <td><span style="color:var(--emerald);"><i class="fas fa-check-circle"></i> Valid (2025)</span></td>
-                    <td>N/A</td>
-                    <td>
-                        <div style="display:flex; color:var(--orange);">
-                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
-                        </div>
-                    </td>
-                    <td><span class="status active">Approved</span></td>
-                    <td><button class="btn btn-secondary open-drawer" style="padding:4px 8px;" onclick="window.drawer.open('Vendor Profile', window.DrawerTemplates.vendorProfile)">Profile</button></td>
-                  </tr>
-                   <tr>
-                    <td style="font-weight:600;">Apex Security</td>
-                    <td>Services</td>
-                    <td><span style="color:var(--red);"><i class="fas fa-times-circle"></i> Expired</span></td>
-                    <td>N/A</td>
-                    <td>
-                        <div style="display:flex; color:var(--orange);">
-                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
-                        </div>
-                    </td>
-                    <td><span class="status locked">Suspended</span></td>
-                    <td><button class="btn btn-secondary open-drawer" style="padding:4px 8px;" onclick="window.drawer.open('Vendor Audit', window.DrawerTemplates.newAudit)">Audit</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight:600;">BuildRite Construction</td>
-                    <td>Sub-Contractor</td>
-                    <td><span style="color:var(--emerald);"><i class="fas fa-check-circle"></i> Valid (2025)</span></td>
-                    <td>15 Million</td>
-                    <td>
-                        <div style="display:flex; color:var(--orange);">
-                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-                        </div>
-                    </td>
-                    <td><span class="status active">Approved</span></td>
-                    <td><button class="btn btn-secondary open-drawer" style="padding:4px 8px;" onclick="window.drawer.open('Vendor Profile', window.DrawerTemplates.vendorProfile)">Profile</button></td>
-                  </tr>
+                    ${rows}
                 </tbody>
-              </table>
-            </div>
+            </table>
         `;
     }
 

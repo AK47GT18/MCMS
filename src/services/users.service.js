@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const emailService = require('../emails/email.service');
 
 /**
  * Get all users with pagination
@@ -90,6 +91,8 @@ async function create(data) {
     data: {
       ...userData,
       passwordHash,
+      mustChangePassword: true,
+      mustChangeEmail: true,
       avatarUrl: data.avatarUrl || 
         `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
     },
@@ -101,11 +104,16 @@ async function create(data) {
       role: true,
       permissions: true,
       avatarUrl: true,
+      mustChangePassword: true,
+      mustChangeEmail: true,
       createdAt: true,
     },
   });
   
   logger.info('User created', { userId: user.id, email: user.email });
+  
+  // Send welcome email
+  emailService.sendWelcome(user).catch(err => logger.error('Failed to send welcome email', err));
   
   return user;
 }
@@ -117,8 +125,8 @@ async function create(data) {
  * @returns {Promise<Object>} Updated user
  */
 async function update(id, data) {
-  // Ensure user exists
-  await getById(id);
+  // Get old user data for comparison
+  const oldUser = await getById(id);
   
   const user = await prisma.user.update({
     where: { id },
@@ -138,6 +146,21 @@ async function update(id, data) {
   
   logger.info('User updated', { userId: id });
   
+  // Determine what changed
+  const changes = [];
+  if (data.name && data.name !== oldUser.name) changes.push(`Name changed from "${oldUser.name}" to "${data.name}"`);
+  if (data.email && data.email !== oldUser.email) changes.push(`Email changed from "${oldUser.email}" to "${data.email}"`);
+  if (data.role && data.role !== oldUser.role) changes.push(`Role changed from "${oldUser.role.replace(/_/g, ' ')}" to "${data.role.replace(/_/g, ' ')}"`);
+  if (data.phone && data.phone !== oldUser.phone) changes.push(`Phone changed from "${oldUser.phone || 'None'}" to "${data.phone}"`);
+
+  const changeText = changes.length > 0 
+    ? `The following changes were made to your account:\n- ${changes.join('\n- ')}`
+    : 'Your account details have been updated.';
+
+  // Send update notification
+  emailService.sendNotification(user, 'Account Updated', `${changeText}\n\nIf you did not authorize this, please contact support.`)
+    .catch(err => logger.error('Failed to send update email', err));
+  
   return user;
 }
 
@@ -145,13 +168,17 @@ async function update(id, data) {
  * Delete user by ID
  * @param {number} id - User ID
  */
-async function remove(id) {
+async function remove(id, reason = 'No reason provided') {
   // Ensure user exists
-  await getById(id);
+  const user = await getById(id);
+  
+  // Send deletion email BEFORE deleting
+  await emailService.sendNotification(user, 'Account Deleted', `Your MCMS account has been deleted by an administrator. Reason: ${reason}`)
+    .catch(err => logger.error('Failed to send deletion email', err));
   
   await prisma.user.delete({ where: { id } });
   
-  logger.info('User deleted', { userId: id });
+  logger.info('User deleted', { userId: id, reason });
 }
 
 /**
@@ -159,13 +186,24 @@ async function remove(id) {
  * @param {number} id - User ID
  * @param {boolean} locked - Lock status
  */
-async function setLockStatus(id, locked) {
-  await prisma.user.update({
+async function setLockStatus(id, locked, reason = 'No reason provided') {
+  const user = await prisma.user.update({
     where: { id },
-    data: { isLocked: locked },
+    data: { 
+      isLocked: locked,
+      statusReason: reason
+    },
+    select: { id: true, name: true, email: true }
   });
   
-  logger.info(`User ${locked ? 'locked' : 'unlocked'}`, { userId: id });
+  const status = locked ? 'deactivated' : 'reactivated';
+  
+  logger.info(`User ${status}`, { userId: id, reason });
+  
+  // Send notification
+  emailService.sendNotification(user, `Account ${status.charAt(0).toUpperCase() + status.slice(1)}`, 
+    `Your MCMS account has been ${status} by an administrator. Reason: ${reason}`)
+    .catch(err => logger.error(`Failed to send ${status} email`, err));
 }
 
 /**

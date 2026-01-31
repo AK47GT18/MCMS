@@ -1,8 +1,11 @@
-import { currentUser, ROLES } from '../config/roles.js';
+import { currentUser as mockUser, ROLES } from '../config/roles.js';
 import { NAV_ITEMS } from '../config/navConfig.js';
 import { DrawerTemplates } from '../components/DrawerTemplates.js';
 import { modal } from '../components/ui/ModalManager.js';
 import { toast } from '../components/ui/ToastManager.js';
+
+// Get current user dynamically (from main.js real auth or fallback to mock)
+const getCurrentUser = () => window.currentUser || mockUser;
 
 export class AppLayout {
     constructor() {
@@ -21,7 +24,10 @@ export class AppLayout {
 
     render() {
         this.appContainer.innerHTML = '';
-        const navSections = NAV_ITEMS[currentUser.role] || [];
+        const currentUser = getCurrentUser();
+        // Robust role matching: normalize current role to match config keys (spaces instead of underscores)
+        const roleKey = currentUser.role ? currentUser.role.replace(/_/g, ' ') : '';
+        const navSections = NAV_ITEMS[roleKey] || NAV_ITEMS[currentUser.role] || [];
         const allItems = navSections.flatMap(s => s.items);
 
         const sidebarHTML = this.generateSidebar(navSections);
@@ -44,6 +50,7 @@ export class AppLayout {
     }
 
     generateSidebar(sections) {
+        const currentUser = getCurrentUser();
         const dashboardTitle = this.roleTitles[currentUser.role] || 'DASHBOARD';
         
         const sectionsHTML = sections.map(section => `
@@ -101,6 +108,7 @@ export class AppLayout {
     }
 
     generateTopBar() {
+        const currentUser = getCurrentUser();
         // Generic Breadcrumb - Title is updated by main.js
         const breadcrumbTitle = currentUser.role.toUpperCase();
         
@@ -168,6 +176,7 @@ export class AppLayout {
     }
 
     getRecentNotificationsHTML() {
+        const currentUser = getCurrentUser();
         const role = currentUser.role;
         let notifications = [];
 
@@ -313,6 +322,7 @@ export class AppLayout {
     }
 
     showProfileDrawer() {
+        const currentUser = getCurrentUser();
         const contentHTML = `
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); text-align: center;">
                 <div style="width: 64px; height: 64px; background: var(--white); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
@@ -387,9 +397,11 @@ export class AppLayout {
     handleLogout() {
         modal.confirm('Sign Out', 'Are you sure you want to sign out?', () => {
             window.toast.show('Signing out...', 'info');
+            // Clear auth token
+            localStorage.removeItem('mcms_auth_token');
             setTimeout(() => {
-                window.location.reload(); // Simulates logout for now
-            }, 800);
+                window.location.href = 'index.html'; // Redirect to landing/login page
+            }, 500);
         });
     }
 }

@@ -279,12 +279,8 @@ export const DrawerTemplates = {
              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div>
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Supervisor</label>
-                    <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                        <option>Sarah Jenkins</option>
-                        <option>John Banda</option>
-                        <option>Blessings Phiri</option>
-                        <option>Peter Phiri</option>
-                        <option>Davi Moyo</option>
+                    <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
+                        <option value="">Loading supervisors...</option>
                     </select>
                 </div>
                 <div>
@@ -1764,6 +1760,145 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); window.toast.show('Asset successfully added to fleet registry', 'success')">Add to Fleet</button>
+        </div>
+    `,
+
+    // --- SYSTEM TECHNICIAN / USER MANAGEMENT TEMPLATES ---
+    newUser: `
+        <div class="drawer-section">
+            <div id="create-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            <form id="newUserForm" onsubmit="event.preventDefault(); window.techModule?.handleCreateUser(new FormData(this));">
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="e.g. John Doe" required style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="john@mkaka.mw" required style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" name="phone" class="form-input" placeholder="+265..." style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">System Role</label>
+                    <select name="role" class="form-input" required style="width:100%;">
+                        <option value="Project_Manager">Project Manager</option>
+                        <option value="Finance_Director">Finance Director</option>
+                        <option value="Operations_Manager">Operations Manager</option>
+                        <option value="Field_Supervisor">Field Supervisor</option>
+                        <option value="Contract_Administrator">Contract Administrator</option>
+                        <option value="Equipment_Coordinator">Equipment Coordinator</option>
+                        <option value="Managing_Director">Managing Director</option>
+                        <option value="System_Technician">System Technician</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:24px;">
+                    <label class="form-label">Initial Password</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" name="password" class="form-input" placeholder="Min 8 chars..." required style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-generate-pass" style="padding:0 12px;" title="Generate secure password"><i class="fas fa-key"></i></button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">Create User Account</button>
+            </form>
+        </div>
+    `,
+
+    editUser: `
+        <div class="drawer-section">
+            <div id="edit-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            <form id="editUserForm" onsubmit="event.preventDefault(); window.techModule?.handleUpdateUser(new FormData(this));">
+                <input type="hidden" name="id" id="edit-user-id">
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" id="edit-user-name" class="form-input" required style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" id="edit-user-email" class="form-input" required style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">System Role</label>
+                    <select name="role" id="edit-user-role" class="form-input" required style="width:100%;">
+                        <option value="Project_Manager">Project Manager</option>
+                        <option value="Finance_Director">Finance Director</option>
+                        <option value="Operations_Manager">Operations Manager</option>
+                        <option value="Field_Supervisor">Field Supervisor</option>
+                        <option value="Contract_Administrator">Contract Administrator</option>
+                        <option value="Equipment_Coordinator">Equipment Coordinator</option>
+                        <option value="Managing_Director">Managing Director</option>
+                        <option value="System_Technician">System Technician</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; margin-bottom: 24px;">Update User Details</button>
+
+                <div style="border-top: 1px solid var(--slate-200); padding-top: 24px;">
+                    <label class="form-label" style="color: var(--slate-500); font-size: 11px; margin-bottom: 12px;">ACCOUNT SECURITY & STATUS</label>
+                    <div id="edit-user-status-actions" style="display: flex; flex-direction: column; gap: 8px;">
+                        <button type="button" id="btn-deactivate-user" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light); justify-content: center;" onclick="window.techModule?.lockUser(document.getElementById('edit-user-id').value)">Deactivate Account</button>
+                        <button type="button" id="btn-unlock-user" class="btn btn-secondary" style="color: var(--emerald); border-color: var(--emerald-light); justify-content: center; display: none;" onclick="window.techModule?.unlockUser(document.getElementById('edit-user-id').value)">Unlock & Reactivate</button>
+                        <button type="button" id="btn-delete-user-drawer" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light); justify-content: center; margin-top: 8px; background: var(--red-light); font-weight: 700;" onclick="window.techModule?.deleteUser(document.getElementById('edit-user-id').value)">Delete Account Permanently</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    `,
+
+    editVAT: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">Current VAT Rate (%)</label>
+                <input type="number" class="form-input" value="16.5" step="0.5" style="width:100%;">
+                <p style="font-size:11px; color:var(--slate-500); margin-top:4px;">Applies to all new invoices and procurement orders.</p>
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.toast.show('VAT Rate Updated', 'success'); window.drawer.close();">Save Changes</button>
+        </div>
+    `,
+
+    editCurrency: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">System Primary Currency</label>
+                <select class="form-input" style="width:100%;">
+                    <option selected>Malawi Kwacha (MWK)</option>
+                    <option>US Dollar (USD)</option>
+                    <option>Euro (EUR)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.toast.show('Currency Config Saved', 'success'); window.drawer.close();">Update Global Currency</button>
+        </div>
+    `,
+
+    editCompany: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Company Name</label>
+                <input type="text" class="form-input" value="Mkaka Construction Ltd" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">HQ Address</label>
+                <textarea class="form-input" rows="3" style="width:100%;">Area 4, Lilongwe, Malawi</textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.toast.show('Company Details Updated', 'success'); window.drawer.close();">Save Profile</button>
+        </div>
+    `,
+
+    editSMTP: `
+        <div class="drawer-section">
+            <div class="form-group" style="margin-bottom:12px;">
+                <label class="form-label">SMTP Host</label>
+                <input type="text" class="form-input" value="smtp.gmail.com" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label class="form-label">SMTP Port</label>
+                <input type="number" class="form-input" value="587" style="width:100%;">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">SMTP Password (Encrypted)</label>
+                <input type="password" class="form-input" value="********" style="width:100%;">
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.toast.show('SMTP Connection Tested & Saved', 'success'); window.drawer.close();">Test & Save</button>
         </div>
     `
 };

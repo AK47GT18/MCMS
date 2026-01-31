@@ -161,7 +161,7 @@ const registerLimiter = createRateLimiter({
  */
 const apiLimiter = createRateLimiter({
   windowMs: 60 * 1000,
-  max: 100,
+  max: 1000, // Relaxed for dev
   message: 'API rate limit exceeded. Please slow down.',
   keyGenerator: (req) => `api:${getClientIP(req)}`,
 });

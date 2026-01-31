@@ -55,9 +55,13 @@ export class ModuleLoaderStrategy {
             return this.modules.get(role);
         }
 
-        const config = this.registry[role];
+        // Normalize role: convert 'System_Technician' to 'System Technician'
+        const normalizedRole = role.replace(/_/g, ' ');
+        
+        // Try both original and normalized role
+        const config = this.registry[role] || this.registry[normalizedRole];
         if (!config) {
-            console.warn(`No module configuration found for role: ${role}`);
+            console.warn(`No module configuration found for role: ${role} (normalized: ${normalizedRole})`);
             return null;
         }
 

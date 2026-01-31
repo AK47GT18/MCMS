@@ -68,6 +68,9 @@ async function router(req, res) {
     if (method === 'POST' && id === 'change-password') {
       return authController.changePassword(req, res);
     }
+    if (method === 'POST' && id === 'change-email') {
+      return authController.changeEmail(req, res);
+    }
     // Forgot password - rate limited (3 attempts per hour)
     if (method === 'POST' && id === 'forgot-password') {
       const allowed = await passwordResetLimiter(req, res);
@@ -87,6 +90,14 @@ async function router(req, res) {
   // USERS ROUTES
   // ============================================
   if (resource === 'users') {
+    // Check for role filter query param
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const roleParam = url.searchParams.get('role');
+    
+    if (roleParam && method === 'GET') {
+      return usersController.getByRole(req, res);
+    }
+    
     if (!id) {
       if (method === 'GET') return usersController.getAll(req, res);
       if (method === 'POST') return usersController.create(req, res);

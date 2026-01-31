@@ -290,43 +290,100 @@ export class FieldSupervisorDashboard {
     }
 
     getEquipmentView() {
-         return `
+        // Trigger async load
+        setTimeout(() => this.loadEquipmentFromAPI(), 0);
+        
+        return `
             <div class="data-card">
-              <div class="data-card-header"><div class="card-title">On-Site Equipment</div></div>
-              <table>
+              <div class="data-card-header">
+                <div class="card-title">On-Site Equipment</div>
+                <button class="btn btn-primary" onclick="window.drawer.open('Request Equipment', window.DrawerTemplates.requestEquipment)"><i class="fas fa-plus"></i> Request</button>
+              </div>
+              <div id="equipment-table-container">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div>Loading equipment...</div>
+                </div>
+              </div>
+            </div>
+        `;
+    }
+
+    async loadEquipmentFromAPI() {
+        const container = document.getElementById('equipment-table-container');
+        if (!container) return;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/assets', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load equipment');
+
+            const result = await response.json();
+            const assets = result.data || result.items || result || [];
+
+            if (assets.length === 0) {
+                container.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400); text-align: center;">
+                        <i class="fas fa-tools" style="font-size: 32px; margin-bottom: 12px;"></i>
+                        <div style="font-weight: 600; color: var(--slate-600);">No equipment assigned</div>
+                        <div style="font-size: 13px;">Request equipment to get started</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = this.renderEquipmentTable(assets);
+        } catch (error) {
+            console.error('Failed to load equipment:', error);
+            container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load equipment: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.loadPage('equipment')">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    renderEquipmentTable(assets) {
+        const getStatusClass = (status) => {
+            const map = { 'active': 'active', 'idle': '', 'in_transit': 'pending', 'maintenance': 'delayed' };
+            return map[status?.toLowerCase()] || '';
+        };
+        const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
+
+        const rows = assets.map(asset => `
+            <tr>
+                <td>${asset.name || asset.type}</td>
+                <td>${asset.code || asset.id}</td>
+                <td>${asset.operator?.name || asset.operatorName || '-'}</td>
+                <td><span class="status ${getStatusClass(asset.status)}">${formatStatus(asset.status)}</span></td>
+                <td>
+                    ${asset.status === 'active' ? `
+                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.drawer.open('Log Usage', window.DrawerTemplates.logEquipmentUsage)">Log Usage</button>
+                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px; color:var(--orange); border-color:var(--orange-light);" onclick="window.drawer.open('Return Asset', window.DrawerTemplates.returnEquipment)">Return</button>
+                    ` : asset.status === 'idle' ? `
+                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.drawer.open('Assign Operator', window.DrawerTemplates.assignEquipment)">Assign</button>
+                    ` : asset.status === 'in_transit' ? `
+                        <button class="btn btn-primary" style="padding:4px 8px; font-size:10px;" onclick="window.drawer.open('Confirm Arrival', window.DrawerTemplates.confirmArrival)">Confirm Arrival</button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <table>
                 <thead><tr><th>Asset</th><th>ID</th><th>Operator</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>Excavator CAT 320</td>
-                        <td>EQ-001</td>
-                        <td>J. Phiri</td>
-                        <td><span class="status active">Active</span></td>
-                        <td>
-                             <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.drawer.open('Log Usage', window.DrawerTemplates.logEquipmentUsage)">Log Usage</button>
-                             <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px; color:var(--orange); border-color:var(--orange-light);" onclick="window.drawer.open('Return Asset', window.DrawerTemplates.returnEquipment)">Return</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Concrete Mixer</td>
-                        <td>EQ-012</td>
-                        <td>-</td>
-                        <td><span class="status">Idle</span></td>
-                        <td>
-                            <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.drawer.open('Assign Operator', window.DrawerTemplates.assignEquipment)">Assign</button>
-                        </td>
-                    </tr>
-                     <tr>
-                        <td>Generator 50kVA</td>
-                        <td>EQ-088</td>
-                        <td>-</td>
-                        <td><span class="status pending">In Transit</span></td>
-                        <td>
-                            <button class="btn btn-primary" style="padding:4px 8px; font-size:10px;" onclick="window.drawer.open('Confirm Arrival', window.DrawerTemplates.confirmArrival)">Confirm Arrival</button>
-                        </td>
-                    </tr>
+                    ${rows}
                 </tbody>
-              </table>
-            </div>
+            </table>
         `;
     }
 }

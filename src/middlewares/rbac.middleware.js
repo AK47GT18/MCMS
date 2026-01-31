@@ -10,6 +10,7 @@ const logger = require('../utils/logger');
  * Role hierarchy - higher roles inherit lower role permissions
  */
 const ROLE_HIERARCHY = {
+  'System_Technician': 110,
   'Managing_Director': 100,
   'Operations_Manager': 90,
   'Finance_Director': 80,
@@ -17,7 +18,6 @@ const ROLE_HIERARCHY = {
   'Contract_Administrator': 60,
   'Equipment_Coordinator': 50,
   'Field_Supervisor': 40,
-  'System_Technician': 30,
 };
 
 /**

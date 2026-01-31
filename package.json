@@ -38,6 +38,9 @@
     "ws": "^8.19.0",
     "zod": "^4.3.5"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "devDependencies": {
     "@prisma/client": "^5.22.0",
     "browser-sync": "^3.0.4",

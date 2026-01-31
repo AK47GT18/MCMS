@@ -114,8 +114,11 @@ model User {
   passwordHash         String?   @map("password_hash") @db.VarChar(255)
   lastLoginIp          String?   @map("last_login_ip") @db.Inet
   isLocked             Boolean   @default(false) @map("is_locked")
+  statusReason         String?   @map("status_reason")
   passwordResetToken   String?   @map("password_reset_token") @db.VarChar(100)
   passwordResetExpires DateTime? @map("password_reset_expires") @db.Timestamptz
+  mustChangePassword   Boolean   @default(false) @map("must_change_password")
+  mustChangeEmail      Boolean   @default(false) @map("must_change_email")
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 

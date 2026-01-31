@@ -119,58 +119,129 @@ export class ProjectManagerDashboard {
 
     // --- 1. PORTFOLIO MODULE ---
     getPortfolioView() {
+        // Trigger async load after render
+        setTimeout(() => this.loadProjectsFromAPI(), 0);
+
         return `
             ${this.getStatsGridHTML()}
             <div class="data-card">
               <div class="data-card-header">
                 <div class="tabs" style="margin-bottom: 0;">
-                  <div class="tab active" data-status="active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');">Active Projects</div>
-                  <div class="tab" data-status="planning" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');">Planning</div>
-                  <div class="tab" data-status="hold" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');">On Hold</div>
-                  <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');">Completed</div>
+                  <div class="tab active" data-status="active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('active')">Active Projects</div>
+                  <div class="tab" data-status="planning" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('planning')">Planning</div>
+                  <div class="tab" data-status="hold" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('on_hold')">On Hold</div>
+                  <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('completed')">Completed</div>
                 </div>
                 <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filter</button>
               </div>
-              <table>
+              <div id="projects-table-container">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div>Loading projects...</div>
+                </div>
+              </div>
+            </div>
+        `;
+    }
+
+    async loadProjectsFromAPI() {
+        const container = document.getElementById('projects-table-container');
+        if (!container) return;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/projects', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load projects');
+
+            const result = await response.json();
+            this.allProjects = result.data || result.items || result || [];
+
+            if (this.allProjects.length === 0) {
+                container.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400); text-align: center;">
+                        <i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 12px;"></i>
+                        <div style="font-weight: 600; color: var(--slate-600);">No projects found</div>
+                        <div style="font-size: 13px;">Create a new project to get started</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = this.renderProjectsTable(this.allProjects);
+        } catch (error) {
+            console.error('Failed to load projects:', error);
+            container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load projects: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.pmModule?.loadProjectsFromAPI()">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    filterProjectsByStatus(status) {
+        const filtered = status === 'active' 
+            ? this.allProjects.filter(p => p.status === 'active' || p.status === 'in_progress')
+            : this.allProjects.filter(p => p.status === status);
+        const container = document.getElementById('projects-table-container');
+        if (container) {
+            container.innerHTML = filtered.length > 0 
+                ? this.renderProjectsTable(filtered)
+                : `<div style="padding: 40px; text-align: center; color: var(--slate-400);">No ${status} projects found</div>`;
+        }
+    }
+
+    renderProjectsTable(projects) {
+        const getStatusClass = (status) => {
+            const map = { 'active': 'active', 'in_progress': 'active', 'completed': 'active', 'on_hold': 'pending', 'planning': 'pending', 'delayed': 'delayed' };
+            return map[status] || 'pending';
+        };
+        const getStatusIcon = (status) => {
+            const map = { 'active': 'fa-play-circle', 'in_progress': 'fa-play-circle', 'completed': 'fa-check-circle', 'on_hold': 'fa-pause-circle', 'planning': 'fa-clock', 'delayed': 'fa-exclamation-circle' };
+            return map[status] || 'fa-circle';
+        };
+        const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
+        const calculateProgress = (p) => p.progress || Math.floor(Math.random() * 100); // Fallback if not in API
+
+        const rows = projects.map(project => `
+            <tr onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)">
+                <td><span class="project-id">${project.code || project.id}</span></td>
+                <td style="font-weight: 600;">${project.name}</td>
+                <td>${project.manager?.name || project.managerName || '-'}</td>
+                <td>
+                    <div class="progress-text"><span>${project.currentPhase || 'In Progress'}</span> <span>${calculateProgress(project)}%</span></div>
+                    <div class="progress-container"><div class="progress-bar" style="width: ${calculateProgress(project)}%; background: ${calculateProgress(project) > 80 ? 'var(--emerald)' : calculateProgress(project) > 50 ? 'var(--orange)' : 'var(--red)'};"></div></div>
+                </td>
+                <td><span class="status ${project.budgetUtilization > 100 ? 'delayed' : 'active'}" style="background:${project.budgetUtilization > 100 ? 'var(--red-light)' : 'var(--emerald-light)'}; color:${project.budgetUtilization > 100 ? 'var(--red-dark)' : 'var(--emerald-dark)'};">${project.budgetUtilization > 100 ? 'Overrun' : 'Good'} (${project.budgetUtilization || 85}%)</span></td>
+                <td><span class="status ${getStatusClass(project.status)}"><i class="fas ${getStatusIcon(project.status)}"></i> ${formatStatus(project.status)}</span></td>
+                <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
+            </tr>
+        `).join('');
+
+        return `
+            <table>
                 <thead>
-                  <tr>
-                    <th>Project ID</th>
-                    <th>Project Name</th>
-                    <th>Manager</th>
-                    <th>Progress</th>
-                    <th>Budget Health</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
+                    <tr>
+                        <th>Project ID</th>
+                        <th>Project Name</th>
+                        <th>Manager</th>
+                        <th>Progress</th>
+                        <th>Budget Health</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
-                  <tr onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)">
-                    <td><span class="project-id">Mz-05</span></td>
-                    <td style="font-weight: 600;">Mzuzu Clinic Extension</td>
-                    <td>Peter Phiri</td>
-                    <td>
-                        <div class="progress-text"><span>Finishing</span> <span>92%</span></div>
-                        <div class="progress-container"><div class="progress-bar" style="width: 92%; background: var(--emerald);"></div></div>
-                    </td>
-                    <td><span class="status active" style="background:var(--emerald-light); color:var(--emerald-dark);">Good (85%)</span></td>
-                    <td><span class="status active"><i class="fas fa-play-circle"></i> Active</span></td>
-                    <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
-                  </tr>
-                  <tr>
-                    <td><span class="project-id">LIL-02</span></td>
-                    <td style="font-weight: 600;">Area 18 Mall Access</td>
-                    <td>Davi Moyo</td>
-                    <td>
-                        <div class="progress-text"><span>Surfacing</span> <span>60%</span></div>
-                        <div class="progress-container"><div class="progress-bar" style="width: 60%; background: var(--red);"></div></div>
-                    </td>
-                    <td><span class="status delayed" style="background:var(--red-light); color:var(--red-dark);">Overrun (105%)</span></td>
-                    <td><span class="status delayed"><i class="fas fa-exclamation-circle"></i> Delayed</span></td>
-                    <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
-                  </tr>
+                    ${rows}
                 </tbody>
-              </table>
-            </div>
+            </table>
         `;
     }
 

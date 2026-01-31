@@ -68,6 +68,25 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 /**
+ * POST /api/v1/auth/change-email
+ * Change user email address
+ */
+const changeEmail = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const body = await parseBody(req);
+  const { newEmail } = body;
+  
+  if (!newEmail) {
+    return response.badRequest(res, 'New email address required');
+  }
+  
+  await authService.changeEmail(user.id, newEmail);
+  response.success(res, { message: 'Email address updated successfully' });
+});
+
+/**
  * POST /api/v1/auth/forgot-password
  * Request password reset email
  */
@@ -106,5 +125,5 @@ const resetPassword = asyncHandler(async (req, res) => {
   response.success(res, result);
 });
 
-module.exports = { login, register, getProfile, changePassword, forgotPassword, resetPassword };
+module.exports = { login, register, getProfile, changePassword, changeEmail, forgotPassword, resetPassword };
 
