@@ -14,10 +14,25 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+/**
+ * Password strength requirements:
+ * - At least 8 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
+ */
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character');
+
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email format'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: passwordSchema,
   phone: z.string().optional(),
   role: z.enum([
     'Project_Manager', 'Finance_Director', 'Field_Supervisor',
@@ -39,7 +54,7 @@ const createUserSchema = z.object({
     'Contract_Administrator', 'Equipment_Coordinator',
     'Operations_Manager', 'Managing_Director', 'System_Technician'
   ]),
-  password: z.string().min(6),
+  password: passwordSchema,
   permissions: z.array(z.string()).optional(),
 });
 
@@ -235,6 +250,7 @@ module.exports = {
   // Auth
   loginSchema,
   registerSchema,
+  passwordSchema,
   // User
   createUserSchema,
   updateUserSchema,

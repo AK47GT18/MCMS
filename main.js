@@ -76,6 +76,11 @@ class App {
             // Strategy Pattern: Load module based on role
             module = await this.moduleLoader.load(currentUser.role);
 
+            // Expose PM module globally as expected by ProjectManagerDashboard.js templates
+            if (currentUser.role === 'Project Manager') {
+                this.pmModule = module;
+            }
+
             if (module) {
                 module.currentView = pageId;
                 content = module.render();

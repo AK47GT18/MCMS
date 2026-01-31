@@ -19,6 +19,33 @@ export class SystemTechnicianDashboard {
                 const form = document.getElementById('createUserForm');
                 if (form) {
                     const validator = new FormValidator(form);
+                    
+                    // Password Generation Logic
+                    const generateBtn = document.getElementById('btn-generate-pass');
+                    if (generateBtn) {
+                        generateBtn.addEventListener('click', () => {
+                            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+                            let pass = '';
+                            // Ensure 8 chars minimum using typed array for better randomness (simulated here)
+                            for (let i = 0; i < 12; i++) {
+                                pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                            }
+                            
+                            // Ensure complexity requirements
+                            if (!/[A-Z]/.test(pass)) pass += 'A';
+                            if (!/[0-9]/.test(pass)) pass += '1';
+                            if (!/[!@#$%^&*]/.test(pass)) pass += '!';
+                            
+                            const passInput = document.getElementById('new_user_password');
+                            if (passInput) {
+                                passInput.value = pass;
+                                passInput.type = 'text'; // Show it
+                                // Trigger input event for validation
+                                passInput.dispatchEvent(new Event('input'));
+                            }
+                        });
+                    }
+
                     form.addEventListener('submit', (e) => {
                         e.preventDefault();
                         if (validator.validate()) {

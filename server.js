@@ -33,6 +33,10 @@ const response = require('./src/utils/response');
 const logger = require('./src/utils/logger');
 const { handleError, notFoundHandler } = require('./src/middlewares/error.middleware');
 const { parseBody, parseQuery } = require('./src/middlewares/validate.middleware');
+const { applySecurityHeaders, bodySizeLimit } = require('./src/middlewares/security.middleware');
+
+// Request body size limiter (10MB default)
+const checkBodySize = bodySizeLimit(10 * 1024 * 1024);
 
 /**
  * Create the HTTP server
@@ -43,11 +47,20 @@ const server = http.createServer(async (req, res) => {
   // Apply CORS headers
   applyCors(res, req.headers.origin);
   
+  // Apply security headers
+  applySecurityHeaders(res);
+  
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
     res.end();
     return;
+  }
+  
+  // Check request body size for POST/PUT/PATCH
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    const allowed = await checkBodySize(req, res);
+    if (!allowed) return;
   }
   
   try {
@@ -196,18 +209,27 @@ async function start() {
     
     // Start listening
     server.listen(env.PORT, () => {
+      const baseUrl = `http://localhost:${env.PORT}`;
       console.log('');
       console.log('╔══════════════════════════════════════════════════════╗');
       console.log('║                                                      ║');
-      console.log('║   🏗️  MCMS Backend Server                            ║');
+      console.log('║   🚀 MCMS Full-Stack Server                          ║');
       console.log('║                                                      ║');
-      console.log(`║   HTTP:  http://localhost:${env.PORT}                       ║`);
-      console.log(`║   WS:    ws://localhost:${env.PORT}                         ║`);
+      console.log(`║   Frontend:  ${baseUrl.padEnd(28)} ║`);
+      console.log(`║   API/Docs:  ${(baseUrl + '/api/v1/health').padEnd(28)} ║`);
+      console.log(`║   WebSocket: ws://localhost:${env.PORT.toString().padEnd(22)} ║`);
       console.log('║                                                      ║');
       console.log('║   Press Ctrl+C to stop                               ║');
       console.log('║                                                      ║');
       console.log('╚══════════════════════════════════════════════════════╝');
       console.log('');
+      
+      // Open browser automatically in development if requested
+      if (process.env.OPEN_BROWSER === 'true') {
+        const { exec } = require('child_process');
+        const command = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+        exec(`${command} ${baseUrl}`);
+      }
     });
     
   } catch (error) {

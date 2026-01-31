@@ -10,35 +10,35 @@ export class ModuleLoaderStrategy {
         // Configuration: Role -> { path, className }
         this.registry = {
             'Finance Director': { 
-                path: './../components/modules/FinanceDashboard.js', 
+                path: '../../components/modules/FinanceDashboard.js', 
                 className: 'FinanceDashboard' 
             },
             'Project Manager': { 
-                path: './../components/modules/ProjectManagerDashboard.js', 
+                path: '../../components/modules/ProjectManagerDashboard.js', 
                 className: 'ProjectManagerDashboard' 
             },
             'Field Supervisor': { 
-                path: './../components/modules/FieldSupervisorDashboard.js', 
+                path: '../../components/modules/FieldSupervisorDashboard.js', 
                 className: 'FieldSupervisorDashboard' 
             },
             'Contract Administrator': { 
-                path: './../components/modules/ContractAdminDashboard.js', 
+                path: '../../components/modules/ContractAdminDashboard.js', 
                 className: 'ContractAdminDashboard' 
             },
             'Equipment Coordinator': { 
-                path: './../components/modules/EquipmentCoordinatorDashboard.js', 
+                path: '../../components/modules/EquipmentCoordinatorDashboard.js', 
                 className: 'EquipmentCoordinatorDashboard' 
             },
             'Operations Manager': { 
-                path: './../components/modules/OperationsManagerDashboard.js', 
+                path: '../../components/modules/OperationsManagerDashboard.js', 
                 className: 'OperationsManagerDashboard' 
             },
             'Managing Director': { 
-                path: './../components/modules/ManagingDirectorDashboard.js', 
+                path: '../../components/modules/ManagingDirectorDashboard.js', 
                 className: 'ManagingDirectorDashboard' 
             },
             'System Technician': { 
-                path: './../components/modules/SystemTechnicianDashboard.js', 
+                path: '../../components/modules/SystemTechnicianDashboard.js', 
                 className: 'SystemTechnicianDashboard' 
             }
         };

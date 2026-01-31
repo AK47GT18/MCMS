@@ -1133,7 +1133,10 @@ Contract Admin</textarea>
                 </div>
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label" for="new_user_password">Initial Password</label>
-                    <input type="password" id="new_user_password" name="password" class="form-input" placeholder="••••••••" style="width: 100%;" required data-validate="password">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="new_user_password" name="password" class="form-input" placeholder="••••••••" style="width: 100%;" required data-validate="strong-password" data-strength-meter="true">
+                        <button type="button" id="btn-generate-pass" class="btn btn-secondary" style="white-space: nowrap;">Generate</button>
+                    </div>
                     <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">User will be prompted to change this on first login.</p>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">Create User Account</button>

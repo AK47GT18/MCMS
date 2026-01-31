@@ -39,7 +39,9 @@ export class FormValidator {
             if (this.options.validateOnBlur) {
                 input.addEventListener('blur', () => {
                     this.validateInput(input);
-                    if (input.type === 'password') this.checkPasswordStrength(input);
+                    if (input.type === 'password' && input.dataset.strengthMeter === 'true') {
+                        this.checkPasswordStrength(input);
+                    }
                 });
             }
             if (this.options.validateOnInput) {
@@ -48,7 +50,7 @@ export class FormValidator {
                     if (input.classList.contains(this.options.errorClass) || input.type === 'password') {
                         this.validateInput(input);
                     }
-                    if (input.type === 'password') {
+                    if (input.type === 'password' && input.dataset.strengthMeter === 'true') {
                         this.checkPasswordStrength(input);
                     }
                 }, 300);

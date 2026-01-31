@@ -95,6 +95,13 @@ const resetPassword = asyncHandler(async (req, res) => {
     return response.badRequest(res, 'Token and new password are required');
   }
   
+  // Validate password strength
+  const { passwordSchema } = require('../utils/validators');
+  const validation = passwordSchema.safeParse(newPassword);
+  if (!validation.success) {
+    return response.badRequest(res, validation.error.errors[0].message);
+  }
+  
   const result = await authService.resetPassword(token, newPassword);
   response.success(res, result);
 });

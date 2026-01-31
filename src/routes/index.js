@@ -17,6 +17,7 @@ const procurementController = require('../controllers/procurement.controller');
 const auditController = require('../controllers/audit.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
+const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
 
 /**
  * Parse URL path and extract ID if present
@@ -46,13 +47,19 @@ async function router(req, res) {
   const { resource, id, action } = parseUrl(req.url);
   
   // ============================================
-  // AUTH ROUTES
+  // AUTH ROUTES (with rate limiting)
   // ============================================
   if (resource === 'auth') {
+    // Login - rate limited (5 attempts per 15 minutes)
     if (method === 'POST' && id === 'login') {
+      const allowed = await loginLimiter(req, res);
+      if (!allowed) return;
       return authController.login(req, res);
     }
+    // Register - rate limited (10 attempts per hour)
     if (method === 'POST' && id === 'register') {
+      const allowed = await registerLimiter(req, res);
+      if (!allowed) return;
       return authController.register(req, res);
     }
     if (method === 'GET' && id === 'me') {
@@ -61,10 +68,16 @@ async function router(req, res) {
     if (method === 'POST' && id === 'change-password') {
       return authController.changePassword(req, res);
     }
+    // Forgot password - rate limited (3 attempts per hour)
     if (method === 'POST' && id === 'forgot-password') {
+      const allowed = await passwordResetLimiter(req, res);
+      if (!allowed) return;
       return authController.forgotPassword(req, res);
     }
+    // Reset password - rate limited
     if (method === 'POST' && id === 'reset-password') {
+      const allowed = await passwordResetLimiter(req, res);
+      if (!allowed) return;
       return authController.resetPassword(req, res);
     }
     return response.notFound(res, 'Auth endpoint');
