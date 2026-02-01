@@ -1,4 +1,6 @@
 import { StatCard } from '../ui/StatCard.js';
+import client from '../../src/api/client.js';
+import users from '../../src/api/users.api.js';
 
 export class ProjectManagerDashboard {
     constructor() {
@@ -102,7 +104,7 @@ export class ProjectManagerDashboard {
                     <button class="btn btn-secondary" onclick="window.drawer.open('Log Complaint', window.DrawerTemplates.submitComplaint)">
                         <i class="fas fa-exclamation-triangle"></i> <span>Log Issue</span>
                     </button>
-                    <button class="btn btn-action" onclick="window.drawer.open('Initialize New Project', window.DrawerTemplates.newProject); window.app.pmModule.initializeProjectMap();">
+                    <button class="btn btn-action" onclick="window.app.pmModule.openNewProjectDrawer()">
                         <i class="fas fa-plus-circle"></i> <span>New Project</span>
                     </button>
                 </div>`;
@@ -145,22 +147,16 @@ export class ProjectManagerDashboard {
     }
 
     async loadProjectsFromAPI() {
+        console.log('[DEBUG] loadProjectsFromAPI triggered');
         const container = document.getElementById('projects-table-container');
         if (!container) return;
 
         try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const response = await fetch('/api/v1/projects', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to load projects');
-
-            const result = await response.json();
-            this.allProjects = result.data || result.items || result || [];
+            // Using authenticated client instead of raw fetch
+            const result = await client.get('/projects');
+            console.log('[DEBUG] Projects fetch successfully:', result);
+            
+            this.allProjects = Array.isArray(result) ? result : result.data || result.items || [];
 
             if (this.allProjects.length === 0) {
                 container.innerHTML = `
@@ -175,14 +171,25 @@ export class ProjectManagerDashboard {
 
             container.innerHTML = this.renderProjectsTable(this.allProjects);
         } catch (error) {
-            console.error('Failed to load projects:', error);
+            console.error('[CRITICAL] Failed to load projects from API:', error);
+            
+            // Show detailed error if available from backend
+            const errorMsg = error.data?.error?.message || error.message || 'Unknown error';
+            
             container.innerHTML = `
-                <div style="padding: 24px; text-align: center; color: var(--red);">
-                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
-                    <div>Failed to load projects: ${error.message}</div>
-                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.pmModule?.loadProjectsFromAPI()">Retry</button>
+                <div style="padding: 24px; text-align: center; color: var(--red); background: rgba(239, 68, 68, 0.05); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 12px; opacity: 0.8;"></i>
+                    <div style="font-weight: 700; margin-bottom: 4px;">Backend Error (500)</div>
+                    <div style="font-size: 13px; margin-bottom: 16px;">${errorMsg}</div>
+                    <button class="btn btn-secondary" style="margin: 0 auto;" onclick="window.app?.pmModule?.loadProjectsFromAPI()">
+                        <i class="fas fa-sync-alt" style="margin-right: 8px;"></i> Retry Connection
+                    </button>
                 </div>
             `;
+            
+            if (window.toast) {
+                window.toast.show(`Project fetch failed: ${errorMsg}`, 'error');
+            }
         }
     }
 
@@ -989,13 +996,6 @@ export class ProjectManagerDashboard {
                     radius: 500
                 }).addTo(map);
 
-                const updateCoords = (lat, lng) => {
-                    const latEl = document.getElementById('proj_lat');
-                    const lngEl = document.getElementById('proj_lng');
-                    if (latEl) latEl.textContent = lat.toFixed(6);
-                    if (lngEl) lngEl.textContent = lng.toFixed(6);
-                };
-
                 // Add Search Control (Geocoder)
                 const geocoder = LeafletEngine.Control.geocoder({
                     defaultMarkGeocode: false,
@@ -1007,8 +1007,8 @@ export class ProjectManagerDashboard {
                     map.setView(latlng, 16);
                     marker.setLatLng(latlng);
                     circle.setLatLng(latlng);
-                    updateCoords(latlng.lat, latlng.lng);
-                })
+                    this.updateCoords(latlng.lat, latlng.lng);
+                }.bind(this))
                 .addTo(map);
 
                 // Expose circle and update functions to the instance for radius changes
@@ -1041,14 +1041,14 @@ export class ProjectManagerDashboard {
                     const { lat, lng } = e.latlng;
                     marker.setLatLng(e.latlng);
                     circle.setLatLng(e.latlng);
-                    updateCoords(lat, lng);
+                    this.updateCoords(lat, lng);
                 });
 
                 // Handle marker drag
                 marker.on('dragend', (e) => {
                     const { lat, lng } = marker.getLatLng();
                     circle.setLatLng(marker.getLatLng());
-                    updateCoords(lat, lng);
+                    this.updateCoords(lat, lng);
                 });
 
                 // Force layout recalculation after various delays to ensure visibility
@@ -1060,6 +1060,143 @@ export class ProjectManagerDashboard {
                 mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--red);">Failed to initialize map.</div>';
             }
         }, 500);
+    }
+
+    openNewProjectDrawer() {
+        window.drawer.open('Initialize New Project', window.DrawerTemplates.newProject);
+        this.initializeProjectMap();
+        this.fetchSupervisors();
+    }
+
+    async fetchSupervisors() {
+        console.log('[DEBUG] ProjectManagerDashboard.fetchSupervisors() triggered - v2.1');
+        const select = document.getElementById('proj_supervisor');
+        if (!select) return;
+
+        try {
+            const result = await users.getByRole('Field_Supervisor');
+            console.log('[DEBUG] fetchSupervisors result:', result);
+            const supervisors = Array.isArray(result) ? result : result.data || [];
+
+            select.innerHTML = '<option value="">Select Supervisor</option>' + 
+                supervisors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            
+        } catch (error) {
+            console.error('[DEBUG] Error fetching supervisors:', error);
+            select.innerHTML = '<option value="">Error loading supervisors</option>';
+        }
+    }
+
+    updateCoords(lat, lng) {
+        const latEl = document.getElementById('proj_lat');
+        const lngEl = document.getElementById('proj_lng');
+        if (latEl) latEl.textContent = lat.toFixed(6);
+        if (lngEl) lngEl.textContent = lng.toFixed(6);
+    }
+
+    validateProjectForm() {
+        let isValid = true;
+        const fields = [
+            { id: 'proj_name', label: 'Project Name' },
+            { id: 'proj_client', label: 'Client Name' },
+            { id: 'proj_budget', label: 'Budget' },
+            { id: 'proj_start', label: 'Start Date' },
+            { id: 'proj_end', label: 'End Date' },
+            { id: 'proj_supervisor', label: 'Supervisor' }
+        ];
+
+        // Reset errors
+        fields.forEach(f => {
+            const errEl = document.getElementById(`error-${f.id}`);
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+        });
+        const globalErr = document.getElementById('project-form-error');
+        if (globalErr) globalErr.style.display = 'none';
+
+        // Check required
+        fields.forEach(f => {
+            const el = document.getElementById(f.id);
+            if (!el || !el.value) {
+                const errEl = document.getElementById(`error-${f.id}`);
+                if (errEl) {
+                    errEl.style.display = 'block';
+                    errEl.textContent = `${f.label} is required`;
+                }
+                isValid = false;
+            }
+        });
+
+        // Date validation
+        const start = document.getElementById('proj_start')?.value;
+        const end = document.getElementById('proj_end')?.value;
+        const today = new Date().toISOString().split('T')[0];
+
+        if (start && start < today) {
+            const errEl = document.getElementById('error-proj_start');
+            if (errEl) {
+                errEl.style.display = 'block';
+                errEl.textContent = 'Start date cannot be in the past';
+            }
+            isValid = false;
+        }
+
+        if (start && end && end <= start) {
+            const errEl = document.getElementById('error-proj_end');
+            if (errEl) {
+                errEl.style.display = 'block';
+                errEl.textContent = 'End date must be after start date';
+            }
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    async handleCreateProject() {
+        if (!this.validateProjectForm()) return;
+
+        const btn = document.getElementById('btn-create-project');
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+
+        const data = {
+            name: document.getElementById('proj_name').value,
+            client: document.getElementById('proj_client').value, // This will be handled as description or custom field if needed
+            budgetTotal: parseFloat(document.getElementById('proj_budget').value),
+            startDate: new Date(document.getElementById('proj_start').value).toISOString(),
+            endDate: new Date(document.getElementById('proj_end').value).toISOString(),
+            managerId: parseInt(document.getElementById('proj_supervisor').value),
+            lat: parseFloat(document.getElementById('proj_lat').textContent),
+            lng: parseFloat(document.getElementById('proj_lng').textContent),
+            radius: parseInt(document.getElementById('proj_radius_input').value),
+            status: 'planning',
+            // Code will be generated by backend if not provided, but we can generate a prefix
+            code: 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase()
+        };
+
+        try {
+            const response = await client.post('/projects', data);
+
+            window.toast.show('Project initialized successfully', 'success');
+            window.drawer.close();
+            this.loadProjectsFromAPI(); // Refresh the list
+            
+        } catch (error) {
+            console.error('Project creation error:', error);
+            const globalErr = document.getElementById('project-form-error');
+            if (globalErr) {
+                globalErr.style.display = 'block';
+                globalErr.textContent = error.message;
+            }
+            window.toast.show(error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 
     updateMapRadius(radius) {

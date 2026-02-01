@@ -13,36 +13,46 @@ const logger = require('../utils/logger');
  * @returns {Promise<Object>} Paginated projects list
  */
 async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status }) {
-  const skip = (page - 1) * limit;
-  const where = status ? { status } : {};
-  
-  const [projects, total] = await Promise.all([
-    prisma.project.findMany({
-      skip,
-      take: limit,
-      where,
-      orderBy: { [sortBy]: sortOrder },
-      include: {
-        manager: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
+  try {
+    const skip = (page - 1) * limit;
+    const where = status ? { status } : {};
+    
+    // Defensive check for sortBy
+    const validSortBy = sortBy || 'createdAt';
+    
+    logger.debug('Fetching all projects', { page, limit, sortBy: validSortBy, sortOrder, status });
+
+    const [projects, total] = await Promise.all([
+      prisma.project.findMany({
+        skip,
+        take: limit,
+        where,
+        orderBy: { [validSortBy]: sortOrder },
+        include: {
+          manager: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          _count: {
+            select: {
+              tasks: true,
+              contracts: true,
+              issues: true,
+            },
           },
         },
-        _count: {
-          select: {
-            tasks: true,
-            contracts: true,
-            issues: true,
-          },
-        },
-      },
-    }),
-    prisma.project.count({ where }),
-  ]);
-  
-  return { projects, total, page, limit };
+      }),
+      prisma.project.count({ where }),
+    ]);
+    
+    return { projects, total, page, limit };
+  } catch (error) {
+    logger.error('Error in projectsService.getAll:', error);
+    throw error;
+  }
 }
 
 /**
@@ -120,6 +130,30 @@ async function getByCode(code) {
  * @returns {Promise<Object>} Created project
  */
 async function create(data) {
+  // Validate dates
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  
+  const start = new Date(data.startDate);
+  start.setHours(0, 0, 0, 0);
+  
+  const end = new Date(data.endDate);
+  end.setHours(0, 0, 0, 0);
+
+  if (start < now) {
+    throw new AppError('Start date cannot be in the past', 400);
+  }
+
+  if (end <= start) {
+    throw new AppError('End date must be after start date', 400);
+  }
+
+  // Check if code is unique (Prisma will throw but we can be explicit)
+  const existing = await prisma.project.findUnique({ where: { code: data.code } });
+  if (existing) {
+    throw new AppError(`Project code ${data.code} already exists`, 400);
+  }
+
   const project = await prisma.project.create({
     data: {
       ...data,

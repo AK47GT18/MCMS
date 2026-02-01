@@ -67,12 +67,16 @@ const updateUserSchema = createUserSchema.partial().omit({ password: true });
 const createProjectSchema = z.object({
   code: z.string().min(1).max(20),
   name: z.string().min(1).max(255),
+  client: z.string().max(255).optional(),
   managerId: z.number().int().positive().optional(),
   status: z.enum(['active', 'planning', 'on_hold', 'completed', 'cancelled']).optional(),
   contractValue: z.number().positive().optional(),
   budgetTotal: z.number().positive().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  lat: z.coerce.number().optional(),
+  lng: z.coerce.number().optional(),
+  radius: z.coerce.number().int().optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();

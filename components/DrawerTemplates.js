@@ -254,34 +254,46 @@ export const DrawerTemplates = {
     `,
     newProject: `
         <div class="drawer-section">
+            <div id="project-form-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            
             <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                <input type="text" id="proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                <input type="text" id="proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Unilia Library Complex">
+                <span id="error-proj_name" style="color:var(--red); font-size:11px; display:none;"></span>
             </div>
+            
             <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Ministry of Education">
+                <span id="error-proj_client" style="color:var(--red); font-size:11px; display:none;"></span>
             </div>
-             <div style="margin-bottom: 16px;">
+            
+            <div style="margin-bottom: 16px;">
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                <input type="number" id="proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                <input type="number" id="proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="0.00">
+                <span id="error-proj_budget" style="color:var(--red); font-size:11px; display:none;"></span>
             </div>
+            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div>
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
-                    <input type="date" id="proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                    <input type="date" id="proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                    <span id="error-proj_start" style="color:var(--red); font-size:11px; display:none;"></span>
                 </div>
                 <div>
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
-                    <input type="date" id="proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                    <input type="date" id="proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                    <span id="error-proj_end" style="color:var(--red); font-size:11px; display:none;"></span>
                 </div>
             </div>
-             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div>
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Supervisor</label>
                     <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
                         <option value="">Loading supervisors...</option>
                     </select>
+                    <span id="error-proj_supervisor" style="color:var(--red); font-size:11px; display:none;"></span>
                 </div>
                 <div>
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Radius (m)</label>
@@ -303,7 +315,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%" onclick="window.toast.show('Project created successfully', 'success'); window.drawer.close();">Create Project</button>
+            <button id="btn-create-project" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-weight:700;" onclick="window.app.pmModule.handleCreateProject()">Create Project</button>
         </div>
     `,
 

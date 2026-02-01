@@ -179,6 +179,10 @@ model Project {
   budgetSpent   Decimal?          @default(0) @map("budget_spent") @db.Decimal(18, 2)
   startDate     DateTime?         @map("start_date") @db.Date
   endDate       DateTime?         @map("end_date") @db.Date
+  client        String?           @db.VarChar(255)
+  lat           Decimal?          @db.Decimal(10, 8)
+  lng           Decimal?          @db.Decimal(11, 8)
+  radius        Int?              @default(500)
   createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 

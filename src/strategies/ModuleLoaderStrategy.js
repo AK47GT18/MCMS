@@ -67,7 +67,7 @@ export class ModuleLoaderStrategy {
 
         try {
             console.log(`Lazy loading module for: ${role}...`);
-            const module = await import(config.path);
+            const module = await import(config.path + '?v=' + Date.now());
             const Instance = module[config.className];
             const instance = new Instance();
             
