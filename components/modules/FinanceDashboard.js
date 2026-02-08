@@ -37,13 +37,12 @@ export class FinanceDashboard {
             case 'transaction': return this.getTransactionEntryView();
             case 'approvals': return this.getApprovalsView();
             case 'bcr': return this.getBudgetControlView();
-            case 'audit': return this.getAuditView();
             case 'fraud': return this.getFraudView();
             case 'reconciliation': return this.getReconciliationView();
             case 'ledger': return this.getLedgerView();
             case 'contracts': return this.getContractsView();
-            case 'vendors': return this.getVendorsView();
             case 'reports': return this.getReportsView();
+            case 'expenditures': return this.getExpendituresView();
             default: return this.getPlaceholderView(this.currentView);
         }
     }
@@ -161,47 +160,7 @@ export class FinanceDashboard {
         `;
     }
 
-    getAuditView() {
-        return `
-            <div class="data-card">
-               <div class="data-card-header">
-                  <div class="card-title"><i class="fas fa-lock"></i> Immutable System Log</div>
-                  <button class="btn btn-secondary" onclick="window.toast.show('Audit report exporting...', 'info')">Export Audit Report</button>
-               </div>
-               <table>
-                  <thead>
-                     <tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Target</th><th>IP Address</th></tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td style="color: var(--slate-500);">09:15:23</td>
-                        <td style="font-weight: 600;">S. Mwale</td>
-                        <td>Finance Dir</td>
-                        <td><span class="status active">Approved</span></td>
-                        <td>TRX-9901</td>
-                        <td style="font-family: 'JetBrains Mono';">105.12.4.22</td>
-                     </tr>
-                     <tr>
-                        <td style="color: var(--slate-500);">09:10:45</td>
-                        <td style="font-weight: 600;">A. Kanjira</td>
-                        <td>PM</td>
-                        <td><span class="status pending">Submitted</span></td>
-                        <td>TRX-9901</td>
-                        <td style="font-family: 'JetBrains Mono';">105.12.4.55</td>
-                     </tr>
-                     <tr style="background: var(--slate-50);">
-                        <td style="color: var(--slate-500);">08:30:12</td>
-                        <td style="color: var(--slate-400);">Unknown</td>
-                        <td>-</td>
-                        <td><span class="status rejected">Login Fail</span></td>
-                        <td>Auth</td>
-                        <td style="font-family: 'JetBrains Mono';">192.168.1.5</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-        `;
-    }
+
 
     getFraudView() {
         return `
@@ -599,115 +558,7 @@ export class FinanceDashboard {
         `;
     }
 
-    getVendorsView() {
-        // Trigger async load
-        setTimeout(() => this.loadVendorsFromAPI(), 0);
-        
-        return `
-            <div class="data-card">
-              <div class="data-card-header">
-                <div class="card-title">Vendor Registry & Compliance</div>
-                <button class="btn btn-primary"><i class="fas fa-user-plus"></i> Onboard Vendor</button>
-              </div>
-              <div id="vendors-table-container">
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
-                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
-                    <div>Loading vendors...</div>
-                </div>
-              </div>
-            </div>
-        `;
-    }
 
-    async loadVendorsFromAPI() {
-        const container = document.getElementById('vendors-table-container');
-        if (!container) return;
-
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const response = await fetch('/api/v1/vendors', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to load vendors');
-
-            const result = await response.json();
-            const vendors = result.data || result.items || result || [];
-
-            if (vendors.length === 0) {
-                container.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400); text-align: center;">
-                        <i class="fas fa-users" style="font-size: 32px; margin-bottom: 12px;"></i>
-                        <div style="font-weight: 600; color: var(--slate-600);">No vendors found</div>
-                        <div style="font-size: 13px;">Onboard a new vendor to get started</div>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = this.renderVendorsTable(vendors);
-        } catch (error) {
-            console.error('Failed to load vendors:', error);
-            container.innerHTML = `
-                <div style="padding: 24px; text-align: center; color: var(--red);">
-                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
-                    <div>Failed to load vendors: ${error.message}</div>
-                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app?.loadPage('vendors')">Retry</button>
-                </div>
-            `;
-        }
-    }
-
-    renderVendorsTable(vendors) {
-        const getStatusClass = (status) => {
-            const map = { 'approved': 'active', 'active': 'active', 'suspended': 'locked', 'pending': 'pending' };
-            return map[status?.toLowerCase()] || 'pending';
-        };
-        const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
-        const renderStars = (rating) => {
-            const r = Math.min(5, Math.max(0, rating || 0));
-            return Array.from({length: 5}, (_, i) => 
-                `<i class="fa${i < Math.floor(r) ? 's' : i < r ? 's fa-star-half-alt' : 'r'} fa-star"></i>`
-            ).join('');
-        };
-
-        const rows = vendors.map(vendor => `
-            <tr>
-                <td style="font-weight:600;">${vendor.name}</td>
-                <td>${vendor.category || 'General'}</td>
-                <td><span style="color:${vendor.taxClearanceValid ? 'var(--emerald)' : 'var(--red)'};">
-                    <i class="fas fa-${vendor.taxClearanceValid ? 'check' : 'times'}-circle"></i> 
-                    ${vendor.taxClearanceValid ? 'Valid' : 'Invalid/Expired'}
-                </span></td>
-                <td>${vendor.ncicGrade || 'N/A'}</td>
-                <td><div style="display:flex; color:var(--orange);">${renderStars(vendor.performanceRating || 3)}</div></td>
-                <td><span class="status ${getStatusClass(vendor.status)}">${formatStatus(vendor.status)}</span></td>
-                <td><button class="btn btn-secondary open-drawer" style="padding:4px 8px;" onclick="window.drawer.open('Vendor Profile', window.DrawerTemplates.vendorProfile)">Profile</button></td>
-            </tr>
-        `).join('');
-
-        return `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Vendor Name</th>
-                        <th>Category</th>
-                        <th>Tax Clearance</th>
-                        <th>NCIC Grade</th>
-                        <th>Performance</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
-            </table>
-        `;
-    }
 
     getReportsView() {
         return `
@@ -792,6 +643,143 @@ export class FinanceDashboard {
         `;
     }
     
+    getExpendituresView() {
+        return `
+            <div class="stats-grid" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-header"><span class="stat-label">Total Allocated</span><i class="fas fa-coins" style="color: var(--blue);"></i></div>
+                    <div class="stat-value">MWK 1.2B</div>
+                    <div class="stat-sub">Across all active projects</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--emerald-light); background: #f0fdf4;">
+                    <div class="stat-header"><span class="stat-label" style="color: var(--emerald);">Total Spent</span><i class="fas fa-money-bill-wave" style="color: var(--emerald);"></i></div>
+                    <div class="stat-value" style="color: var(--emerald);">MWK 890M</div>
+                    <div class="stat-sub">74.2% utilization</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--orange-light); background: #fffbeb;">
+                    <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Overrun Projects</span><i class="fas fa-exclamation-triangle" style="color: var(--orange);"></i></div>
+                    <div class="stat-value" style="color: var(--orange);">2</div>
+                    <div class="stat-sub">Above 90% threshold</div>
+                </div>
+            </div>
+
+            <div class="data-card" style="margin-bottom: 24px;">
+                <div class="data-card-header">
+                    <div class="card-title">Budget vs Actual by Project</div>
+                    <button class="btn btn-secondary"><i class="fas fa-download"></i> Export</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th style="text-align:right">Budget (MWK)</th>
+                            <th style="text-align:right">Spent (MWK)</th>
+                            <th style="text-align:right">Remaining</th>
+                            <th>Utilization</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight:600;">CEN-01 Unilia</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">500,000,000</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">485,000,000</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono'; color: var(--orange);">15,000,000</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:80px; height:6px; background:var(--slate-200); border-radius:3px;">
+                                        <div style="width:97%; height:100%; background:var(--orange); border-radius:3px;"></div>
+                                    </div>
+                                    <span style="font-size:11px; font-weight:600; color:var(--orange);">97%</span>
+                                </div>
+                            </td>
+                            <td><span class="status delayed">Over 90%</span></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600;">MZ-05 Mzimba Clinic</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">200,000,000</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">140,000,000</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono'; color: var(--emerald);">60,000,000</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:80px; height:6px; background:var(--slate-200); border-radius:3px;">
+                                        <div style="width:70%; height:100%; background:var(--emerald); border-radius:3px;"></div>
+                                    </div>
+                                    <span style="font-size:11px; font-weight:600; color:var(--emerald);">70%</span>
+                                </div>
+                            </td>
+                            <td><span class="status active">Healthy</span></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600;">LIL-02 Mall</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">350,000,000</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">265,000,000</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono'; color: var(--emerald);">85,000,000</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:80px; height:6px; background:var(--slate-200); border-radius:3px;">
+                                        <div style="width:76%; height:100%; background:var(--blue); border-radius:3px;"></div>
+                                    </div>
+                                    <span style="font-size:11px; font-weight:600; color:var(--blue);">76%</span>
+                                </div>
+                            </td>
+                            <td><span class="status active">Healthy</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title">Recent Expenditure Transactions</div>
+                    <button class="btn btn-primary" onclick="window.drawer.open('New Transaction', window.DrawerTemplates.transactionEntry)"><i class="fas fa-plus"></i> Log Transaction</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Ref</th>
+                            <th>Project</th>
+                            <th>Vendor</th>
+                            <th>Category</th>
+                            <th style="text-align:right">Amount (MWK)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Feb 08, 2026</td>
+                            <td><span class="project-id">TRX-10045</span></td>
+                            <td>CEN-01 Unilia</td>
+                            <td>Malawi Cement Ltd</td>
+                            <td>Materials</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">4,500,000</td>
+                            <td><span class="status active">Approved</span></td>
+                        </tr>
+                        <tr>
+                            <td>Feb 07, 2026</td>
+                            <td><span class="project-id">TRX-10044</span></td>
+                            <td>MZ-05 Clinic</td>
+                            <td>Steel Masters MW</td>
+                            <td>Materials</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">12,500,000</td>
+                            <td><span class="status active">Approved</span></td>
+                        </tr>
+                        <tr>
+                            <td>Feb 06, 2026</td>
+                            <td><span class="project-id">TRX-10043</span></td>
+                            <td>CEN-01 Unilia</td>
+                            <td>Transport Co</td>
+                            <td>Logistics</td>
+                            <td style="text-align:right; font-family: 'JetBrains Mono';">850,000</td>
+                            <td><span class="status pending">Pending</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
     getPlaceholderView(title) {
         return `<div class="data-card"><div class="data-card-header"><div class="card-title">${title.charAt(0).toUpperCase() + title.slice(1)}</div></div><div style="padding: 24px;">Content for ${title} coming soon.</div></div>`;
     }
@@ -811,7 +799,8 @@ export class FinanceDashboard {
             'fraud': { title: 'Fraud Detection', context: 'Active Alerts & Rules' },
             'contracts': { title: 'Contract Management', context: 'Milestones & Deadlines' },
             'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
-            'reports': { title: 'Reporting', context: 'Export & Print' }
+            'reports': { title: 'Reporting', context: 'Export & Print' },
+            'expenditures': { title: 'Expenditures', context: 'Budget vs Actual Tracking' }
         };
 
         const current = headers[this.currentView] || { title: this.currentView, context: '' };

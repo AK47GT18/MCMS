@@ -17,9 +17,12 @@ const getAll = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
   
-  // Only allow PM, FM, MD, and ST to view audit logs
+  // Normalize role to handle db format variants
+  const userRole = user.role.replace(' ', '_');
+  
+  // Only allow PM, FD, MD, and ST to view audit logs
   const allowedRoles = ['Project_Manager', 'Finance_Director', 'Managing_Director', 'System_Technician'];
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(userRole)) {
     return response.forbidden(res, 'Access denied');
   }
   

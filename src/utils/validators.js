@@ -77,6 +77,7 @@ const createProjectSchema = z.object({
   lat: z.coerce.number().optional(),
   lng: z.coerce.number().optional(),
   radius: z.coerce.number().int().optional(),
+  suspensionReason: z.string().optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();

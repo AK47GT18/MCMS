@@ -1,0 +1,282 @@
+﻿Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+node.exe : 
+At C:\Program Files\no
+dejs\npx.ps1:29 char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (:String) [   
+ ], RemoteExceptio    
+n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+Error: Prisma schema 
+validation - 
+(validate wasm)
+Error code: P1012
+[1;91merror[0m: 
+[1mType "RoleEnum" 
+is neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:1
+5[0m
+[1;94m   | [0m
+[1;94m14 | [0m  
+phone                 
+String?               
+@db.VarChar(20)
+[1;94m15 | [0m  
+role                  
+[1;91mRoleEnum[0m
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType 
+"VendorStatusEnum" is 
+neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:5
+4[0m
+[1;94m   | [0m
+[1;94m53 | [0m  
+performanceRating  
+Int?             @map(
+"performance_rating") 
+@db.SmallInt
+[1;94m54 | [0m  
+status             [1
+;91mVendorStatusEnum[
+0m @default(pending)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType 
+"ProjectStatusEnum" 
+is neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:7
+0[0m
+[1;94m   | [0m
+[1;94m69 | [0m  
+managerId            
+Int?                  
+@map("manager_id")
+[1;94m70 | [0m  
+status               
+[1;91mProjectStatusEnu
+m[0m     
+@default(planning)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType 
+"ContractStatusEnum" 
+is neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:1
+28[0m
+[1;94m   | [0m
+[1;94m127 | [0m  
+endDate     DateTime? 
+         
+@map("end_date") 
+@db.Date
+[1;94m128 | [0m  
+status      [1;91mCon
+tractStatusEnum[0m 
+@default(draft)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType 
+"MilestoneStatusEnum" 
+is neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:1
+48[0m
+[1;94m   | [0m
+[1;94m147 | [0m  
+value          
+Decimal?            
+@db.Decimal(18, 2)
+[1;94m148 | [0m  
+status         [1;91m
+MilestoneStatusEnum[0
+m @default(scheduled)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType 
+"AssetConditionEnum" 
+is neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:1
+65[0m
+[1;94m   | [0m
+[1;94m164 | [0m  
+hoursOrKm        Int? 
+              
+@map("hours_or_km")
+[1;94m165 | [0m  
+condition        [1;9
+1mAssetConditionEnum[
+0m @default(Good)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType 
+"AssetStatusEnum" is 
+neither a built-in 
+type, nor refers to 
+another model, 
+composite type, or 
+enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:1
+68[0m
+[1;94m   | [0m
+[1;94m167 | [0m  
+currentProjectId Int? 
+              @map("cu
+rrent_project_id")
+[1;94m168 | [0m  
+status           [1;9
+1mAssetStatusEnum[0m 
+   @default(available)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType "RequisitionS
+tatusEnum" is neither 
+a built-in type, nor 
+refers to another 
+model, composite 
+type, or enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:2
+05[0m
+[1;94m   | [0m
+[1;94m204 | [0m  
+budgetLine   String?  
+             
+@map("budget_line") 
+@db.VarChar(20)
+[1;94m205 | [0m  
+status       [1;91mRe
+quisitionStatusEnum[0
+m @default(pending)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mType "ProcurementS
+tatusEnum" is neither 
+a built-in type, nor 
+refers to another 
+model, composite 
+type, or enum.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:3
+29[0m
+[1;94m   | [0m
+[1;94m328 | [0m  
+financeReviewedAt 
+DateTime?             
+@map("finance_reviewed
+_at") 
+@db.Timestamptz(6)
+[1;94m329 | [0m  
+status            [1;
+91mProcurementStatusEn
+um[0m 
+@default(pending_pm)
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mError validating 
+model "Asset": The 
+index definition 
+refers to the 
+relation fields 
+status. Index 
+definitions must 
+reference only scalar 
+fields.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:1
+76[0m
+[1;94m   | [0m
+[1;94m175 | [0m  @@i
+ndex([currentProjectId
+])
+[1;94m176 | [0m  [1
+;91m@@index([status])
+[0m
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mError validating 
+model "Requisition": 
+The index definition 
+refers to the 
+relation fields 
+status. Index 
+definitions must 
+reference only scalar 
+fields.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:2
+19[0m
+[1;94m   | [0m
+[1;94m218 | [0m  
+@@index([projectId])
+[1;94m219 | [0m  [1
+;91m@@index([status])
+[0m
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mError validating 
+model 
+"ProcurementRequest": 
+The index definition 
+refers to the 
+relation fields 
+status. Index 
+definitions must 
+reference only scalar 
+fields.[0m
+  [1;94m-->[0m  [4m
+prisma\schema.prisma:3
+34[0m
+[1;94m   | [0m
+[1;94m333 | [0m
+[1;94m334 | [0m  [1
+;91m@@index([status])
+[0m
+[1;94m   | [0m
+
+Validation Error 
+Count: 12
+[Context: validate]
+
+Prisma CLI Version : 
+5.22.0

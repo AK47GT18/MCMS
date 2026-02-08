@@ -213,12 +213,67 @@ export const DrawerTemplates = {
                     </div>
                 </div>
 
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Action Remarks (Required for Rejection)</label>
+                    <textarea id="req-remarks" class="form-input" rows="2" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="Enter reason for rejection or approval notes..."></textarea>
+                </div>
+
                 <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-primary" style="flex: 1; justify-content: center;">Approve Requisition</button>
-                    <button class="btn btn-danger" style="flex: 1; justify-content: center;">Reject</button>
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.toast.show('Requisition forwarded to Project Manager for clarification', 'info')">Forward to PM</button>
+                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="
+                        const reason = document.getElementById('req-remarks').value;
+                        if(!reason) { window.toast.show('Please provide a reason for rejection', 'error'); return; }
+                        window.drawer.close(); window.toast.show('Requisition Rejected', 'error');
+                    ">Reject</button>
+                    <button class="btn btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.drawer.close(); window.toast.show('Requisition Approved - PO Generated', 'success')">Approve</button>
                 </div>
             </div>
          </div>
+    `,
+
+    requestFunds: `
+        <div class="drawer-section">
+            <div style="margin-bottom: 24px; padding: 12px; background: var(--blue-light); border-radius: 8px; border: 1px solid var(--blue-hover); display: flex; gap: 12px; align-items: center;">
+                 <i class="fas fa-file-invoice-dollar" style="color: var(--blue); font-size: 20px;"></i>
+                 <div>
+                     <div style="font-weight: 700; color: var(--blue); font-size: 14px;">New Fund Request</div>
+                     <div style="font-size: 11px; color: var(--blue-hover);">Submit requisition for approval</div>
+                 </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Project</label>
+                <select class="form-input" style="width: 100%; padding: 10px;">
+                    <option>CEN-01 Unilia Library Complex</option>
+                    <option>MZ-05 Mzimba Clinic Extension</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Vendor Name</label>
+                <input type="text" class="form-input" style="width: 100%; padding: 10px;" placeholder="e.g. Lilongwe Hardware">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Description / Items</label>
+                <textarea class="form-input" rows="3" style="width: 100%; padding: 10px;" placeholder="List items needed..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Total Amount (MWK)</label>
+                <input type="number" class="form-input" style="width: 100%; padding: 10px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0.00">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label class="form-label">Supporting Document (Quote/Invoice)</label>
+                <div style="border: 2px dashed var(--slate-300); padding: 20px; text-align: center; border-radius: 8px; background: var(--slate-50); color: var(--slate-500); cursor: pointer;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <p style="font-size: 12px; margin: 0;">Click to upload PDF/Image</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 700;" onclick="window.drawer.close(); window.toast.show('Fund Request Submitted', 'success')">Submit Request</button>
+        </div>
     `,
 
     investigation: `
@@ -266,6 +321,18 @@ export const DrawerTemplates = {
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
                 <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Ministry of Education">
                 <span id="error-proj_client" style="color:var(--red); font-size:11px; display:none;"></span>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Type</label>
+                <select id="proj_type" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
+                    <option value="">Select Project Type...</option>
+                    <option value="civil_works">Civil Works</option>
+                    <option value="bridge_construction">Bridge Construction</option>
+                    <option value="road_works">Road Works</option>
+                    <option value="building_works">Building Works</option>
+                </select>
+                <span id="error-proj_type" style="color:var(--red); font-size:11px; display:none;"></span>
             </div>
             
             <div style="margin-bottom: 16px;">
@@ -746,21 +813,54 @@ export const DrawerTemplates = {
             </div>
             
             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Equipment ID/Name</label>
-                <select class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                    <option>EQP-045: Caterpillar 320D Excavator</option>
-                    <option>EQP-012: Tata Tipper 10T</option>
-                    <option>EQP-008: Winget Concrete Mixer</option>
+                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Assign To Project</label>
+                <select id="assign_project" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" onchange="window.app?.equipModule?.showRecommendedVehicles?.(this.value)">
+                    <option value="civil_works" data-type="civil_works">CEN-01: Unilia Library Complex (Building)</option>
+                    <option value="road_works" data-type="road_works">MZ-05: Mzimba Clinic Extension (Road)</option>
+                    <option value="bridge_construction" data-type="bridge_construction">NOR-04: Mzuzu Bridge Repair (Bridge)</option>
                 </select>
+            </div>
+
+            <!-- Recommended Vehicles Section -->
+            <div id="recommended-vehicles" style="margin-bottom: 16px; padding: 12px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <i class="fas fa-lightbulb" style="color: var(--blue);"></i>
+                    <span style="font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase;">Recommended for this Project Type</span>
+                </div>
+                <div id="recommended-list" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span style="background: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #BFDBFE;">Excavator</span>
+                    <span style="background: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #BFDBFE;">Bulldozer</span>
+                    <span style="background: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #BFDBFE;">Tower Crane</span>
+                    <span style="background: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #BFDBFE;">Concrete Mixer</span>
+                </div>
             </div>
             
             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Assign To Project</label>
-                <select class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                    <option>CEN-01: Unilia Library Complex</option>
-                    <option>MZ-05: Mzimba Clinic Extension</option>
-                    <option>NOR-04: Mzuzu Bridge Repair</option>
+                <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Equipment ID/Name</label>
+                <select id="assign_equipment" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" onchange="window.app?.equipModule?.checkEquipmentConflict?.(this.value)">
+                    <option value="EQP-045">EQP-045: Caterpillar 320D Excavator</option>
+                    <option value="EQP-012">EQP-012: Tata Tipper 10T</option>
+                    <option value="EQP-008">EQP-008: Winget Concrete Mixer</option>
                 </select>
+            </div>
+
+            <!-- Conflict Alert (hidden by default) -->
+            <div id="equipment-conflict-alert" style="display: none; margin-bottom: 16px; padding: 12px; background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--orange);"></i>
+                    <span style="font-size: 12px; font-weight: 700; color: var(--orange);">Conflict Detected</span>
+                </div>
+                <div id="conflict-message" style="font-size: 12px; color: var(--slate-700); margin-bottom: 12px;">
+                    This equipment is currently assigned to <strong>MZ-05 Mzimba Clinic</strong> until <strong>Feb 15, 2026</strong>.
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" style="flex:1; padding:8px; font-size:11px;" onclick="window.app?.equipModule?.stallRequest?.()">
+                        <i class="fas fa-pause"></i> Stall Request
+                    </button>
+                    <button class="btn btn-action" style="flex:1; padding:8px; font-size:11px;" onclick="window.app?.equipModule?.reassignEquipment?.()">
+                        <i class="fas fa-exchange-alt"></i> Reassign Now
+                    </button>
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
@@ -842,11 +942,35 @@ export const DrawerTemplates = {
             <div style="margin-bottom: 24px;">
                 <label style="display:block; font-size:11px; font-weight:700; color:var(--slate-400); text-transform:uppercase; margin-bottom:10px; letter-spacing: 0.5px;">Maintenance Health</label>
                 <div style="padding: 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-200);">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
-                        <span>Next Service Due</span>
-                        <span style="font-weight: 700; color: var(--orange);">50h remaining</span>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Last Maintenance</div>
+                            <div id="asset-last-maintenance" style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--emerald);">Dec 15, 2025</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Next Service Due</div>
+                            <div id="asset-next-service" style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--orange);">50h remaining</div>
+                        </div>
                     </div>
                     <div class="budget-bar-bg" style="height: 6px;"><div class="budget-bar-fill" style="width: 90%; background: var(--orange);"></div></div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display:block; font-size:11px; font-weight:700; color:var(--slate-400); text-transform:uppercase; margin-bottom:10px; letter-spacing: 0.5px;">Maintenance History</label>
+                <div id="asset-maintenance-history" style="font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--slate-100);">
+                        <div><span style="font-weight: 600;">500 Hour Service</span> <span class="status active" style="font-size: 9px; padding: 1px 6px;">Preventive</span></div>
+                        <div style="color: var(--slate-500);">Dec 15, 2025 • MWK 1.2M</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--slate-100);">
+                        <div><span style="font-weight: 600;">Oil & Filter Change</span> <span class="status active" style="font-size: 9px; padding: 1px 6px;">Preventive</span></div>
+                        <div style="color: var(--slate-500);">Oct 02, 2025 • MWK 450K</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                        <div><span style="font-weight: 600;">Hydraulic Hose Repair</span> <span class="status pending" style="font-size: 9px; padding: 1px 6px;">Corrective</span></div>
+                        <div style="color: var(--slate-500);">Aug 18, 2025 • MWK 890K</div>
+                    </div>
                 </div>
             </div>
 
@@ -856,6 +980,7 @@ export const DrawerTemplates = {
             </div>
         </div>
     `,
+
 
     scheduleMaintenance: `
         <div class="drawer-section">
@@ -868,6 +993,88 @@ export const DrawerTemplates = {
     `,
 
     // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
+
+    // --- PROJECT MANAGEMENT TEMPLATES ---
+    editProject: `
+        <div class="drawer-section">
+            <input type="hidden" id="edit_proj_id">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="edit_proj_name" class="form-input" style="width:100%; padding:10px;">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Client</label>
+                <input type="text" id="edit_proj_client" class="form-input" style="width:100%; padding:10px;">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Status</label>
+                <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px;">
+                    <option value="planning">Planning</option>
+                    <option value="active">Active</option>
+                    <option value="on_hold">On Hold</option>
+                    <option value="completed">Completed</option>
+                    <option value="delayed">Delayed</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Budget</label>
+                <input type="number" id="edit_proj_budget" class="form-input" style="width:100%; padding:10px;">
+            </div>
+            <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div class="form-group"><label class="form-label">Start Date</label><input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px;"></div>
+                <div class="form-group"><label class="form-label">End Date</label><input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px;"></div>
+            </div>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.app.pmModule.handleUpdateProject()">Update Project</button>
+        </div>
+    `,
+
+    suspendProject: `
+        <div class="drawer-section">
+            <input type="hidden" id="suspend_project_id">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; padding:10px;" readonly>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Reason for Suspension</label>
+                 <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%; padding:10px;" placeholder="Detailed reason required..."></textarea>
+            </div>
+            <div style="background:var(--red-light); color:var(--red-dark); padding:12px; border-radius:6px; font-size:12px; margin-bottom:16px;">
+                <i class="fas fa-exclamation-triangle"></i> This will halt all active workflows and notify stakeholders.
+            </div>
+            <button class="btn btn-primary" style="width:100%; background:var(--red); border-color:var(--red); padding:12px;" onclick="window.app.pmModule.handleSuspendProject()">Suspend Project</button>
+        </div>
+    `,
+
+    userForm: `
+        <div class="drawer-section">
+            <input type="hidden" id="user_form_id">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="user_form_name" class="form-input" style="width:100%; padding:10px;" required>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="user_form_email" class="form-input" style="width:100%; padding:10px;" required>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Role</label>
+                <select id="user_form_role" class="form-input" style="width:100%; padding:10px;" required>
+                    <option value="">Select Role...</option>
+                    <option value="Project_Manager">Project Manager</option>
+                    <option value="Finance_Director">Finance Director</option>
+                    <option value="Field_Supervisor">Field Supervisor</option>
+                    <option value="Equipment_Coordinator">Equipment Coordinator</option>
+                    <option value="Client_Viewer">Client Viewer</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Password</label>
+                <input type="password" id="user_form_password" class="form-input" style="width:100%; padding:10px;" placeholder="Leave blank to keep current (update only)">
+            </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.app.pmModule.handleSaveUser()">Save User</button>
+        </div>
+    `,
 
     vendorProfile: `
         <div class="drawer-section">
@@ -1779,7 +1986,7 @@ Contract Admin</textarea>
     newUser: `
         <div class="drawer-section">
             <div id="create-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
-            <form id="newUserForm" onsubmit="event.preventDefault(); window.techModule?.handleCreateUser(new FormData(this));">
+            <form id="newUserForm" onsubmit="event.preventDefault(); (window.techModule || window.app.pmModule)?.handleCreateUser(new FormData(this));">
                 <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label">Full Name</label>
                     <input type="text" name="name" class="form-input" placeholder="e.g. John Doe" required style="width:100%;">
@@ -1820,7 +2027,7 @@ Contract Admin</textarea>
     editUser: `
         <div class="drawer-section">
             <div id="edit-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
-            <form id="editUserForm" onsubmit="event.preventDefault(); window.techModule?.handleUpdateUser(new FormData(this));">
+            <form id="editUserForm" onsubmit="event.preventDefault(); (window.techModule || window.app.pmModule)?.handleUpdateUser(new FormData(this));">
                 <input type="hidden" name="id" id="edit-user-id">
                 <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label">Full Name</label>
@@ -1848,9 +2055,9 @@ Contract Admin</textarea>
                 <div style="border-top: 1px solid var(--slate-200); padding-top: 24px;">
                     <label class="form-label" style="color: var(--slate-500); font-size: 11px; margin-bottom: 12px;">ACCOUNT SECURITY & STATUS</label>
                     <div id="edit-user-status-actions" style="display: flex; flex-direction: column; gap: 8px;">
-                        <button type="button" id="btn-deactivate-user" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light); justify-content: center;" onclick="window.techModule?.lockUser(document.getElementById('edit-user-id').value)">Deactivate Account</button>
-                        <button type="button" id="btn-unlock-user" class="btn btn-secondary" style="color: var(--emerald); border-color: var(--emerald-light); justify-content: center; display: none;" onclick="window.techModule?.unlockUser(document.getElementById('edit-user-id').value)">Unlock & Reactivate</button>
-                        <button type="button" id="btn-delete-user-drawer" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light); justify-content: center; margin-top: 8px; background: var(--red-light); font-weight: 700;" onclick="window.techModule?.deleteUser(document.getElementById('edit-user-id').value)">Delete Account Permanently</button>
+                        <button type="button" id="btn-deactivate-user" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light); justify-content: center;" onclick="(window.techModule || window.app.pmModule)?.lockUser(document.getElementById('edit-user-id').value)">Deactivate Account</button>
+                        <button type="button" id="btn-unlock-user" class="btn btn-secondary" style="color: var(--emerald); border-color: var(--emerald-light); justify-content: center; display: none;" onclick="(window.techModule || window.app.pmModule)?.unlockUser(document.getElementById('edit-user-id').value)">Unlock & Reactivate</button>
+                        <button type="button" id="btn-delete-user-drawer" class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light); justify-content: center; margin-top: 8px; background: var(--red-light); font-weight: 700;" onclick="(window.techModule || window.app.pmModule)?.deleteUser(document.getElementById('edit-user-id').value)">Delete Account Permanently</button>
                     </div>
                 </div>
             </form>
@@ -1911,6 +2118,65 @@ Contract Admin</textarea>
                 <input type="password" class="form-input" value="********" style="width:100%;">
             </div>
             <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.toast.show('SMTP Connection Tested & Saved', 'success'); window.drawer.close();">Test & Save</button>
+        </div>
+    `,
+
+    suspendProject: `
+        <div class="drawer-section">
+            <input type="hidden" id="suspend_project_id">
+            <div style="background:var(--orange-light); border:1px solid var(--orange); color:var(--orange-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;">
+                <i class="fas fa-exclamation-triangle"></i> This will halt all activities. Project Manager will be notified.
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; background:var(--slate-50);" readonly>
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">Reason for Suspension (Required)</label>
+                <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%;" placeholder="e.g. Budget overflow, safety violation, client request..."></textarea>
+            </div>
+            <button class="btn btn-secondary" style="width:100%; justify-content:center; color:var(--orange); border-color:var(--orange);" onclick="window.app.pmModule.handleSuspendProject()">Confirm Suspension</button>
+        </div>
+    `,
+
+    editProject: `
+        <div class="drawer-section">
+            <input type="hidden" id="edit_proj_id">
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
+                <input type="text" id="edit_proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+            </div>
+             <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client</label>
+                <input type="text" id="edit_proj_client" class="form-input" style="width:100%; padding:10px;">
+            </div>
+            <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div>
+                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Status</label>
+                     <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px;">
+                        <option value="planning">Planning</option>
+                        <option value="active">Active</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                     </select>
+                </div>
+                <div>
+                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Budget (MWK)</label>
+                     <input type="number" id="edit_proj_budget" class="form-input" style="width:100%; padding:10px;">
+                </div>
+            </div>
+             <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+                <div>
+                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
+                     <input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px;">
+                </div>
+                <div>
+                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
+                     <input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px;">
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.app.pmModule.handleUpdateProject()">Save Changes</button>
         </div>
     `
 };

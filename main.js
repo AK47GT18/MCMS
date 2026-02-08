@@ -161,8 +161,8 @@ class App {
         // Route-level permission control
         const ROUTE_PERMISSIONS = {
             'dashboard': [], // All authenticated users
-            'users': ['System_Technician', 'System Technician'],
-            'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director'],
+            'users': ['System_Technician', 'System Technician', 'Project_Manager', 'Project Manager'],
+            'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director', 'Project_Manager', 'Project Manager'],
             'config': ['System_Technician', 'System Technician'],
             'finance': ['Finance_Director', 'Managing_Director', 'Finance Director', 'Managing Director'],
             'accounting': ['Finance_Director', 'Finance Director'],

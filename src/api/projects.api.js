@@ -38,8 +38,9 @@ const projects = {
   /**
    * Delete project by ID
    */
-  async remove(id) {
-    return await client.delete(`/projects/${id}`);
+  async remove(id, reason) {
+    const queryString = reason ? `?reason=${encodeURIComponent(reason)}` : '';
+    return await client.delete(`/projects/${id}${queryString}`);
   },
 
   /**

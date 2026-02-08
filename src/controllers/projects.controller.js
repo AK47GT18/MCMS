@@ -56,7 +56,7 @@ const update = asyncHandler(async (req, res, id) => {
   const data = validateBody(body, updateProjectSchema, res);
   if (!data) return;
   
-  const result = await projectsService.update(projectId, data);
+  const result = await projectsService.update(projectId, data, user);
   response.success(res, result);
 });
 
@@ -66,8 +66,10 @@ const remove = asyncHandler(async (req, res, id) => {
   
   const projectId = validateId(id, res);
   if (!projectId) return;
+
+  const query = parseQuery(req.url);
   
-  await projectsService.remove(projectId);
+  await projectsService.remove(projectId, user, query.reason);
   response.noContent(res);
 });
 

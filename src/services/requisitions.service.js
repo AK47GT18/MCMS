@@ -21,7 +21,6 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
       orderBy: { [sortBy]: sortOrder },
       include: {
         project: { select: { id: true, code: true, name: true } },
-        vendor: { select: { id: true, name: true } },
         submitter: { select: { id: true, name: true } },
         items: true,
       },
@@ -37,7 +36,6 @@ async function getById(id) {
     where: { id },
     include: {
       project: { select: { id: true, code: true, name: true } },
-      vendor: true,
       submitter: { select: { id: true, name: true, email: true } },
       reviewer: { select: { id: true, name: true } },
       items: true,
@@ -93,20 +91,23 @@ async function approve(id, reviewerId) {
   return requisition;
 }
 
-async function reject(id, reviewerId) {
+async function reject(id, reviewerId, reason) {
+  if (!reason) throw new AppError('Rejection reason is required', 400);
+
   const requisition = await prisma.requisition.update({
     where: { id },
     data: {
       status: 'rejected',
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
+      rejectionReason: reason,
     },
     include: {
       submitter: { select: { id: true, name: true, email: true } },
     },
   });
   
-  logger.info('Requisition rejected', { reqId: id, reviewerId });
+  logger.info('Requisition rejected', { reqId: id, reviewerId, reason });
   
   // Emit realtime event
   handlers.emitRequisitionStatus(requisition, 'rejected', reviewerId);
@@ -116,7 +117,7 @@ async function reject(id, reviewerId) {
     emailService.sendNotification(
       requisition.submitter,
       'Requisition Rejected',
-      `Your requisition ${requisition.reqCode} has been rejected.`,
+      `Your requisition ${requisition.reqCode} has been rejected. Reason: ${reason}`,
     ).catch(err => logger.error('Email notification failed', { error: err.message }));
   }
   

@@ -11,14 +11,14 @@ const audit = {
    */
   async getAll(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return await client.get(`/audit${queryString ? '?' + queryString : ''}`);
+    return await client.get(`/audit-logs${queryString ? '?' + queryString : ''}`);
   },
 
   /**
    * Get audit log by ID
    */
   async getById(id) {
-    return await client.get(`/audit/${id}`);
+    return await client.get(`/audit-logs/${id}`);
   },
 
   /**
@@ -26,21 +26,21 @@ const audit = {
    */
   async getByUser(userId, params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return await client.get(`/audit/user/${userId}${queryString ? '?' + queryString : ''}`);
+    return await client.get(`/audit-logs/user/${userId}${queryString ? '?' + queryString : ''}`);
   },
 
   /**
    * Get audit logs by date range
    */
   async getByDateRange(startDate, endDate) {
-    return await client.get(`/audit?startDate=${startDate}&endDate=${endDate}`);
+    return await client.get(`/audit-logs?startDate=${startDate}&endDate=${endDate}`);
   },
 
   /**
    * Get audit logs by severity
    */
   async getBySeverity(severity) {
-    return await client.get(`/audit?severity=${severity}`);
+    return await client.get(`/audit-logs?severity=${severity}`);
   },
 };
 

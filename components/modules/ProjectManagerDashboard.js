@@ -1,6 +1,10 @@
 import { StatCard } from '../ui/StatCard.js';
 import client from '../../src/api/client.js';
 import users from '../../src/api/users.api.js';
+import dailyLogs from '../../src/api/dailyLogs.api.js';
+import requisitions from '../../src/api/requisitions.api.js';
+import projects from '../../src/api/projects.api.js';
+import audit from '../../src/api/audit.api.js';
 
 export class ProjectManagerDashboard {
     constructor() {
@@ -29,6 +33,8 @@ export class ProjectManagerDashboard {
             case 'reviews': contentHTML = this.getReviewsView(); break;
             case 'issues': contentHTML = this.getIssuesView(); break;
             case 'fleet': contentHTML = this.getFleetView(); break;
+            case 'users': contentHTML = this.getUsersView(); break;
+            case 'audit': contentHTML = this.getAuditView(); break;
             default: contentHTML = this.getPortfolioView();
         }
 
@@ -55,7 +61,9 @@ export class ProjectManagerDashboard {
             'analytics': 'Performance Analytics',
             'reviews': 'Approvals & Reviews',
             'issues': 'Issues Resolution Center',
-            'fleet': 'Asset Registry'
+            'fleet': 'Asset Registry',
+            'users': 'User Management',
+            'audit': 'System Audit Logs'
         };
 
         return `
@@ -89,11 +97,11 @@ export class ProjectManagerDashboard {
         }
         return `
             <div class="context-strip">
-              <span class="context-value">4</span> Active Projects
+              <span class="context-value" id="context-active-projects">4</span> Active Projects
               <div class="context-dot"></div>
-              <span class="context-value">MWK 1.2B</span> Portfolio Value
+              <span class="context-value" id="context-portfolio-value">MWK 1.2B</span> Portfolio Value
               <div class="context-dot"></div>
-              <span style="color: var(--orange); font-weight: 600;">3 Pending Logs</span>
+              <span style="color: var(--orange); font-weight: 600;"><span id="context-pending-logs">3</span> Pending Logs</span>
             </div>`;
     }
 
@@ -114,6 +122,14 @@ export class ProjectManagerDashboard {
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-secondary"><i class="fas fa-sliders"></i> Filter</button>
                     <button class="btn btn-primary" onclick="window.drawer.open('Add Task', window.DrawerTemplates.addTask)"><i class="fas fa-calendar-plus"></i> Add Task</button>
+                </div>`;
+        }
+        if (this.currentView === 'users') {
+             return `
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-action" onclick="window.drawer.open('Add New User', window.DrawerTemplates.newUser); window.app.pmModule.initCreateUserForm();">
+                        <i class="fas fa-user-plus"></i> <span>Add User</span>
+                    </button>
                 </div>`;
         }
         return '';
@@ -170,6 +186,7 @@ export class ProjectManagerDashboard {
             }
 
             container.innerHTML = this.renderProjectsTable(this.allProjects);
+            this.updateHeaderStats();
         } catch (error) {
             console.error('[CRITICAL] Failed to load projects from API:', error);
             
@@ -215,25 +232,34 @@ export class ProjectManagerDashboard {
             return map[status] || 'fa-circle';
         };
         const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
-        const calculateProgress = (p) => p.progress || Math.floor(Math.random() * 100); // Fallback if not in API
+        const calculateProgress = (p) => p.progress || 0; // Default to 0 instead of random
 
         const rows = projects.map(project => `
-            <tr onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)">
-                <td><span class="project-id">${project.code || project.id}</span></td>
-                <td style="font-weight: 600;">${project.name}</td>
-                <td>${project.manager?.name || project.managerName || '-'}</td>
-                <td>
+            <tr>
+                <td onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)"><span class="project-id">${project.code || project.id}</span></td>
+                <td style="font-weight: 600;" onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)">${project.name}</td>
+                <td onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)">${project.manager?.name || project.managerName || '-'}</td>
+                <td onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)">
                     <div class="progress-text"><span>${project.currentPhase || 'In Progress'}</span> <span>${calculateProgress(project)}%</span></div>
                     <div class="progress-container"><div class="progress-bar" style="width: ${calculateProgress(project)}%; background: ${calculateProgress(project) > 80 ? 'var(--emerald)' : calculateProgress(project) > 50 ? 'var(--orange)' : 'var(--red)'};"></div></div>
                 </td>
-                <td><span class="status ${project.budgetUtilization > 100 ? 'delayed' : 'active'}" style="background:${project.budgetUtilization > 100 ? 'var(--red-light)' : 'var(--emerald-light)'}; color:${project.budgetUtilization > 100 ? 'var(--red-dark)' : 'var(--emerald-dark)'};">${project.budgetUtilization > 100 ? 'Overrun' : 'Good'} (${project.budgetUtilization || 85}%)</span></td>
-                <td><span class="status ${getStatusClass(project.status)}"><i class="fas ${getStatusIcon(project.status)}"></i> ${formatStatus(project.status)}</span></td>
-                <td><i class="fas fa-chevron-right" style="color: var(--slate-300);"></i></td>
+                <td onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)"><span class="status ${project.budgetUtilization > 100 ? 'delayed' : 'active'}" style="background:${project.budgetUtilization > 100 ? 'var(--red-light)' : 'var(--emerald-light)'}; color:${project.budgetUtilization > 100 ? 'var(--red-dark)' : 'var(--emerald-dark)'};">${project.budgetUtilization > 100 ? 'Overrun' : 'Good'} (${project.budgetUtilization || 85}%)</span></td>
+                <td onclick="window.drawer.open('Project Details', window.DrawerTemplates.projectDetails)"><span class="status ${getStatusClass(project.status)}"><i class="fas ${getStatusIcon(project.status)}"></i> ${formatStatus(project.status)}</span></td>
+                <td style="position: relative;">
+                    <div class="dropdown" style="position: relative; display: inline-block;">
+                        <button class="btn-icon" onclick="event.stopPropagation(); this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block';"><i class="fas fa-ellipsis-v"></i></button>
+                        <div class="dropdown-content" style="display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; border: 1px solid var(--slate-200);">
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.openEditProjectDrawer('${project.id}');" style="color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-edit" style="width: 20px;"></i> Edit</a>
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.openSuspendProjectDrawer('${project.id}');" style="color: black; padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-pause" style="width: 20px;"></i> Suspend</a>
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.handleDeleteProject('${project.id}');" style="color: var(--red); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-trash" style="width: 20px;"></i> Delete</a>
+                        </div>
+                    </div>
+                </td>
             </tr>
         `).join('');
 
         return `
-            <table>
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>Project ID</th>
@@ -242,13 +268,27 @@ export class ProjectManagerDashboard {
                         <th>Progress</th>
                         <th>Budget Health</th>
                         <th>Status</th>
-                        <th></th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${rows}
                 </tbody>
             </table>
+            <script>
+                // Close dropdowns when clicking outside
+                window.onclick = function(event) {
+                    if (!event.target.matches('.btn-icon') && !event.target.matches('.fa-ellipsis-v')) {
+                        var dropdowns = document.getElementsByClassName("dropdown-content");
+                        for (var i = 0; i < dropdowns.length; i++) {
+                            var openDropdown = dropdowns[i];
+                            if (openDropdown.style.display === 'block') {
+                                openDropdown.style.display = 'none';
+                            }
+                        }
+                    }
+                }
+            </script>
         `;
     }
 
@@ -257,23 +297,23 @@ export class ProjectManagerDashboard {
             <div class="stats-grid">
                <div class="stat-card">
                   <div class="stat-header"><span class="stat-label">Budget Health</span><i class="fas fa-wallet" style="color: var(--emerald);"></i></div>
-                  <div class="stat-value">85%</div>
+                  <div class="stat-value" id="stat-budget-health">85%</div>
                   <div class="stat-sub"><i class="fas fa-arrow-up"></i> Utilized (Aggregate)</div>
                </div>
                <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;" onclick="window.toast.show('Filtering for pending reviews...', 'info')">
                   <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Pending Reviews</span><i class="fas fa-clipboard-check" style="color: var(--orange);"></i></div>
-                  <div class="stat-value" style="color: var(--orange);">3</div>
+                  <div class="stat-value" style="color: var(--orange);" id="stat-pending-reviews">0</div>
                   <div class="stat-sub">Field logs awaiting approval</div>
                </div>
                <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Schedule Variance</span><i class="fas fa-clock" style="color: var(--blue);"></i></div>
-                  <div class="stat-value">-2 Days</div>
-                  <div class="stat-sub">Minor delay on CEN-01</div>
+                  <div class="stat-header"><span class="stat-label">Portfolio Value</span><i class="fas fa-chart-line" style="color: var(--blue);"></i></div>
+                  <div class="stat-value" id="stat-portfolio-value">MWK 0</div>
+                  <div class="stat-sub">Across all projects</div>
                </div>
                <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Incidents</span><i class="fas fa-exclamation-triangle" style="color: var(--red);"></i></div>
-                  <div class="stat-value">0</div>
-                  <div class="stat-sub" style="color: var(--emerald);">No open safety issues</div>
+                  <div class="stat-header"><span class="stat-label">Active Projects</span><i class="fas fa-project-diagram" style="color: var(--slate-600);"></i></div>
+                  <div class="stat-value" id="stat-active-projects">0</div>
+                  <div class="stat-sub">Managed currently</div>
                </div>
             </div>
         `;
@@ -1099,6 +1139,7 @@ export class ProjectManagerDashboard {
         const fields = [
             { id: 'proj_name', label: 'Project Name' },
             { id: 'proj_client', label: 'Client Name' },
+            { id: 'proj_type', label: 'Project Type' },
             { id: 'proj_budget', label: 'Budget' },
             { id: 'proj_start', label: 'Start Date' },
             { id: 'proj_end', label: 'End Date' },
@@ -1165,7 +1206,8 @@ export class ProjectManagerDashboard {
 
         const data = {
             name: document.getElementById('proj_name').value,
-            client: document.getElementById('proj_client').value, // This will be handled as description or custom field if needed
+            client: document.getElementById('proj_client').value,
+            projectType: document.getElementById('proj_type').value,
             budgetTotal: parseFloat(document.getElementById('proj_budget').value),
             startDate: new Date(document.getElementById('proj_start').value).toISOString(),
             endDate: new Date(document.getElementById('proj_end').value).toISOString(),
@@ -1174,7 +1216,6 @@ export class ProjectManagerDashboard {
             lng: parseFloat(document.getElementById('proj_lng').textContent),
             radius: parseInt(document.getElementById('proj_radius_input').value),
             status: 'planning',
-            // Code will be generated by backend if not provided, but we can generate a prefix
             code: 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase()
         };
 
@@ -1320,5 +1361,498 @@ export class ProjectManagerDashboard {
                 </table>
             </div>
         `;
+    }
+
+    calculateDashboardStats(projects) {
+        const stats = {
+            totalProjects: projects.length,
+            activeProjects: projects.filter(p => p.status === 'active' || p.status === 'planning').length,
+            portfolioValue: projects.reduce((sum, p) => sum + (parseFloat(p.contractValue) || 0), 0),
+            totalBudget: projects.reduce((sum, p) => sum + (parseFloat(p.budgetTotal) || 0), 0),
+            totalSpent: projects.reduce((sum, p) => sum + (parseFloat(p.budgetSpent) || 0), 0),
+        };
+        
+        stats.budgetUtilization = stats.totalBudget > 0 ? (stats.totalSpent / stats.totalBudget) * 100 : 0;
+        
+        return stats;
+    }
+
+    async updateHeaderStats() {
+        if (!this.allProjects) return;
+        
+        const stats = this.calculateDashboardStats(this.allProjects);
+        
+        // Update Context Strip
+        const activeProjectsContext = document.getElementById('context-active-projects');
+        if (activeProjectsContext) activeProjectsContext.textContent = stats.activeProjects;
+        
+        const portfolioValueContext = document.getElementById('context-portfolio-value');
+        if (portfolioValueContext) {
+            portfolioValueContext.textContent = 'MWK ' + (stats.portfolioValue >= 1000000000 
+                ? (stats.portfolioValue / 1000000000).toFixed(1) + 'B' 
+                : (stats.portfolioValue / 1000000).toFixed(1) + 'M');
+        }
+
+        // Update Stats Grid
+        const activeProjectsEl = document.getElementById('stat-active-projects');
+        if (activeProjectsEl) activeProjectsEl.textContent = stats.activeProjects;
+        
+        const portfolioValueEl = document.getElementById('stat-portfolio-value');
+        if (portfolioValueEl) {
+            portfolioValueEl.textContent = 'MWK ' + (stats.portfolioValue >= 1000000000 
+                ? (stats.portfolioValue / 1000000000).toFixed(1) + 'B' 
+                : (stats.portfolioValue / 1000000).toFixed(1) + 'M');
+        }
+        
+        const budgetHealthEl = document.getElementById('stat-budget-health');
+        if (budgetHealthEl) budgetHealthEl.textContent = stats.budgetUtilization.toFixed(1) + '%';
+
+        // Fetch pending counts
+        try {
+            const [logsResponse, reqsResponse] = await Promise.all([
+                dailyLogs.getAll(),
+                requisitions.getPending()
+            ]);
+
+            const logs = Array.isArray(logsResponse) ? logsResponse : (logsResponse.data || []);
+            const reqs = Array.isArray(reqsResponse) ? reqsResponse : (reqsResponse.data || []);
+
+            const pendingLogsCount = logs.filter(l => l.status === 'pending').length;
+            const pendingReqsCount = reqs.length;
+
+            const pendingLogsEl = document.getElementById('context-pending-logs');
+            if (pendingLogsEl) pendingLogsEl.textContent = pendingLogsCount;
+
+            // If there's a stat card for pending, update it too
+            const pendingReviewsEl = document.getElementById('stat-pending-reviews');
+            if (pendingReviewsEl) pendingReviewsEl.textContent = pendingLogsCount + pendingReqsCount;
+
+        } catch (e) {
+            console.error('[Dashboard] Error updating pending counts:', e);
+        }
+    }
+
+    // --- SYSTEM ALIGNMENT HELPERS ---
+    renderLoadingState() {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 32px; color: var(--orange); margin-bottom: 16px;"></i>
+                <div style="font-weight: 600; color: var(--slate-600);">Loading system data...</div>
+            </div>
+        `;
+    }
+
+    renderEmptyState(message = 'No records found') {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--slate-400); text-align: center;">
+                <div style="width: 64px; height: 64px; background: var(--slate-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <i class="fas fa-search" style="font-size: 24px; color: var(--slate-400);"></i>
+                </div>
+                <div style="font-weight: 600; color: var(--slate-700); margin-bottom: 8px;">${message}</div>
+                <div style="font-size: 13px; max-width: 300px;">Try adjusting your filters or search terms to find what you're looking for.</div>
+                <button class="btn btn-secondary" style="margin-top: 24px;" onclick="window.app.pmModule.currentView='dashboard'; window.app.pmModule.render();">Return to Overview</button>
+            </div>
+        `;
+    }
+
+    initCreateUserForm() {
+        setTimeout(() => {
+            const form = document.getElementById('newUserForm');
+            if (form) {
+                const generateBtn = form.querySelector('.btn-generate-pass');
+                if (generateBtn) {
+                    generateBtn.onclick = () => {
+                        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+                        let pass = '';
+                        for (let i = 0; i < 12; i++) {
+                            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        if (!/[A-Z]/.test(pass)) pass += 'A';
+                        if (!/[0-9]/.test(pass)) pass += '1';
+                        
+                        const passInput = form.querySelector('input[name="password"]');
+                        if (passInput) {
+                            passInput.value = pass;
+                            passInput.type = 'text'; 
+                            passInput.dispatchEvent(new Event('input'));
+                        }
+                    };
+                }
+            }
+        }, 100);
+    }
+
+    initEditUserForm(user) {
+        setTimeout(() => {
+            const form = document.getElementById('editUserForm');
+            if (form && user) {
+                form.querySelector('[name="id"]').value = user.id;
+                form.querySelector('[name="name"]').value = user.name;
+                form.querySelector('[name="email"]').value = user.email;
+                form.querySelector('[name="role"]').value = user.role.replace(' ', '_');
+                if (form.querySelector('[name="phone"]')) form.querySelector('[name="phone"]').value = user.phone || '';
+                
+                const lockBtn = document.getElementById('btn-deactivate-user');
+                const unlockBtn = document.getElementById('btn-unlock-user');
+                
+                if (lockBtn && unlockBtn) {
+                    if (user.isLocked || !user.active) {
+                        lockBtn.style.display = 'none';
+                        unlockBtn.style.display = 'flex';
+                    } else {
+                        lockBtn.style.display = 'flex';
+                        unlockBtn.style.display = 'none';
+                    }
+                }
+            }
+        }, 100);
+    }
+
+    // --- USERS MODULE ---
+    getUsersView() {
+        setTimeout(() => this.loadUsers(), 0);
+        
+        return `
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title">User Registry & Permissions</div>
+                    <button class="btn btn-primary" onclick="window.drawer.open('Add New User', window.DrawerTemplates.newUser); window.app.pmModule.initCreateUserForm();" data-tooltip="Create a new system user"><i class="fas fa-plus"></i> New User</button>
+                </div>
+                <div id="users-table-container">
+                    ${this.renderLoadingState()}
+                </div>
+            </div>
+        `;
+    }
+
+    async loadUsers() {
+        const container = document.getElementById('users-table-container');
+        if (!container) return;
+
+        try {
+            const response = await users.getAll({ limit: 100 });
+            const data = response.data || response; 
+            const usersList = Array.isArray(data) ? data : data.users || [];
+            
+            if (usersList.length === 0) {
+                container.innerHTML = this.renderEmptyState('No users found in the system.');
+                return;
+            }
+
+            container.innerHTML = this.renderUsersTable(usersList);
+        } catch (error) {
+            console.error('Failed to load users:', error);
+            container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load users: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app.pmModule.loadUsers()">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    renderUsersTable(usersList) {
+        const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const formatRole = (role) => role.replace(/_/g, ' ');
+        
+        const rows = usersList.map(user => {
+            const isLocked = user.isLocked || !user.active;
+            return `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isLocked ? 'var(--red-light)' : 'var(--slate-800)'}; color: ${isLocked ? 'var(--red)' : 'white'}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">${getInitials(user.name)}</div>
+                            <div style="font-weight: 600; ${isLocked ? 'color: var(--slate-400);' : ''}">${user.name}</div>
+                        </div>
+                    </td>
+                    <td>${formatRole(user.role)}</td>
+                    <td>${user.email}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td><span class="status ${isLocked ? 'inactive' : 'active'}">${isLocked ? 'Locked' : 'Active'}</span></td>
+                    <td>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 600;" onclick="window.drawer.open('Edit User Details', window.DrawerTemplates.editUser); window.app.pmModule.initEditUserForm(${JSON.stringify(user).replace(/"/g, '&quot;')})" data-tooltip="Manage account details and status">Edit User</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // --- AUDIT MODULE ---
+    getAuditView() {
+        setTimeout(() => this.loadAuditLogs(), 0);
+        return `
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title">Immutable Audit & Security Log</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="form-input" placeholder="Search logs..." style="width: 200px; padding: 6px 12px; font-size: 13px;">
+                        <button class="btn btn-secondary" data-tooltip="Filter logs by criteria"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-secondary" onclick="window.app.pmModule.loadAuditLogs()" data-tooltip="Refresh local logs"><i class="fas fa-sync"></i></button>
+                    </div>
+                </div>
+                <div id="audit-table-container">
+                    ${this.renderLoadingState()}
+                </div>
+            </div>
+        `;
+    }
+
+    async loadAuditLogs() {
+        const container = document.getElementById('audit-table-container');
+        if (!container) return;
+
+        try {
+            const response = await audit.getAll({ limit: 50 });
+            const data = response.data || response;
+            const logs = Array.isArray(data) ? data : data.logs || [];
+            
+            if (logs.length === 0) {
+                container.innerHTML = this.renderEmptyState('No audit logs found matching your criteria.');
+                return;
+            }
+
+            container.innerHTML = this.renderAuditTable(logs);
+        } catch (error) {
+             console.error('Failed to load audit logs:', error);
+             container.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div>Failed to load logs: ${error.message}</div>
+                    <button class="btn btn-secondary" style="margin-top: 16px;" onclick="window.app.pmModule.loadAuditLogs()">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    renderAuditTable(logs) {
+        const rows = logs.map(log => {
+            const severity = log.severity || 'info';
+            const sevIcon = severity === 'critical' || severity === 'error' ? 
+                '<i class="fas fa-circle-exclamation" style="color: var(--red);" title="Critical"></i>' :
+                '<i class="fas fa-circle" style="color: var(--slate-300);" title="Routine"></i>';
+            const statusClass = log.status === 'success' || !log.status ? 'active' : 'rejected';
+            
+            return `
+                <tr>
+                    <td style="text-align: center;">${sevIcon}</td>
+                    <td style="font-family: 'JetBrains Mono'; font-size: 12px;">${new Date(log.timestamp).toLocaleString()}</td>
+                    <td style="font-weight: 600;">${log.userName || 'System'}</td>
+                    <td>${log.action}</td>
+                    <td>${log.targetType || '-'}${log.targetCode ? ` (${log.targetCode})` : ''}</td>
+                    <td style="font-family: 'JetBrains Mono'; font-size: 12px;">${log.ipAddress || 'internal'}</td>
+                    <td><span class="status ${statusClass}">${log.status || 'Success'}</span></td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Sev.</th>
+                        <th>Timestamp</th>
+                        <th>User / Actor</th>
+                        <th>Event Action</th>
+                        <th>Target Resource</th>
+                        <th>IP Address</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 13px;">${rows}</tbody>
+            </table>
+        `;
+    }
+
+    // --- HANDLERS ---
+    
+    openUserDrawer(userId = null) {
+        window.drawer.open(userId ? 'Edit User' : 'Add New User', window.DrawerTemplates.userForm);
+        if (userId) {
+             users.getById(userId).then(response => {
+                 const user = response.data || response;
+                 document.getElementById('user_form_id').value = user.id;
+                 document.getElementById('user_form_name').value = user.name;
+                 document.getElementById('user_form_email').value = user.email;
+                 document.getElementById('user_form_role').value = user.role;
+             });
+        }
+    }
+
+    async handleCreateUser(formData) {
+        const data = Object.fromEntries(formData.entries());
+        try {
+            await users.create(data);
+            window.toast.show('User account created successfully', 'success');
+            window.drawer.close();
+            this.loadUsers();
+        } catch (error) {
+            console.error('Create user error:', error);
+            const errEl = document.getElementById('create-user-error');
+            if (errEl) {
+                errEl.innerText = error.message;
+                errEl.style.display = 'block';
+            } else {
+                window.toast.show(error.message, 'error');
+            }
+        }
+    }
+
+    async handleUpdateUser(formData) {
+        const id = formData.get('id');
+        const data = Object.fromEntries(formData.entries());
+        delete data.id;
+
+        try {
+            await users.update(id, data);
+            window.toast.show('User details updated', 'success');
+            window.drawer.close();
+            this.loadUsers();
+        } catch (error) {
+            console.error('Update user error:', error);
+            const errEl = document.getElementById('edit-user-error');
+            if (errEl) {
+                errEl.innerText = error.message;
+                errEl.style.display = 'block';
+            } else {
+                window.toast.show(error.message, 'error');
+            }
+        }
+    }
+
+    async lockUser(id) {
+        const reason = prompt("Reason for account deactivation:");
+        if (reason === null) return;
+        if (!reason.trim()) {
+            window.toast.show("A reason is required to deactivate an account", "error");
+            return;
+        }
+
+        try {
+            await users.lock(id, { reason });
+            window.toast.show('User account locked', 'warning');
+            window.drawer.close();
+            this.loadUsers();
+        } catch (error) {
+            window.toast.show(error.message, 'error');
+        }
+    }
+
+    async unlockUser(id) {
+        try {
+            await users.unlock(id);
+            window.toast.show('User account reactivated', 'success');
+            window.drawer.close();
+            this.loadUsers();
+        } catch (error) {
+            window.toast.show(error.message, 'error');
+        }
+    }
+
+    async deleteUser(id) {
+        if (!confirm('CRITICAL: This will permanently delete this user account. All audit logs will remain but the user will be purged. Proceed?')) return;
+        
+        const confirmation = prompt("Type 'PURGE' to confirm permanent deletion:");
+        if (confirmation !== 'PURGE') return;
+
+        try {
+            await users.remove(id);
+            window.toast.show('User purged from system', 'error');
+            window.drawer.close();
+            this.loadUsers();
+        } catch (error) {
+            window.toast.show(error.message, 'error');
+        }
+    }
+
+    // ... Project Handlers ...
+    openEditProjectDrawer(id) {
+        if(!id) return;
+        window.drawer.open('Edit Project', window.DrawerTemplates.editProject);
+         projects.getById(id).then(response => {
+             const project = response.data || response;
+             document.getElementById('edit_proj_id').value = project.id;
+             document.getElementById('edit_proj_name').value = project.name;
+             document.getElementById('edit_proj_client').value = project.client;
+             document.getElementById('edit_proj_status').value = project.status;
+             document.getElementById('edit_proj_budget').value = project.budget;
+             document.getElementById('edit_proj_start').value = project.startDate ? project.startDate.split('T')[0] : '';
+             document.getElementById('edit_proj_end').value = project.endDate ? project.endDate.split('T')[0] : '';
+         });
+    }
+
+    async handleUpdateProject() {
+        const id = document.getElementById('edit_proj_id').value;
+        const data = {
+             name: document.getElementById('edit_proj_name').value,
+             client: document.getElementById('edit_proj_client').value,
+             status: document.getElementById('edit_proj_status').value,
+             budget: parseFloat(document.getElementById('edit_proj_budget').value),
+             startDate: document.getElementById('edit_proj_start').value ? new Date(document.getElementById('edit_proj_start').value) : undefined,
+             endDate: document.getElementById('edit_proj_end').value ? new Date(document.getElementById('edit_proj_end').value) : undefined,
+        };
+        
+        try {
+            await projects.update(id, data);
+            window.toast.show('Project updated', 'success');
+            window.drawer.close();
+            this.loadProjectsFromAPI(); // Refresh list
+        } catch (error) {
+             window.toast.show(error.message, 'error');
+        }
+    }
+
+    openSuspendProjectDrawer(id) {
+         window.drawer.open('Suspend Project', window.DrawerTemplates.suspendProject);
+         projects.getById(id).then(response => {
+              const p = response.data || response;
+              document.getElementById('suspend_project_id').value = p.id;
+              document.getElementById('suspend_project_name').value = p.name;
+         });
+    }
+
+    async handleSuspendProject() {
+         const id = document.getElementById('suspend_project_id').value;
+         const reason = document.getElementById('suspend_project_reason').value;
+         
+         if (!reason) {
+             window.toast.show('Please provide a reason', 'error');
+             return;
+         }
+
+         try {
+             await projects.update(id, { status: 'suspended', suspensionReason: reason });
+             window.toast.show('Project suspended', 'warning');
+             window.drawer.close();
+             this.loadProjectsFromAPI();
+         } catch (error) {
+             window.toast.show(error.message, 'error');
+         }
+    }
+
+    async handleDeleteProject(id) {
+         const reason = prompt("Enter reason for deletion (This will be logged):");
+         if (!reason) return;
+
+         try {
+             await projects.remove(id, reason);
+             window.toast.show('Project deleted', 'success');
+             this.loadProjectsFromAPI();
+         } catch (error) {
+             window.toast.show(error.message, 'error');
+         }
     }
 }

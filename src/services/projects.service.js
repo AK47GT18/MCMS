@@ -12,13 +12,18 @@ const logger = require('../utils/logger');
  * @param {Object} options - Pagination and filter options
  * @returns {Promise<Object>} Paginated projects list
  */
+const ALLOWED_SORT_FIELDS = [
+  'id', 'code', 'name', 'status', 'contractValue', 
+  'budgetTotal', 'budgetSpent', 'startDate', 'endDate', 'createdAt'
+];
+
 async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status }) {
   try {
     const skip = (page - 1) * limit;
     const where = status ? { status } : {};
     
     // Defensive check for sortBy
-    const validSortBy = sortBy || 'createdAt';
+    const validSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt';
     
     logger.debug('Fetching all projects', { page, limit, sortBy: validSortBy, sortOrder, status });
 
@@ -171,15 +176,51 @@ async function create(data) {
   return project;
 }
 
+const emailService = require('../emails/email.service');
+
+// ... (existing imports)
+
 /**
  * Update project by ID
  * @param {number} id - Project ID
  * @param {Object} data - Update data
+ * @param {Object} user - Authenticated user
  * @returns {Promise<Object>} Updated project
  */
-async function update(id, data) {
-  await getById(id);
+async function update(id, data, user) {
+  const existingProject = await getById(id);
   
+  // Handle Suspension Logic
+  if (data.status === 'suspended' && existingProject.status !== 'suspended') {
+    // Send Email
+    if (existingProject.manager?.email) {
+      await emailService.send({
+        to: existingProject.manager.email,
+        subject: `Project Suspended: ${existingProject.name}`,
+        html: `
+          <h1>Project Suspended</h1>
+          <p>The project <strong>${existingProject.name}</strong> (${existingProject.code}) has been suspended.</p>
+          <p><strong>Reason:</strong> ${data.suspensionReason || 'No reason provided'}</p>
+          <p><strong>Actioned By:</strong> ${user?.name || 'System'}</p>
+        `
+      });
+    }
+
+    // Audit Log
+    await prisma.auditLog.create({
+      data: {
+        userId: user?.id,
+        userName: user?.name,
+        userRole: user?.role,
+        action: 'SUSPEND_PROJECT',
+        targetType: 'Project',
+        targetId: id,
+        targetCode: existingProject.code,
+        details: { reason: data.suspensionReason, previousStatus: existingProject.status },
+      }
+    });
+  }
+
   const project = await prisma.project.update({
     where: { id },
     data,
@@ -190,7 +231,7 @@ async function update(id, data) {
     },
   });
   
-  logger.info('Project updated', { projectId: id });
+  logger.info('Project updated', { projectId: id, userId: user?.id });
   
   return project;
 }
@@ -198,13 +239,43 @@ async function update(id, data) {
 /**
  * Delete project by ID
  * @param {number} id - Project ID
+ * @param {Object} user - Authenticated user
+ * @param {string} reason - Reason for deletion
  */
-async function remove(id) {
-  await getById(id);
+async function remove(id, user, reason) {
+  const project = await getById(id);
+  
+  // Send Email
+  if (project.manager?.email) {
+    await emailService.send({
+      to: project.manager.email,
+      subject: `Project Deleted: ${project.name}`,
+      html: `
+        <h1>Project Deleted</h1>
+        <p>The project <strong>${project.name}</strong> (${project.code}) has been permanently deleted.</p>
+        <p><strong>Reason:</strong> ${reason || 'No reason provided'}</p>
+        <p><strong>Actioned By:</strong> ${user?.name || 'System'}</p>
+      `
+    });
+  }
+
+  // Audit Log
+  await prisma.auditLog.create({
+    data: {
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'DELETE_PROJECT',
+      targetType: 'Project',
+      targetId: id,
+      targetCode: project.code,
+      details: { reason },
+    }
+  });
   
   await prisma.project.delete({ where: { id } });
   
-  logger.info('Project deleted', { projectId: id });
+  logger.info('Project deleted', { projectId: id, userId: user?.id });
 }
 
 /**

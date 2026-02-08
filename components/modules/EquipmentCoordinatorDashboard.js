@@ -612,4 +612,84 @@ export class EquipmentCoordinatorDashboard {
             </div>
         `;
     }
+
+    // --- Equipment Assignment Helpers ---
+
+    showRecommendedVehicles(projectType) {
+        const vehicleMap = {
+            'civil_works': ['Excavator', 'Bulldozer', 'Tower Crane', 'Concrete Mixer', 'Compactor'],
+            'bridge_construction': ['Pile Driver', 'Mobile Crane', 'Excavator', 'Concrete Pump', 'Barge'],
+            'road_works': ['Grader', 'Road Roller', 'Asphalt Paver', 'Tipper Truck', 'Water Bowser'],
+            'building_works': ['Tower Crane', 'Concrete Mixer', 'Scaffolding Lift', 'Excavator', 'Forklift']
+        };
+
+        const vehicles = vehicleMap[projectType] || vehicleMap['civil_works'];
+        const container = document.getElementById('recommended-list');
+        if (container) {
+            container.innerHTML = vehicles.map(v => 
+                `<span style="background: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #BFDBFE;">${v}</span>`
+            ).join('');
+        }
+    }
+
+    checkEquipmentConflict(equipmentId) {
+        // Simulate conflict check - in real app this would query the API
+        const conflictingEquipment = {
+            'EQP-045': { project: 'CEN-01 Unilia', returnDate: 'Feb 15, 2026' },
+            'EQP-012': { project: 'MZ-05 Mzimba Clinic', returnDate: 'Feb 20, 2026' }
+        };
+
+        const alertEl = document.getElementById('equipment-conflict-alert');
+        const messageEl = document.getElementById('conflict-message');
+        
+        if (!alertEl || !messageEl) return;
+
+        if (conflictingEquipment[equipmentId]) {
+            const conflict = conflictingEquipment[equipmentId];
+            messageEl.innerHTML = `This equipment is currently assigned to <strong>${conflict.project}</strong> until <strong>${conflict.returnDate}</strong>.`;
+            alertEl.style.display = 'block';
+        } else {
+            alertEl.style.display = 'none';
+        }
+    }
+
+    stallRequest() {
+        const alertEl = document.getElementById('equipment-conflict-alert');
+        if (alertEl) {
+            alertEl.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-clock" style="color: var(--blue);"></i>
+                    <span style="font-size: 12px; font-weight: 600; color: var(--blue);">Request Stalled</span>
+                </div>
+                <div style="font-size: 11px; color: var(--slate-600); margin-top: 4px;">
+                    You will be notified when this equipment becomes available.
+                </div>
+            `;
+            alertEl.style.background = '#EFF6FF';
+            alertEl.style.borderColor = '#BFDBFE';
+        }
+        if (window.toast) {
+            window.toast.show('Request stalled - will notify when available', 'info');
+        }
+    }
+
+    reassignEquipment() {
+        const alertEl = document.getElementById('equipment-conflict-alert');
+        if (alertEl) {
+            alertEl.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-check-circle" style="color: var(--emerald);"></i>
+                    <span style="font-size: 12px; font-weight: 600; color: var(--emerald);">Reassignment Approved</span>
+                </div>
+                <div style="font-size: 11px; color: var(--slate-600); margin-top: 4px;">
+                    Previous assignment will be terminated. Proceed with handover.
+                </div>
+            `;
+            alertEl.style.background = '#ECFDF5';
+            alertEl.style.borderColor = '#A7F3D0';
+        }
+        if (window.toast) {
+            window.toast.show('Reassignment approved - previous assignment terminated', 'success');
+        }
+    }
 }

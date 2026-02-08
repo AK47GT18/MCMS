@@ -1,0 +1,82 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+System.Management.Automation.RemoteException
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+[1;91merror[0m: [1mType "RoleEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:15[0m
+[1;94m   | [0m
+[1;94m14 | [0m  phone                 String?               @db.VarChar(20)
+[1;94m15 | [0m  role                  [1;91mRoleEnum[0m
+[1;94m   | [0m
+[1;91merror[0m: [1mType "VendorStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:54[0m
+[1;94m   | [0m
+[1;94m53 | [0m  performanceRating  Int?             @map("performance_rating") @db.SmallInt
+[1;94m54 | [0m  status             [1;91mVendorStatusEnum[0m @default(pending)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "ProjectStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:70[0m
+[1;94m   | [0m
+[1;94m69 | [0m  managerId            Int?                  @map("manager_id")
+[1;94m70 | [0m  status               [1;91mProjectStatusEnum[0m     @default(planning)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "ContractStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:128[0m
+[1;94m   | [0m
+[1;94m127 | [0m  endDate     DateTime?          @map("end_date") @db.Date
+[1;94m128 | [0m  status      [1;91mContractStatusEnum[0m @default(draft)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "MilestoneStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:148[0m
+[1;94m   | [0m
+[1;94m147 | [0m  value          Decimal?            @db.Decimal(18, 2)
+[1;94m148 | [0m  status         [1;91mMilestoneStatusEnum[0m @default(scheduled)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "AssetConditionEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:165[0m
+[1;94m   | [0m
+[1;94m164 | [0m  hoursOrKm        Int?               @map("hours_or_km")
+[1;94m165 | [0m  condition        [1;91mAssetConditionEnum[0m @default(Good)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "AssetStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:168[0m
+[1;94m   | [0m
+[1;94m167 | [0m  currentProjectId Int?               @map("current_project_id")
+[1;94m168 | [0m  status           [1;91mAssetStatusEnum[0m    @default(available)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "RequisitionStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:205[0m
+[1;94m   | [0m
+[1;94m204 | [0m  budgetLine   String?               @map("budget_line") @db.VarChar(20)
+[1;94m205 | [0m  status       [1;91mRequisitionStatusEnum[0m @default(pending)
+[1;94m   | [0m
+[1;91merror[0m: [1mType "ProcurementStatusEnum" is neither a built-in type, nor refers to another model, composite type, or enum.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:329[0m
+[1;94m   | [0m
+[1;94m328 | [0m  financeReviewedAt DateTime?             @map("finance_reviewed_at") @db.Timestamptz(6)
+[1;94m329 | [0m  status            [1;91mProcurementStatusEnum[0m @default(pending_pm)
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating model "Asset": The index definition refers to the relation fields status. Index definitions must reference only scalar fields.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:176[0m
+[1;94m   | [0m
+[1;94m175 | [0m  @@index([currentProjectId])
+[1;94m176 | [0m  [1;91m@@index([status])[0m
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating model "Requisition": The index definition refers to the relation fields status. Index definitions must reference only scalar fields.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:219[0m
+[1;94m   | [0m
+[1;94m218 | [0m  @@index([projectId])
+[1;94m219 | [0m  [1;91m@@index([status])[0m
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating model "ProcurementRequest": The index definition refers to the relation fields status. Index definitions must reference only scalar fields.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:334[0m
+[1;94m   | [0m
+[1;94m333 | [0m
+[1;94m334 | [0m  [1;91m@@index([status])[0m
+[1;94m   | [0m
+System.Management.Automation.RemoteException
+Validation Error Count: 12
+[Context: validate]
+System.Management.Automation.RemoteException
+Prisma CLI Version : 5.22.0

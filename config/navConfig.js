@@ -82,6 +82,13 @@ export const NAV_ITEMS = {
                 { label: 'Reports', icon: '<i class="fas fa-file-pdf"></i>', id: 'reports' },
                 { label: 'Issues Center', icon: '<i class="fas fa-headset"></i>', id: 'issues' }
             ]
+        },
+        {
+            section: 'System Management',
+            items: [
+                { label: 'User Management', icon: '<i class="fas fa-users-cog"></i>', id: 'users' },
+                { label: 'Audit Logs', icon: '<i class="fas fa-shield-alt"></i>', id: 'audit' }
+            ]
         }
     ],
     [ROLES.FIELD_SUPERVISOR]: [

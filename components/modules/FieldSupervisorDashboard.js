@@ -67,6 +67,11 @@ export class FieldSupervisorDashboard {
                   <div class="stat-value" style="font-size: 18px; color: var(--orange);">Submit Report</div>
                   <div class="stat-sub">Geotagging Active</div>
                </div>
+               <div class="stat-card" style="cursor: pointer;" onclick="window.drawer.open('Request Funds', window.DrawerTemplates.requestFunds)">
+                  <div class="stat-header"><span class="stat-label" style="color: var(--blue);">Requisition</span><i class="fas fa-file-invoice-dollar" style="color: var(--blue);"></i></div>
+                  <div class="stat-value" style="font-size: 18px; color: var(--blue);">Request Funds</div>
+                  <div class="stat-sub">Submit to Finance</div>
+               </div>
                <div class="stat-card" style="cursor: pointer;" onclick="window.drawer.open('Worker Attendance', window.DrawerTemplates.attendanceLog)">
                   <div class="stat-header"><span class="stat-label">Workforce</span><i class="fas fa-users" style="color: var(--blue);"></i></div>
                   <div class="stat-value">14</div>

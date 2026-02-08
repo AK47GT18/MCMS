@@ -15,7 +15,7 @@ const auditService = require('../services/audit.service');
 const getAll = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Operations_Manager')) return;
+  if (!hasMinimumRole(req, res, 'Project_Manager')) return;
   
   const query = parseQuery(req.url);
   const options = validateBody(query, paginationSchema, res);
@@ -56,7 +56,7 @@ const create = asyncHandler(async (req, res) => {
 const update = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Operations_Manager')) return;
+  if (!hasMinimumRole(req, res, 'Project_Manager')) return;
   
   const userId = validateId(id, res);
   if (!userId) return;
