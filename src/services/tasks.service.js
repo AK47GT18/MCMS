@@ -7,9 +7,28 @@ const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 
+async function getAll() {
+  return prisma.task.findMany({
+    orderBy: { startDate: 'asc' },
+    include: {
+      dependency: { select: { id: true, name: true } },
+    },
+  });
+}
+
 async function getByProject(projectId) {
   return prisma.task.findMany({
     where: { projectId },
+    orderBy: { startDate: 'asc' },
+    include: {
+      dependency: { select: { id: true, name: true } },
+    },
+  });
+}
+
+async function getByStatus(status) {
+  return prisma.task.findMany({
+    where: { status },
     orderBy: { startDate: 'asc' },
     include: {
       dependency: { select: { id: true, name: true } },
@@ -61,4 +80,4 @@ async function updateProgress(id, progress) {
   return task;
 }
 
-module.exports = { getByProject, getById, create, update, remove, updateProgress };
+module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress };

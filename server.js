@@ -207,6 +207,10 @@ async function start() {
     // Initialize WebSocket
     websocket.init(server);
     
+    // Initialize Scheduled Jobs (Cron)
+    const cronJobs = require('./src/jobs/projectCron');
+    cronJobs.initProjectJobs();
+    
     // Start listening
     server.listen(env.PORT, () => {
       const baseUrl = `http://localhost:${env.PORT}`;

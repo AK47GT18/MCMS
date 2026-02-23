@@ -53,7 +53,7 @@ const requisitions = {
    * Get pending requisitions
    */
   async getPending() {
-    return await client.get('/requisitions?status=pending');
+    return await client.get('/requisitions/pending');
   },
 };
 

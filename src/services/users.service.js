@@ -14,11 +14,22 @@ const emailService = require('../emails/email.service');
  * @param {Object} options - Pagination options
  * @returns {Promise<Object>} Paginated users list
  */
-async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' }) {
+async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', role, isLocked, search }) {
   const skip = (page - 1) * limit;
   
+  const where = {};
+  if (role) where.role = role;
+  if (isLocked !== undefined) where.isLocked = isLocked;
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
   const [users, total] = await Promise.all([
     prisma.user.findMany({
+      where,
       skip,
       take: limit,
       orderBy: { [sortBy]: sortOrder },
@@ -34,7 +45,7 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
         updatedAt: true,
       },
     }),
-    prisma.user.count(),
+    prisma.user.count({ where }),
   ]);
   
   return { users, total, page, limit };
@@ -128,9 +139,18 @@ async function update(id, data) {
   // Get old user data for comparison
   const oldUser = await getById(id);
   
+  const updateData = { ...data };
+  
+  // Hash password if provided
+  if (updateData.password) {
+    updateData.passwordHash = await bcrypt.hash(updateData.password, 10);
+    delete updateData.password;
+    updateData.mustChangePassword = true; // Force change on next login if admin reset it
+  }
+
   const user = await prisma.user.update({
     where: { id },
-    data,
+    data: updateData,
     select: {
       id: true,
       name: true,

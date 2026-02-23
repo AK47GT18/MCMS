@@ -8,58 +8,41 @@ datasource db {
 }
 
 model User {
-  id                    Int                   @id @default(autoincrement())
-  name                  String                @db.VarChar(100)
-  email                 String                @unique @db.VarChar(255)
-  phone                 String?               @db.VarChar(20)
-  role                  RoleEnum
-  avatarUrl             String?               @map("avatar_url")
-  permissions           String[]
-  passwordHash          String?               @map("password_hash") @db.VarChar(255)
-  lastLoginIp           String?               @map("last_login_ip") @db.Inet
-  isLocked              Boolean               @default(false) @map("is_locked")
-  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
-  passwordResetExpires  DateTime?             @map("password_reset_expires") @db.Timestamptz(6)
-  passwordResetToken    String?               @map("password_reset_token") @db.VarChar(100)
-  statusReason          String?               @map("status_reason")
-  mustChangeEmail       Boolean               @default(false) @map("must_change_email")
-  mustChangePassword    Boolean               @default(false) @map("must_change_password")
-  assetLogs             AssetLog[]
-  auditLogs             AuditLog[]
-  budgetChangeRequests  BudgetChangeRequest[]
-  dailyLogs             DailyLog[]
-  issuesAssigned        Issue[]               @relation("AssignedTo")
-  issuesReported        Issue[]               @relation("ReportedBy")
-  procurementRequests   ProcurementRequest[]
-  managedProjects       Project[]             @relation("ProjectManager")
-  requisitionsReviewed  Requisition[]         @relation("ReviewedBy")
-  requisitionsSubmitted Requisition[]         @relation("SubmittedBy")
-  safetyIncidents       SafetyIncident[]
-  transactionsCreated   Transaction[]
-  whistleblowerAssigned WhistleblowerReport[] @relation("AssignedTo")
-  whistleblowerReported WhistleblowerReport[] @relation("Reporter")
+  id                       Int                   @id @default(autoincrement())
+  name                     String                @db.VarChar(100)
+  email                    String                @unique @db.VarChar(255)
+  phone                    String?               @db.VarChar(20)
+  role                     RoleEnum
+  avatarUrl                String?               @map("avatar_url")
+  permissions              String[]
+  passwordHash             String?               @map("password_hash") @db.VarChar(255)
+  lastLoginIp              String?               @map("last_login_ip") @db.Inet
+  isLocked                 Boolean               @default(false) @map("is_locked")
+  createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  passwordResetExpires     DateTime?             @map("password_reset_expires") @db.Timestamptz(6)
+  passwordResetToken       String?               @map("password_reset_token") @db.VarChar(100)
+  statusReason             String?               @map("status_reason")
+  mustChangeEmail          Boolean               @default(false) @map("must_change_email")
+  mustChangePassword       Boolean               @default(false) @map("must_change_password")
+  assetLogs                AssetLog[]
+  auditLogs                AuditLog[]
+  budgetChangeRequests     BudgetChangeRequest[]
+  dailyLogs                DailyLog[]
+  issuesAssigned           Issue[]               @relation("AssignedTo")
+  issuesReported           Issue[]               @relation("ReportedBy")
+  procurementRequests      ProcurementRequest[]
+  managedProjects          Project[]             @relation("ProjectManager")
+  requisitionsReviewed     Requisition[]         @relation("RequisitionsReviewed")
+  requisitionsSubmitted    Requisition[]         @relation("RequisitionsSubmitted")
+  transactions             Transaction[]
+  safetyIncidents          SafetyIncident[]
+  whistleblowerAssigned    WhistleblowerReport[] @relation("AssignedTo")
+  whistleblowerReported    WhistleblowerReport[] @relation("Reporter")
+  uploadedDocuments        Document[]            @relation("DocumentUploader")
+  uploadedDocumentVersions DocumentVersion[]     @relation("DocumentVersionUploader")
 
   @@map("users")
-}
-
-model Vendor {
-  id                 Int              @id @default(autoincrement())
-  name               String           @db.VarChar(255)
-  category           String?          @db.VarChar(50)
-  taxClearanceValid  Boolean          @default(false) @map("tax_clearance_valid")
-  taxClearanceExpiry DateTime?        @map("tax_clearance_expiry") @db.Date
-  ncicGrade          String?          @map("ncic_grade") @db.VarChar(20)
-  performanceRating  Int?             @map("performance_rating") @db.SmallInt
-  status             VendorStatusEnum @default(pending)
-  contactEmail       String?          @map("contact_email") @db.VarChar(255)
-  contactPhone       String?          @map("contact_phone") @db.VarChar(20)
-  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  contracts          Contract[]
-  requisitions       Requisition[]
-
-  @@map("vendors")
 }
 
 model Project {
@@ -86,6 +69,7 @@ model Project {
   budgetChangeRequests BudgetChangeRequest[]
   contracts            Contract[]
   dailyLogs            DailyLog[]
+  documents            Document[]
   issues               Issue[]
   manager              User?                 @relation("ProjectManager", fields: [managerId], references: [id])
   requisitions         Requisition[]
@@ -122,7 +106,7 @@ model Contract {
   id          Int                @id @default(autoincrement())
   refCode     String             @unique @map("ref_code") @db.VarChar(30)
   projectId   Int?               @map("project_id")
-  vendorId    Int?               @map("vendor_id")
+  vendorName  String?            @map("vendor_name") @db.VarChar(255)
   title       String             @db.VarChar(255)
   value       Decimal?           @db.Decimal(18, 2)
   startDate   DateTime?          @map("start_date") @db.Date
@@ -132,11 +116,9 @@ model Contract {
   createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   project     Project?           @relation(fields: [projectId], references: [id])
-  vendor      Vendor?            @relation(fields: [vendorId], references: [id])
   milestones  Milestone[]
 
   @@index([projectId])
-  @@index([vendorId])
   @@map("contracts")
 }
 
@@ -217,28 +199,29 @@ model AssetLog {
 
 model Requisition {
   id              Int                   @id @default(autoincrement())
-  reqCode         String                @unique @map("req_code") @db.VarChar(20)
-  projectId       Int?                  @map("project_id")
-  vendorName      String?               @map("vendor_name") @db.VarChar(100)
-  submittedBy     Int?                  @map("submitted_by")
-  description     String?
-  totalAmount     Decimal               @map("total_amount") @db.Decimal(18, 2)
-  budgetLine      String?               @map("budget_line") @db.VarChar(20)
+  reqCode         String                @unique @map("req_code") @db.VarChar(50)
+  projectId       Int                   @map("project_id")
+  vendorName      String?               @map("vendor_name") @db.VarChar(255) // Replaces vendorId/relation
+  totalAmount     Decimal               @map("total_amount") @db.Decimal(15, 2)
   status          RequisitionStatusEnum @default(pending)
-  fraudCheck      Boolean               @default(false) @map("fraud_check")
+  rejectionReason String?               @map("rejection_reason") @db.Text
+  submittedBy     Int                   @map("submitted_by")
   reviewedBy      Int?                  @map("reviewed_by")
-  reviewedAt      DateTime?             @map("reviewed_at") @db.Timestamptz(6)
-  rejectionReason String?               @map("rejection_reason")
-  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
-  items           RequisitionItem[]
-  project         Project?              @relation(fields: [projectId], references: [id])
-  reviewer        User?                 @relation("ReviewedBy", fields: [reviewedBy], references: [id])
-  submitter       User?                 @relation("SubmittedBy", fields: [submittedBy], references: [id])
-  transactions    Transaction[]
+  reviewedAt      DateTime?             @map("reviewed_at")
+  fraudCheck      Boolean               @default(false) @map("fraud_check")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  // Relations
+  items        RequisitionItem[]
+  project      Project           @relation(fields: [projectId], references: [id])
+  reviewer     User?             @relation("RequisitionsReviewed", fields: [reviewedBy], references: [id])
+  submitter    User              @relation("RequisitionsSubmitted", fields: [submittedBy], references: [id])
+  transactions Transaction[]
 
   @@index([projectId])
-  @@index([status])
+  @@index([submittedBy])
+  @@index([reqCode])
   @@map("requisitions")
 }
 
@@ -461,6 +444,42 @@ enum MilestoneStatusEnum {
   paid
 
   @@map("milestone_status_enum")
+}
+
+model Document {
+  id                Int      @id @default(autoincrement())
+  title             String   @db.VarChar(255)
+  description       String?
+  originalName      String   @map("original_name") @db.VarChar(255)
+  currentVersionUrl String   @map("current_version_url")
+  status            String   @default("active") @db.VarChar(20)
+  projectId         Int      @map("project_id")
+  uploadedById      Int      @map("uploaded_by_id")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy User              @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  versions   DocumentVersion[]
+
+  @@index([projectId])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            Int      @id @default(autoincrement())
+  documentId    Int      @map("document_id")
+  versionNumber Int      @map("version_number")
+  fileUrl       String   @map("file_url")
+  changeNotes   String?  @map("change_notes")
+  uploadedById  Int      @map("uploaded_by_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy User     @relation("DocumentVersionUploader", fields: [uploadedById], references: [id])
+
+  @@index([documentId])
+  @@map("document_versions")
 }
 
 // Vendor model removed

@@ -6,7 +6,7 @@
 const usersService = require('../services/users.service');
 const { validateBody, validateId, parseBody, parseQuery } = require('../middlewares/validate.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
-const { hasRole, hasMinimumRole } = require('../middlewares/rbac.middleware');
+const { hasRole, hasMinimumRole, ROLE_HIERARCHY } = require('../middlewares/rbac.middleware');
 const { createUserSchema, updateUserSchema, paginationSchema } = require('../utils/validators');
 const response = require('../utils/response');
 const { asyncHandler } = require('../middlewares/error.middleware');
@@ -93,12 +93,22 @@ const remove = asyncHandler(async (req, res, id) => {
 });
 
 const lock = asyncHandler(async (req, res, id) => {
-  const user = await authenticate(req, res);
+  const user = req.user || await authenticate(req, res);
   if (!user) return;
-  if (!hasRole(req, res, ['System_Technician', 'Managing_Director'])) return;
+  if (!hasMinimumRole(req, res, 'Project_Manager')) return;
   
   const userId = validateId(id, res);
   if (!userId) return;
+
+  // Hierarchy check: cannot lock someone with higher or equal role unless you are System Tech/MD
+  const targetUser = await usersService.getById(userId);
+  const requesterRole = user.role.replace(' ', '_');
+  const targetRole = targetUser.role.replace(' ', '_');
+  
+  const isSuperAdmin = ['System_Technician', 'Managing_Director'].includes(requesterRole);
+  if (!isSuperAdmin && ROLE_HIERARCHY[targetRole] >= ROLE_HIERARCHY[requesterRole]) {
+    return response.forbidden(res, 'Cannot lock users with equal or higher authority');
+  }
   
   const body = await parseBody(req).catch(() => ({}));
   const reason = body.reason || 'No reason provided';
@@ -112,12 +122,22 @@ const lock = asyncHandler(async (req, res, id) => {
 });
 
 const unlock = asyncHandler(async (req, res, id) => {
-  const user = await authenticate(req, res);
+  const user = req.user || await authenticate(req, res);
   if (!user) return;
-  if (!hasRole(req, res, ['System_Technician', 'Managing_Director'])) return;
+  if (!hasMinimumRole(req, res, 'Project_Manager')) return;
   
   const userId = validateId(id, res);
   if (!userId) return;
+
+  // Hierarchy check: cannot unlock someone with higher or equal role unless you are System Tech/MD
+  const targetUser = await usersService.getById(userId);
+  const requesterRole = user.role.replace(' ', '_');
+  const targetRole = targetUser.role.replace(' ', '_');
+  
+  const isSuperAdmin = ['System_Technician', 'Managing_Director'].includes(requesterRole);
+  if (!isSuperAdmin && ROLE_HIERARCHY[targetRole] >= ROLE_HIERARCHY[requesterRole]) {
+    return response.forbidden(res, 'Cannot unlock users with equal or higher authority');
+  }
   
   const body = await parseBody(req).catch(() => ({}));
   const reason = body.reason || 'Reactivated by administrator';

@@ -65,7 +65,8 @@ const reject = asyncHandler(async (req, res, id) => {
   const reqId = validateId(id, res);
   if (!reqId) return;
   
-  const result = await requisitionsService.reject(reqId, user.id);
+  const body = await parseBody(req);
+  const result = await requisitionsService.reject(reqId, user.id, body.reason);
   response.success(res, result);
 });
 

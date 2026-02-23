@@ -58,7 +58,7 @@ const createUserSchema = z.object({
   permissions: z.array(z.string()).optional(),
 });
 
-const updateUserSchema = createUserSchema.partial().omit({ password: true });
+const updateUserSchema = createUserSchema.partial();
 
 // ============================================
 // PROJECT SCHEMAS
@@ -245,6 +245,10 @@ const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  // User Filters
+  role: z.string().optional(),
+  isLocked: z.coerce.boolean().optional(),
+  search: z.string().optional(),
 });
 
 // ============================================

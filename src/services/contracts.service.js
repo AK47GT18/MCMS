@@ -17,7 +17,6 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
       orderBy: { [sortBy]: sortOrder },
       include: {
         project: { select: { id: true, code: true, name: true } },
-        vendor: { select: { id: true, name: true } },
         _count: { select: { milestones: true } },
       },
     }),
@@ -32,7 +31,6 @@ async function getById(id) {
     where: { id },
     include: {
       project: { select: { id: true, code: true, name: true } },
-      vendor: true,
       milestones: { orderBy: { dueDate: 'asc' } },
     },
   });
@@ -43,7 +41,7 @@ async function getById(id) {
 async function create(data) {
   const contract = await prisma.contract.create({
     data,
-    include: { project: { select: { id: true, name: true } }, vendor: { select: { id: true, name: true } } },
+    include: { project: { select: { id: true, name: true } } },
   });
   logger.info('Contract created', { contractId: contract.id, refCode: contract.refCode });
   return contract;
@@ -65,7 +63,6 @@ async function remove(id) {
 async function getByProject(projectId) {
   return prisma.contract.findMany({
     where: { projectId },
-    include: { vendor: { select: { id: true, name: true } } },
   });
 }
 

@@ -68,7 +68,7 @@ export class FinanceDashboard {
                      </tr>
                   </thead>
                   <tbody>
-                     <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview)">
+                     <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('REQ-089'))">
                         <td><span class="project-id">REQ-089</span></td>
                         <td><span class="status pending">Approval</span></td>
                         <td style="font-weight: 600;">Materials - CEN-01</td>
@@ -856,5 +856,31 @@ export class FinanceDashboard {
                 </div>
             </div>
         `;
+    }
+
+    async handleApproveRequisition(id) {
+        if (!confirm('Are you sure you want to approve this requisition?')) return;
+        
+        try {
+            await client.post(`/requisitions/${id}/approve`);
+            window.toast.show('Requisition approved successfully.', 'success');
+            window.drawer.close();
+            this.render();
+        } catch (error) {
+            console.error('Approval failed:', error);
+            window.toast.show('Failed to approve requisition.', 'error');
+        }
+    }
+
+    async handleRejectRequisition(id, reason) {
+        try {
+            await client.post(`/requisitions/${id}/reject`, { reason });
+            window.toast.show('Requisition rejected.', 'info');
+            window.drawer.close();
+            this.render();
+        } catch (error) {
+            console.error('Rejection failed:', error);
+            window.toast.show('Failed to reject requisition.', 'error');
+        }
     }
 }

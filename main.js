@@ -1,5 +1,5 @@
 import { AppLayout } from './layouts/AppLayout.js';
-import { currentUser as mockUser } from './config/roles.js'; // Keep as fallback
+import { currentUser as mockUser, ROLES } from './config/roles.js'; // Keep as fallback
 import { drawer } from './components/DrawerManager.js';
 import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
 import './components/ui/ToastManager.js';
@@ -195,6 +195,11 @@ class App {
             if (this.currentUser.role === 'Project Manager' || this.currentUser.role === 'Project_Manager') {
                 this.pmModule = module;
             }
+
+            // Expose CA module globally for document interactions
+            if (this.currentUser.role === ROLES.CONTRACT_ADMIN || this.currentUser.role === 'Contract Administrator' || this.currentUser.role === 'Contract_Administrator') {
+                this.caModule = module;
+            }
             
             // Expose techModule globally for System Technician role
             if (this.currentUser.role === 'System Technician' || this.currentUser.role === 'System_Technician') {
@@ -203,7 +208,7 @@ class App {
 
             if (module) {
                 module.currentView = pageId;
-                content = module.render();
+                content = await module.render();
             } else {
                 // Fallback for roles without specific modules or testing
                 content = this.getMockContent(pageId);

@@ -6,6 +6,7 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const emailService = require('../emails/email.service');
 
 /**
  * Get all projects with pagination
@@ -53,7 +54,20 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
       prisma.project.count({ where }),
     ]);
     
-    return { projects, total, page, limit };
+    const projectsWithUtilization = projects.map(project => {
+      const budgetTotal = Number(project.budgetTotal) || 0;
+      const budgetSpent = Number(project.budgetSpent) || 0;
+      const budgetUtilization = budgetTotal > 0 
+        ? parseFloat(((budgetSpent / budgetTotal) * 100).toFixed(2))
+        : 0;
+      
+      return {
+        ...project,
+        budgetUtilization
+      };
+    });
+
+    return { projects: projectsWithUtilization, total, page, limit };
   } catch (error) {
     logger.error('Error in projectsService.getAll:', error);
     throw error;
@@ -80,16 +94,7 @@ async function getById(id) {
       tasks: {
         orderBy: { startDate: 'asc' },
       },
-      contracts: {
-        include: {
-          vendor: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
+      contracts: true,
       _count: {
         select: {
           dailyLogs: true,
@@ -166,19 +171,61 @@ async function create(data) {
     },
     include: {
       manager: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, email: true },
       },
     },
   });
   
   logger.info('Project created', { projectId: project.id, code: project.code });
   
+  // Send notifications to key roles + explicitly to the assigned manager
+  try {
+    const rolesToNotify = [
+      'Finance_Director',
+      'Contract_Administrator',
+      'Equipment_Coordinator'
+    ];
+    
+    // Fetch users with the specified roles
+    const usersToNotify = await prisma.user.findMany({
+      where: {
+        role: { in: rolesToNotify }
+      },
+      select: { id: true, name: true, email: true }
+    });
+
+    // If a manager is allocated, ensure they are also in the notification list
+    if (project.manager && project.manager.email) {
+      // Check if they are already in the list to avoid duplicates
+      const exists = usersToNotify.some(u => u.id === project.manager.id);
+      if (!exists) {
+        usersToNotify.push({
+          id: project.manager.id,
+          name: project.manager.name,
+          email: project.manager.email
+        });
+      }
+    }
+    
+    if (usersToNotify.length > 0) {
+      const title = 'New Project Assigned';
+      const message = `A new project "${project.name}" (${project.code}) has been created and assigned. Please review the project details and any associated contracts or requirements.`;
+      
+      const notificationPromises = usersToNotify.map(user => 
+        emailService.sendNotification(user, title, message).catch(err => 
+          logger.error('Failed to send project creation email to user', { userId: user.id, error: err.message })
+        )
+      );
+      
+      await Promise.all(notificationPromises);
+      logger.info('Project creation notifications sent', { projectCode: project.code, recipientCount: usersToNotify.length });
+    }
+  } catch (error) {
+    logger.error('Error sending project creation notifications', { projectCode: project.code, error: error.message });
+  }
+  
   return project;
 }
-
-const emailService = require('../emails/email.service');
-
-// ... (existing imports)
 
 /**
  * Update project by ID
@@ -190,12 +237,30 @@ const emailService = require('../emails/email.service');
 async function update(id, data, user) {
   const existingProject = await getById(id);
   
+  // Helper to fetch involved parties for notifications
+  const getInvolvedParties = async (managerEmail, managerName) => {
+    const rolesToNotify = ['Finance_Director', 'Contract_Administrator', 'Equipment_Coordinator'];
+    const usersToNotify = await prisma.user.findMany({
+      where: { role: { in: rolesToNotify } },
+      select: { email: true, name: true }
+    });
+    
+    // Add manager if they have an email and aren't already in the list
+    if (managerEmail) {
+      if (!usersToNotify.some(u => u.email === managerEmail)) {
+        usersToNotify.push({ email: managerEmail, name: managerName });
+      }
+    }
+    return usersToNotify;
+  };
+
   // Handle Suspension Logic
   if (data.status === 'suspended' && existingProject.status !== 'suspended') {
-    // Send Email
-    if (existingProject.manager?.email) {
-      await emailService.send({
-        to: existingProject.manager.email,
+    const parties = await getInvolvedParties(existingProject.manager?.email, existingProject.manager?.name);
+    
+    const suspendPromises = parties.map(party => 
+      emailService.send({
+        to: party.email,
         subject: `Project Suspended: ${existingProject.name}`,
         html: `
           <h1>Project Suspended</h1>
@@ -203,8 +268,9 @@ async function update(id, data, user) {
           <p><strong>Reason:</strong> ${data.suspensionReason || 'No reason provided'}</p>
           <p><strong>Actioned By:</strong> ${user?.name || 'System'}</p>
         `
-      });
-    }
+      }).catch(err => logger.error('Failed suspension email', { email: party.email, error: err.message }))
+    );
+    await Promise.all(suspendPromises);
 
     // Audit Log
     await prisma.auditLog.create({
@@ -217,6 +283,39 @@ async function update(id, data, user) {
         targetId: id,
         targetCode: existingProject.code,
         details: { reason: data.suspensionReason, previousStatus: existingProject.status },
+      }
+    });
+  }
+
+  // Handle Completion Logic
+  if (data.status === 'completed' && existingProject.status !== 'completed') {
+    const parties = await getInvolvedParties(existingProject.manager?.email, existingProject.manager?.name);
+    
+    const completePromises = parties.map(party => 
+      emailService.send({
+        to: party.email,
+        subject: `Project Completed: ${existingProject.name}`,
+        html: `
+          <h1>Project Completed</h1>
+          <p>The project <strong>${existingProject.name}</strong> (${existingProject.code}) has been marked as completed.</p>
+          <p>Please ensure all final logs, equipment returns, and financial reconciliations are processed.</p>
+          <p><strong>Actioned By:</strong> ${user?.name || 'System'}</p>
+        `
+      }).catch(err => logger.error('Failed completion email', { email: party.email, error: err.message }))
+    );
+    await Promise.all(completePromises);
+
+    // Audit Log
+    await prisma.auditLog.create({
+      data: {
+        userId: user?.id,
+        userName: user?.name,
+        userRole: user?.role,
+        action: 'COMPLETE_PROJECT',
+        targetType: 'Project',
+        targetId: id,
+        targetCode: existingProject.code,
+        details: { previousStatus: existingProject.status },
       }
     });
   }
@@ -245,19 +344,30 @@ async function update(id, data, user) {
 async function remove(id, user, reason) {
   const project = await getById(id);
   
-  // Send Email
-  if (project.manager?.email) {
-    await emailService.send({
-      to: project.manager.email,
+  // Helper to fetch involved parties for notifications
+  const rolesToNotify = ['Finance_Director', 'Contract_Administrator', 'Equipment_Coordinator'];
+  const parties = await prisma.user.findMany({
+    where: { role: { in: rolesToNotify } },
+    select: { email: true, name: true }
+  });
+  
+  if (project.manager?.email && !parties.some(p => p.email === project.manager.email)) {
+    parties.push({ email: project.manager.email, name: project.manager.name });
+  }
+  
+  const deletePromises = parties.map(party => 
+    emailService.send({
+      to: party.email,
       subject: `Project Deleted: ${project.name}`,
       html: `
         <h1>Project Deleted</h1>
-        <p>The project <strong>${project.name}</strong> (${project.code}) has been permanently deleted.</p>
+        <p>The project <strong>${project.name}</strong> (${project.code}) has been permanently deleted from the system.</p>
         <p><strong>Reason:</strong> ${reason || 'No reason provided'}</p>
         <p><strong>Actioned By:</strong> ${user?.name || 'System'}</p>
       `
-    });
-  }
+    }).catch(err => logger.error('Failed deletion email', { email: party.email, error: err.message }))
+  );
+  await Promise.all(deletePromises);
 
   // Audit Log
   await prisma.auditLog.create({

@@ -180,7 +180,7 @@ export async function errorInterceptor(response, config) {
     
     try {
       errorData = await response.json();
-      message = errorData.message || errorData.error || message;
+      message = errorData.message || (errorData.error && typeof errorData.error === 'object' ? errorData.error.message : errorData.error) || message;
     } catch {
       // Response is not JSON
     }

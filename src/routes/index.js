@@ -15,6 +15,7 @@ const dailyLogsController = require('../controllers/dailyLogs.controller');
 const issuesController = require('../controllers/issues.controller');
 const procurementController = require('../controllers/procurement.controller');
 const auditController = require('../controllers/audit.controller');
+const { documentRoutes } = require('../api/documents.api');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
@@ -175,8 +176,21 @@ async function router(req, res) {
   // ============================================
   if (resource === 'tasks') {
     if (!id) {
+      if (method === 'GET') {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const projectId = url.searchParams.get('projectId');
+        const status = url.searchParams.get('status');
+        
+        if (projectId) {
+          return tasksController.getByProject(req, res, projectId);
+        }
+        if (status) {
+          return tasksController.getByStatus(req, res, status);
+        }
+        return tasksController.getAll(req, res);
+      }
       if (method === 'POST') return tasksController.create(req, res);
-      return methodNotAllowed(res, ['POST']);
+      return methodNotAllowed(res, ['GET', 'POST']);
     }
     if (action === 'progress' && method === 'PATCH') {
       return tasksController.updateProgress(req, res, id);
@@ -317,6 +331,14 @@ async function router(req, res) {
       return auditController.getAll(req, res);
     }
     return methodNotAllowed(res, ['GET']);
+  }
+  
+  // ============================================
+  // DOCUMENT ROUTES
+  // ============================================
+  if (resource === 'documents') {
+    const handled = await documentRoutes(req, res);
+    if (handled !== false) return;
   }
   
   // Not found

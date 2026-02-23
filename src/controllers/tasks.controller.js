@@ -9,6 +9,14 @@ const { createTaskSchema, updateTaskSchema } = require('../utils/validators');
 const response = require('../utils/response');
 const { asyncHandler } = require('../middlewares/error.middleware');
 
+const getAll = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const result = await tasksService.getAll();
+  response.success(res, result);
+});
+
 const getByProject = asyncHandler(async (req, res, projectId) => {
   const user = await authenticate(req, res);
   if (!user) return;
@@ -17,6 +25,18 @@ const getByProject = asyncHandler(async (req, res, projectId) => {
   if (!id) return;
   
   const result = await tasksService.getByProject(id);
+  response.success(res, result);
+});
+
+const getByStatus = asyncHandler(async (req, res, status) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  if (!status) {
+    return response.badRequest(res, 'Status is required');
+  }
+  
+  const result = await tasksService.getByStatus(status);
   response.success(res, result);
 });
 
@@ -85,4 +105,4 @@ const updateProgress = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getByProject, getById, create, update, remove, updateProgress };
+module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress };

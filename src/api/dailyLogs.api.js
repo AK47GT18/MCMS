@@ -48,6 +48,13 @@ const dailyLogs = {
   async getByDateRange(startDate, endDate) {
     return await client.get(`/daily-logs?startDate=${startDate}&endDate=${endDate}`);
   },
+
+  /**
+   * Approve daily log
+   */
+  async approve(id) {
+    return await client.post(`/daily-logs/${id}/approve`);
+  },
 };
 
 export default dailyLogs;

@@ -20,7 +20,7 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
       skip, take: limit, where,
       orderBy: { [sortBy]: sortOrder },
       include: {
-        project: { select: { id: true, code: true, name: true } },
+        project: { select: { id: true, code: true, name: true, budgetTotal: true, budgetSpent: true } },
         submitter: { select: { id: true, name: true } },
         items: true,
       },
@@ -71,8 +71,13 @@ async function approve(id, reviewerId) {
     },
     include: {
       submitter: { select: { id: true, name: true, email: true } },
+      project: true,
     },
   });
+
+  // Link to Project Budget Spent
+  const projectsService = require('./projects.service');
+  await projectsService.addToSpent(requisition.projectId, Number(requisition.totalAmount));
   
   logger.info('Requisition approved', { reqId: id, reviewerId });
   

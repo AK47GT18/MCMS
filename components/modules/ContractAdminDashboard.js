@@ -21,11 +21,10 @@ export class ContractAdminDashboard {
     getCurrentViewHTML() {
         switch(this.currentView) {
             case 'dashboard': return this.getDashboardView();
-            case 'repository': return this.getRepositoryView();
+            case 'documents': return this.getDocumentsView();
             case 'milestones': return this.getMilestonesView();
             case 'amendments': return this.getAmendmentsView();
             case 'compliance': return this.getComplianceView();
-            case 'vendors': return this.getVendorsView();
             case 'reports': return this.getReportsView();
             default: return `<div class="p-4">View ${this.currentView} not found</div>`;
         }
@@ -35,11 +34,10 @@ export class ContractAdminDashboard {
         // Dynamic Header Content
         const headers = {
             'dashboard': { title: 'Dashboard', context: '4 Active Contracts | 98% Compliance' },
-            'repository': { title: 'Contract Repository', context: 'Centralized Document Store' },
+            'documents': { title: 'Document Repository', context: 'Centralized Project Documents' },
             'milestones': { title: 'Milestone Tracking', context: 'Deliverables & Deadlines' },
             'amendments': { title: 'Amendments & Variations', context: 'Change Control Log' },
             'compliance': { title: 'Insurance & Bonds', context: 'Risk Management' },
-            'vendors': { title: 'Vendor Registry', context: 'Approved Suppliers' },
             'reports': { title: 'Performance Reporting', context: 'KPIs & Analytics' }
         };
         const current = headers[this.currentView] || { title: 'Overview', context: '' };
@@ -62,10 +60,10 @@ export class ContractAdminDashboard {
                       ` : ''}
                     </div>
                   </div>
-                  ${this.currentView === 'repository' || this.currentView === 'dashboard' ? `
-                      <button class="btn btn-action" onclick="window.drawer.open('New Contract', window.DrawerTemplates.newContract)">
-                        <i class="fas fa-plus"></i>
-                        <span>New Contract</span>
+                  ${this.currentView === 'documents' || this.currentView === 'dashboard' ? `
+                      <button class="btn btn-action" onclick="window.app.caModule.openUploadDrawer()">
+                        <i class="fas fa-file-arrow-up"></i>
+                        <span>Upload Document</span>
                       </button>
                   ` : ''}
                 </div>
@@ -148,70 +146,188 @@ export class ContractAdminDashboard {
         `;
     }
 
-    getRepositoryView() {
+    async getDocumentsView() {
+        const docs = await this.loadDocuments();
+        
         return `
             <div class="data-card">
                 <div class="data-card-header">
-                    <div class="card-title">All Contracts</div>
+                    <div class="card-title">Project Documents & Versions</div>
                     <div style="display:flex; gap:8px;">
-                        <input type="text" placeholder="Search contracts..." style="padding:6px 12px; border:1px solid var(--slate-300); border-radius:4px; font-size:13px;">
-                        <button class="btn btn-secondary"><i class="fas fa-filter"></i> Type</button>
-                        <button class="btn btn-secondary"><i class="fas fa-download"></i> Export</button>
+                        <input type="text" placeholder="Search documents..." style="padding:6px 12px; border:1px solid var(--slate-300); border-radius:4px; font-size:13px;">
+                        <button class="btn btn-secondary"><i class="fas fa-filter"></i> Project</button>
                     </div>
                 </div>
                 <table>
                     <thead>
                         <tr>
-                            <th>Ref ID</th>
-                            <th>Contract Title</th>
-                            <th>Vendor</th>
-                            <th>Start Date</th>
-                            <th>Completion</th>
-                            <th>Value (MWK)</th>
-                            <th>Status</th>
+                            <th>Document Title</th>
+                            <th>Linked Project</th>
+                            <th>Latest Version</th>
+                            <th>Last Updated</th>
+                            <th>Uploaded By</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr onclick="window.drawer.open('Contract Details', window.DrawerTemplates.contractDetails)">
-                            <td><span class="project-id">CTR-2024-001</span></td>
-                            <td style="font-weight:600;">Unilia Main Works</td>
-                            <td>Unilia Construction</td>
-                            <td>Jan 01, 2025</td>
-                            <td>Jun 30, 2026</td>
-                            <td class="mono-val">1,200,000,000</td>
-                            <td><span class="status active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td><span class="project-id">CTR-2024-002</span></td>
-                            <td style="font-weight:600;">Mzuzu Bridge Works</td>
-                            <td>Civil Eng Ltd</td>
-                            <td>Feb 01, 2025</td>
-                            <td>Dec 15, 2025</td>
-                            <td class="mono-val">850,000,000</td>
-                            <td><span class="status active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td><span class="project-id">CTR-SUP-089</span></td>
-                            <td style="font-weight:600;">Cement Supply 2025</td>
-                            <td>Malawi Cement</td>
-                            <td>Jan 01, 2025</td>
-                            <td>Dec 31, 2025</td>
-                            <td class="mono-val">Rate Sheet</td>
-                            <td><span class="status active">Active</span></td>
-                        </tr>
-                         <tr>
-                            <td><span class="project-id">CTR-SUB-012</span></td>
-                            <td style="font-weight:600;">Electrical Subcontract</td>
-                            <td>Bright Sparks</td>
-                            <td>Mar 01, 2025</td>
-                            <td>Sep 30, 2025</td>
-                            <td class="mono-val">45,000,000</td>
-                            <td><span class="status pending">Draft</span></td>
-                        </tr>
+                        ${docs.length === 0 ? `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--slate-400);">No documents uploaded yet.</td></tr>` : 
+                          docs.map(doc => `
+                            <tr>
+                                <td style="font-weight:600;">${doc.title}</td>
+                                <td><span class="project-id">${doc.project?.code || 'PRJ'}</span> ${doc.project?.name || 'Unknown'}</td>
+                                <td><span class="version-tag">v${doc.versions[0]?.versionNumber || 1}</span></td>
+                                <td>${new Date(doc.updatedAt).toLocaleDateString()}</td>
+                                <td>${doc.uploadedBy?.name || 'N/A'}</td>
+                                <td>
+                                    <div style="display:flex; gap:8px;">
+                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openVersionDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})">Update</button>
+                                        <a href="${doc.currentVersionUrl}" target="_blank" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;"><i class="fas fa-download"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
                     </tbody>
                 </table>
             </div>
         `;
+    }
+
+    async loadDocuments() {
+        try {
+            const res = await fetch('/api/v1/documents');
+            const data = await res.json();
+            return data.data || [];
+        } catch (error) {
+            console.error('Failed to load documents', error);
+            return [];
+        }
+    }
+
+    async openUploadDrawer() {
+        try {
+            const res = await fetch('/api/v1/projects');
+            const data = await res.json();
+            const projects = data.data || [];
+            window.drawer.open('Upload New Document', window.DrawerTemplates.uploadDocument(projects));
+        } catch (error) {
+            window.toast.show('Failed to load projects', 'error');
+        }
+    }
+
+    openVersionDrawer(doc) {
+        window.drawer.open(`Upload New Version: ${doc.title}`, window.DrawerTemplates.uploadDocumentVersion(doc));
+    }
+
+    async handleUploadDocument() {
+        const title = document.getElementById('doc_title').value;
+        const projectId = document.getElementById('doc_project_id').value;
+        const description = document.getElementById('doc_description').value;
+        const fileInput = document.getElementById('doc_file');
+        const errorEl = document.getElementById('upload-doc-error');
+
+        if (!title || !projectId || !fileInput.files[0]) {
+            errorEl.innerText = 'Please fill required fields and select a file.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('projectId', projectId);
+        formData.append('description', description);
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const res = await fetch('/api/v1/documents', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                window.toast.show('Document uploaded and PM notified', 'success');
+                window.drawer.close();
+                window.app.caModule.refresh();
+            } else {
+                errorEl.innerText = result.message;
+                errorEl.style.display = 'block';
+            }
+        } catch (error) {
+            errorEl.innerText = 'Server error during upload.';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    async handleUploadVersion(docId) {
+        const notes = document.getElementById('ver_notes').value;
+        const fileInput = document.getElementById('ver_file');
+        const errorEl = document.getElementById('upload-ver-error');
+
+        if (!fileInput.files[0]) {
+            errorEl.innerText = 'Please select a file.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('changeNotes', notes);
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const res = await fetch(`/api/v1/documents/${docId}/versions`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                window.toast.show('Document version updated', 'success');
+                window.drawer.close();
+                window.app.caModule.refresh();
+            } else {
+                errorEl.innerText = result.message;
+                errorEl.style.display = 'block';
+            }
+        } catch (error) {
+            errorEl.innerText = 'Server error during upload.';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    refresh() {
+        // Simple re-render of current view
+        const content = document.querySelector('#ca-module .content');
+        if (content) {
+            this.getCurrentViewHTML().then(html => content.innerHTML = html);
+        }
+    }
+
+    // Replace render with async version to handle fetching
+    async render() {
+        const html = await this.getTemplateAsync();
+        return html;
+    }
+
+    async getTemplateAsync() {
+        const viewHtml = await this.getCurrentViewHTML();
+        return `
+            <div id="ca-module" class="animate-fade-in">
+                ${this.getHeaderHTML()}
+                <div class="content">
+                    ${viewHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    async getCurrentViewHTML() {
+        switch(this.currentView) {
+            case 'dashboard': return this.getDashboardView();
+            case 'documents': return await this.getDocumentsView();
+            case 'milestones': return this.getMilestonesView();
+            case 'amendments': return this.getAmendmentsView();
+            case 'compliance': return this.getComplianceView();
+            case 'reports': return this.getReportsView();
+            default: return `<div class="p-4">View ${this.currentView} not found</div>`;
+        }
     }
 
     getMilestonesView() {
@@ -369,54 +485,7 @@ export class ContractAdminDashboard {
         `;
     }
 
-    getVendorsView() {
-         return `
-            <div class="data-card">
-              <div class="data-card-header">
-                <div class="card-title">Approved Supplier List</div>
-                <button class="btn btn-primary" onclick="window.drawer.open('New Vendor', window.DrawerTemplates.onboardVendor)"><i class="fas fa-user-plus"></i> Onboard New</button>
-              </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Vendor Name</th>
-                    <th>Category</th>
-                    <th>NCIC Grade</th>
-                    <th>Contracts</th>
-                    <th>Total Value</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style="font-weight:600;">Unilia Construction</td>
-                    <td>Civil Works</td>
-                    <td>Unlimited</td>
-                    <td>2 Active</td>
-                    <td class="mono-val">2.5B MWK</td>
-                    <td><span class="status active">Preferred</span></td>
-                  </tr>
-                   <tr>
-                    <td style="font-weight:600;">Malawi Cement</td>
-                    <td>Materials</td>
-                    <td>N/A</td>
-                    <td>1 Framework</td>
-                    <td class="mono-val">Volumetric</td>
-                    <td><span class="status active">Active</span></td>
-                  </tr>
-                   <tr>
-                    <td style="font-weight:600;">Apex Security</td>
-                    <td>Services</td>
-                    <td>N/A</td>
-                    <td>1 Service Level</td>
-                    <td class="mono-val">4.5M/mo</td>
-                    <td><span class="status locked" style="background:var(--red-light); color:var(--red);">Compliance Hold</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-        `;
-    }
+
 
     getReportsView() {
          return `

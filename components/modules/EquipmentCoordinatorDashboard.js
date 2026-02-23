@@ -141,7 +141,7 @@ export class EquipmentCoordinatorDashboard {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                    <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails({ name: 'Caterpillar 320D Excavator', code: 'EQP-045', status: 'Checked Out' }))">
                       <td style="padding: 16px 20px;"><span class="mono-val" style="background: var(--slate-100); padding: 2px 6px; border-radius: 4px; font-weight: 600;">EQP-045</span></td>
                       <td>
                         <div style="font-weight: 700; color: var(--slate-900);">Caterpillar 320D Excavator</div>
@@ -170,7 +170,7 @@ export class EquipmentCoordinatorDashboard {
                         </button>
                       </td>
                     </tr>
-                    <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                    <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails({ name: 'Tata Tipper Truck 10T', code: 'EQP-012', status: 'In Transit' }))">
                       <td style="padding: 16px 20px;"><span class="mono-val" style="background: var(--slate-100); padding: 2px 6px; border-radius: 4px; font-weight: 600;">EQP-012</span></td>
                       <td>
                         <div style="font-weight: 700; color: var(--slate-900);">Tata Tipper Truck 10T</div>
@@ -199,7 +199,7 @@ export class EquipmentCoordinatorDashboard {
                         </button>
                       </td>
                     </tr>
-                    <tr style="background: #FFFBEB;" onclick="window.drawer.open('Refuel Required', window.DrawerTemplates.assetDetails)">
+                    <tr style="background: #FFFBEB;" onclick="window.drawer.open('Refuel Required', window.DrawerTemplates.assetDetails({ name: 'Honda Generator 5kVA', code: 'EQP-023', status: 'Needs Refuel' }))">
                       <td style="padding: 16px 20px;"><span class="mono-val" style="background: var(--orange); color: white; padding: 2px 6px; border-radius: 4px; font-weight: 600;">EQP-023</span></td>
                       <td>
                         <div style="font-weight: 700; color: var(--orange-hover);">Honda Generator 5kVA</div>
@@ -258,7 +258,7 @@ export class EquipmentCoordinatorDashboard {
                         </tr>
                     </thead>
                     <tbody>
-                         <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                         <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails({ name: 'Excavator 20T', code: 'EQP-045', status: 'Good' }))">
                             <td><span class="mono-val">EQP-045</span></td>
                             <td style="font-weight:600;">Excavator 20T</td>
                             <td>CAT 320D</td>
@@ -267,7 +267,7 @@ export class EquipmentCoordinatorDashboard {
                             <td><span class="status active">Good</span></td>
                             <td>CEN-01 Unilia</td>
                         </tr>
-                        <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                        <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails({ name: 'Tipper 10T', code: 'EQP-012', status: 'Fair' }))">
                             <td><span class="mono-val">EQP-012</span></td>
                             <td style="font-weight:600;">Tipper 10T</td>
                             <td>Tata Prima</td>
@@ -276,7 +276,7 @@ export class EquipmentCoordinatorDashboard {
                             <td><span class="status pending">Fair</span></td>
                             <td>In Transit</td>
                         </tr>
-                        <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">
+                        <tr onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails({ name: 'Concrete Mixer', code: 'EQP-008', status: 'Poor' }))">
                              <td><span class="mono-val">EQP-008</span></td>
                              <td style="font-weight:600;">Concrete Mixer</td>
                              <td>Winget 400L</td>
@@ -398,7 +398,7 @@ export class EquipmentCoordinatorDashboard {
                         <div style="color: var(--slate-500); margin-bottom: 8px;">ID: ${asset.id}</div>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span class="status active" style="font-size: 10px; background: ${asset.color}20; color: ${asset.color}">${asset.status}</span>
-                            <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails)">Details</button>
+                            <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 10px;" onclick="window.drawer.open('Asset Details', window.DrawerTemplates.assetDetails({ name: 'Asset', code: 'EQP', status: 'Active' }))">Details</button>
                         </div>
                     </div>
                 `);

@@ -391,4 +391,42 @@ export class FieldSupervisorDashboard {
             </table>
         `;
     }
+
+    async handleRequestFunds() {
+        const vendorName = document.querySelector('input[placeholder="e.g. Lilongwe Hardware"]')?.value;
+        const description = document.querySelector('textarea[placeholder="List items needed..."]')?.value;
+        const amount = document.querySelector('input[type="number"][placeholder="0.00"]')?.value;
+
+        if (!vendorName || !description || !amount) {
+            window.toast.show('Please fill in all required fields.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-submit-funds');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
+        }
+
+        try {
+            await client.post('/requisitions', {
+                projectId: 1, // Mocked for now
+                vendorName,
+                description,
+                totalAmount: parseFloat(amount),
+                items: [{ itemName: description, quantity: 1, unitPrice: parseFloat(amount) }]
+            });
+
+            window.toast.show('Fund request submitted successfully!', 'success');
+            window.drawer.close();
+        } catch (error) {
+            console.error('Fund request failed:', error);
+            window.toast.show('Failed to submit fund request.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'Submit Request';
+            }
+        }
+    }
 }

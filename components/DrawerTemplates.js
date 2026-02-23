@@ -5,22 +5,22 @@ export const DrawerTemplates = {
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Transaction Type</label>
                 <div style="display: flex; gap: 12px;">
                      <label style="flex: 1; border: 1px solid var(--orange); background: var(--orange-light); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--orange); cursor: pointer;">
-                        <input type="radio" name="trx_type" checked style="accent-color: var(--orange);"> Expense
+                        <input type="radio" name="trx_type" id="trx_type_expense" value="expense" checked style="accent-color: var(--orange);"> Expense
                      </label>
                      <label style="flex: 1; border: 1px solid var(--slate-200); padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-600); cursor: pointer;">
-                        <input type="radio" name="trx_type" style="accent-color: var(--slate-400);"> Invoice
+                        <input type="radio" name="trx_type" id="trx_type_invoice" value="invoice" style="accent-color: var(--slate-400);"> Invoice
                      </label>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Amount (MWK)</label>
-                <input type="number" class="form-input" value="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
+                <input type="number" id="trx-amount" class="form-input" value="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project</label>
-                <select class="form-input" style="width: 100%;">
+                <select id="trx-project" class="form-input" style="width: 100%;">
                     <option selected>CEN-01 Unilia Library Complex</option>
                     <option>MZ-05 Mzimba Clinic Extension</option>
                     <option>NOR-04 Mzuzu Bridge Repair</option>
@@ -30,18 +30,19 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Budget Line</label>
-                <select class="form-input" style="width: 100%;">
-                    <option selected>Materials (02-MAT)</option>
-                    <option>Labor (03-LAB)</option>
-                    <option>Equipment (04-EQU)</option>
-                    <option>Overheads (05-OVH)</option>
-                    <option>Subcontractors (06-SUB)</option>
+                <select id="trx-category" class="form-input" style="width: 100%;">
+                    <option value="materials" selected>Materials (02-MAT)</option>
+                    <option value="labor">Labor (03-LAB)</option>
+                    <option value="equipment">Equipment (04-EQU)</option>
+                    <option value="overheads">Overheads (05-OVH)</option>
+                    <option value="subcontractors">Subcontractors (06-SUB)</option>
                 </select>
             </div>
 
              <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Description</label>
-                <textarea class="form-input" rows="3" placeholder="Enter transaction details..." style="width: 100%;"></textarea>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Description / Vendor</label>
+                <input type="text" id="trx-vendor" class="form-input" placeholder="Enter vendor name..." style="width: 100%; margin-bottom: 8px;">
+                <textarea id="trx-description" class="form-input" rows="3" placeholder="Enter transaction details..." style="width: 100%;"></textarea>
             </div>
 
              <div class="form-group" style="margin-bottom: 24px;">
@@ -52,7 +53,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Transaction Processed', 'success'); window.drawer.close();">Process Transaction</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="window.app.pmModule.handleTransactionSubmit()">Process Transaction</button>
         </div>
     `,
 
@@ -109,6 +110,11 @@ export const DrawerTemplates = {
         </div>
     `,
 
+
+
+
+
+
     safetyIncident: `
         <div style="padding: 24px;">
             <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; border: 1px solid var(--orange-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
@@ -158,13 +164,13 @@ export const DrawerTemplates = {
         </div>
     `,
     
-    requisitionReview: `
+    requisitionReview: (project, req) => `
          <div style="padding: 0;">
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
                     <div>
-                        <div style="font-size: 18px; font-weight: 700; color: var(--slate-900);">REQ-089</div>
-                        <div style="color: var(--slate-500); font-size: 13px;">Submitted by Frank M. (Site Manager) • 2 hours ago</div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--slate-900);">REQ-${req?.id || '---'}</div>
+                        <div style="color: var(--slate-500); font-size: 13px;">Submitted by ${req?.requesterName || 'Site Manager'} • ${req ? new Date(req.createdAt).toLocaleDateString() : 'Just now'}</div>
                     </div>
                     <span class="status pending" style="background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">Pending Approval</span>
                 </div>
@@ -172,44 +178,29 @@ export const DrawerTemplates = {
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Project</div>
-                        <div style="font-weight: 600; color: var(--slate-800);">CEN-01 Unilia</div>
+                        <div style="font-weight: 600; color: var(--slate-800);">${project?.name || '---'}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor</div>
-                        <div style="font-weight: 600; color: var(--slate-800);">Malawi Cement Ltd</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor / Payee</div>
+                        <div style="font-weight: 600; color: var(--slate-800);">${req?.vendorName || req?.vendor || 'Not Specified'}</div>
                     </div>
-                     <div>
+                    <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Total Amount</div>
-                        <div style="font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">MWK 4,500,000</div>
+                        <div style="font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">MWK ${req?.amount?.toLocaleString() || '0'}</div>
                     </div>
                 </div>
             </div>
 
             <div style="padding: 24px;">
-                <h4 style="font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px; text-transform: uppercase;">Line Items</h4>
-                <table style="width: 100%; font-size: 13px; border: 1px solid var(--slate-200); border-radius: 6px; overflow: hidden; margin-bottom: 24px;">
-                    <thead style="background: var(--slate-50);">
-                        <tr>
-                            <th style="padding: 8px 12px; text-align: left; color: var(--slate-500);">Item</th>
-                            <th style="padding: 8px 12px; text-align: right; color: var(--slate-500);">Qty</th>
-                            <th style="padding: 8px 12px; text-align: right; color: var(--slate-500);">Unit Price</th>
-                            <th style="padding: 8px 12px; text-align: right; color: var(--slate-500);">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="padding: 8px 12px; border-top: 1px solid var(--slate-200);">Portland Cement (50kg)</td>
-                            <td style="padding: 8px 12px; text-align: right; border-top: 1px solid var(--slate-200);">600</td>
-                            <td style="padding: 8px 12px; text-align: right; border-top: 1px solid var(--slate-200);">7,500</td>
-                            <td style="padding: 8px 12px; text-align: right; border-top: 1px solid var(--slate-200); font-weight: 600;">4,500,000</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h4 style="font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px; text-transform: uppercase;">Request Details</h4>
+                <div style="font-size: 14px; color: var(--slate-600); margin-bottom: 24px; line-height: 1.6;">
+                    ${req?.purpose || req?.description || 'No detailed purpose provided for this requisition.'}
+                </div>
 
                 <div style="background: var(--blue-light); border: 1px solid var(--blue); padding: 12px; border-radius: 6px; display: flex; gap: 10px; margin-bottom: 24px;">
                     <i class="fas fa-info-circle" style="color: var(--blue); margin-top: 2px;"></i>
                     <div style="font-size: 13px; color: var(--blue-dark);">
-                        <strong>Budget Check:</strong> This expenditure is within the remaining budget for "Materials" (85% utilized after this).
+                        <strong>System Check:</strong> This request is pending PM review. Final approval will be processed by the Commissioner.
                     </div>
                 </div>
 
@@ -219,13 +210,13 @@ export const DrawerTemplates = {
                 </div>
 
                 <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.toast.show('Requisition forwarded to Project Manager for clarification', 'info')">Forward to PM</button>
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.toast.show('Forwarded to PM for clarification', 'info')">Contact Requester</button>
                     <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="
                         const reason = document.getElementById('req-remarks').value;
-                        if(!reason) { window.toast.show('Please provide a reason for rejection', 'error'); return; }
-                        window.drawer.close(); window.toast.show('Requisition Rejected', 'error');
+                        if(!reason) { window.toast.show('Mandatory: Please provide a reason for rejection', 'error'); return; }
+                        window.app.pmModule.handleRejectRequisition('${req?.id}', reason);
                     ">Reject</button>
-                    <button class="btn btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.drawer.close(); window.toast.show('Requisition Approved - PO Generated', 'success')">Approve</button>
+                    <button class="btn btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveRequisition('${req?.id}')">Approve</button>
                 </div>
             </div>
          </div>
@@ -272,7 +263,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 700;" onclick="window.drawer.close(); window.toast.show('Fund Request Submitted', 'success')">Submit Request</button>
+            <button class="btn btn-primary" id="btn-submit-funds" style="width: 100%; padding: 14px; font-weight: 700;" onclick="window.app.fsModule.handleRequestFunds()">Submit Request</button>
         </div>
     `,
 
@@ -386,12 +377,16 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    siteLogVerification: `
+    siteLogVerification: (project, log) => {
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        };
+        return `
         <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
           <div class="tabs" style="margin-bottom: 0;">
             <div class="tab active">Verify Log</div>
-            <div class="tab">Budget Check</div>
-            <div class="tab">Tasks</div>
+            <div class="tab">Attendance</div>
           </div>
         </div>
 
@@ -399,24 +394,24 @@ export const DrawerTemplates = {
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <div>
                     <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Supervisor</div>
-                    <div style="font-weight:600;">John Banda</div>
+                    <div style="font-weight:600;">${escapeHTML(project?.manager?.name || 'Site Supervisor')}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Timestamp</div>
-                    <div style="font-weight:600;">Today, 08:30 AM</div>
+                    <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Date</div>
+                    <div style="font-weight:600;">${log ? new Date(log.createdAt || log.date).toLocaleDateString() : 'Today'}</div>
                 </div>
             </div>
 
             <div class="evidence-photo" style="width: 100%; height: 200px; background: var(--slate-200); border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 16px; border: 1px solid var(--slate-300);">
-                <img src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="${log?.photoUrl || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop'}" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover;">
                 <div class="geo-tag" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; display: flex; align-items: center; gap: 6px;">
-                    <i class="fas fa-map-marker-alt"></i> Sector 4 (-13.98, 33.78)
+                    <i class="fas fa-map-marker-alt"></i> ${log?.gpsCoords || project?.location || 'Sector 4'}
                 </div>
             </div>
 
             <div style="font-size:13px; font-weight:700; color:var(--slate-900); margin-bottom:8px;">Narrative Report</div>
             <p style="font-size:13px; color:var(--slate-600); line-height:1.5; background:var(--slate-50); padding:12px; border-radius:6px;">
-                "Excavated 50 meters of trenching. Encountered minor rock obstruction but cleared. 15 bags cement received."
+                "${log?.narrative || 'No narrative provided for this log.'}"
             </p>
         </div>
 
@@ -424,33 +419,21 @@ export const DrawerTemplates = {
             <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:12px;">Resource Consumption</div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                 <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
-                    <div style="font-size:11px; color:var(--slate-500);">Materials</div>
-                    <div style="font-weight:600;">Cement: 15 Bags</div>
-                    <div style="font-weight:600;">Sand: 2 Tons</div>
+                    <div style="font-size:11px; color:var(--slate-500);">Materials Used</div>
+                    <div style="font-weight:600;">${log?.materials || 'None reported'}</div>
                 </div>
                 <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
                     <div style="font-size:11px; color:var(--slate-500);">Attendance</div>
-                    <div style="font-weight:600;">12 General</div>
-                    <div style="font-weight:600;">2 Skilled</div>
+                    <div style="font-weight:600;">${log?.attendanceCount || log?.attendance || 0} Workers</div>
                 </div>
             </div>
         </div>
-        
-        <div class="drawer-section" style="border:none;">
-             <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:12px;">Impact on Schedule</div>
-             <div style="background:var(--orange-light); padding:12px; border-radius:6px; display:flex; gap:12px; align-items:center;">
-                <i class="fas fa-info-circle" style="color:var(--orange);"></i>
-                <div style="font-size:12px; color:var(--slate-800);">
-                    Approving this log will advance <strong>Task 2.4 (Foundation)</strong> from 20% to <strong>25%</strong>.
-                </div>
-             </div>
-        </div>
 
         <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px;">
-          <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);" onclick="window.drawer.close(); window.toast.show('Log rejected. Supervisor notified.', 'error')">Reject Log</button>
-          <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="window.drawer.close(); window.toast.show('Progress approved and Gantt updated.', 'success')">Confirm & Update Gantt</button>
+          <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);" onclick="window.app.pmModule.handleRejectLog('${escapeHTML(log?.id)}', prompt('Reason for rejection:'))">Reject Log</button>
+          <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="window.app.pmModule.handleApproveLog('${escapeHTML(log?.id)}')">Approve & Update Gantt</button>
         </div>
-    `,
+    `},
 
     dailyReport: `
         <div class="drawer-section">
@@ -801,6 +784,68 @@ export const DrawerTemplates = {
         </div>
     `,
 
+    uploadDocument: (projects = []) => `
+        <div class="drawer-section">
+            <div id="upload-doc-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Document Title</label>
+                <input type="text" id="doc_title" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Environmental Impact Assessment">
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Associated Project</label>
+                <select id="doc_project_id" class="form-input" style="width:100%; padding:10px;">
+                    <option value="">Select Project...</option>
+                    ${projects.map(p => `<option value="${p.id}">${p.code} - ${p.name}</option>`).join('')}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Description</label>
+                <textarea id="doc_description" class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="Brief details about this document..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">Select File</label>
+                <input type="file" id="doc_file" style="display:none;" onchange="document.getElementById('file-name-display').innerText = this.files[0]?.name || 'No file selected'">
+                <div style="border:2px dashed var(--slate-300); padding:24px; text-align:center; border-radius:8px; background:var(--slate-50); color:var(--slate-500); cursor:pointer;" onclick="document.getElementById('doc_file').click()">
+                    <i class="fas fa-cloud-arrow-up" style="font-size:28px; margin-bottom:8px; color:var(--slate-400);"></i>
+                    <p id="file-name-display" style="margin:0; font-weight:500;">Click to select document file (PDF, Docx, etc.)</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUploadDocument()">Upload & Notify PM</button>
+        </div>
+    `,
+
+    uploadDocumentVersion: (document) => `
+        <div class="drawer-section">
+            <div id="upload-ver-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--blue-light); border-radius: 8px;">
+                <div style="font-weight: 700; color: var(--blue); font-size: 14px;">Updating: ${document.title}</div>
+                <div style="font-size: 11px; color: var(--blue-hover);">Current Version: v${document.versions[0]?.versionNumber || 1}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Change Notes</label>
+                <textarea id="ver_notes" class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="What has changed in this version?"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label">Select Updated File</label>
+                <input type="file" id="ver_file" style="display:none;" onchange="document.getElementById('ver-file-name').innerText = this.files[0]?.name || 'No file selected'">
+                <div style="border:2px dashed var(--slate-300); padding:24px; text-align:center; border-radius:8px; background:var(--slate-50); color:var(--slate-500); cursor:pointer;" onclick="document.getElementById('ver_file').click()">
+                    <i class="fas fa-file-arrow-up" style="font-size:28px; margin-bottom:8px; color:var(--slate-400);"></i>
+                    <p id="ver-file-name" style="margin:0; font-weight:500;">Select the new version file</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUploadVersion(${document.id})">Upload Version</button>
+        </div>
+    `,
+
     // --- EQUIPMENT COORDINATOR TEMPLATES ---
     assignEquipment: `
         <div class="drawer-section">
@@ -895,17 +940,22 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    assetDetails: `
+    assetDetails: (asset) => {
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        };
+        return `
         <div class="drawer-section">
             <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center;">
                 <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--slate-600); border: 1px solid var(--slate-200);">
                     <i class="fas fa-truck-front"></i>
                 </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--slate-900);">Caterpillar 320D</h3>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(asset.name) || 'Equipment Details'}</h3>
                     <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center;">
-                        <span class="project-id">EQP-045</span>
-                        <span class="status active" style="font-size: 10px; padding: 2px 8px;">In Use</span>
+                        <span class="project-id">${escapeHTML(asset.code || asset.id)}</span>
+                        <span class="status active" style="font-size: 10px; padding: 2px 8px;">${escapeHTML(asset.status) || 'Active'}</span>
                     </div>
                 </div>
             </div>
@@ -913,15 +963,15 @@ export const DrawerTemplates = {
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
                 <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
                     <div class="stat-label" style="font-size: 9px;">Engine Hours</div>
-                    <div style="font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono'; margin-top: 4px;">2,450h</div>
+                    <div style="font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono'; margin-top: 4px;">${asset.hours || '2,450'}h</div>
                 </div>
                 <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
                     <div class="stat-label" style="font-size: 9px;">Fuel Level</div>
-                    <div style="font-size: 14px; font-weight: 700; color: var(--emerald); margin-top: 4px;">85%</div>
+                    <div style="font-size: 14px; font-weight: 700; color: var(--emerald); margin-top: 4px;">${asset.fuel || '85'}%</div>
                 </div>
                 <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
                     <div class="stat-label" style="font-size: 9px;">Utilization</div>
-                    <div style="font-size: 14px; font-weight: 700; color: var(--blue); margin-top: 4px;">92%</div>
+                    <div style="font-size: 14px; font-weight: 700; color: var(--blue); margin-top: 4px;">${asset.utilization || '92'}%</div>
                 </div>
             </div>
             
@@ -930,11 +980,11 @@ export const DrawerTemplates = {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <div style="font-size: 11px; color: var(--slate-500);">Current Location</div>
-                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">Unilia Site (CEN-01)</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">${asset.location || 'HQ Storage'}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; color: var(--slate-500);">Assigned To</div>
-                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">John Banda (PM)</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">${asset.assignedTo || 'Unassigned'}</div>
                     </div>
                 </div>
             </div>
@@ -945,7 +995,7 @@ export const DrawerTemplates = {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                         <div>
                             <div style="font-size: 11px; color: var(--slate-500);">Last Maintenance</div>
-                            <div id="asset-last-maintenance" style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--emerald);">Dec 15, 2025</div>
+                            <div id="asset-last-maintenance" style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--emerald);">${asset.lastMaintenance || 'Dec 15, 2025'}</div>
                         </div>
                         <div>
                             <div style="font-size: 11px; color: var(--slate-500);">Next Service Due</div>
@@ -979,7 +1029,7 @@ export const DrawerTemplates = {
                 <button class="btn btn-secondary" style="flex:1; padding: 12px;">Full History</button>
             </div>
         </div>
-    `,
+    `},
 
 
     scheduleMaintenance: `
@@ -1531,74 +1581,123 @@ Contract Admin</textarea>
         </div>
     `,
     
-    projectDetails: `
+    projectDetails: (project) => {
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        };
+        return `
         <div class="drawer-section">
-            <div style="font-size:18px; font-weight:700; margin-bottom:4px;">MZ-05 Mzuzu Clinic Extension</div>
-            <div style="font-size:13px; color:var(--slate-500); margin-bottom:16px;">Project Manager: Peter Phiri</div>
-            
-            <div class="stats-grid" style="grid-template-columns:1fr 1fr; margin:0 0 16px 0;">
-                <div class="stat-card" style="padding:10px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                <div>
+                    <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(project.name) || 'Project Details'}</div>
+                    <div style="font-size: 13px; color: var(--slate-500); font-family: 'JetBrains Mono';">${escapeHTML(project.code) || 'PRJ-' + escapeHTML(project.id)}</div>
+                </div>
+                <span class="status active" style="padding: 6px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase;">${escapeHTML(project.status)?.toUpperCase() || 'ACTIVE'}</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-100);">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Client</div>
+                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.client) || 'Government of Malawi'}</div>
+                </div>
+                <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-100);">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Manager</div>
+                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.manager?.name || project.managerName || 'Unassigned')}</div>
+                </div>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="stat-card" style="margin: 0;">
                     <div class="stat-label">Budget</div>
-                    <div class="stat-value" style="font-size:16px;">MWK 450M</div>
+                    <div class="stat-value" style="font-size: 18px;">MWK ${project.budgetTotal ? (project.budgetTotal/1000000).toFixed(1) + 'M' : '0'}</div>
                 </div>
-                <div class="stat-card" style="padding:10px;">
+                <div class="stat-card" style="margin: 0;">
                     <div class="stat-label">Progress</div>
-                    <div class="stat-value" style="font-size:16px; color:var(--emerald);">92%</div>
+                    <div class="stat-value" style="font-size: 18px; color: var(--orange);">${project.progress || 0}%</div>
                 </div>
             </div>
 
-            <div style="margin-bottom:16px;">
-                <div class="stat-label" style="margin-bottom:8px;">Project Health</div>
-                <div style="display:flex; gap:8px;">
-                     <span class="status active" style="flex:1; text-align:center;">Schedule: On Time</span>
-                     <span class="status active" style="flex:1; text-align:center;">Safety: 100%</span>
+            <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+                <div style="padding: 12px 16px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase;">
+                    Schedule Timeline
+                </div>
+                <div style="padding: 16px; display: flex; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 2px;">Start Date</div>
+                        <div style="font-weight: 600;">${project.startDate || 'Jan 10, 2024'}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 2px;">End Date</div>
+                        <div style="font-weight: 600;">${project.endDate || 'Dec 15, 2024'}</div>
+                    </div>
                 </div>
             </div>
 
-             <div class="stat-label" style="margin-bottom:8px;">Recent Activity</div>
-             <div style="font-size:12px; color:var(--slate-600); border-left:2px solid var(--slate-200); padding-left:10px; margin-bottom:8px;">
-                <strong>Today:</strong> Material Delivery (Cement) confirmed.
-             </div>
-             <div style="font-size:12px; color:var(--slate-600); border-left:2px solid var(--slate-200); padding-left:10px;">
-                <strong>Yesterday:</strong> Painting gang A completed 2nd coat.
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Health Metrics</div>
+                <div style="display: flex; gap: 12px;">
+                     <div style="flex: 1; padding: 12px; border-radius: 8px; background: ${project.budgetUtilization > 100 ? 'var(--red-light)' : 'var(--emerald-light)'}; border: 1px solid ${project.budgetUtilization > 100 ? 'var(--red-hover)' : 'var(--emerald-hover)'};">
+                        <div style="font-size: 10px; color: ${project.budgetUtilization > 100 ? 'var(--red)' : 'var(--emerald)'}; font-weight: 700;">BUDGET</div>
+                        <div style="font-weight: 600; font-size: 13px;">${project.budgetUtilization > 100 ? 'Overrun' : 'Within Budget'}</div>
+                     </div>
+                     <div style="flex: 1; padding: 12px; border-radius: 8px; background: var(--blue-light); border: 1px solid var(--blue-hover);">
+                        <div style="font-size: 10px; color: var(--blue); font-weight: 700;">SAFETY</div>
+                        <div style="font-weight: 600; font-size: 13px;">100% Score</div>
+                     </div>
+                </div>
+            </div>
+
+             <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Recent Updates</div>
+             <div style="display: flex; flex-direction: column; gap: 12px;">
+                 <div style="display: flex; gap: 10px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--orange); margin-top: 4px;"></div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">Site Log Submitted</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">3 hours ago by Supervisor</div>
+                    </div>
+                 </div>
+                 <div style="display: flex; gap: 10px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); margin-top: 4px;"></div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">Project Review Completed</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Yesterday by PM</div>
+                    </div>
+                 </div>
              </div>
         </div>
-        <div style="padding:16px 24px; border-top:1px solid var(--slate-200); display:flex; gap:12px;">
-            <button class="btn btn-secondary" style="flex:1;">View Gantt</button>
-            <button class="btn btn-primary" style="flex:1;">Open Dashboard</button>
+        <div style="padding: 24px; border-top: 1px solid var(--slate-200); background: var(--slate-50); display: flex; gap: 12px; border-radius: 0 0 12px 12px;">
+            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.app.pmModule.currentView='gantt'; window.app.pmModule.render();">View Schedule</button>
+            <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.app.pmModule.currentView='budget'; window.app.pmModule.render();">Financial Info</button>
         </div>
-    `,
+    `},
 
     addTask: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Task Name</label>
-                <input type="text" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Foundation Pouring">
+                <input type="text" id="task-name" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Foundation Pouring">
             </div>
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Start Date</label>
-                <input type="date" class="form-input" style="width:100%; padding:10px;">
+                <input type="date" id="task-start" class="form-input" style="width:100%; padding:10px;">
             </div>
             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Duration (Days)</label>
-                <input type="number" class="form-input" style="width:100%; padding:10px;" placeholder="0">
+                <label class="form-label">End Date</label>
+                <input type="date" id="task-end" class="form-input" style="width:100%; padding:10px;">
             </div>
              <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Assignee</label>
+                <label class="form-label">Assignee (Optional)</label>
                 <select class="form-input" style="width:100%; padding:10px;">
                     <option>John Banda (Supervisor)</option>
                     <option>Davi Moyo (Foreman)</option>
                 </select>
             </div>
              <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Dependencies</label>
-                <select class="form-input" style="width:100%; padding:10px;">
-                    <option>None</option>
-                    <option>1.1 Site Clearing</option>
-                    <option>1.2 Excavation</option>
-                </select>
+                <label class="form-label">Dependencies (Optional)</label>
+                <input type="text" id="task-dependencies" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. T1, T2">
             </div>
-            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Task Added to Schedule', 'success')">Save Task</button>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.app.pmModule.handleAddTask()">Save Task</button>
         </div>
     `,
 
@@ -1710,68 +1809,29 @@ Contract Admin</textarea>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div class="form-group">
                     <label class="form-label">Issue Category</label>
-                    <select class="form-input">
-                        <option selected>Subcontractor Delay</option>
-                        <option>Site Operational Issue</option>
-                        <option>Safety/HSE Hazard</option>
-                        <option>Equipment Failure</option>
-                        <option>Material Shortage/Quality</option>
-                        <option>Labor Dispute</option>
-                        <option>Weather Delay</option>
-                        <option>Other / General Complaint</option>
+                    <select id="issue-category" class="form-input">
+                        <option value="material">Material Shortage</option>
+                        <option value="equipment">Equipment Failure</option>
+                        <option value="safety">Safety Hazard</option>
+                        <option value="labor">Labor Dispute</option>
+                        <option value="weather">Weather Delay</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Project Affected</label>
-                    <select class="form-input">
-                        <option selected>CEN-01 Unilia Library</option>
-                        <option>MZ-05 Clinic Extension</option>
-                        <option>NOR-04 Mzuzu Bridge</option>
-                        <option>LIL-02 Mall Access Road</option>
+                    <label class="form-label">Priority</label>
+                    <select id="issue-priority" class="form-input">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical / SOS</option>
                     </select>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div class="form-group">
-                    <label class="form-label">Site Location / Block</label>
-                    <input type="text" class="form-input" value="Block B - North Face">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Date Identified</label>
-                    <input type="date" class="form-input" value="2026-01-16">
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Priority Level</label>
-                <div style="display:flex; gap:8px;">
-                    <label style="flex:1; border:1px solid var(--slate-200); padding:10px; border-radius:6px; text-align:center; cursor:pointer; font-size:12px; font-weight:600;">
-                        <input type="radio" name="priority" value="Low"> Low
-                    </label>
-                    <label style="flex:1; border:1px solid var(--orange); background:var(--orange-light); color:var(--orange); padding:10px; border-radius:6px; text-align:center; cursor:pointer; font-size:12px; font-weight:600;">
-                        <input type="radio" name="priority" value="Medium"> Medium
-                    </label>
-                    <label style="flex:1; border:1px solid var(--red); background:var(--red-light); color:var(--red); padding:10px; border-radius:6px; text-align:center; cursor:pointer; font-size:12px; font-weight:600;">
-                        <input type="radio" name="priority" value="High" checked> Urgent
-                    </label>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Issue Description / Narrative</label>
-                <textarea class="form-input" rows="4">Subcontractor for plumbing has failed to show up for 3 days. This is delaying the screeding process in Block B. Need immediate intervention to avoid project lag.</textarea>
-            </div>
-
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Assign To (Initial)</label>
-                <select class="form-input">
-                    <option selected>Sarah Jenkins (PM)</option>
-                    <option>John Banda (PM)</option>
-                    <option>Mike Banda (Supervisor)</option>
-                    <option>Grace Chibwe (Ops Manager)</option>
-                    <option>Stefan Mwale (Finance)</option>
-                </select>
+                <textarea id="issue-description" class="form-input" rows="4" placeholder="Provide details about the issue..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom:24px;">
@@ -1782,77 +1842,60 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.drawer.close(); window.toast.show('Issue #CMP-443 logged. Ops Manager notified.', 'success');">Submit Issue Report</button>
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.pmModule.handleIssueSubmit()">Submit Issue Report</button>
         </div>
     `,
 
-    complaintDetails: `
+    complaintDetails: (issue) => `
         <div class="drawer-section">
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
                 <div>
-                    <div style="font-size:18px; font-weight:800; color:var(--slate-900);">Issue #CMP-442</div>
-                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by John Banda (PM) • 3h ago</div>
+                    <div style="font-size:18px; font-weight:800; color:var(--slate-900);">Issue #${issue.id}</div>
+                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by ${issue.reportedBy || 'Site Manager'}</div>
                 </div>
-                <span class="status pending" id="drawer_complaint_status" style="font-weight:700;">In Progress</span>
+                <span class="status ${issue.status === 'open' ? 'pending' : 'active'}" id="drawer_complaint_status" style="font-weight:700;">${issue.status.toUpperCase()}</span>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
                 <div style="background:var(--slate-50); padding:12px; border-radius:8px; border:1px solid var(--slate-100);">
-                    <div class="stat-label" style="font-size:10px;">Project</div>
-                    <div style="font-size:13px; font-weight:700; margin-top:4px;">CEN-01 Unilia</div>
+                    <div class="stat-label" style="font-size:10px;">Category</div>
+                    <div style="font-size:13px; font-weight:700; margin-top:4px;">${issue.category}</div>
                 </div>
                 <div style="background:var(--red-light); padding:12px; border-radius:8px; border:1px solid var(--red-hover);">
                     <div class="stat-label" style="font-size:10px; color:var(--red);">Priority</div>
-                    <div style="font-size:13px; font-weight:700; color:var(--red); margin-top:4px;">Urgent</div>
+                    <div style="font-size:13px; font-weight:700; color:var(--red); margin-top:4px;">${issue.priority.toUpperCase()}</div>
                 </div>
             </div>
 
             <div style="margin-bottom:24px;">
                 <label class="form-label" style="color:var(--slate-400);">Narrative</label>
                 <p style="font-size:13px; line-height:1.6; color:var(--slate-700); background:var(--white); border:1px solid var(--slate-200); padding:16px; border-radius:8px;">
-                    "Subcontractor for plumbing has failed to show up for 3 days. This is delaying the screeding process in Block B. Need immediate intervention to avoid project lag."
+                    "${issue.description || 'No description provided.'}"
                 </p>
-            </div>
-
-            <div style="margin-bottom:24px;">
-                <label class="form-label" style="color:var(--slate-400);">Attachment</label>
-                <div style="width:100%; height:150px; background:var(--slate-200); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--slate-500);">
-                    <i class="fas fa-image" style="font-size:32px;"></i>
-                </div>
             </div>
 
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
                 <label class="form-label" style="margin-bottom:12px; font-weight:700;">Resolution Management</label>
-                
+
                 <div class="form-group" style="margin-bottom:16px;">
-                    <label class="form-label" style="font-size:11px;">ASSIGNED TO</label>
-                    <select class="form-input">
-                        <option>Sarah Jenkins (PM)</option>
-                        <option>Mike Banda (SV)</option>
-                        <option>John Banda (PM)</option>
-                        <option>Stefan Mwale (Finance)</option>
-                        <option>Grace Chibwe (Ops)</option>
+                    <label class="form-label" style="font-size:11px;">RESOLUTION STATUS</label>
+                    <select id="resolution-status" class="form-input">
+                        <option value="resolved">Mark Resolved</option>
+                        <option value="in_progress">Set In Progress</option>
+                        <option value="closed">Close (No Action)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" style="font-size:11px;">INTERNAL RESOLUTION NOTES</label>
-                    <textarea class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."></textarea>
+                    <textarea id="resolution-notes" class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."></textarea>
                 </div>
             </div>
 
-            <div style="border-top:1px solid var(--slate-200); padding-top:24px;">
-                <label class="form-label" style="margin-bottom:12px;">Resolution Actions</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <button class="btn btn-secondary" style="justify-content:center;" onclick="document.getElementById('drawer_complaint_status').className='status pending'; document.getElementById('drawer_complaint_status').innerText='In Progress'; window.toast.show('Status set to In Progress', 'info');">
-                        Set In Progress
-                    </button>
-                    <button class="btn btn-primary" style="justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="document.getElementById('drawer_complaint_status').className='status active'; document.getElementById('drawer_complaint_status').innerText='Resolved'; window.toast.show('Issue marked as Resolved', 'success');">
-                        Mark Resolved
-                    </button>
-                </div>
-                <button class="btn btn-action" style="width:100%; margin-top:12px; justify-content:center;">
-                </div>
+            <div style="border-top:1px solid var(--slate-200); padding-top:24px; display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content:center;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.pmModule.handleResolveIssue('${issue.id}')">Submit Resolution</button>
+            </div>
         </div>
     `,
 
@@ -1892,27 +1935,22 @@ Contract Admin</textarea>
         </div>
     `,
 
-    reviewVehicleRequest: `
+    reviewVehicleRequest: (request) => `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:20px;">
-                <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Procurement Request #PROC-882</div>
-                <div style="font-size:18px; font-weight:800; color:var(--slate-900); margin-top:4px;" id="rev_veh_name">Toyota Hilux 4x4</div>
-                <div style="font-size:14px; color:var(--slate-600); font-weight:600; margin-top:2px;">Target Cost: MWK 45,000,000</div>
+                <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Procurement Request #${request.id || 'PROC-NEW'}</div>
+                <div style="font-size:18px; font-weight:800; color:var(--slate-900); margin-top:4px;">${request.name || request.vehicle || 'New Vehicle Request'}</div>
+                <div style="font-size:14px; color:var(--slate-600); font-weight:600; margin-top:2px;">Requested by: ${request.user || 'Supervisor'}</div>
             </div>
 
             <div style="margin-bottom:20px;">
-                <label class="form-label" style="color:var(--slate-400);">EC Justification</label>
-                <p style="font-size:13px; color:var(--slate-700); line-height:1.5;">"Current site vehicle for CEN-01 is frequently breaking down. Need a reliable 4x4 for supervisor site visits and urgent small material deliveries."</p>
-            </div>
-
-            <div class="form-group" style="margin-bottom:20px;">
-                <label class="form-label">PM Review Comments</label>
-                <textarea class="form-input" rows="3" placeholder="Enter your review notes for Finance..."></textarea>
+                <label class="form-label" style="color:var(--slate-400);">Purpose / Justification</label>
+                <p style="font-size:13px; color:var(--slate-700); line-height:1.5;">"${request.purpose || request.reason || 'No justification provided.'}"</p>
             </div>
 
             <div style="display:flex; gap:12px;">
-                <button class="btn btn-secondary" style="flex:1;" onclick="window.drawer.close(); window.toast.show('Request sent back to EC for clarification', 'info')">Need Info</button>
-                <button class="btn btn-primary" style="flex:2;" onclick="window.drawer.close(); window.toast.show('Request recommended to Finance Director', 'success')">Recommend to Finance</button>
+                <button class="btn btn-danger" style="flex:1;" onclick="window.app.pmModule.handleReviewVehicle('${request.id}', 'rejected')">Reject Request</button>
+                <button class="btn btn-primary" style="flex:2;" onclick="window.app.pmModule.handleReviewVehicle('${request.id}', 'approved')">Approve & Register</button>
             </div>
         </div>
     `,
@@ -1950,23 +1988,24 @@ Contract Admin</textarea>
     addNewVehicle: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Asset ID (Auto-generated)</label>
-                <input type="text" class="form-input" value="EQP-088" readonly>
+                <label class="form-label">Vehicle Name / Model</label>
+                <input type="text" id="vehicle-name" class="form-input" placeholder="e.g. Toyota Hilux 2024">
             </div>
             
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Make / Model</label>
-                <input type="text" class="form-input" placeholder="e.g. Toyota Hilux 2024">
-            </div>
-
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
                 <div class="form-group">
-                    <label class="form-label">Serial Number / VIN</label>
-                    <input type="text" class="form-input">
+                    <label class="form-label">Registration Plate</label>
+                    <input type="text" id="vehicle-plate" class="form-input" placeholder="Registration Number">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Initial Engine Hours / KM</label>
-                    <input type="number" class="form-input" value="0">
+                    <label class="form-label">Vehicle Type</label>
+                    <select id="vehicle-type" class="form-input">
+                        <option value="truck">Truck / Tipper</option>
+                        <option value="loader">Front Loader</option>
+                        <option value="excavator">Excavator</option>
+                        <option value="pickup">Pickup (4x4)</option>
+                        <option value="sedan">Staff Sedan</option>
+                    </select>
                 </div>
             </div>
 
@@ -1978,7 +2017,7 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); window.toast.show('Asset successfully added to fleet registry', 'success')">Add to Fleet</button>
+            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.app.pmModule.handleAddVehicle()">Register Vehicle</button>
         </div>
     `,
 
@@ -2037,7 +2076,7 @@ Contract Admin</textarea>
                     <label class="form-label">Email Address</label>
                     <input type="email" name="email" id="edit-user-email" class="form-input" required style="width:100%;">
                 </div>
-                <div class="form-group" style="margin-bottom:16px;">
+                <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label">System Role</label>
                     <select name="role" id="edit-user-role" class="form-input" required style="width:100%;">
                         <option value="Project_Manager">Project Manager</option>
@@ -2049,6 +2088,11 @@ Contract Admin</textarea>
                         <option value="Managing_Director">Managing Director</option>
                         <option value="System_Technician">System Technician</option>
                     </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">Password Reset</label>
+                    <input type="password" name="password" id="edit-user-password" class="form-input" placeholder="Enter new password to reset" style="width:100%;">
+                    <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">Leave blank to keep the current password.</p>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; margin-bottom: 24px;">Update User Details</button>
 
@@ -2140,43 +2184,136 @@ Contract Admin</textarea>
     `,
 
     editProject: `
-        <div class="drawer-section">
+        <div class="drawer-section" style="padding: 24px;">
             <input type="hidden" id="edit_proj_id">
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                <input type="text" id="edit_proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="edit_proj_name" class="form-input" style="width: 100%;">
             </div>
-             <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client</label>
-                <input type="text" id="edit_proj_client" class="form-input" style="width:100%; padding:10px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Client / Agency</label>
+                <input type="text" id="edit_proj_client" class="form-input" style="width: 100%;">
             </div>
-            <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                <div>
-                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Status</label>
-                     <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Budget (MWK)</label>
+                    <input type="number" id="edit_proj_budget" class="form-input" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="edit_proj_status" class="form-input" style="width: 100%;">
                         <option value="planning">Planning</option>
                         <option value="active">Active</option>
                         <option value="on_hold">On Hold</option>
                         <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                     </select>
-                </div>
-                <div>
-                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Budget (MWK)</label>
-                     <input type="number" id="edit_proj_budget" class="form-input" style="width:100%; padding:10px;">
+                    </select>
                 </div>
             </div>
-             <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-                <div>
-                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
-                     <input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px;">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="edit_proj_start" class="form-input" style="width: 100%;">
                 </div>
-                <div>
-                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
-                     <input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px;">
+                <div class="form-group">
+                    <label class="form-label">Target Completion</label>
+                    <input type="date" id="edit_proj_end" class="form-input" style="width: 100%;">
                 </div>
             </div>
-            <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.app.pmModule.handleUpdateProject()">Save Changes</button>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Designated Supervisor</label>
+                <select id="edit_proj_supervisor" class="form-input" style="width: 100%;">
+                    <option value="">Loading supervisors...</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Site Location (Geofence)</label>
+                <div id="edit-project-map" style="height: 200px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--slate-200);"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--slate-500);">
+                    <span>Lat: <span id="edit_proj_lat">--</span></span>
+                    <span>Lng: <span id="edit_proj_lng">--</span></span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUpdateProject()">Update Project Master</button>
+        </div>
+    `,
+
+    newProject: `
+        <div class="drawer-section" style="padding: 24px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="new_proj_name" class="form-input" placeholder="e.g., Unilia Library Complex">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Client Name</label>
+                <input type="text" id="new_proj_client" class="form-input" placeholder="e.g., Ministry of Education">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Total Budget (MWK)</label>
+                    <input type="number" id="new_proj_budget" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Project Code</label>
+                    <input type="text" id="new_proj_code" class="form-input" placeholder="e.g., CEN-01">
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Site Location</label>
+                <div id="new-project-map" style="height: 200px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--slate-200);"></div>
+                <input type="hidden" id="new_proj_lat">
+                <input type="hidden" id="new_proj_lng">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleCreateProject()">Create New Project</button>
+        </div>
+    `,
+
+    newContract: `
+        <div class="drawer-section" style="padding: 24px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Contract Title</label>
+                <input type="text" id="cnt-title" class="form-input" placeholder="e.g., Cement Supply Agreement">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Contract Type</label>
+                <select id="cnt-type" class="form-input">
+                    <option value="service">Service Agreement</option>
+                    <option value="supply">Supply Contract</option>
+                    <option value="employment">Employment Contract</option>
+                    <option value="lease">Lease Agreement</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Expiry Date</label>
+                <input type="date" id="cnt-expiry" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Document Upload (PDF)</label>
+                <div style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 32px; text-align: center; color: var(--slate-500); background: var(--slate-50);">
+                    <i class="fas fa-file-pdf" style="font-size: 32px; margin-bottom: 8px;"></i>
+                    <p>Selection required</p>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.app.pmModule.handleContractUpload()">Upload & Register Contract</button>
+        </div>
+    `,
+    completeMaintenance: (assetId) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Maintenance Performed</label>
+                <textarea id="maint-summary" class="form-input" rows="3" style="width: 100%;" placeholder="Summary of work..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Cost (MWK)</label>
+                <input type="number" id="maint-cost" class="form-input" style="width: 100%;" placeholder="0.00">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.app.pmModule.handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `
 };
+

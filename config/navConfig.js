@@ -109,7 +109,7 @@ export const NAV_ITEMS = {
             section: 'Lifecycle',
             items: [
                  { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
-                 { label: 'Repository', icon: '<i class="fas fa-folder-open"></i>', id: 'repository' },
+                 { label: 'Documents', icon: '<i class="fas fa-folder-open"></i>', id: 'documents' },
                  { label: 'Milestones', icon: '<i class="fas fa-flag"></i>', id: 'milestones', badge: 3 },
                  { label: 'Amendments', icon: '<i class="fas fa-pen-to-square"></i>', id: 'amendments' }
             ]
@@ -117,8 +117,7 @@ export const NAV_ITEMS = {
         {
             section: 'Compliance',
             items: [
-                { label: 'Ins. & Bonds', icon: '<i class="fas fa-shield-halved"></i>', id: 'compliance' },
-                { label: 'Vendor Registry', icon: '<i class="fas fa-store"></i>', id: 'vendors' }
+                { label: 'Ins. & Bonds', icon: '<i class="fas fa-shield-halved"></i>', id: 'compliance' }
             ]
         },
         {
