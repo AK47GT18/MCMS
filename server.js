@@ -151,8 +151,13 @@ const server = http.createServer(async (req, res) => {
     // STATIC FILES (for frontend if served from same origin)
     // ============================================
     
-    // Serve static files from project root
-    const staticPath = path.join(__dirname, url);
+    // Serve static files from project root or public directory
+    let staticPath = path.join(__dirname, url);
+    if (!fs.existsSync(staticPath) || !fs.statSync(staticPath).isFile()) {
+      // Try public directory fallback
+      staticPath = path.join(__dirname, 'public', url);
+    }
+
     if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
       const ext = path.extname(url);
       const mimeTypes = {
@@ -164,6 +169,8 @@ const server = http.createServer(async (req, res) => {
         '.jpg': 'image/jpeg',
         '.svg': 'image/svg+xml',
         '.ico': 'image/x-icon',
+        '.pdf': 'application/pdf',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       };
       
       const contentType = mimeTypes[ext] || 'application/octet-stream';

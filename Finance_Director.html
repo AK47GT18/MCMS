@@ -392,7 +392,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
               </div>
               <table>
                  <thead>
-                    <tr><th><input type="checkbox"></th><th>Req ID</th><th>Project</th><th>Vendor</th><th>Description</th><th style="text-align:right">Amount</th><th>Fraud Check</th></tr>
+                    <tr><th><input type="checkbox"></th><th>Req ID</th><th>Project</th><th>Contractor</th><th>Description</th><th style="text-align:right">Amount</th><th>Fraud Check</th></tr>
                  </thead>
                  <tbody>
                     <tr onclick="openDrawer('approval', 'REQ-089')">
@@ -479,7 +479,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
                 <div style="font-size: 24px; color: var(--red);"><i class="fas fa-triangle-exclamation"></i></div>
                 <div style="flex: 1;">
                     <div style="font-weight: 700; color: var(--red); font-size: 16px;">Duplicate Payment Detected</div>
-                    <div style="color: var(--slate-600); margin-top: 4px;">REQ-095 (MWK 850,000) matches TRX-9885 from 3 days ago. Vendor: Mzuzu Hardware.</div>
+                    <div style="color: var(--slate-600); margin-top: 4px;">REQ-095 (MWK 850,000) matches TRX-9885 from 3 days ago. Contractor: Mzuzu Hardware.</div>
                     <div style="margin-top: 12px; display: flex; gap: 8px;">
                         <button class="btn btn-danger" onclick="openDrawer('fraud', 'REQ-095')">Investigate</button>
                         <button class="btn btn-secondary">Mark False Positive</button>
@@ -489,7 +489,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
         </div>
 
         <div id="view-contracts" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Contracts Module</div></div><div style="padding: 24px;">Contract Table Placeholder</div></div></div>
-        <div id="view-vendors" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Vendor Registry</div></div><div style="padding: 24px;">Vendor Table Placeholder</div></div></div>
+        <div id="view-contractors" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Contractor Registry</div></div><div style="padding: 24px;">Contractor Table Placeholder</div></div></div>
         <div id="view-ledger" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">General Ledger</div></div><div style="padding: 24px;">Ledger Table Placeholder</div></div></div>
         <div id="view-analytics" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Financial Analytics</div></div><div style="padding: 24px;">Charts Placeholder</div></div></div>
         <div id="view-reports" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Reports Generator</div></div><div style="padding: 24px;">Report Config Placeholder</div></div></div>
@@ -530,7 +530,7 @@ const views = {
     'audit': { title: 'Audit Log', context: 'Immutable System Record' },
     'fraud': { title: 'Fraud Detection', context: 'Active Alerts & Rules' },
     'contracts': { title: 'Contract Management', context: 'Milestones & Deadlines' },
-    'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
+    'contractors': { title: 'Contractor Registry', context: 'Compliance & Performance' },
     'reports': { title: 'Reporting', context: 'Export & Print' }
 };
 
@@ -573,7 +573,7 @@ function openDrawer(type, id) {
             <div class="drawer-section">
                 <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
                     <div><div class="stat-label">Project</div><div style="font-weight:600;">CEN-01 Unilia</div></div>
-                    <div><div class="stat-label">Vendor</div><div style="font-weight:600;">Malawi Cement Co.</div></div>
+                    <div><div class="stat-label">Contractor</div><div style="font-weight:600;">Malawi Cement Co.</div></div>
                     <div><div class="stat-label">Category</div><div class="project-id">02-MAT</div></div>
                     <div><div class="stat-label">Amount</div><div class="stat-value" style="font-size:16px;">MWK 4,500,000</div></div>
                 </div>
@@ -652,7 +652,7 @@ function openDrawer(type, id) {
                     <select class="form-input"><option>CEN-01 Unilia Library</option></select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Vendor</label>
+                    <label class="form-label">Contractor</label>
                     <select class="form-input"><option>Malawi Cement Co.</option></select>
                     <div style="font-size:11px; color:var(--emerald); margin-top:4px;"><i class="fas fa-check-circle"></i> Registered</div>
                 </div>
@@ -680,7 +680,7 @@ function openDrawer(type, id) {
             <div class="drawer-section">
                 <div style="background: #FEF2F2; padding:16px; border-radius:6px; margin-bottom:16px;">
                     <div style="color:var(--red); font-weight:700; margin-bottom:4px;">High Risk Alert</div>
-                    <div style="color:var(--slate-700);">REQ-095 matches transaction TRX-9885 from 3 days ago exactly (Amount & Vendor).</div>
+                    <div style="color:var(--slate-700);">REQ-095 matches transaction TRX-9885 from 3 days ago exactly (Amount & Contractor).</div>
                 </div>
                 <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
                     <div class="data-card" style="margin:0; border:1px solid var(--red);">
@@ -709,7 +709,7 @@ function openDrawer(type, id) {
         
         footer.innerHTML = `
             <button class="btn btn-secondary" style="flex:1;" onclick="closeDrawer()">False Positive</button>
-            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Block Vendor</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="closeDrawer()">Block Contractor</button>
         `;
     }
 }

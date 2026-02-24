@@ -36,7 +36,10 @@ function hasRole(req, res, allowedRoles) {
   // Convert Prisma role format to match our enum
   const userRole = req.user.role.replace(' ', '_');
   
-  if (!allowedRoles.includes(userRole)) {
+  const isAuthorized = allowedRoles.includes(userRole);
+  console.log('[DEBUG RBAC] hasRole check:', { userRole, allowedRoles, isAuthorized });
+
+  if (!isAuthorized) {
     logger.warn('Access denied - insufficient role', {
       userId: req.user.id,
       userRole,
@@ -127,10 +130,25 @@ function isOwnerOrAdmin(req, res, resourceOwnerId) {
   return true;
 }
 
+/**
+ * Authorize middleware factory
+ * Returns a middleware that checks if user has one of the required roles
+ * @param {...string} roles - Allowed roles
+ * @returns {Function} Middleware function
+ */
+function authorize(...roles) {
+  return (req, res, next) => {
+    if (hasRole(req, res, roles)) {
+      return next();
+    }
+  };
+}
+
 module.exports = {
   hasRole,
   hasPermission,
   hasMinimumRole,
   isOwnerOrAdmin,
+  authorize,
   ROLE_HIERARCHY,
 };

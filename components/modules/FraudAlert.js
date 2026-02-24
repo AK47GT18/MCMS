@@ -1,6 +1,6 @@
 import { StatusBadge } from '../ui/StatusBadge.js';
 
-export function FraudAlert({ id, vendor, amount, riskScore, date, status }) {
+export function FraudAlert({ id, contractor, amount, riskScore, date, status }) {
     // High risk > 80
     const isHighRisk = riskScore > 80;
     
@@ -11,7 +11,7 @@ export function FraudAlert({ id, vendor, amount, riskScore, date, status }) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M3.4 20.4a2 2 0 0 0 1.7 1h13.8a2 2 0 0 0 1.7-1l-6.9-12a2 2 0 0 0-3.4 0z"></path></svg>
                 </div>
                 <div>
-                    <h4 class="text-sm font-medium text-slate-900">${vendor}</h4>
+                    <h4 class="text-sm font-medium text-slate-900">${contractor}</h4>
                     <p class="text-xs text-slate-500">Invoice #${id} • ${date}</p>
                 </div>
             </div>

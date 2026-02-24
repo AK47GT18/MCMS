@@ -6,8 +6,9 @@
 const authController = require('../controllers/auth.controller');
 const usersController = require('../controllers/users.controller');
 const projectsController = require('../controllers/projects.controller');
-const vendorsController = require('../controllers/vendors.controller');
 const contractsController = require('../controllers/contracts.controller');
+const contractVersionsController = require('../controllers/contractVersions.controller');
+const insurancePoliciesController = require('../controllers/insurancePolicies.controller');
 const tasksController = require('../controllers/tasks.controller');
 const assetsController = require('../controllers/assets.controller');
 const requisitionsController = require('../controllers/requisitions.controller');
@@ -138,36 +139,41 @@ async function router(req, res) {
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
   
-  // ============================================
-  // VENDORS ROUTES
-  // ============================================
-  if (resource === 'vendors') {
-    if (id === 'approved' && method === 'GET') {
-      return vendorsController.getApproved(req, res);
-    }
-    if (!id) {
-      if (method === 'GET') return vendorsController.getAll(req, res);
-      if (method === 'POST') return vendorsController.create(req, res);
-      return methodNotAllowed(res, ['GET', 'POST']);
-    }
-    if (method === 'GET') return vendorsController.getById(req, res, id);
-    if (method === 'PUT' || method === 'PATCH') return vendorsController.update(req, res, id);
-    if (method === 'DELETE') return vendorsController.remove(req, res, id);
-    return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
-  }
-  
+  // Vendor Routes Removed  
   // ============================================
   // CONTRACTS ROUTES
   // ============================================
   if (resource === 'contracts') {
+    if (action === 'versions') {
+      if (method === 'GET') return contractVersionsController.getByContract(req, res, id);
+      if (method === 'POST') return contractVersionsController.create(req, res, id);
+      return methodNotAllowed(res, ['GET', 'POST']);
+    }
     if (!id) {
       if (method === 'GET') return contractsController.getAll(req, res);
       if (method === 'POST') return contractsController.create(req, res);
       return methodNotAllowed(res, ['GET', 'POST']);
     }
+    if (action === 'approve' && method === 'POST') {
+      return contractsController.approve(req, res, id);
+    }
     if (method === 'GET') return contractsController.getById(req, res, id);
     if (method === 'PUT' || method === 'PATCH') return contractsController.update(req, res, id);
     if (method === 'DELETE') return contractsController.remove(req, res, id);
+    return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE', 'POST']);
+  }
+  
+  // ============================================
+  // INSURANCE POLICIES ROUTES
+  // ============================================
+  if (resource === 'insurance-policies') {
+    if (!id) {
+      if (method === 'GET') return insurancePoliciesController.getAll(req, res);
+      if (method === 'POST') return insurancePoliciesController.create(req, res);
+      return methodNotAllowed(res, ['GET', 'POST']);
+    }
+    if (method === 'PUT' || method === 'PATCH') return insurancePoliciesController.update(req, res, id);
+    if (method === 'DELETE') return insurancePoliciesController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
   

@@ -22,25 +22,26 @@ model User {
   updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
   passwordResetExpires     DateTime?             @map("password_reset_expires") @db.Timestamptz(6)
   passwordResetToken       String?               @map("password_reset_token") @db.VarChar(100)
-  statusReason             String?               @map("status_reason")
   mustChangeEmail          Boolean               @default(false) @map("must_change_email")
   mustChangePassword       Boolean               @default(false) @map("must_change_password")
+  statusReason             String?               @map("status_reason")
   assetLogs                AssetLog[]
   auditLogs                AuditLog[]
   budgetChangeRequests     BudgetChangeRequest[]
+  contractVersionsCreated  ContractVersion[]     @relation("ContractVersionCreator")
   dailyLogs                DailyLog[]
+  uploadedDocumentVersions DocumentVersion[]     @relation("DocumentVersionUploader")
+  uploadedDocuments        Document[]            @relation("DocumentUploader")
   issuesAssigned           Issue[]               @relation("AssignedTo")
   issuesReported           Issue[]               @relation("ReportedBy")
   procurementRequests      ProcurementRequest[]
   managedProjects          Project[]             @relation("ProjectManager")
   requisitionsReviewed     Requisition[]         @relation("RequisitionsReviewed")
   requisitionsSubmitted    Requisition[]         @relation("RequisitionsSubmitted")
-  transactions             Transaction[]
   safetyIncidents          SafetyIncident[]
+  transactions             Transaction[]
   whistleblowerAssigned    WhistleblowerReport[] @relation("AssignedTo")
   whistleblowerReported    WhistleblowerReport[] @relation("Reporter")
-  uploadedDocuments        Document[]            @relation("DocumentUploader")
-  uploadedDocumentVersions DocumentVersion[]     @relation("DocumentVersionUploader")
 
   @@map("users")
 }
@@ -50,9 +51,6 @@ model Project {
   code                 String                @unique @db.VarChar(20)
   name                 String                @db.VarChar(255)
   managerId            Int?                  @map("manager_id")
-  projectType          ProjectTypeEnum?      @map("project_type")
-  status               String                @default("planning") @db.VarChar(20)
-  suspensionReason     String?               @map("suspension_reason")
   contractValue        Decimal?              @map("contract_value") @db.Decimal(18, 2)
   budgetTotal          Decimal?              @map("budget_total") @db.Decimal(18, 2)
   budgetSpent          Decimal?              @default(0) @map("budget_spent") @db.Decimal(18, 2)
@@ -63,7 +61,10 @@ model Project {
   client               String?               @db.VarChar(255)
   lat                  Decimal?              @db.Decimal(10, 8)
   lng                  Decimal?              @db.Decimal(11, 8)
+  projectType          ProjectTypeEnum?      @map("project_type")
   radius               Int?                  @default(500)
+  suspensionReason     String?               @map("suspension_reason")
+  status               String                @default("planning") @db.VarChar(20)
   assetLogs            AssetLog[]
   assets               Asset[]
   budgetChangeRequests BudgetChangeRequest[]
@@ -106,7 +107,6 @@ model Contract {
   id          Int                @id @default(autoincrement())
   refCode     String             @unique @map("ref_code") @db.VarChar(30)
   projectId   Int?               @map("project_id")
-  vendorName  String?            @map("vendor_name") @db.VarChar(255)
   title       String             @db.VarChar(255)
   value       Decimal?           @db.Decimal(18, 2)
   startDate   DateTime?          @map("start_date") @db.Date
@@ -115,6 +115,8 @@ model Contract {
   documentUrl String?            @map("document_url")
   createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vendorName  String?            @map("vendor_name") @db.VarChar(255)
+  versions    ContractVersion[]
   project     Project?           @relation(fields: [projectId], references: [id])
   milestones  Milestone[]
 
@@ -138,6 +140,38 @@ model Milestone {
   @@map("milestones")
 }
 
+model ContractVersion {
+  id            Int      @id @default(autoincrement())
+  contractId    Int      @map("contract_id")
+  versionNumber Int      @map("version_number")
+  refCode       String   @map("ref_code") @db.VarChar(30)
+  title         String   @db.VarChar(255)
+  value         Decimal? @db.Decimal(18, 2)
+  status        String   @map("status") @db.VarChar(20)
+  changeNotes   String?  @map("change_notes")
+  createdById   Int?     @map("created_by_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  contract      Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  createdBy     User?    @relation("ContractVersionCreator", fields: [createdById], references: [id])
+
+  @@index([contractId])
+  @@map("contract_versions")
+}
+
+model InsurancePolicy {
+  id           Int      @id @default(autoincrement())
+  entityName   String   @map("entity_name") @db.VarChar(255)
+  documentType String   @map("document_type") @db.VarChar(100)
+  policyNumber String   @map("policy_number") @db.VarChar(100)
+  expiryDate   DateTime @map("expiry_date") @db.Date
+  status       String   @default("Valid") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([expiryDate])
+  @@map("insurance_policies")
+}
+
 model Asset {
   id                 Int                 @id @default(autoincrement())
   assetCode          String              @unique @map("asset_code") @db.VarChar(20)
@@ -151,9 +185,9 @@ model Asset {
   currentProjectId   Int?                @map("current_project_id")
   status             AssetStatusEnum     @default(available)
   estimatedValue     Decimal?            @map("estimated_value") @db.Decimal(18, 2)
-  lastMaintenanceAt  DateTime?           @map("last_maintenance_at") @db.Date
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastMaintenanceAt  DateTime?           @map("last_maintenance_at") @db.Date
   assetLogs          AssetLog[]
   currentProject     Project?            @relation(fields: [currentProjectId], references: [id])
   maintenanceRecords MaintenanceRecord[]
@@ -201,23 +235,21 @@ model Requisition {
   id              Int                   @id @default(autoincrement())
   reqCode         String                @unique @map("req_code") @db.VarChar(50)
   projectId       Int                   @map("project_id")
-  vendorName      String?               @map("vendor_name") @db.VarChar(255) // Replaces vendorId/relation
+  submittedBy     Int                   @map("submitted_by")
   totalAmount     Decimal               @map("total_amount") @db.Decimal(15, 2)
   status          RequisitionStatusEnum @default(pending)
-  rejectionReason String?               @map("rejection_reason") @db.Text
-  submittedBy     Int                   @map("submitted_by")
+  fraudCheck      Boolean               @default(false) @map("fraud_check")
   reviewedBy      Int?                  @map("reviewed_by")
   reviewedAt      DateTime?             @map("reviewed_at")
-  fraudCheck      Boolean               @default(false) @map("fraud_check")
   createdAt       DateTime              @default(now()) @map("created_at")
   updatedAt       DateTime              @updatedAt @map("updated_at")
-
-  // Relations
-  items        RequisitionItem[]
-  project      Project           @relation(fields: [projectId], references: [id])
-  reviewer     User?             @relation("RequisitionsReviewed", fields: [reviewedBy], references: [id])
-  submitter    User              @relation("RequisitionsSubmitted", fields: [submittedBy], references: [id])
-  transactions Transaction[]
+  rejectionReason String?               @map("rejection_reason")
+  vendorName      String?               @map("vendor_name") @db.VarChar(255)
+  items           RequisitionItem[]
+  project         Project               @relation(fields: [projectId], references: [id])
+  reviewer        User?                 @relation("RequisitionsReviewed", fields: [reviewedBy], references: [id])
+  submitter       User                  @relation("RequisitionsSubmitted", fields: [submittedBy], references: [id])
+  transactions    Transaction[]
 
   @@index([projectId])
   @@index([submittedBy])
@@ -405,6 +437,42 @@ model Issue {
   @@map("issues")
 }
 
+model Document {
+  id                Int               @id @default(autoincrement())
+  title             String            @db.VarChar(255)
+  description       String?
+  originalName      String            @map("original_name") @db.VarChar(255)
+  currentVersionUrl String            @map("current_version_url")
+  status            String            @default("active") @db.VarChar(20)
+  contractValue     Decimal?          @map("contract_value") @db.Decimal(18, 2)
+  projectId         Int               @map("project_id")
+  uploadedById      Int               @map("uploaded_by_id")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  versions          DocumentVersion[]
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy        User              @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([projectId])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            Int      @id @default(autoincrement())
+  documentId    Int      @map("document_id")
+  versionNumber Int      @map("version_number")
+  fileUrl       String   @map("file_url")
+  changeNotes   String?  @map("change_notes")
+  contractValue Decimal? @map("contract_value") @db.Decimal(18, 2)
+  uploadedById  Int      @map("uploaded_by_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy    User     @relation("DocumentVersionUploader", fields: [uploadedById], references: [id])
+
+  @@index([documentId])
+  @@map("document_versions")
+}
+
 enum RoleEnum {
   Project_Manager        @map("Project Manager")
   Finance_Director       @map("Finance Director")
@@ -431,6 +499,7 @@ enum ProjectStatusEnum {
 enum ContractStatusEnum {
   active
   draft
+  pending_approval
   expired
   cancelled
 
@@ -445,44 +514,6 @@ enum MilestoneStatusEnum {
 
   @@map("milestone_status_enum")
 }
-
-model Document {
-  id                Int      @id @default(autoincrement())
-  title             String   @db.VarChar(255)
-  description       String?
-  originalName      String   @map("original_name") @db.VarChar(255)
-  currentVersionUrl String   @map("current_version_url")
-  status            String   @default("active") @db.VarChar(20)
-  projectId         Int      @map("project_id")
-  uploadedById      Int      @map("uploaded_by_id")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  uploadedBy User              @relation("DocumentUploader", fields: [uploadedById], references: [id])
-  versions   DocumentVersion[]
-
-  @@index([projectId])
-  @@map("documents")
-}
-
-model DocumentVersion {
-  id            Int      @id @default(autoincrement())
-  documentId    Int      @map("document_id")
-  versionNumber Int      @map("version_number")
-  fileUrl       String   @map("file_url")
-  changeNotes   String?  @map("change_notes")
-  uploadedById  Int      @map("uploaded_by_id")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  uploadedBy User     @relation("DocumentVersionUploader", fields: [uploadedById], references: [id])
-
-  @@index([documentId])
-  @@map("document_versions")
-}
-
-// Vendor model removed
 
 enum AssetConditionEnum {
   Good

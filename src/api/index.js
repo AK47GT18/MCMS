@@ -23,6 +23,7 @@ export { default as requisitions } from './requisitions.api.js';
 export { default as dailyLogs } from './dailyLogs.api.js';
 export { default as issues } from './issues.api.js';
 export { default as procurement } from './procurement.api.js';
-export { default as vendors } from './vendors.api.js';
 export { default as audit } from './audit.api.js';
 export { default as tasks } from './tasks.api.js';
+export { default as contractVersions } from './contractVersions.api.js';
+export { default as insurancePolicies } from './insurancePolicies.api.js';

@@ -40,8 +40,8 @@ export const DrawerTemplates = {
             </div>
 
              <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Description / Vendor</label>
-                <input type="text" id="trx-vendor" class="form-input" placeholder="Enter vendor name..." style="width: 100%; margin-bottom: 8px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Description / Contractor</label>
+                <input type="text" id="trx-contractor" class="form-input" placeholder="Enter contractor name..." style="width: 100%; margin-bottom: 8px;">
                 <textarea id="trx-description" class="form-input" rows="3" placeholder="Enter transaction details..." style="width: 100%;"></textarea>
             </div>
 
@@ -769,6 +769,59 @@ export const DrawerTemplates = {
         </div>
     `,
 
+    editContract: (contract) => {
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toISOString().split('T')[0];
+        };
+
+        return `
+        <div class="drawer-section">
+            <div id="edit-contract-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-100); border-radius: 8px; border-left: 4px solid var(--slate-400);">
+                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Editing: ${contract.refCode}</div>
+                <div style="font-size: 11px; color: var(--slate-500);">${contract.project?.name || 'No Project'}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Contract Value (MWK)</label>
+                 <input type="number" id="edit_contract_value" class="form-input" value="${contract.value || ''}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Vendor Name</label>
+                 <input type="text" id="edit_contract_vendor" class="form-input" value="${contract.vendorName || ''}" style="width:100%; padding:10px;">
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="edit_contract_start" class="form-input" value="${formatDate(contract.startDate)}" style="width:100%; padding:10px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Date</label>
+                    <input type="date" id="edit_contract_end" class="form-input" value="${formatDate(contract.endDate)}" style="width:100%; padding:10px;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label">Contract Status</label>
+                <select id="edit_contract_status" class="form-input" style="width:100%; padding:10px;">
+                    <option value="draft" ${contract.status === 'draft' ? 'selected' : ''}>Draft</option>
+                    <option value="pending_approval" ${contract.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
+                    <option value="active" ${contract.status === 'active' ? 'selected' : ''}>Active</option>
+                    <option value="expired" ${contract.status === 'expired' ? 'selected' : ''}>Expired</option>
+                    <option value="cancelled" ${contract.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUpdateContract(${contract.id})">Save Changes</button>
+        </div>
+        `;
+    },
+
     uploadAmendment: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Amendment Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Variation Order</option><option>Addendum</option></select></div>
@@ -803,7 +856,12 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Description</label>
-                <textarea id="doc_description" class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="Brief details about this document..."></textarea>
+                <textarea id="doc_description" class="form-input" rows="2" style="width:100%; padding:10px;" placeholder="Brief details about this document..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                 <label class="form-label">Estimated Contract Value (MWK)</label>
+                 <input type="number" id="doc_contract_value" class="form-input" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0.00">
             </div>
 
             <div class="form-group" style="margin-bottom:20px;">
@@ -843,6 +901,34 @@ export const DrawerTemplates = {
             </div>
 
             <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUploadVersion(${document.id})">Upload Version</button>
+        </div>
+    `,
+
+    editDocument: (doc) => `
+        <div class="drawer-section">
+            <div id="edit-doc-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--blue-light); border-radius: 8px;">
+                <div style="font-weight: 700; color: var(--blue); font-size: 14px;">Edit Document Details</div>
+                <div style="font-size: 11px; color: var(--blue-hover);">${doc.title}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Document Title</label>
+                <input type="text" id="edit_doc_title" class="form-input" value="${doc.title}" style="width:100%; padding:10px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Description</label>
+                <textarea id="edit_doc_description" class="form-input" rows="3" style="width:100%; padding:10px;">${doc.description || ''}</textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+                 <label class="form-label">Contract Value (MWK)</label>
+                 <input type="number" id="edit_doc_contract_value" class="form-input" value="${doc.contractValue || ''}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUpdateDocumentDetails(${doc.id})">Save Changes</button>
         </div>
     `,
 

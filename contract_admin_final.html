@@ -195,9 +195,6 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
           <a class="nav-link" onclick="navigateTo('compliance', this)">
              <i class="fas fa-shield-halved"></i> <span>Ins. & Bonds</span>
           </a>
-          <a class="nav-link" onclick="navigateTo('vendors', this)">
-             <i class="fas fa-store"></i> <span>Vendor Registry</span>
-          </a>
         </div>
         
         <div class="nav-section">
@@ -312,7 +309,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
                     <tr>
                        <th>Contract ID</th>
                        <th>Project</th>
-                       <th>Vendor/Client</th>
+                       <th>Contractor/Entity</th>
                        <th>Type</th>
                        <th>Version</th>
                        <th>Status</th>
@@ -384,7 +381,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
 
         <div id="view-amendments" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Amendments Log</div></div><div style="padding: 24px; text-align: center; color: var(--slate-400);">Amendment History Table Placeholder</div></div></div>
         <div id="view-compliance" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Compliance Checks</div></div><div style="padding: 24px; text-align: center; color: var(--slate-400);">Insurance & Tax Certs Placeholder</div></div></div>
-        <div id="view-vendors" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Vendor Registry</div></div><div style="padding: 24px; text-align: center; color: var(--slate-400);">Vendor List Placeholder</div></div></div>
+
         <div id="view-reports" class="view-section"><div class="data-card"><div class="data-card-header"><div class="card-title">Reports</div></div><div style="padding: 24px; text-align: center; color: var(--slate-400);">Report Generator Placeholder</div></div></div>
 
       </div>
@@ -418,7 +415,7 @@ const views = {
     'milestones': { title: 'Milestone Tracker', context: 'Critical Path Deadlines' },
     'amendments': { title: 'Amendments', context: 'Change Control Log' },
     'compliance': { title: 'Compliance & Risk', context: 'Insurance & Bonds' },
-    'vendors': { title: 'Vendor Registry', context: 'Stakeholder Management' },
+
     'reports': { title: 'Reporting', context: 'Performance Analytics' }
 };
 
@@ -498,7 +495,7 @@ function openDrawer(type, id) {
         body.innerHTML = `
             <div class="drawer-section">
                 <div class="form-group"><label class="form-label">Project</label><select class="form-input"><option>CEN-01 Unilia</option></select></div>
-                <div class="form-group"><label class="form-label">Vendor/Client</label><select class="form-input"><option>Mkaka Ltd</option></select></div>
+                <div class="form-group"><label class="form-label">Contractor/Entity</label><select class="form-input"><option>Mkaka Ltd</option></select></div>
                 <div class="form-group"><label class="form-label">Contract Type</label><select class="form-input"><option>Main Works</option><option>Supply</option></select></div>
                 <div class="form-group"><label class="form-label">Value (MWK)</label><input class="form-input" type="number"></div>
                 <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date"></div>

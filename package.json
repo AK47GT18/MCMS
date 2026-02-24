@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "predev": "node scripts/ensure-db.js",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "nodemon server.js",
     "dev:client": "browser-sync start --proxy \"localhost:3000\" --port 3001 --files \"*.html, *.css, components/**/*.js\" --no-notify --no-open",

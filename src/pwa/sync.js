@@ -17,7 +17,7 @@ const getInitialSync = asyncHandler(async (req, res) => {
   if (!user) return;
   
   // Fetch essential data in parallel
-  const [projects, vendors, users] = await Promise.all([
+  const [projects, users] = await Promise.all([
     prisma.project.findMany({
       where: { status: 'active' },
       select: {
@@ -28,14 +28,6 @@ const getInitialSync = asyncHandler(async (req, res) => {
         managerId: true,
         budgetTotal: true,
         budgetSpent: true,
-      },
-    }),
-    prisma.vendor.findMany({
-      where: { status: 'approved' },
-      select: {
-        id: true,
-        name: true,
-        category: true,
       },
     }),
     prisma.user.findMany({
@@ -51,7 +43,6 @@ const getInitialSync = asyncHandler(async (req, res) => {
   response.success(res, {
     syncedAt: new Date().toISOString(),
     projects,
-    vendors,
     users,
   });
 });

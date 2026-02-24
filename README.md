@@ -11,43 +11,29 @@ A vanilla Node.js backend for the MCMS Construction Management System. Built wit
 - **PWA Support**: Manifest and offline sync endpoints.
 - **REST API**: Standardized API for all entities (Projects, Users, Vendors, etc.).
 
-## Prerequisites
+## Quick Start
 
-- Node.js (v18+)
-- PostgreSQL (v14+)
-- SMTP Server (e.g., Gmail) for emails
+For a detailed walkthrough on setting up the environment from scratch, please refer to the **[Installation & Setup Guide](./SETUP_GUIDE.md)**.
 
-## Setup
+1.  **Clone & Install**
 
-1. **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-   ```bash
-   npm install
-   ```
+2.  **Configure `.env`**
+    Copy `.env.example` to `.env` and update your database credentials.
 
-2. **Environment Configuration**
-   Copy `.env` (already created during initialization) and ensure the following variables are set:
+3.  **Database Setup**
 
-   ```env
-   DATABASE_URL="postgresql://postgres:1234@localhost:5432/mcms?schema=public"
-   PORT=3000
-   JWT_SECRET="your-super-secret-key-change-in-production"
-   SMTP_HOST="smtp.gmail.com"
-   SMTP_PORT=587
-   SMTP_USERNAME="your-email@gmail.com"
-   SMTP_PASSWORD="your-app-password"
-   FRONTEND_URL="http://localhost:3000"
-   ```
+    ```bash
+    npx prisma db push
+    ```
 
-3. **Database Setup**
-
-   ```bash
-   # Run migrations
-   npx prisma migrate deploy
-
-   # (Optional) Seed database
-   npm run db:seed
-   ```
+4.  **Launch**
+    ```bash
+    npm run dev
+    ```
 
 ## Running the Server
 

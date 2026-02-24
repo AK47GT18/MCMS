@@ -27,7 +27,7 @@ const documentsService = {
       throw new AppError('Project not found', 404);
     }
 
-    const fileUrl = `/uploads/documents/${file.filename}`;
+    const fileUrl = `/public/uploads/documents/${file.filename}`;
 
     const document = await prisma.document.create({
       data: {
@@ -35,6 +35,7 @@ const documentsService = {
         description,
         originalName: file.originalname,
         currentVersionUrl: fileUrl,
+        contractValue: data.contractValue ? parseFloat(data.contractValue) : null,
         projectId: parseInt(projectId),
         uploadedById: userId,
         versions: {
@@ -42,7 +43,8 @@ const documentsService = {
             versionNumber: 1,
             fileUrl: fileUrl,
             uploadedById: userId,
-            changeNotes: 'Initial upload'
+            changeNotes: 'Initial upload',
+            contractValue: data.contractValue ? parseFloat(data.contractValue) : null
           }
         }
       }
@@ -87,18 +89,20 @@ const documentsService = {
     }
 
     const nextVersion = (document.versions[0]?.versionNumber || 1) + 1;
-    const fileUrl = `/uploads/documents/${file.filename}`;
+    const fileUrl = `/public/uploads/documents/${file.filename}`;
 
     const updatedDoc = await prisma.document.update({
       where: { id: docId },
       data: {
         currentVersionUrl: fileUrl,
+        contractValue: data.contractValue ? parseFloat(data.contractValue) : undefined,
         versions: {
           create: {
             versionNumber: nextVersion,
             fileUrl: fileUrl,
             uploadedById: userId,
-            changeNotes: data.changeNotes || `Version ${nextVersion}`
+            changeNotes: data.changeNotes || `Version ${nextVersion}`,
+            contractValue: data.contractValue ? parseFloat(data.contractValue) : null
           }
         }
       }
@@ -119,6 +123,21 @@ const documentsService = {
     }
 
     return updatedDoc;
+  },
+
+  /**
+   * Update document details
+   */
+  async updateDetails(documentId, data) {
+    const { title, description, contractValue } = data;
+    return prisma.document.update({
+      where: { id: parseInt(documentId) },
+      data: {
+        title,
+        description,
+        contractValue: contractValue !== undefined ? parseFloat(contractValue) : undefined
+      }
+    });
   },
 
   /**

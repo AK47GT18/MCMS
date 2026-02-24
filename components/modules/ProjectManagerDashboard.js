@@ -696,7 +696,7 @@ export class ProjectManagerDashboard {
             <tr>
                 <td class="project-id">PROC-${this.escapeHTML(trx.id)}</td>
                 <td>${this.escapeHTML(trx.category || 'Materials')}</td>
-                <td>${this.escapeHTML(trx.vendorName || trx.vendor?.name || 'Various Vendors')}</td>
+                <td>${this.escapeHTML(trx.contractorName || trx.contractor?.name || 'Various Contractors')}</td>
                 <td style="font-family:'JetBrains Mono'">MWK ${(trx.amount || 0).toLocaleString()}</td>
                 <td><span class="status ${trx.status === 'approved' ? 'active' : 'pending'}">${this.escapeHTML(trx.status?.toUpperCase() || 'PENDING')}</span></td>
             </tr>
@@ -705,7 +705,7 @@ export class ProjectManagerDashboard {
         return `
             <table>
                 <thead>
-                    <tr><th>Ref</th><th>Category</th><th>Vendor</th><th>Amount</th><th>Status</th></tr>
+                    <tr><th>Ref</th><th>Category</th><th>Contractor</th><th>Amount</th><th>Status</th></tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
@@ -890,7 +890,7 @@ export class ProjectManagerDashboard {
             // Simulated report categories for now as per design requirements
             const reportTypes = [
                 { id: 'status', title: 'Project Status Summary', icon: 'fa-chart-line', bg: 'var(--blue-light)', color: 'var(--blue)', desc: 'Comprehensive timeline adherence, milestone tracking, and risk assessment.' },
-                { id: 'finance', title: 'Financial Expenditure', icon: 'fa-coins', bg: 'var(--emerald-light)', color: 'var(--emerald)', desc: 'Real-time budget consumption by vendor, category, and labor cost variance.' },
+                { id: 'finance', title: 'Financial Expenditure', icon: 'fa-coins', bg: 'var(--emerald-light)', color: 'var(--emerald)', desc: 'Real-time budget consumption by contractor, category, and labor cost variance.' },
                 { id: 'activity', title: 'Site Activity Log', icon: 'fa-hard-hat', bg: 'var(--orange-light)', color: 'var(--orange)', desc: 'Consolidated daily field reports, site attendance, and equipment usage logs.' },
                 { id: 'procurement', title: 'Procurement Tracker', icon: 'fa-truck-loading', bg: '#EEF2FF', color: '#4F46E5', desc: 'Material requisition status, supplier delivery performance, and stock levels.' },
                 { id: 'hse', title: 'HSE & Incident Audit', icon: 'fa-shield-alt', bg: '#FFF1F2', color: '#E11D48', desc: 'Health, Safety, and Environment incident summary and compliance audit history.' },
@@ -2309,9 +2309,10 @@ export class ProjectManagerDashboard {
         try {
             const category = document.getElementById('trx-category').value;
             const amount = document.getElementById('trx-amount').value;
-            const vendor = document.getElementById('trx-vendor').value;
+            const contractor = document.getElementById('trx-contractor').value;
+            const description = document.getElementById('trx-description').value;
 
-            if (!amount || !vendor) {
+            if (!amount || !contractor) {
                 window.toast.show('Please fill all required fields', 'error');
                 return;
             }
@@ -2320,7 +2321,7 @@ export class ProjectManagerDashboard {
             await procurement.create({
                 category,
                 amount: parseFloat(amount),
-                vendorName: vendor,
+                vendorName: contractor,
                 projectId: this.selectedProjectId,
                 status: 'pending'
             });

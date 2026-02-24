@@ -56,6 +56,7 @@ class APIClient {
    * Make HTTP request with retry logic
    */
   async request(endpoint, options = {}) {
+    console.trace(`[DEBUG] API Request trace for: ${endpoint}`);
     const {
       method = 'GET',
       headers = {},
@@ -83,6 +84,11 @@ class APIClient {
       _skipDeduplication: skipDeduplication,
       _requestId: requestId || this.generateRequestId(method, endpoint, body),
     };
+
+    // If body is FormData, we must let the browser set the Content-Type header with boundaries
+    if (body instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
 
     // Request deduplication - prevent duplicate in-flight requests
     if (!skipDeduplication && this.pendingRequests.has(config._requestId)) {
@@ -203,9 +209,13 @@ class APIClient {
       };
 
       if (config.body) {
-        fetchOptions.body = typeof config.body === 'string' 
-          ? config.body 
-          : JSON.stringify(config.body);
+        if (config.body instanceof FormData) {
+          fetchOptions.body = config.body;
+        } else {
+          fetchOptions.body = typeof config.body === 'string' 
+            ? config.body 
+            : JSON.stringify(config.body);
+        }
       }
 
       const response = await fetch(config.url, fetchOptions);

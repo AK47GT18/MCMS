@@ -28,6 +28,8 @@ const env = {
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:8080',
 };
 
+console.log('[DEBUG ENV] JWT_SECRET loaded:', env.JWT_SECRET.substring(0, 5) + '...');
+
 // Validate required environment variables
 const required = ['DATABASE_URL'];
 const missing = required.filter(key => !env[key]);

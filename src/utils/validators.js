@@ -82,23 +82,7 @@ const createProjectSchema = z.object({
 
 const updateProjectSchema = createProjectSchema.partial();
 
-// ============================================
-// VENDOR SCHEMAS
-// ============================================
-
-const createVendorSchema = z.object({
-  name: z.string().min(1).max(255),
-  category: z.string().max(50).optional(),
-  taxClearanceValid: z.boolean().optional(),
-  taxClearanceExpiry: z.string().datetime().optional(),
-  ncicGrade: z.string().max(20).optional(),
-  performanceRating: z.number().int().min(1).max(5).optional(),
-  status: z.enum(['approved', 'pending', 'suspended']).optional(),
-  contactEmail: z.string().email().optional(),
-  contactPhone: z.string().max(20).optional(),
-});
-
-const updateVendorSchema = createVendorSchema.partial();
+// VENDOR SCHEMAS REMOVED
 
 // ============================================
 // CONTRACT SCHEMAS
@@ -107,7 +91,7 @@ const updateVendorSchema = createVendorSchema.partial();
 const createContractSchema = z.object({
   refCode: z.string().min(1).max(30),
   projectId: z.number().int().positive().optional(),
-  vendorId: z.number().int().positive().optional(),
+  vendorName: z.string().max(255).optional(),
   title: z.string().min(1).max(255),
   value: z.number().positive().optional(),
   startDate: z.string().datetime().optional(),
@@ -133,6 +117,34 @@ const createTaskSchema = z.object({
 });
 
 const updateTaskSchema = createTaskSchema.partial();
+
+// ============================================
+// CONTRACT VERSION SCHEMAS
+// ============================================
+
+const createContractVersionSchema = z.object({
+  refCode: z.string().max(30).optional(),
+  title: z.string().min(1).max(255),
+  value: z.number().positive().optional(),
+  status: z.string().max(20),
+  changeNotes: z.string().optional(),
+});
+
+const updateContractVersionSchema = createContractVersionSchema.partial();
+
+// ============================================
+// INSURANCE POLICY SCHEMAS
+// ============================================
+
+const createInsurancePolicySchema = z.object({
+  entityName: z.string().min(1).max(255),
+  documentType: z.string().min(1).max(100),
+  policyNumber: z.string().min(1).max(100),
+  expiryDate: z.string().datetime(),
+  status: z.string().max(20).optional(),
+});
+
+const updateInsurancePolicySchema = createInsurancePolicySchema.partial();
 
 // ============================================
 // ASSET SCHEMAS
@@ -161,7 +173,7 @@ const updateAssetSchema = createAssetSchema.partial();
 const createRequisitionSchema = z.object({
   reqCode: z.string().min(1).max(20),
   projectId: z.number().int().positive().optional(),
-  vendorId: z.number().int().positive().optional(),
+  vendorName: z.string().max(255).optional(),
   description: z.string().optional(),
   totalAmount: z.number().positive(),
   budgetLine: z.string().max(20).optional(),
@@ -266,12 +278,16 @@ module.exports = {
   // Project
   createProjectSchema,
   updateProjectSchema,
-  // Vendor
-  createVendorSchema,
-  updateVendorSchema,
+  // Vendor removed
   // Contract
   createContractSchema,
   updateContractSchema,
+  // Contract Version
+  createContractVersionSchema,
+  updateContractVersionSchema,
+  // Insurance Policy
+  createInsurancePolicySchema,
+  updateInsurancePolicySchema,
   // Task
   createTaskSchema,
   updateTaskSchema,

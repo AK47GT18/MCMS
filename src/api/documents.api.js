@@ -3,7 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const documentsService = require('../services/documents.service');
 const response = require('../utils/response');
-const { auth, authorize } = require('../middlewares/auth.middleware');
+const { authenticate } = require('../middlewares/auth.middleware');
+const { authorize } = require('../middlewares/rbac.middleware');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../../public/uploads/documents');
@@ -33,9 +34,14 @@ async function documentRoutes(req, res) {
   const url = req.url.split('?')[0];
   const method = req.method;
 
+  console.log(`[DEBUG DOCUMENTS] Request: ${method} ${url}`, {
+    authHeader: req.headers.authorization ? 'Present' : 'Missing',
+    userAgent: req.headers['user-agent']
+  });
+
   // Middleware simulation for simplicity in vanilla router
   try {
-    const user = await auth(req, res);
+    const user = await authenticate(req, res);
     if (!user) return; // auth handles response if unauthorized
 
     // GET /api/v1/documents
@@ -57,6 +63,21 @@ async function documentRoutes(req, res) {
             return response.error(res, error.message, error.statusCode || 500);
           }
         });
+      });
+      return;
+    }
+
+    // PUT /api/v1/documents/:id (Update Details)
+    const docMatch = url.match(/\/api\/v1\/documents\/(\d+)$/);
+    if (docMatch && method === 'PUT') {
+      await authorize('Contract_Administrator', 'Project_Manager')(req, res, async () => {
+        try {
+          const body = await require('../middlewares/validate.middleware').parseBody(req);
+          const doc = await documentsService.updateDetails(docMatch[1], body);
+          return response.success(res, doc);
+        } catch (error) {
+          return response.error(res, error.message, error.statusCode || 500);
+        }
       });
       return;
     }

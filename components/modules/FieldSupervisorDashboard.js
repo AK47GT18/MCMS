@@ -393,7 +393,7 @@ export class FieldSupervisorDashboard {
     }
 
     async handleRequestFunds() {
-        const vendorName = document.querySelector('input[placeholder="e.g. Lilongwe Hardware"]')?.value;
+        const contractorName = document.querySelector('input[placeholder="e.g. Lilongwe Hardware"]')?.value;
         const description = document.querySelector('textarea[placeholder="List items needed..."]')?.value;
         const amount = document.querySelector('input[type="number"][placeholder="0.00"]')?.value;
 
@@ -411,7 +411,7 @@ export class FieldSupervisorDashboard {
         try {
             await client.post('/requisitions', {
                 projectId: 1, // Mocked for now
-                vendorName,
+                contractorName,
                 description,
                 totalAmount: parseFloat(amount),
                 items: [{ itemName: description, quantity: 1, unitPrice: parseFloat(amount) }]
