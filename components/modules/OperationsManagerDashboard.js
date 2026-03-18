@@ -400,7 +400,7 @@ export class OperationsManagerDashboard {
                     <div class="card-title">Project Issues & Complaints</div>
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-secondary"><i class="fas fa-filter"></i> All Projects</button>
-                        <button class="btn btn-secondary" onclick="window.drawer.open('Submit Complaint', window.DrawerTemplates.submitComplaint)">
+                        <button class="btn btn-secondary" onclick="window.app.openIssueDrawer(null, 'Submit Complaint')">
                             <i class="fas fa-plus"></i> Manual Log
                         </button>
                     </div>

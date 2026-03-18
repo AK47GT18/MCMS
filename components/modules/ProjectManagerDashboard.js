@@ -132,7 +132,7 @@ export class ProjectManagerDashboard {
         if (this.currentView === 'portfolio' || this.currentView === 'dashboard') {
             return `
                 <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" onclick="window.drawer.open('Log Complaint', window.DrawerTemplates.submitComplaint)">
+                    <button class="btn btn-secondary" onclick="window.app.openIssueDrawer(${this.selectedProjectId || 'null'})">
                         <i class="fas fa-exclamation-triangle"></i> <span>Log Issue</span>
                     </button>
                     <button class="btn btn-action" onclick="window.app.pmModule.openNewProjectDrawer()">
@@ -439,7 +439,7 @@ export class ProjectManagerDashboard {
     // --- 2.1 GANTT SCHEDULE (EXECUTION) ---
     getGanttView() {
         // Initialize Gantt after a short delay to ensure DOM is ready
-        setTimeout(() => this.renderGanttChart(), 100);
+        setTimeout(() => this.renderGanttChart(), 300);
 
         const projectsList = this.allProjects || [];
 
@@ -478,8 +478,8 @@ export class ProjectManagerDashboard {
                         </select>
                     </div>
                 </div>
-                <div id="gantt-chart-container" style="overflow-x:auto; background: white; min-height: 500px; padding: 20px; border: 1px solid var(--slate-100); border-radius: 8px;">
-                    <div id="gantt" style="position: relative; min-height: 450px;"></div>
+                <div id="gantt-chart-container" style="overflow-x:auto; overflow-y:visible; background: white; min-height: 550px; padding: 0; border: 1px solid var(--slate-100); border-radius: 8px;">
+                    <div id="gantt" style="position: relative; min-height: 500px; width: 100%;"></div>
                 </div>
             </div>
         `;
@@ -506,60 +506,78 @@ export class ProjectManagerDashboard {
     }
 
     async renderGanttChart() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        
-        // Helper to get ISO date strings for near-future tasks
-        const dateOffset = (days) => {
-            const d = new Date();
-            d.setDate(d.getDate() + days);
-            return d.toISOString().split('T')[0];
-        };
-        
-        // Removed hardcoded projectData mapping
-
-        // Create a basic tasks list for fallback
         let tasksList = [];
         
         try {
-            console.log("[Gantt] Starting live render for project:", this.selectedProjectId);
+            console.log("[Gantt] Starting render for project:", this.selectedProjectId);
+            
             const el = document.getElementById('gantt');
-            if (!el) return;
+            if (!el) {
+                console.error("[Gantt] Container #gantt not found");
+                return;
+            }
+            
+            // Check container is in DOM and visible
+            const containerParent = document.getElementById('gantt-chart-container');
+            if (!containerParent) {
+                console.error("[Gantt] Parent container not found");
+                return;
+            }
+            
+            console.log("[Gantt] Container dimensions:", {
+                width: el.offsetWidth,
+                height: el.offsetHeight,
+                display: window.getComputedStyle(el).display
+            });
 
             // Fetch actual tasks for this project
             const response = await tasks.getByProject(this.selectedProjectId);
             const data = response.data || response;
             tasksList = Array.isArray(data) ? data : data.tasks || [];
 
+            console.log("[Gantt] Fetched tasks:", tasksList.length, tasksList);
+
             if (tasksList.length === 0) {
-                // Fallback to some basic milestones if none found, or show empty
-                console.warn("[Gantt] No tasks found for project, using empty state");
+                console.warn("[Gantt] No tasks found, showing empty state");
                 el.innerHTML = this.renderEmptyState('No tasks scheduled for this project yet.');
                 return;
             }
 
             // Map API tasks to Frappe Gantt format
-            const mappedTasks = tasksList.map(t => ({
-                id: (t.id || t.code).toString(),
-                name: t.name,
-                start: t.startDate || t.start_date,
-                end: t.endDate || t.end_date,
-                progress: t.progress || 0,
-                dependencies: t.dependencies || ''
-            }));
+            const mappedTasks = tasksList.map(t => {
+                const startDate = t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                const endDate = t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                return {
+                    id: (t.id || t.code).toString(),
+                    name: t.name,
+                    start: startDate,
+                    end: endDate,
+                    progress: t.progress || 0,
+                    dependencies: t.dependencies || ''
+                };
+            });
 
-            // Clear and ensure dimensions
+            console.log("[Gantt] Mapped tasks for Gantt:", mappedTasks);
+
+            // Clear container with proper styling
             el.innerHTML = '';
-            el.style.minHeight = '450px';
+            el.style.minHeight = '500px';
+            el.style.width = '100%';
             el.style.position = 'relative';
+            el.style.display = 'block';
+            el.style.background = 'white';
+            el.style.borderRadius = '8px';
 
-            // Add CSS Overrides to fix conflict with style.css .bar class
+            // Add comprehensive CSS overrides
             if (!document.getElementById('gantt-overrides')) {
                 const style = document.createElement('style');
                 style.id = 'gantt-overrides';
                 style.innerHTML = `
+                    #gantt { display: block !important; width: 100% !important; min-height: 500px !important; }
+                    #gantt svg { display: block !important; width: 100% !important; height: auto !important; min-height: 500px !important; }
+                    #gantt-chart-container { display: block !important; width: 100% !important; overflow-x: auto !important; overflow-y: visible !important; }
+                    .gantt-container { display: block !important; width: 100% !important; min-height: 500px !important; height: auto !important; }
+                    .gantt { display: block !important; width: 100% !important; }
                     .gantt .bar { fill: #a3a3a3; }
                     .gantt .bar-progress { fill: var(--orange-500) !important; }
                     .gantt-item-emerald .bar-progress { fill: #10b981 !important; }
@@ -567,22 +585,18 @@ export class ProjectManagerDashboard {
                     .gantt .grid-row { fill: #ffffff !important; }
                     .gantt .row-line { stroke: #f1f5f9 !important; }
                     .gantt .holiday-highlight { fill: #f8fafc !important; }
-                    .gantt-container { 
-                        border-radius: 8px; 
-                        border: 1px solid var(--slate-200); 
-                        min-height: 450px !important; 
-                        height: auto !important;
-                    }
                 `;
                 document.head.appendChild(style);
             }
 
             const GanttCls = window.Gantt || window.FrappeGantt;
             if (!GanttCls) {
-                el.innerHTML = '<div style="padding:40px; text-align:center; color:#666;"><i class="fas fa-exclamation-circle"></i> Gantt library not loaded</div>';
+                console.error("[Gantt] Gantt library not found");
+                el.innerHTML = '<div style="padding:40px; text-align:center; color:red;"><i class="fas fa-exclamation-circle"></i> Gantt library not loaded. Reload page.</div>';
                 return;
             }
 
+            console.log("[Gantt] Creating instance with FrappeGantt");
             this.ganttInstance = new GanttCls("#gantt", mappedTasks, {
                 header_height: 50,
                 column_width: 32,
@@ -592,44 +606,33 @@ export class ProjectManagerDashboard {
                 bar_corner_radius: 6,
                 arrow_curve: 5,
                 padding: 20,
-                view_mode: this.currentGanttViewMode,
-                date_format: 'YYYY-MM-DD',
-                custom_popup_html: function(task) {
-                    const startStr = window.moment ? moment(task._start).format('MMM D') : task.start;
-                    const endStr = window.moment ? moment(task._end).format('MMM D') : task.end;
-                    const days = window.moment ? moment(task._end).diff(moment(task._start), 'days') || 1 : 1;
-
-                    return `
-                        <div class="gantt-popup-card" style="padding: 16px; min-width: 220px; border-radius: 12px; background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--slate-200);">
-                            <div style="font-weight:800; color:var(--slate-900); font-size:14px; margin-bottom:8px;">${this.escapeHTML(task.name)}</div>
-                            <div style="font-size:12px; color:var(--slate-600); margin-bottom:12px;">${this.escapeHTML(startStr)} - ${this.escapeHTML(endStr)} (${days} Days)</div>
-                            <div style="height:6px; background:var(--slate-100); border-radius:3px; overflow:hidden;">
-                                <div style="width:${task.progress}%; height:100%; background:var(--orange-500);"></div>
-                            </div>
-                            <div style="font-size:11px; margin-top:4px;">Progress: ${task.progress}%</div>
-                        </div>
-                    `;
-                }
+                view_mode: this.currentGanttViewMode || 'Month',
+                date_format: 'YYYY-MM-DD'
             });
 
-            console.log("[Gantt] Render successful:", this.ganttInstance);
-            el.querySelector('div')?.remove(); // Remove "Drawing..." text
+            console.log("[Gantt] Instance created successfully");
 
-            // Auto-scroll to current period
+            // Verify SVG was created
             setTimeout(() => {
-                const container = el.querySelector('.gantt-container') || document.querySelector('.gantt-container');
-                if (container) {
-                    const svg = container.querySelector('svg');
-                    if (!svg || svg.childNodes.length === 0) {
-                        console.warn("Gantt SVG is empty - force refreshing");
-                        this.ganttInstance.refresh(tasks);
-                    }
+                const svg = el.querySelector('svg');
+                if (svg) {
+                    console.log("[Gantt] SVG found, dimensions:", svg.getBoundingClientRect());
+                    svg.style.display = 'block';
+                    svg.style.width = '100%';
+                    console.log("[Gantt] Chart should be visible now");
                     this.scrollToToday();
+                } else {
+                    console.warn("[Gantt] SVG element not created");
+                    console.log("[Gantt] El contents:", el.innerHTML);
                 }
-            }, 500);
+            }, 200);
 
         } catch (e) {
-            console.error("Gantt Error:", e);
+            console.error("[Gantt] Error:", e);
+            const el = document.getElementById('gantt');
+            if (el) {
+                el.innerHTML = `<div style="padding:20px; color:red; font-weight:bold;">Gantt Error: ${e.message}</div>`;
+            }
         }
     }
 
@@ -1395,7 +1398,7 @@ export class ProjectManagerDashboard {
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.loadIssuesFromAPI()"><i class="fas fa-sync"></i> Refresh</button>
-                            <button class="btn btn-action btn-sm" onclick="window.drawer.open('Log Complaint', window.DrawerTemplates.submitComplaint)"><i class="fas fa-plus"></i> Log Issue</button>
+                            <button class="btn btn-action btn-sm" onclick="window.app.openIssueDrawer(${this.selectedProjectId || 'null'}, 'Log Issue')"><i class="fas fa-plus"></i> Log Issue</button>
                         </div>
                     </div>
                     

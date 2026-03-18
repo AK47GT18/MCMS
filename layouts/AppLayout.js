@@ -269,9 +269,16 @@ export class AppLayout {
                         'assignEquipment': 'Assign Equipment'
                     };
                     const title = drawerTitles[drawerId] || 'Details';
-                    const template = DrawerTemplates[drawerId];
-                    if (template) {
-                        window.drawer.open(title, template);
+                    
+                    // Special handling for issue submission drawer
+                    if (drawerId === 'submitComplaint') {
+                        const projectId = window.app?.pmModule?.selectedProjectId || null;
+                        window.app?.openIssueDrawer(projectId, title);
+                    } else {
+                        const template = DrawerTemplates[drawerId];
+                        if (template) {
+                            window.drawer.open(title, template);
+                        }
                     }
                 } else {
                     const id = target.dataset.id;

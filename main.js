@@ -2,6 +2,7 @@ import { AppLayout } from './layouts/AppLayout.js';
 import { currentUser as mockUser, ROLES } from './config/roles.js'; // Keep as fallback
 import { drawer } from './components/DrawerManager.js';
 import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
+import issues from './src/api/issues.api.js';
 import './components/ui/ToastManager.js';
 import './components/ui/ModalManager.js';
 
@@ -392,6 +393,113 @@ class App {
         const main = document.querySelector('main');
         if (main) main.style.opacity = '1';
         window.modal.success('Security Synced', 'Your credentials have been updated. Welcome to MCMS!');
+    }
+
+    // Generic Issue Submission Handler (works for all roles)
+    async handleIssueSubmit() {
+        try {
+            const category = document.getElementById('issue-category')?.value;
+            const priority = document.getElementById('issue-priority')?.value;
+            const description = document.getElementById('issue-description')?.value;
+            
+            // Try to get project ID - with validation
+            let projectId = window.currentIssueProjectId;
+            
+            // Check if user selected a project from the dropdown
+            const projectSelectEl = document.getElementById('issue-project');
+            if (projectSelectEl) {
+                const selectedValue = projectSelectEl.value;
+                if (selectedValue) {
+                    projectId = parseInt(selectedValue);
+                    console.log('[Issue Submit] Project selected from dropdown:', projectId);
+                } else {
+                    console.warn('[Issue Submit] Dropdown visible but no project selected');
+                }
+            }
+            
+            // Fallback to module's selected project
+            if (!projectId && this.pmModule?.selectedProjectId) {
+                projectId = this.pmModule.selectedProjectId;
+                console.log('[Issue Submit] Using pmModule.selectedProjectId:', projectId);
+            }
+            
+            // Fallback to window variable
+            if (!projectId) {
+                projectId = window.currentProjectId;
+                console.log('[Issue Submit] Using window.currentProjectId:', projectId);
+            }
+            
+            // Fallback to URL params
+            if (!projectId) {
+                const urlParams = new URLSearchParams(window.location.search);
+                projectId = parseInt(urlParams.get('projectId'));
+                console.log('[Issue Submit] Using URL projectId:', projectId);
+            }
+
+            // Validate description
+            if (!description || description.trim() === '') {
+                window.toast.show('❌ Description required: Please explain the issue', 'error');
+                document.getElementById('issue-description')?.focus();
+                return;
+            }
+
+            // Validate project ID
+            if (!projectId || isNaN(projectId)) {
+                const errorEl = document.getElementById('issue-project-error');
+                if (errorEl) {
+                    errorEl.style.display = 'block';
+                    document.getElementById('issue-project')?.focus();
+                }
+                window.toast.show('❌ Project required: Please select a project from the dropdown', 'error');
+                console.warn('[Issue Submit] No valid projectId found:', {
+                    currentIssueProjectId: window.currentIssueProjectId,
+                    projectSelectValue: projectSelectEl?.value,
+                    pmModuleSelected: this.pmModule?.selectedProjectId,
+                    windowProjectId: window.currentProjectId,
+                    urlParam: new URLSearchParams(window.location.search).get('projectId')
+                });
+                return;
+            }
+
+            console.log('[Issue Submit] ✅ All validation passed. Submitting for project:', projectId);
+            window.toast.show('✅ Submitting issue report...', 'info');
+            
+            const result = await issues.create({
+                projectId: parseInt(projectId),
+                category: category || 'General',
+                priority: priority || 'Medium',
+                description: description.trim(),
+                status: 'open'
+            });
+
+            console.log('[Issue Submit] ✅ Issue created successfully:', result);
+            window.toast.show('✅ Issue submitted! Issue Code: ' + (result.issueCode || result.id), 'success');
+            
+            // Close drawer after slight delay
+            setTimeout(() => {
+                window.drawer.close();
+            }, 500);
+            
+            // Clear the stored project context
+            window.currentIssueProjectId = null;
+            
+            // Reload issues if in issues view
+            if (this.pmModule?.currentView === 'issues') {
+                console.log('[Issue Submit] Refreshing issues list');
+                this.pmModule.loadIssuesFromAPI();
+            }
+            
+        } catch (error) {
+            console.error('[Issue Submit] ❌ Error:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+            window.toast.show('❌ Failed to submit: ' + errorMsg, 'error');
+        }
+    }
+
+    // Helper method to open issue drawer with project context
+    openIssueDrawer(projectId = null, title = 'Report Issue') {
+        window.currentIssueProjectId = projectId;
+        window.drawer.open(title, window.DrawerTemplates.submitComplaint);
     }
 }
 

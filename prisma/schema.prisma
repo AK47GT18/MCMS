@@ -20,6 +20,8 @@ model User {
   isLocked                 Boolean               @default(false) @map("is_locked")
   createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  deletionReason           String?               @map("deletion_reason") @db.VarChar(500)
   passwordResetExpires     DateTime?             @map("password_reset_expires") @db.Timestamptz(6)
   passwordResetToken       String?               @map("password_reset_token") @db.VarChar(100)
   mustChangeEmail          Boolean               @default(false) @map("must_change_email")

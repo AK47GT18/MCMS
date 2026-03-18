@@ -1892,6 +1892,28 @@ Contract Admin</textarea>
                 </div>
             </div>
 
+            <div id="issue-project-selector" style="margin-bottom:20px; display:none;">
+                <div class="form-group">
+                    <label class="form-label" style="color:var(--red); font-weight:700;">
+                        <span style="color:var(--red);">*</span> Select Project
+                    </label>
+                    <select id="issue-project" class="form-input" required style="border-color:var(--orange); border-width:2px;">
+                        <option value="">-- Choose a Project --</option>
+                    </select>
+                    <span id="issue-project-error" style="color:var(--red); font-size:12px; display:none; margin-top:4px;">
+                        <i class="fas fa-exclamation-triangle"></i> Project is required
+                    </span>
+                </div>
+                <div id="issue-project-selected" style="background:var(--emerald-light); border:1px solid var(--emerald); padding:12px; border-radius:6px; margin-top:8px; display:none; color:var(--slate-700);">
+                    <i class="fas fa-check-circle" style="color:var(--emerald); margin-right:8px;"></i>
+                    <strong>Selected Project:</strong> <span id="issue-project-name">--</span>
+                </div>
+            </div>
+
+            <div id="issue-no-project-warning" style="background:var(--amber-light); border:1px solid var(--amber); padding:12px; border-radius:6px; margin-bottom:16px; display:none; color:var(--slate-700);">
+                <i class="fas fa-info-circle"></i> <strong>No project selected.</strong> Please choose a project from the dropdown above.
+            </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div class="form-group">
                     <label class="form-label">Issue Category</label>
@@ -1916,8 +1938,8 @@ Contract Admin</textarea>
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Issue Description / Narrative</label>
-                <textarea id="issue-description" class="form-input" rows="4" placeholder="Provide details about the issue..."></textarea>
+                <label class="form-label">Issue Description / Narrative <span style="color:var(--red);">*</span></label>
+                <textarea id="issue-description" class="form-input" rows="4" placeholder="Provide details about the issue..." required></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom:24px;">
@@ -1928,7 +1950,110 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.pmModule.handleIssueSubmit()">Submit Issue Report</button>
+            <button class="btn btn-primary" id="btn-submit-issue" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.handleIssueSubmit()">Submit Issue Report</button>
+
+            <script>
+                // Initialize project selector
+                (function initIssueDrawer() {
+                    const projectId = window.currentIssueProjectId;
+                    const warningEl = document.getElementById('issue-no-project-warning');
+                    const selectorEl = document.getElementById('issue-project-selector');
+                    const projectSelect = document.getElementById('issue-project');
+                    const projectSelectedEl = document.getElementById('issue-project-selected');
+                    const projectNameEl = document.getElementById('issue-project-name');
+                    const submitBtn = document.getElementById('btn-submit-issue');
+                    
+                    console.log('[Issue Init] currentIssueProjectId:', projectId, 'pmModule:', window.app?.pmModule);
+                    
+                    if (!projectId) {
+                        // No project context - show selector and disable submit
+                        console.log('[Issue Init] No project, showing selector');
+                        if (selectorEl) selectorEl.style.display = 'block';
+                        if (warningEl) warningEl.style.display = 'block';
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.style.opacity = '0.5';
+                            submitBtn.style.cursor = 'not-allowed';
+                        }
+                        
+                        // Load and populate projects list
+                        if (window.app?.pmModule?.allProjects) {
+                            console.log('[Issue Init] Loading projects from pmModule:', window.app.pmModule.allProjects.length);
+                            window.app.pmModule.allProjects.forEach(p => {
+                                const option = document.createElement('option');
+                                option.value = p.id;
+                                option.textContent = p.code + ' - ' + p.name;
+                                option.dataset.projectCode = p.code;
+                                option.dataset.projectName = p.name;
+                                projectSelect.appendChild(option);
+                            });
+                        } else if (window.app?.pmModule) {
+                            // Try to load projects if available
+                            console.log('[Issue Init] pmModule available but allProjects not loaded');
+                            if (typeof window.app.pmModule.loadProjectsFromAPI === 'function') {
+                                window.app.pmModule.loadProjectsFromAPI().then(() => {
+                                    if (window.app.pmModule.allProjects) {
+                                        projectSelect.innerHTML = '<option value="">-- Choose a Project --</option>';
+                                        window.app.pmModule.allProjects.forEach(p => {
+                                            const option = document.createElement('option');
+                                            option.value = p.id;
+                                            option.textContent = p.code + ' - ' + p.name;
+                                            option.dataset.projectCode = p.code;
+                                            option.dataset.projectName = p.name;
+                                            projectSelect.appendChild(option);
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                        
+                        // Enable submit and show project name when project is selected
+                        projectSelect.addEventListener('change', function() {
+                            if (this.value) {
+                                const selectedOption = this.options[this.selectedIndex];
+                                const projectCode = selectedOption.dataset.projectCode;
+                                const projectName = selectedOption.dataset.projectName;
+                                
+                                window.currentIssueProjectId = parseInt(this.value);
+                                
+                                if (submitBtn) {
+                                    submitBtn.disabled = false;
+                                    submitBtn.style.opacity = '1';
+                                    submitBtn.style.cursor = 'pointer';
+                                }
+                                if (warningEl) warningEl.style.display = 'none';
+                                if (projectSelectedEl) projectSelectedEl.style.display = 'block';
+                                if (projectNameEl) projectNameEl.textContent = projectCode + ' - ' + projectName;
+                                
+                                console.log('[Issue Init] Project selected:', {
+                                    id: window.currentIssueProjectId,
+                                    code: projectCode,
+                                    name: projectName
+                                });
+                            } else {
+                                window.currentIssueProjectId = null;
+                                if (submitBtn) {
+                                    submitBtn.disabled = true;
+                                    submitBtn.style.opacity = '0.5';
+                                    submitBtn.style.cursor = 'not-allowed';
+                                }
+                                if (warningEl) warningEl.style.display = 'block';
+                                if (projectSelectedEl) projectSelectedEl.style.display = 'none';
+                            }
+                        });
+                    } else {
+                        // Project already provided - hide selector
+                        console.log('[Issue Init] Project provided:', projectId);
+                        if (selectorEl) selectorEl.style.display = 'none';
+                        if (warningEl) warningEl.style.display = 'none';
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.style.opacity = '1';
+                            submitBtn.style.cursor = 'pointer';
+                        }
+                    }
+                })();
+            </script>
         </div>
     `,
 
@@ -2325,36 +2450,6 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUpdateProject()">Update Project Master</button>
-        </div>
-    `,
-
-    newProject: `
-        <div class="drawer-section" style="padding: 24px;">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="new_proj_name" class="form-input" placeholder="e.g., Unilia Library Complex">
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Client Name</label>
-                <input type="text" id="new_proj_client" class="form-input" placeholder="e.g., Ministry of Education">
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label class="form-label">Total Budget (MWK)</label>
-                    <input type="number" id="new_proj_budget" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Project Code</label>
-                    <input type="text" id="new_proj_code" class="form-input" placeholder="e.g., CEN-01">
-                </div>
-            </div>
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Site Location</label>
-                <div id="new-project-map" style="height: 200px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--slate-200);"></div>
-                <input type="hidden" id="new_proj_lat">
-                <input type="hidden" id="new_proj_lng">
-            </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleCreateProject()">Create New Project</button>
         </div>
     `,
 

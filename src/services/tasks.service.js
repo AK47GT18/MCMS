@@ -50,8 +50,24 @@ async function getById(id) {
 }
 
 async function create(data) {
+  // Convert date strings to ISO-8601 DateTime format
+  const convertToDateTime = (dateString) => {
+    if (!dateString) return null;
+    // If already a Date or ISO string, return as-is
+    if (dateString instanceof Date) return dateString;
+    if (dateString.includes('T')) return new Date(dateString);
+    // Convert YYYY-MM-DD to ISO-8601 DateTime (midnight UTC)
+    return new Date(`${dateString}T00:00:00.000Z`);
+  };
+
+  const processedData = {
+    ...data,
+    startDate: convertToDateTime(data.startDate),
+    endDate: convertToDateTime(data.endDate),
+  };
+
   const task = await prisma.task.create({
-    data,
+    data: processedData,
     include: { project: { select: { id: true, name: true } } },
   });
   logger.info('Task created', { taskId: task.id, projectId: data.projectId });
@@ -60,7 +76,25 @@ async function create(data) {
 
 async function update(id, data) {
   await getById(id);
-  const task = await prisma.task.update({ where: { id }, data });
+  
+  // Convert date strings to ISO-8601 DateTime format if present
+  const convertToDateTime = (dateString) => {
+    if (!dateString) return undefined;
+    // If already a Date or ISO string, return as-is
+    if (dateString instanceof Date) return dateString;
+    if (typeof dateString === 'string' && dateString.includes('T')) return new Date(dateString);
+    // Convert YYYY-MM-DD to ISO-8601 DateTime (midnight UTC)
+    if (typeof dateString === 'string') return new Date(`${dateString}T00:00:00.000Z`);
+    return dateString;
+  };
+
+  const processedData = {
+    ...data,
+    ...(data.startDate && { startDate: convertToDateTime(data.startDate) }),
+    ...(data.endDate && { endDate: convertToDateTime(data.endDate) }),
+  };
+
+  const task = await prisma.task.update({ where: { id }, data: processedData });
   logger.info('Task updated', { taskId: id });
   return task;
 }
