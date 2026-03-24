@@ -92,7 +92,9 @@ const roadEstimationInputSchema = z.object({
   terrain: z.enum(['Flat', 'Rolling', 'Hilly/Mountainous', 'Rocky', 'Swampy/Wetland', 'Urban']),
   geographicZone: z.string().max(100).optional(),
   nearestTownKm: z.number().positive().optional(),
-  accessories: z.array(z.string()).optional(),
+  // Can be keys (for calc) or full objects (for save overrides)
+  accessories: z.preprocess((val) => Array.isArray(val) ? val : [], z.array(z.any())).optional(),
+  layers: z.array(z.any()).optional(),
   approvedTotal: z.number().positive().optional() // required on save, not on calculate
 });
 

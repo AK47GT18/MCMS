@@ -53,7 +53,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="window.app.pmModule.handleTransactionSubmit()">Process Transaction</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleTransactionSubmit()">Process Transaction</button>
         </div>
     `,
 
@@ -214,9 +214,9 @@ export const DrawerTemplates = {
                     <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="
                         const reason = document.getElementById('req-remarks').value;
                         if(!reason) { window.toast.show('Mandatory: Please provide a reason for rejection', 'error'); return; }
-                        window.app.pmModule.handleRejectRequisition('${req?.id}', reason);
+                        (window.app.pmModule || window.app.fsModule || window.app.caModule).handleRejectRequisition('${req?.id}', reason);
                     ">Reject</button>
-                    <button class="btn btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveRequisition('${req?.id}')">Approve</button>
+                    <button class="btn btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleApproveRequisition('${req?.id}')">Approve</button>
                 </div>
             </div>
          </div>
@@ -263,7 +263,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" id="btn-submit-funds" style="width: 100%; padding: 14px; font-weight: 700;" onclick="window.app.fsModule.handleRequestFunds()">Submit Request</button>
+            <button class="btn btn-primary" id="btn-submit-funds" style="width: 100%; padding: 14px; font-weight: 700;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleRequestFunds()">Submit Request</button>
         </div>
     `,
 
@@ -560,10 +560,10 @@ export const DrawerTemplates = {
             </div>
 
             <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; justify-content: space-between; z-index: 10;">
-                <button id="wizard-prev" class="btn btn-secondary" style="flex:1; display:none; justify-content:center;" onclick="window.app.pmModule.handleWizardNav(-1)">Back</button>
+                <button id="wizard-prev" class="btn btn-secondary" style="flex:1; display:none; justify-content:center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleWizardNav(-1)">Back</button>
                 <div style="flex:1;"></div>
-                <button id="wizard-next" class="btn btn-primary" style="flex:2; justify-content:center; background:var(--orange); border-color:var(--orange);" onclick="window.app.pmModule.handleWizardNav(1)">Continue</button>
-                <button id="wizard-submit" class="btn btn-primary" style="flex:2; display:none; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.pmModule.handleCreateProject()">Finalize & Create</button>
+                <button id="wizard-next" class="btn btn-primary" style="flex:2; justify-content:center; background:var(--orange); border-color:var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleWizardNav(1)">Continue</button>
+                <button id="wizard-submit" class="btn btn-primary" style="flex:2; display:none; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCreateProject()">Finalize & Create</button>
             </div>
         </div>
     `,
@@ -625,8 +625,8 @@ export const DrawerTemplates = {
         </div>
 
         <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px;">
-          <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);" onclick="window.app.pmModule.handleRejectLog('${escapeHTML(log?.id)}', prompt('Reason for rejection:'))">Reject Log</button>
-          <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="window.app.pmModule.handleApproveLog('${escapeHTML(log?.id)}')">Approve & Update Gantt</button>
+          <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleRejectLog('${escapeHTML(log?.id)}', prompt('Reason for rejection:'))">Reject Log</button>
+          <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleApproveLog('${escapeHTML(log?.id)}')">Approve & Update Gantt</button>
         </div>
     `},
 
@@ -833,7 +833,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); window.app.fsModule.handleDailyLogSubmit({ 
+            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).handleDailyLogSubmit({ 
                 expense: document.getElementById('daily-expense').value, 
                 category: document.getElementById('expense-category').value,
                 details: document.getElementById('expense-details').value,
@@ -1355,7 +1355,7 @@ export const DrawerTemplates = {
                 <div class="form-group"><label class="form-label">Start Date</label><input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px;"></div>
                 <div class="form-group"><label class="form-label">End Date</label><input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px;"></div>
             </div>
-            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.app.pmModule.handleUpdateProject()">Update Project</button>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project</button>
         </div>
     `,
 
@@ -1373,7 +1373,7 @@ export const DrawerTemplates = {
             <div style="background:var(--red-light); color:var(--red-dark); padding:12px; border-radius:6px; font-size:12px; margin-bottom:16px;">
                 <i class="fas fa-exclamation-triangle"></i> This will halt all active workflows and notify stakeholders.
             </div>
-            <button class="btn btn-primary" style="width:100%; background:var(--red); border-color:var(--red); padding:12px;" onclick="window.app.pmModule.handleSuspendProject()">Suspend Project</button>
+            <button class="btn btn-primary" style="width:100%; background:var(--red); border-color:var(--red); padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSuspendProject()">Suspend Project</button>
         </div>
     `,
 
@@ -1403,7 +1403,7 @@ export const DrawerTemplates = {
                 <label class="form-label">Password</label>
                 <input type="password" id="user_form_password" class="form-input" style="width:100%; padding:10px;" placeholder="Leave blank to keep current (update only)">
             </div>
-             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.app.pmModule.handleSaveUser()">Save User</button>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSaveUser()">Save User</button>
         </div>
     `,
 
@@ -1948,8 +1948,8 @@ Contract Admin</textarea>
              </div>
         </div>
         <div style="padding: 24px; border-top: 1px solid var(--slate-200); background: var(--slate-50); display: flex; gap: 12px; border-radius: 0 0 12px 12px;">
-            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.app.pmModule.currentView='gantt'; window.app.pmModule.render();">View Schedule</button>
-            <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.app.pmModule.currentView='budget'; window.app.pmModule.render();">Financial Info</button>
+            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).currentView='gantt'; (window.app.pmModule || window.app.fsModule || window.app.caModule).render();">View Schedule</button>
+            <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).currentView='budget'; (window.app.pmModule || window.app.fsModule || window.app.caModule).render();">Financial Info</button>
         </div>
     `},
 
@@ -1978,7 +1978,7 @@ Contract Admin</textarea>
                 <label class="form-label">Dependencies (Optional)</label>
                 <input type="text" id="task-dependencies" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. T1, T2">
             </div>
-            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.app.pmModule.handleAddTask()">Save Task</button>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleAddTask()">Save Task</button>
         </div>
     `,
 
@@ -2173,8 +2173,8 @@ Contract Admin</textarea>
                         
                         // Load and populate projects list
                         if (window.app?.pmModule?.allProjects) {
-                            console.log('[Issue Init] Loading projects from pmModule:', window.app.pmModule.allProjects.length);
-                            window.app.pmModule.allProjects.forEach(p => {
+                            console.log('[Issue Init] Loading projects from pmModule:', (window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects.length);
+                            (window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects.forEach(p => {
                                 const option = document.createElement('option');
                                 option.value = p.id;
                                 option.textContent = p.code + ' - ' + p.name;
@@ -2185,11 +2185,11 @@ Contract Admin</textarea>
                         } else if (window.app?.pmModule) {
                             // Try to load projects if available
                             console.log('[Issue Init] pmModule available but allProjects not loaded');
-                            if (typeof window.app.pmModule.loadProjectsFromAPI === 'function') {
-                                window.app.pmModule.loadProjectsFromAPI().then(() => {
-                                    if (window.app.pmModule.allProjects) {
+                            if (typeof (window.app.pmModule || window.app.fsModule || window.app.caModule).loadProjectsFromAPI === 'function') {
+                                (window.app.pmModule || window.app.fsModule || window.app.caModule).loadProjectsFromAPI().then(() => {
+                                    if ((window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects) {
                                         projectSelect.innerHTML = '<option value="">-- Choose a Project --</option>';
-                                        window.app.pmModule.allProjects.forEach(p => {
+                                        (window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects.forEach(p => {
                                             const option = document.createElement('option');
                                             option.value = p.id;
                                             option.textContent = p.code + ' - ' + p.name;
@@ -2300,7 +2300,7 @@ Contract Admin</textarea>
 
             <div style="border-top:1px solid var(--slate-200); padding-top:24px; display: flex; gap: 12px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content:center;" onclick="window.drawer.close()">Cancel</button>
-                <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.pmModule.handleResolveIssue('${issue.id}')">Submit Resolution</button>
+                <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleResolveIssue('${issue.id}')">Submit Resolution</button>
             </div>
         </div>
     `,
@@ -2355,8 +2355,8 @@ Contract Admin</textarea>
             </div>
 
             <div style="display:flex; gap:12px;">
-                <button class="btn btn-danger" style="flex:1;" onclick="window.app.pmModule.handleReviewVehicle('${request.id}', 'rejected')">Reject Request</button>
-                <button class="btn btn-primary" style="flex:2;" onclick="window.app.pmModule.handleReviewVehicle('${request.id}', 'approved')">Approve & Register</button>
+                <button class="btn btn-danger" style="flex:1;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleReviewVehicle('${request.id}', 'rejected')">Reject Request</button>
+                <button class="btn btn-primary" style="flex:2;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleReviewVehicle('${request.id}', 'approved')">Approve & Register</button>
             </div>
         </div>
     `,
@@ -2423,7 +2423,7 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.app.pmModule.handleAddVehicle()">Register Vehicle</button>
+            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleAddVehicle()">Register Vehicle</button>
         </div>
     `,
 
@@ -2585,7 +2585,7 @@ Contract Admin</textarea>
                 <label class="form-label">Reason for Suspension (Required)</label>
                 <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%;" placeholder="e.g. Budget overflow, safety violation, client request..."></textarea>
             </div>
-            <button class="btn btn-secondary" style="width:100%; justify-content:center; color:var(--orange); border-color:var(--orange);" onclick="window.app.pmModule.handleSuspendProject()">Confirm Suspension</button>
+            <button class="btn btn-secondary" style="width:100%; justify-content:center; color:var(--orange); border-color:var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSuspendProject()">Confirm Suspension</button>
         </div>
     `,
 
@@ -2644,7 +2644,7 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUpdateProject()">Update Project Master</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project Master</button>
         </div>
     `,
 
@@ -2674,7 +2674,7 @@ Contract Admin</textarea>
                     <p>Selection required</p>
                 </div>
             </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.app.pmModule.handleContractUpload()">Upload & Register Contract</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleContractUpload()">Upload & Register Contract</button>
         </div>
     `,
     completeMaintenance: (assetId) => `
@@ -2688,7 +2688,7 @@ Contract Admin</textarea>
                 <label class="form-label">Cost (MWK)</label>
                 <input type="number" id="maint-cost" class="form-input" style="width: 100%;" placeholder="0.00">
             </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.app.pmModule.handleCompleteMaintenance('${assetId}')">Log Completion</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `
 };

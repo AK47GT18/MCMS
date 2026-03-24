@@ -1,4 +1,5 @@
 import { StatCard } from '../ui/StatCard.js';
+import { ROLES } from '../../config/roles.js';
 import client from '../../src/api/client.js';
 import users from '../../src/api/users.api.js';
 import dailyLogs from '../../src/api/dailyLogs.api.js';
@@ -391,9 +392,7 @@ export class ProjectManagerDashboard {
 
 
 
-    openNewProjectDrawer() {
-        window.drawer.open('New Project', window.DrawerTemplates.newProject);
-    }
+
 
     // Consolidated Project Action Handlers
     openProjectDetailsDrawer(id) {
@@ -1479,15 +1478,24 @@ export class ProjectManagerDashboard {
                         <div style="font-size:10px; color:var(--slate-500);">${type === 'layer' ? 'Phase ' + item.phaseNumber : 'Accessory'}</div>
                     </td>
                     <td style="font-family:'JetBrains Mono'; font-size:11px;">
-                        ${formatter.format(item.totalQuantity)} ${item.unit}
+                        <input type="number" step="any" value="${item.totalQuantity}" 
+                            style="width:80px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px; position:relative; z-index:5;"
+                            onclick="event.stopPropagation()"
+                            oninput="(window.app.pmModule || window.app.fsModule || window.app.caModule).updateItemQuantity('${type}', ${index}, this.value)">
+                        ${item.unit}
                     </td>
                     <td style="font-family:'JetBrains Mono'; font-size:11px; font-weight:700; text-align:right;">
-                        ${formatter.format(item.totalCostLow)} – ${formatter.format(item.totalCostHigh)}
+                        <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} –</span> 
+                        <input type="number" step="any" value="${Math.round(item.totalCostHigh)}" 
+                            style="width:120px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px; text-align:right; margin-left:4px; position:relative; z-index:5;"
+                            onclick="event.stopPropagation()"
+                            oninput="(window.app.pmModule || window.app.fsModule || window.app.caModule).updateItemCost('${type}', ${index}, this.value)">
                     </td>
                     <td style="text-align:right;">
                         <input type="checkbox" ${item.approved ? 'checked' : ''} 
-                            style="width:16px; height:16px; accent-color:var(--emerald); cursor:pointer;"
-                            onchange="window.app.pmModule.toggleReceiptItem('${type}', ${index})">
+                            style="width:18px; height:18px; accent-color:var(--emerald); cursor:pointer; position:relative; z-index:5;"
+                            onclick="event.stopPropagation()"
+                            onchange="(window.app.pmModule || window.app.fsModule || window.app.caModule).toggleReceiptItem('${type}', ${index})">
                     </td>
                 </tr>
             `;
@@ -1529,6 +1537,30 @@ export class ProjectManagerDashboard {
         `;
 
         this.checkBudgetReconciliation();
+    }
+
+    updateItemQuantity(type, index, value) {
+        if (!this.wizardState.roadEstimatePreview) return;
+        const qty = parseFloat(value) || 0;
+        const list = type === 'layer' ? this.wizardState.roadEstimatePreview.layers : this.wizardState.roadEstimatePreview.accessories;
+        const item = list[index];
+        
+        item.totalQuantity = qty;
+        item.totalCostLow = qty * (item.unitCostLow || 0);
+        item.totalCostHigh = qty * (item.unitCostHigh || 0);
+        
+        this.renderBudgetReceipt();
+    }
+
+    updateItemCost(type, index, value) {
+        if (!this.wizardState.roadEstimatePreview) return;
+        const cost = parseFloat(value) || 0;
+        const list = type === 'layer' ? this.wizardState.roadEstimatePreview.layers : this.wizardState.roadEstimatePreview.accessories;
+        const item = list[index];
+        
+        item.totalCostHigh = cost;
+        // Adjust quantity to match if desired? No, let's keep them independent for "Fixed Amount" overrides
+        this.renderBudgetReceipt();
     }
 
     toggleReceiptItem(type, index) {
@@ -1716,7 +1748,8 @@ export class ProjectManagerDashboard {
                     terrain: document.getElementById('road_terrain').value,
                     geographicZone: document.getElementById('road_zone').value,
                     nearestTownKm: parseFloat(document.getElementById('road_town_dist').value),
-                    accessories
+                    layers: this.wizardState.roadEstimatePreview.layers,
+                    accessories: this.wizardState.roadEstimatePreview.accessories
                 };
                 
                 await client.post('/road-estimation/save', estPayload);
@@ -2766,6 +2799,85 @@ export class ProjectManagerDashboard {
             console.error('Log submission error:', error);
             window.toast.show('Failed to submit log', 'error');
         }
+    }
+    async fetchSupervisors() {
+        const select = document.getElementById('proj_supervisor');
+        if (!select) return;
+        
+        try {
+            select.innerHTML = '<option value="">Searching for supervisors...</option>';
+            const response = await users.getAll({ role: 'FIELD_SUPERVISOR' });
+            const supervisorList = response.data || response;
+            
+            if (supervisorList && supervisorList.length > 0) {
+                select.innerHTML = '<option value="">Select a Supervisor</option>' + 
+                    supervisorList.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            } else {
+                select.innerHTML = '<option value="">No supervisors available</option>';
+            }
+        } catch (error) {
+            console.error('Error fetching supervisors:', error);
+            select.innerHTML = '<option value="">Error loading supervisors</option>';
+        }
+    }
+
+    validateProjectForm() {
+        const name = document.getElementById('proj_name')?.value;
+        const budget = document.getElementById('proj_budget')?.value;
+        const supervisor = document.getElementById('proj_supervisor')?.value;
+        const start = document.getElementById('proj_start')?.value;
+        const end = document.getElementById('proj_end')?.value;
+
+        if (!name || !budget || !supervisor || !start || !end) {
+            window.toast.show('Please fill in all mandatory fields (Name, Budget, Supervisor, Dates)', 'warning');
+            return false;
+        }
+
+        if (parseFloat(budget) <= 0) {
+            window.toast.show('Allocated budget must be greater than zero', 'warning');
+            return false;
+        }
+
+        return true;
+    }
+
+    updateItemQuantity(type, index, value) {
+        const est = this.wizardState.roadEstimatePreview;
+        const list = type === 'layer' ? est.layers : est.accessories;
+        const item = list[index];
+        
+        const newQty = parseFloat(value) || 0;
+        const oldQty = item.totalQuantity;
+        
+        // Update quantity
+        item.totalQuantity = newQty;
+        
+        // Recalculate costs proportionally if they weren't manually overridden yet?
+        // Actually, usually PM wants to change quantity which then updates total cost
+        const unitCostHigh = item.totalCostHigh / (oldQty || 1);
+        const unitCostLow = item.totalCostLow / (oldQty || 1);
+        
+        item.totalCostHigh = newQty * unitCostHigh;
+        item.totalCostLow = newQty * unitCostLow;
+        
+        // Re-render the receipt to show new totals
+        this.renderEstimatedReceipt();
+    }
+
+    updateItemCost(type, index, value) {
+        const est = this.wizardState.roadEstimatePreview;
+        const list = type === 'layer' ? est.layers : est.accessories;
+        const item = list[index];
+        
+        item.totalCostHigh = parseFloat(value) || 0;
+        
+        // Re-render to update the grand total and gap
+        this.renderEstimatedReceipt();
+    }
+
+    // Helper to just re-render the receipt portion
+    renderEstimatedReceipt() {
+        this.generateEstimatedReceipt(); 
     }
 }
 

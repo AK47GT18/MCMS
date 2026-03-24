@@ -50,8 +50,17 @@ const save = asyncHandler(async (req, res) => {
     return response.error(res, 'approvedTotal is required', 400);
   }
 
-  // Recalculate cleanly from server-side constants
-  const estimateData = estimationService.calculateEstimate(data);
+  // Recalculate cleanly from server-side constants, but allow manual overrides if provided
+  let estimateData = estimationService.calculateEstimate(data);
+  
+  if (body.layers && Array.isArray(body.layers)) {
+    estimateData.layers = body.layers;
+  }
+  
+  // Only override accessories if they are full objects (not just category keys)
+  if (body.accessories && Array.isArray(body.accessories) && body.accessories.length > 0 && typeof body.accessories[0] === 'object') {
+    estimateData.accessories = body.accessories;
+  }
   
   const result = await estimationService.saveEstimate(projectId, estimateData, approvedTotal);
   response.success(res, result);

@@ -68,7 +68,7 @@ export class AppLayout {
 
         return `
             <aside class="sidebar hidden-mobile">
-                <div class="logo">
+                <div class="logo" onclick="window.app.loadPage('dashboard')" style="cursor: pointer;">
                      <div class="logo-icon">
                         <span class="material-symbols-outlined">architecture</span>
                     </div>
