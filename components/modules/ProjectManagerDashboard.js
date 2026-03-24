@@ -787,7 +787,7 @@ export class ProjectManagerDashboard {
                                 <strong>${latestLog ? new Date(latestLog.createdAt || latestLog.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'No recent logs'}</strong>
                             </div>
                         </div>
-                        <button class="btn btn-secondary" style="width:100%; font-size:11px;" onclick="window.drawer.open('Site Log History', window.DrawerTemplates.siteLogVerification(${JSON.stringify(project).replace(/"/g, '&quot;')}, ${latestLog ? JSON.stringify(latestLog).replace(/"/g, '&quot;') : 'null'}))">View Site Details</button>
+                        <button class="btn btn-secondary" style="width:100%; font-size:11px;" onclick="window.app.pmModule.openSiteLogVerification(${JSON.stringify(project).replace(/"/g, '&quot;')}, ${latestLog ? JSON.stringify(latestLog).replace(/"/g, '&quot;') : 'null'})">View Site Details</button>
                     </div>
                 `;
             }).join('');
@@ -956,7 +956,7 @@ export class ProjectManagerDashboard {
                         <div style="font-size:11px; color:var(--slate-500);">Value by Project Status</div>
                     </div>
                     <div style="padding:24px; display:flex; align-items:center; justify-content:center; height:240px;">
-                        <div style="position:relative; width:160px; height:160px; border-radius:50%; background:conic-gradient(var(--emerald) 0% 45%, var(--orange) 45% 75%, var(--blue) 75% 100%);">
+                        <div style="position:relative; width:160px; height:160px; border-radius:50%; background:conic-gradient(var(--emerald) 0% 45%, var(--orange) 45% 75%, #4F46E5 75% 100%);">
                             <div style="position:absolute; inset:30px; background:white; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                 <div style="font-weight:800; font-size:18px;">MWK ${(stats.portfolioValue / 1e9).toFixed(1)}B</div>
                                 <div style="font-size:10px; color:var(--slate-500);">Portfolio</div>
@@ -1074,7 +1074,7 @@ export class ProjectManagerDashboard {
         const logRows = logs.map(log => {
             const project = this.allProjects?.find(p => p.id === (log.projectId || log.project_id)) || {};
             return `
-                <tr onclick="window.drawer.open('Review Daily Log', window.DrawerTemplates.siteLogVerification(${JSON.stringify(project).replace(/"/g, '&quot;')}, ${JSON.stringify(log).replace(/"/g, '&quot;')}))">
+                <tr onclick="window.app.pmModule.openSiteLogVerification(${JSON.stringify(project).replace(/"/g, '&quot;')}, ${JSON.stringify(log).replace(/"/g, '&quot;')})">
                     <td><span class="project-id">LOG-${this.escapeHTML(log.id)}</span></td>
                     <td>${this.escapeHTML(log.projectName || project.name || 'Central Site')}</td>
                     <td>${this.escapeHTML(log.supervisorName || log.created_by || 'Field Supervisor')}</td>
@@ -1241,10 +1241,346 @@ export class ProjectManagerDashboard {
         }, 500);
     }
 
+    initializeVerificationMap(lat, lng, projectLat = null, projectLng = null, projectRadius = 500) {
+        setTimeout(() => {
+            const mapContainer = document.getElementById('verification-map');
+            if (!mapContainer) return;
+
+            const LeafletEngine = window.MKAKA_L || window.L;
+            if (!LeafletEngine) {
+                console.error("[Map] Leaflet engine missing for verification.");
+                return;
+            }
+
+            mapContainer.innerHTML = '';
+            const coords = [lat || -13.9626, lng || 33.7741];
+            
+            try {
+                const map = LeafletEngine.map('verification-map').setView(coords, 15);
+                LeafletEngine.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                // Worker Location
+                LeafletEngine.marker(coords).addTo(map).bindPopup("<b>Worker Reported Location</b>").openPopup();
+
+                // Project Boundary
+                if (projectLat && projectLng) {
+                    const projectCoords = [parseFloat(projectLat), parseFloat(projectLng)];
+                    LeafletEngine.circle(projectCoords, {
+                        color: 'var(--orange, #f97316)',
+                        fillColor: 'var(--orange, #f97316)',
+                        fillOpacity: 0.15,
+                        radius: parseFloat(projectRadius) || 500
+                    }).addTo(map).bindPopup("<b>Project Authorized Boundary</b>");
+                    
+                    // Show both if different
+                    const bounds = LeafletEngine.latLngBounds([coords, projectCoords]);
+                    map.fitBounds(bounds, { padding: [30, 30] });
+                }
+                
+                map.invalidateSize();
+                setTimeout(() => map.invalidateSize(), 200);
+            } catch (e) {
+                console.error("Verification Map Error:", e);
+                mapContainer.innerHTML = `<div style="padding:20px; color:var(--red); font-size:12px;">Map initialization failed. Coords: ${lat},${lng}</div>`;
+            }
+        }, 350); 
+    }
+
+    openSiteLogVerification(project, log) {
+        window.drawer.open('Review Daily Log', window.DrawerTemplates.siteLogVerification(project, log));
+        
+        // Pass project context for geo-validation
+        let lat = -13.9626;
+        let lng = 33.7741;
+
+        if (log?.gpsCoords) {
+            const coordsStr = typeof log.gpsCoords === 'string' ? log.gpsCoords : '';
+            const parts = coordsStr.split(',').map(p => parseFloat(p.trim()));
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                lat = parts[0];
+                lng = parts[1];
+            }
+        }
+
+        this.initializeVerificationMap(lat, lng, project?.lat, project?.lng, project?.radius);
+    }
+
+    updateCoords(lat, lng) {
+        const latEl = document.getElementById('proj_lat');
+        const lngEl = document.getElementById('proj_lng');
+        if (latEl) latEl.textContent = lat.toFixed(6);
+        if (lngEl) lngEl.textContent = lng.toFixed(6);
+    }
+
     openNewProjectDrawer() {
+        this.wizardState = {
+            currentStep: 1,
+            isRoad: true,
+            roadEstimatePreview: null
+        };
         window.drawer.open('Initialize New Project', window.DrawerTemplates.newProject);
         this.initializeProjectMap();
         this.fetchSupervisors();
+    }
+
+    async handleWizardNav(direction) {
+        // Validate Step 1 before leaving
+        if (this.wizardState.currentStep === 1 && direction > 0) {
+            if (!this.validateProjectForm()) return;
+        }
+
+        const newStep = this.wizardState.currentStep + direction;
+        
+        // If moving to step 4 (Budget Receipt), run estimation
+        if (newStep === 4 && direction > 0) {
+            await this.generateEstimatedReceipt();
+        }
+
+        if (newStep >= 1 && newStep <= 5) {
+            this.switchWizardStep(newStep);
+        }
+    }
+
+    switchWizardStep(stepNum) {
+        // Hide all panes
+        document.querySelectorAll('.wizard-pane').forEach(p => p.style.display = 'none');
+        // Show target pane
+        const targetPane = document.getElementById(`wizard-pane-${stepNum}`);
+        if(targetPane) targetPane.style.display = 'block';
+
+        // Update progress bar
+        const totalSteps = 5; 
+        const progressPercentage = ((stepNum - 1) / (totalSteps - 1)) * 100;
+        document.getElementById('progress-bar-fill').style.width = `${progressPercentage}%`;
+
+        // Update step UI
+        document.querySelectorAll('.wizard-step').forEach((el, idx) => {
+            const stepIndex = idx + 1;
+            const circle = el.querySelector('.step-circle');
+
+            let visualStep = stepIndex === 5 ? totalSteps : stepIndex;
+            
+            if (visualStep < stepNum || (stepNum === 5 && stepIndex === 5)) {
+                // Completed
+                el.style.opacity = '1';
+                circle.style.background = 'var(--emerald)';
+                circle.style.borderColor = 'white';
+                circle.style.color = 'white';
+                circle.innerHTML = '✓';
+            } else if (visualStep === stepNum) {
+                // Active
+                el.style.opacity = '1';
+                circle.style.background = 'var(--orange)';
+                circle.style.borderColor = 'var(--orange-light)';
+                circle.style.color = 'white';
+                circle.innerHTML = stepIndex === 5 ? '✓' : stepIndex;
+            } else {
+                // Future
+                el.style.opacity = '0.4';
+                circle.style.background = 'var(--slate-200)';
+                circle.style.borderColor = 'white';
+                circle.style.color = 'var(--slate-500)';
+                circle.innerHTML = stepIndex === 5 ? '✓' : stepIndex;
+            }
+        });
+
+        // Update buttons
+        const btnPrev = document.getElementById('wizard-prev');
+        const btnNext = document.getElementById('wizard-next');
+        const btnSubmit = document.getElementById('wizard-submit');
+
+        btnPrev.style.display = stepNum === 1 ? 'none' : 'flex';
+        
+        if (stepNum === 5) {
+            btnNext.style.display = 'none';
+            btnSubmit.style.display = 'flex';
+            this.updateFinalSummary();
+        } else if (stepNum === 4) {
+            btnNext.style.display = 'flex';
+            btnSubmit.style.display = 'none';
+            // Disable next until budget is reconciled
+            this.checkBudgetReconciliation();
+        } else {
+            btnNext.style.display = 'flex';
+            btnSubmit.style.display = 'none';
+            btnNext.disabled = false;
+        }
+
+        this.wizardState.currentStep = stepNum;
+    }
+
+    async generateEstimatedReceipt() {
+        document.getElementById('estimation-loader').style.display = 'block';
+        document.getElementById('estimation-receipt-container').innerHTML = '';
+        document.getElementById('wizard-next').disabled = true;
+
+        const accBoxes = document.querySelectorAll('input[name="road_acc"]:checked');
+        const accessories = Array.from(accBoxes).map(cb => cb.value);
+        if (document.getElementById('acc_lighting').value) {
+            accessories.push(document.getElementById('acc_lighting').value);
+        }
+
+        const payload = {
+            roadType: document.getElementById('road_type').value,
+            lengthKm: parseFloat(document.getElementById('road_length').value),
+            widthM: parseFloat(document.getElementById('road_width').value),
+            lanes: parseInt(document.getElementById('road_lanes').value),
+            terrain: document.getElementById('road_terrain').value,
+            geographicZone: document.getElementById('road_zone').value,
+            nearestTownKm: parseFloat(document.getElementById('road_town_dist').value),
+            accessories
+        };
+
+        try {
+            const response = await client.post('/road-estimation/calculate', payload);
+            const result = response.data;
+            
+            // Add UI state tracking
+            this.wizardState.roadEstimatePreview = {
+                ...result,
+                layers: (result.layers || []).map(l => ({...l, approved: true})),
+                accessories: (result.accessories || []).map(a => ({...a, approved: true}))
+            };
+
+            this.renderBudgetReceipt();
+        } catch (error) {
+            console.error('Estimation generation failed:', error);
+            window.toast.show('Failed to run parametric estimation', 'error');
+        } finally {
+            document.getElementById('estimation-loader').style.display = 'none';
+        }
+    }
+
+    renderBudgetReceipt() {
+        const container = document.getElementById('estimation-receipt-container');
+        if (!container || !this.wizardState.roadEstimatePreview) return;
+
+        const est = this.wizardState.roadEstimatePreview;
+        
+        // Calculate dynamic approved total based on toggles
+        let currentlyApprovedHigh = 0;
+        let currentlyApprovedLow = 0;
+        
+        const renderRow = (item, index, type) => {
+            if (item.approved) {
+                currentlyApprovedLow += parseFloat(item.totalCostLow);
+                currentlyApprovedHigh += parseFloat(item.totalCostHigh);
+            }
+            
+            const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            
+            return `
+                <tr style="opacity: ${item.approved ? '1' : '0.5'}; transition: opacity 0.2s;">
+                    <td>
+                        <div style="font-weight:600; font-size:12px; color:var(--slate-800);">${this.escapeHTML(item.itemName || item.materialType)}</div>
+                        <div style="font-size:10px; color:var(--slate-500);">${type === 'layer' ? 'Phase ' + item.phaseNumber : 'Accessory'}</div>
+                    </td>
+                    <td style="font-family:'JetBrains Mono'; font-size:11px;">
+                        ${formatter.format(item.totalQuantity)} ${item.unit}
+                    </td>
+                    <td style="font-family:'JetBrains Mono'; font-size:11px; font-weight:700; text-align:right;">
+                        ${formatter.format(item.totalCostLow)} – ${formatter.format(item.totalCostHigh)}
+                    </td>
+                    <td style="text-align:right;">
+                        <input type="checkbox" ${item.approved ? 'checked' : ''} 
+                            style="width:16px; height:16px; accent-color:var(--emerald); cursor:pointer;"
+                            onchange="window.app.pmModule.toggleReceiptItem('${type}', ${index})">
+                    </td>
+                </tr>
+            `;
+        };
+
+        const layersRows = est.layers.map((l, i) => renderRow(l, i, 'layer')).join('');
+        const accRows = est.accessories.map((a, i) => renderRow(a, i, 'accessory')).join('');
+
+        this.wizardState.currentlyApprovedHigh = currentlyApprovedHigh;
+
+        container.innerHTML = `
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px; margin-bottom: 16px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead style="background: var(--slate-50); position: sticky; top: 0; z-index: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <tr>
+                            <th style="padding: 12px; text-align: left; color: var(--slate-500); font-weight: 700; font-size: 11px; text-transform: uppercase;">Line Item</th>
+                            <th style="padding: 12px; text-align: left; color: var(--slate-500); font-weight: 700; font-size: 11px; text-transform: uppercase;">Quantity</th>
+                            <th style="padding: 12px; text-align: right; color: var(--slate-500); font-weight: 700; font-size: 11px; text-transform: uppercase;">Est. MWK</th>
+                            <th style="padding: 12px; text-align: right; color: var(--slate-500); font-weight: 700; font-size: 11px; text-transform: uppercase;">Inc.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${layersRows}
+                        ${accRows}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="background: var(--slate-900); padding: 16px; border-radius: 8px; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Approved Total (High End)</div>
+                    <div style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono';">MWK ${new Intl.NumberFormat().format(currentlyApprovedHigh)}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Cost per meter</div>
+                    <div style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">MWK ${new Intl.NumberFormat().format(est.costPerMeterHigh)}</div>
+                </div>
+            </div>
+        `;
+
+        this.checkBudgetReconciliation();
+    }
+
+    toggleReceiptItem(type, index) {
+        if (!this.wizardState.roadEstimatePreview) return;
+        
+        const list = type === 'layer' ? this.wizardState.roadEstimatePreview.layers : this.wizardState.roadEstimatePreview.accessories;
+        list[index].approved = !list[index].approved;
+        
+        this.renderBudgetReceipt();
+    }
+
+    checkBudgetReconciliation() {
+        const allocatedBudget = parseFloat(document.getElementById('proj_budget').value) || 0;
+        const currentEst = this.wizardState.currentlyApprovedHigh || 0;
+        const gap = currentEst - allocatedBudget;
+        
+        const indicator = document.getElementById('budget_gap_indicator');
+        const nextBtn = document.getElementById('wizard-next');
+        const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+        if (indicator) {
+            if (gap > 0) {
+                indicator.textContent = `MWK ${formatter.format(gap)} OVER BUDGET`;
+                indicator.style.color = 'var(--red-dark)';
+                indicator.style.background = 'white';
+                indicator.style.padding = '2px 8px';
+                indicator.style.borderRadius = '4px';
+                indicator.style.fontWeight = '700';
+                indicator.style.fontSize = '12px';
+                if(nextBtn) nextBtn.disabled = true;
+            } else {
+                indicator.textContent = `WITHIN BUDGET (MWK ${formatter.format(Math.abs(gap))} buffer)`;
+                indicator.style.color = 'var(--emerald)';
+                indicator.style.background = 'white';
+                indicator.style.padding = '2px 8px';
+                indicator.style.borderRadius = '4px';
+                indicator.style.fontWeight = '700';
+                indicator.style.fontSize = '12px';
+                if(nextBtn) nextBtn.disabled = false;
+            }
+        }
+    }
+
+    updateFinalSummary() {
+        const name = document.getElementById('proj_name').value;
+        const typeStr = 'Road Works';
+        
+        const budget = this.wizardState.currentlyApprovedHigh;
+
+        document.getElementById('summary_name').textContent = name;
+        document.getElementById('summary_type').textContent = typeStr;
+        document.getElementById('summary_budget').textContent = `MWK ${new Intl.NumberFormat().format(budget || 0)}`;
     }
 
     async fetchSupervisors() {
@@ -1278,7 +1614,6 @@ export class ProjectManagerDashboard {
         const fields = [
             { id: 'proj_name', label: 'Project Name' },
             { id: 'proj_client', label: 'Client Name' },
-            { id: 'proj_type', label: 'Project Type' },
             { id: 'proj_budget', label: 'Budget' },
             { id: 'proj_start', label: 'Start Date' },
             { id: 'proj_end', label: 'End Date' },
@@ -1338,28 +1673,54 @@ export class ProjectManagerDashboard {
     async handleCreateProject() {
         if (!this.validateProjectForm()) return;
 
-        const btn = document.getElementById('btn-create-project');
-        const originalContent = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+        const btn = document.getElementById('wizard-submit') || document.getElementById('btn-create-project');
+        const originalContent = btn ? btn.innerHTML : 'Submit';
+        if(btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+        }
 
         const data = {
             name: document.getElementById('proj_name').value,
             client: document.getElementById('proj_client').value,
-            projectType: document.getElementById('proj_type').value,
-            budgetTotal: parseFloat(document.getElementById('proj_budget').value),
+            projectType: 'road_works',
+            budgetTotal: this.wizardState?.currentlyApprovedHigh || parseFloat(document.getElementById('proj_budget').value),
             startDate: new Date(document.getElementById('proj_start').value).toISOString(),
             endDate: new Date(document.getElementById('proj_end').value).toISOString(),
             managerId: parseInt(document.getElementById('proj_supervisor').value),
             lat: parseFloat(document.getElementById('proj_lat').textContent),
             lng: parseFloat(document.getElementById('proj_lng').textContent),
-            radius: parseInt(document.getElementById('proj_radius_input').value),
+            radius: parseInt(document.getElementById('proj_radius_input')?.value || 500),
             status: 'planning',
             code: 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase()
         };
 
         try {
             const response = await client.post('/projects', data);
+            const projectId = response.data?.id || response.id;
+            
+            if (this.wizardState?.isRoad && this.wizardState?.roadEstimatePreview && projectId) {
+                const accBoxes = document.querySelectorAll('input[name="road_acc"]:checked');
+                const accessories = Array.from(accBoxes).map(cb => cb.value);
+                if (document.getElementById('acc_lighting').value) {
+                    accessories.push(document.getElementById('acc_lighting').value);
+                }
+
+                const estPayload = {
+                    projectId,
+                    approvedTotal: this.wizardState.currentlyApprovedHigh,
+                    roadType: document.getElementById('road_type').value,
+                    lengthKm: parseFloat(document.getElementById('road_length').value),
+                    widthM: parseFloat(document.getElementById('road_width').value),
+                    lanes: parseInt(document.getElementById('road_lanes').value),
+                    terrain: document.getElementById('road_terrain').value,
+                    geographicZone: document.getElementById('road_zone').value,
+                    nearestTownKm: parseFloat(document.getElementById('road_town_dist').value),
+                    accessories
+                };
+                
+                await client.post('/road-estimation/save', estPayload);
+            }
 
             window.toast.show('Project initialized successfully', 'success');
             window.drawer.close();
@@ -1374,8 +1735,10 @@ export class ProjectManagerDashboard {
             }
             window.toast.show(error.message, 'error');
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
+            if(btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
         }
     }
 

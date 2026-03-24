@@ -1,38 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mkaka Construction Management System</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link href="vendor/fonts/inter.css" rel="stylesheet">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+
     <!-- Gantt Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="vendor/moment/moment.min.js"></script>
     <link rel="stylesheet" href="vendor/frappe-gantt/frappe-gantt.css">
     <script src="vendor/frappe-gantt/frappe-gantt.min.js"></script>
-    
+
     <!-- Leaflet & Geocoder (Local) -->
     <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
     <script src="vendor/leaflet/leaflet.js"></script>
     <script>
         // Use a function to safely alias Leaflet
-        (function() {
+        (function () {
             if (typeof L !== 'undefined' && typeof L.map === 'function') {
                 window.MKAKA_L = L;
             } else {
                 // Fallback: wait for Leaflet methods to be available
-                var checkLeaflet = setInterval(function() {
+                var checkLeaflet = setInterval(function () {
                     if (typeof L !== 'undefined' && typeof L.map === 'function') {
                         window.MKAKA_L = L;
                         clearInterval(checkLeaflet);
                     }
                 }, 10);
                 // Clear after 5 seconds to prevent infinite loop
-                setTimeout(function() { clearInterval(checkLeaflet); }, 5000);
+                setTimeout(function () { clearInterval(checkLeaflet); }, 5000);
             }
         })();
     </script>
@@ -40,6 +39,7 @@
     <script src="vendor/leaflet-control-geocoder/Control.Geocoder.js"></script>
     <script type="module" src="main.js" defer></script>
 </head>
+
 <body>
     <div id="app">
         <!-- App content injected here -->
@@ -48,4 +48,5 @@
         </div>
     </div>
 </body>
+
 </html>

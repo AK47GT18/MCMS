@@ -69,6 +69,8 @@ const createProjectSchema = z.object({
   name: z.string().min(1).max(255),
   client: z.string().max(255).optional(),
   managerId: z.number().int().positive().optional(),
+  fieldSupervisorId: z.number().int().positive().optional(),
+  projectType: z.enum(['civil_works', 'bridge_construction', 'road_works', 'building_works']).optional(),
   status: z.enum(['active', 'planning', 'on_hold', 'completed', 'cancelled']).optional(),
   contractValue: z.number().positive().optional(),
   budgetTotal: z.number().positive().optional(),
@@ -81,6 +83,18 @@ const createProjectSchema = z.object({
 });
 
 const updateProjectSchema = createProjectSchema.partial();
+
+const roadEstimationInputSchema = z.object({
+  roadType: z.enum(['RT-1', 'RT-2', 'RT-3', 'RT-4', 'RT-5']),
+  lengthKm: z.number().positive(),
+  widthM: z.number().positive().optional(),
+  lanes: z.number().int().positive().optional(),
+  terrain: z.enum(['Flat', 'Rolling', 'Hilly/Mountainous', 'Rocky', 'Swampy/Wetland', 'Urban']),
+  geographicZone: z.string().max(100).optional(),
+  nearestTownKm: z.number().positive().optional(),
+  accessories: z.array(z.string()).optional(),
+  approvedTotal: z.number().positive().optional() // required on save, not on calculate
+});
 
 // VENDOR SCHEMAS REMOVED
 
@@ -278,7 +292,7 @@ module.exports = {
   // Project
   createProjectSchema,
   updateProjectSchema,
-  // Vendor removed
+  roadEstimationInputSchema,
   // Contract
   createContractSchema,
   updateContractSchema,

@@ -38,6 +38,7 @@ model User {
   issuesReported           Issue[]               @relation("ReportedBy")
   procurementRequests      ProcurementRequest[]
   managedProjects          Project[]             @relation("ProjectManager")
+  supervisedProjects       Project[]             @relation("ProjectFieldSupervisor")
   requisitionsReviewed     Requisition[]         @relation("RequisitionsReviewed")
   requisitionsSubmitted    Requisition[]         @relation("RequisitionsSubmitted")
   safetyIncidents          SafetyIncident[]
@@ -53,6 +54,7 @@ model Project {
   code                 String                @unique @db.VarChar(20)
   name                 String                @db.VarChar(255)
   managerId            Int?                  @map("manager_id")
+  fieldSupervisorId    Int?                  @map("field_supervisor_id")
   contractValue        Decimal?              @map("contract_value") @db.Decimal(18, 2)
   budgetTotal          Decimal?              @map("budget_total") @db.Decimal(18, 2)
   budgetSpent          Decimal?              @default(0) @map("budget_spent") @db.Decimal(18, 2)
@@ -75,11 +77,13 @@ model Project {
   documents            Document[]
   issues               Issue[]
   manager              User?                 @relation("ProjectManager", fields: [managerId], references: [id])
+  fieldSupervisor      User?                 @relation("ProjectFieldSupervisor", fields: [fieldSupervisorId], references: [id])
   requisitions         Requisition[]
   safetyIncidents      SafetyIncident[]
   tasks                Task[]
   transactions         Transaction[]
   whistleblowerReports WhistleblowerReport[]
+  roadSpecification    RoadSpecification?
 
   @@map("projects")
 }
@@ -106,21 +110,23 @@ model Task {
 }
 
 model Contract {
-  id          Int                @id @default(autoincrement())
-  refCode     String             @unique @map("ref_code") @db.VarChar(30)
-  projectId   Int?               @map("project_id")
-  title       String             @db.VarChar(255)
-  value       Decimal?           @db.Decimal(18, 2)
-  startDate   DateTime?          @map("start_date") @db.Date
-  endDate     DateTime?          @map("end_date") @db.Date
-  status      ContractStatusEnum @default(draft)
-  documentUrl String?            @map("document_url")
-  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  vendorName  String?            @map("vendor_name") @db.VarChar(255)
-  versions    ContractVersion[]
-  project     Project?           @relation(fields: [projectId], references: [id])
-  milestones  Milestone[]
+  id            Int                @id @default(autoincrement())
+  refCode       String             @unique @map("ref_code") @db.VarChar(30)
+  projectId     Int?               @map("project_id")
+  title         String             @db.VarChar(255)
+  value         Decimal?           @db.Decimal(18, 2)
+  startDate     DateTime?          @map("start_date") @db.Date
+  endDate       DateTime?          @map("end_date") @db.Date
+  status        ContractStatusEnum @default(draft)
+  documentUrl   String?            @map("document_url")
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vendorName    String?            @map("vendor_name") @db.VarChar(255)
+  contractType  String?            @map("contract_type") @db.VarChar(50)
+  materialsList String?            @map("materials_list")
+  versions      ContractVersion[]
+  project       Project?           @relation(fields: [projectId], references: [id])
+  milestones    Milestone[]
 
   @@index([projectId])
   @@map("contracts")
@@ -575,4 +581,74 @@ enum MaintenanceTypeEnum {
   emergency
 
   @@map("maintenance_type_enum")
+}
+
+// ============================================
+// ROAD CONSTRUCTION MODELS
+// ============================================
+
+model RoadSpecification {
+  id                   Int             @id @default(autoincrement())
+  projectId            Int             @unique @map("project_id")
+  roadType             String          @map("road_type") @db.VarChar(10)
+  lengthKm             Decimal         @map("length_km") @db.Decimal(10, 3)
+  widthM               Decimal         @map("width_m") @db.Decimal(6, 2)
+  lanes                Int             @default(2)
+  terrain              String          @db.VarChar(30)
+  geographicZone       String?         @map("geographic_zone") @db.VarChar(100)
+  nearestTownKm        Decimal?        @map("nearest_town_km") @db.Decimal(8, 2)
+  estimatedTotalLow    Decimal         @map("estimated_total_low") @db.Decimal(20, 2)
+  estimatedTotalHigh   Decimal         @map("estimated_total_high") @db.Decimal(20, 2)
+  approvedTotal        Decimal?        @map("approved_total") @db.Decimal(20, 2)
+  costPerMeterLow      Decimal?        @map("cost_per_meter_low") @db.Decimal(18, 2)
+  costPerMeterHigh     Decimal?        @map("cost_per_meter_high") @db.Decimal(18, 2)
+  reconciliationStatus String          @default("draft") @map("reconciliation_status") @db.VarChar(20)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project              Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  layers               RoadLayer[]
+  accessories          RoadAccessory[]
+
+  @@map("road_specifications")
+}
+
+model RoadLayer {
+  id             Int               @id @default(autoincrement())
+  specId         Int               @map("spec_id")
+  phaseNumber    Int               @map("phase_number")
+  phaseName      String            @map("phase_name") @db.VarChar(100)
+  materialType   String            @map("material_type") @db.VarChar(150)
+  unit           String            @db.VarChar(20)
+  quantityPerKm  Decimal           @map("quantity_per_km") @db.Decimal(14, 3)
+  totalQuantity  Decimal           @map("total_quantity") @db.Decimal(16, 3)
+  unitCostLow    Decimal           @map("unit_cost_low") @db.Decimal(18, 2)
+  unitCostHigh   Decimal           @map("unit_cost_high") @db.Decimal(18, 2)
+  totalCostLow   Decimal           @map("total_cost_low") @db.Decimal(20, 2)
+  totalCostHigh  Decimal           @map("total_cost_high") @db.Decimal(20, 2)
+  approved       Boolean           @default(true)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  spec           RoadSpecification @relation(fields: [specId], references: [id], onDelete: Cascade)
+
+  @@index([specId])
+  @@map("road_layers")
+}
+
+model RoadAccessory {
+  id            Int               @id @default(autoincrement())
+  specId        Int               @map("spec_id")
+  category      String            @db.VarChar(50)
+  itemName      String            @map("item_name") @db.VarChar(150)
+  unit          String            @db.VarChar(20)
+  quantityPerKm Decimal           @map("quantity_per_km") @db.Decimal(14, 3)
+  totalQuantity Decimal           @map("total_quantity") @db.Decimal(16, 3)
+  unitCostLow   Decimal           @map("unit_cost_low") @db.Decimal(18, 2)
+  unitCostHigh  Decimal           @map("unit_cost_high") @db.Decimal(18, 2)
+  totalCostLow  Decimal           @map("total_cost_low") @db.Decimal(20, 2)
+  totalCostHigh Decimal           @map("total_cost_high") @db.Decimal(20, 2)
+  approved      Boolean           @default(true)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  spec          RoadSpecification @relation(fields: [specId], references: [id], onDelete: Cascade)
+
+  @@index([specId])
+  @@map("road_accessories")
 }

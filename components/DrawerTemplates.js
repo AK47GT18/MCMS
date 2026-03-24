@@ -163,7 +163,7 @@ export const DrawerTemplates = {
             <button class="btn btn-primary" style="width: 100%; background: var(--orange); border-color: var(--orange); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('HSE Report Filed. SMS Alert sent to Safety Officer.', 'info'); window.drawer.close();">Log Incident</button>
         </div>
     `,
-    
+
     requisitionReview: (project, req) => `
          <div style="padding: 0;">
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
@@ -197,9 +197,9 @@ export const DrawerTemplates = {
                     ${req?.purpose || req?.description || 'No detailed purpose provided for this requisition.'}
                 </div>
 
-                <div style="background: var(--blue-light); border: 1px solid var(--blue); padding: 12px; border-radius: 6px; display: flex; gap: 10px; margin-bottom: 24px;">
-                    <i class="fas fa-info-circle" style="color: var(--blue); margin-top: 2px;"></i>
-                    <div style="font-size: 13px; color: var(--blue-dark);">
+                <div style="background: var(--orange-light); border: 1px solid var(--orange); padding: 12px; border-radius: 6px; display: flex; gap: 10px; margin-bottom: 24px;">
+                    <i class="fas fa-info-circle" style="color: var(--orange); margin-top: 2px;"></i>
+                    <div style="font-size: 13px; color: var(--orange-dark);">
                         <strong>System Check:</strong> This request is pending PM review. Final approval will be processed by the Commissioner.
                     </div>
                 </div>
@@ -224,11 +224,11 @@ export const DrawerTemplates = {
 
     requestFunds: `
         <div class="drawer-section">
-            <div style="margin-bottom: 24px; padding: 12px; background: var(--blue-light); border-radius: 8px; border: 1px solid var(--blue-hover); display: flex; gap: 12px; align-items: center;">
-                 <i class="fas fa-file-invoice-dollar" style="color: var(--blue); font-size: 20px;"></i>
+            <div style="margin-bottom: 24px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover); display: flex; gap: 12px; align-items: center;">
+                 <i class="fas fa-file-invoice-dollar" style="color: var(--orange); font-size: 20px;"></i>
                  <div>
-                     <div style="font-weight: 700; color: var(--blue); font-size: 14px;">New Fund Request</div>
-                     <div style="font-size: 11px; color: var(--blue-hover);">Submit requisition for approval</div>
+                     <div style="font-weight: 700; color: var(--orange); font-size: 14px;">New Fund Request</div>
+                     <div style="font-size: 11px; color: var(--orange-hover);">Submit requisition for approval</div>
                  </div>
             </div>
 
@@ -299,81 +299,272 @@ export const DrawerTemplates = {
         </div>
     `,
     newProject: `
-        <div class="drawer-section">
+        <div class="drawer-section" style="padding-bottom: 80px;">
             <div id="project-form-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                <input type="text" id="proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Unilia Library Complex">
-                <span id="error-proj_name" style="color:var(--red); font-size:11px; display:none;"></span>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Ministry of Education">
-                <span id="error-proj_client" style="color:var(--red); font-size:11px; display:none;"></span>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Type</label>
-                <select id="proj_type" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
-                    <option value="">Select Project Type...</option>
-                    <option value="civil_works">Civil Works</option>
-                    <option value="bridge_construction">Bridge Construction</option>
-                    <option value="road_works">Road Works</option>
-                    <option value="building_works">Building Works</option>
-                </select>
-                <span id="error-proj_type" style="color:var(--red); font-size:11px; display:none;"></span>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                <input type="number" id="proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="0.00">
-                <span id="error-proj_budget" style="color:var(--red); font-size:11px; display:none;"></span>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
-                    <input type="date" id="proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
-                    <span id="error-proj_start" style="color:var(--red); font-size:11px; display:none;"></span>
+            <!-- Step Progress Header -->
+            <div id="project-wizard-progress" style="display:flex; justify-content:space-between; margin-bottom: 24px; position:relative;">
+                <div style="position:absolute; top:12px; left:0; right:0; height:2px; background:var(--slate-200); z-index:0;"></div>
+                <div id="progress-bar-fill" style="position:absolute; top:12px; left:0; width:0%; height:2px; background:var(--orange); z-index:0; transition:width 0.3s ease;"></div>
+                
+                <div class="wizard-step step-1 active" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;">
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--orange); color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">1</div>
+                    <div style="font-size:10px; font-weight:700; color:var(--orange); text-transform:uppercase;">Identity</div>
                 </div>
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
-                    <input type="date" id="proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
-                    <span id="error-proj_end" style="color:var(--red); font-size:11px; display:none;"></span>
+                <div class="wizard-step step-2" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; opacity:0.4;">
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">2</div>
+                    <div style="font-size:10px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Road Spec</div>
                 </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Supervisor</label>
-                    <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
-                        <option value="">Loading supervisors...</option>
-                    </select>
-                    <span id="error-proj_supervisor" style="color:var(--red); font-size:11px; display:none;"></span>
+                <div class="wizard-step step-3" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; opacity:0.4;">
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">3</div>
+                    <div style="font-size:10px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Accessories</div>
                 </div>
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Radius (m)</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="number" id="proj_radius_input" value="500" class="form-input" style="width:70px; padding:6px; border:1px solid var(--slate-300); border-radius:6px;" oninput="document.getElementById('proj_radius_slider').value = this.value; window.app.pmModule.updateMapRadius(this.value)">
-                        <input type="range" id="proj_radius_slider" value="500" min="50" max="5000" step="50" style="flex: 1; accent-color: var(--orange);" oninput="document.getElementById('proj_radius_input').value = this.value; window.app.pmModule.updateMapRadius(this.value)">
-                    </div>
+                <div class="wizard-step step-4" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; opacity:0.4;">
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">4</div>
+                    <div style="font-size:10px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Budget Lock</div>
                 </div>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
-                <div id="project-map" style="height: 200px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                    <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Loading Map...</div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="proj_lat">-13.9626</span></div>
-                    <div style="font-size: 11px; color: var(--slate-500);">Long: <span id="proj_lng">33.7741</span></div>
+                <!-- Final Step -->
+                <div class="wizard-step step-5" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; opacity:0.4;">
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">✓</div>
+                    <div style="font-size:10px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Submit</div>
                 </div>
             </div>
 
-            <button id="btn-create-project" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-weight:700;" onclick="window.app.pmModule.handleCreateProject()">Create Project</button>
+            <!-- STEP 1: Basic Identity -->
+            <div id="wizard-pane-1" class="wizard-pane active" style="animation: fadeIn 0.3s ease;">
+                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px; border-left: 4px solid var(--orange);">
+                    <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Step 1: Project Identity</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Core details and staffing</div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
+                    <input type="text" id="proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
+                    <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
+                    <input type="number" id="proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
+                    <span style="font-size:11px; color:var(--slate-500); margin-top:4px; display:inline-block;"><i class="fas fa-info-circle"></i> For road works, the estimate must fit within this envelope.</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
+                        <input type="date" id="proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
+                        <input type="date" id="proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Field Supervisor (Mandatory)</label>
+                    <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
+                        <option value="">Loading supervisors...</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
+                    <div id="project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Loading Map...</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="proj_lat">-13.9626</span></div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Long: <span id="proj_lng">33.7741</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Road Specification -->
+            <div id="wizard-pane-2" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
+                <div style="background: var(--slate-100); padding: 12px; border-radius: 8px; border-left: 4px solid var(--orange); margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                    <i class="fas fa-road" style="color: var(--orange); font-size: 20px;"></i>
+                    <div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">RCMS Road Specification</div>
+                        <div style="font-size: 11px; color: var(--slate-600);">Defines phase logic and base material calculations</div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Road Class/Type</label>
+                    <select id="road_type" class="form-input" style="width:100%; padding:10px; font-weight:600; color:var(--slate-800);">
+                        <option value="RT-1">RT-1 Earth (2-5 yrs design life)</option>
+                        <option value="RT-2">RT-2 Gravel (5-10 yrs design life)</option>
+                        <option value="RT-3">RT-3 Surface Dressed (10-15 yrs)</option>
+                        <option value="RT-4" selected>RT-4 Asphalt (15-20 yrs)</option>
+                        <option value="RT-5">RT-5 Concrete (30-50 yrs)</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Total Length (km)</label>
+                        <input type="number" id="road_length" class="form-input" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" placeholder="e.g. 15.5" step="0.1">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Avg Width (m)</label>
+                        <input type="number" id="road_width" class="form-input" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" value="7.0" step="0.5">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Number of Lanes</label>
+                        <select id="road_lanes" class="form-input" style="width:100%; padding:10px;">
+                            <option value="1">1 Lane (Single track)</option>
+                            <option value="2" selected>2 Lanes (Standard)</option>
+                            <option value="4">4 Lanes (Dual Carriageway)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Primary Terrain</label>
+                        <select id="road_terrain" class="form-input" style="width:100%; padding:10px;">
+                            <option value="Flat">Flat</option>
+                            <option value="Rolling">Rolling</option>
+                            <option value="Hilly/Mountainous">Hilly/Mountainous</option>
+                            <option value="Rocky">Rocky</option>
+                            <option value="Swampy/Wetland">Swampy/Wetland</option>
+                            <option value="Urban">Urban</option>
+                        </select>
+                        <div style="font-size:10px; color:var(--slate-500); margin-top:4px;">Affects earthworks multipliers</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Geographical Zone / District</label>
+                    <input type="text" id="road_zone" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Northern Region - Mzimba">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Distance from Nearest Town (km)</label>
+                    <input type="number" id="road_town_dist" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. 25" value="10">
+                    <div style="font-size:10px; color:var(--slate-500); margin-top:4px;">Affects accessibility / transport multipliers</div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Accessories Checklist -->
+            <div id="wizard-pane-3" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
+                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px; border-left: 4px solid var(--orange);">
+                    <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Step 3: Road Accessories & Safety</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Select additional features required for this specification.</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="markings" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Road Markings</div>
+                            <div style="font-size:10px; color:var(--slate-500);">Centrelines, edge lines, studs</div>
+                        </div>
+                    </label>
+                    
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="signage" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Signage</div>
+                            <div style="font-size:10px; color:var(--slate-500);">Regulatory, warning, km markers</div>
+                        </div>
+                    </label>
+
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="guardrails" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Safety Barriers</div>
+                            <div style="font-size:10px; color:var(--slate-500);">W-beam guardrails for embankments</div>
+                        </div>
+                    </label>
+
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="pedestrian" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Pedestrian / NMT</div>
+                            <div style="font-size:10px; color:var(--slate-500);">Footpaths, raised crossings, kerbing</div>
+                        </div>
+                    </label>
+
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="transit" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Transit Facilities</div>
+                            <div style="font-size:10px; color:var(--slate-500);">Bus bays and passenger shelters</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:8px;">Street Lighting Option</label>
+                    <select id="acc_lighting" class="form-input" style="width:100%; padding:10px;">
+                        <option value="">None (No Lighting)</option>
+                        <option value="lighting_solar">Solar Street Lights (Off-grid)</option>
+                        <option value="lighting_poles">Standard Grid Poles (Single arm)</option>
+                        <option value="lighting_mast">High-mast Towers (Junctions)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- STEP 4: Budget Lock Receipt -->
+            <div id="wizard-pane-4" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
+                <div style="background: var(--red-light); padding: 12px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                    <i class="fas fa-lock" style="color: var(--red); font-size: 20px;"></i>
+                    <div style="flex:1;">
+                        <div style="font-weight: 700; color: var(--red-dark); font-size: 14px; display:flex; justify-content:space-between;">
+                            <span>Budget Reconciliation</span>
+                            <span id="budget_gap_indicator">MWK 0.00 Gap</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--red);">Toggle items off if the estimate exceeds your allocated budget.</div>
+                    </div>
+                </div>
+
+                <div id="estimation-loader" style="padding:40px; text-align:center; color:var(--slate-500); display:none;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px; color:var(--orange);"></i>
+                    <div style="font-size:12px; font-weight:600; text-transform:uppercase;">Running Parametric Estimator...</div>
+                </div>
+
+                <div id="estimation-receipt-container">
+                    <!-- Dynamic receipt table rendered here -->
+                </div>
+            </div>
+
+            <!-- STEP 5: Final Summary & Submit -->
+            <div id="wizard-pane-5" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
+                <div style="text-align:center; margin-bottom:24px;">
+                    <div style="width:64px; height:64px; background:var(--emerald); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 16px;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h3 style="font-size:18px; font-weight:700; color:var(--slate-900); margin-bottom:8px;">Ready to Dispatch</h3>
+                    <p style="font-size:13px; color:var(--slate-500); max-width:280px; margin:0 auto;">An email brief will be sent to the Field Supervisor, Finance Director, and Equipment Coordinator.</p>
+                </div>
+
+                <div style="background:var(--slate-50); border:1px solid var(--slate-200); padding:16px; border-radius:8px; margin-bottom:24px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:12px; color:var(--slate-500);">Project</span>
+                        <span id="summary_name" style="font-size:13px; font-weight:600; color:var(--slate-800);">---</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:12px; color:var(--slate-500);">Type</span>
+                        <span id="summary_type" style="font-size:13px; font-weight:600; color:var(--slate-800); text-transform:capitalize;">---</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:12px; color:var(--slate-500);">Locked Budget</span>
+                        <span id="summary_budget" style="font-size:14px; font-weight:700; color:var(--slate-900); font-family:'JetBrains Mono';">MWK 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; justify-content: space-between; z-index: 10;">
+                <button id="wizard-prev" class="btn btn-secondary" style="flex:1; display:none; justify-content:center;" onclick="window.app.pmModule.handleWizardNav(-1)">Back</button>
+                <div style="flex:1;"></div>
+                <button id="wizard-next" class="btn btn-primary" style="flex:2; justify-content:center; background:var(--orange); border-color:var(--orange);" onclick="window.app.pmModule.handleWizardNav(1)">Continue</button>
+                <button id="wizard-submit" class="btn btn-primary" style="flex:2; display:none; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.pmModule.handleCreateProject()">Finalize & Create</button>
+            </div>
         </div>
     `,
 
@@ -385,7 +576,7 @@ export const DrawerTemplates = {
         return `
         <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
           <div class="tabs" style="margin-bottom: 0;">
-            <div class="tab active">Verify Log</div>
+            <div class="tab active" style="border-bottom-color: var(--orange);">Verify Log</div>
             <div class="tab">Attendance</div>
           </div>
         </div>
@@ -402,8 +593,12 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
+            <div id="verification-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 16px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div style="color: var(--slate-400); font-size: 11px;"><i class="fas fa-map-marked-alt"></i> Loading Verification Map...</div>
+            </div>
+
             <div class="evidence-photo" style="width: 100%; height: 200px; background: var(--slate-200); border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 16px; border: 1px solid var(--slate-300);">
-                <img src="${log?.photoUrl || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop'}" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="${log?.photoUrl || 'public/images/hero-background.jpg'}" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover; background: var(--slate-100);" onerror="this.src='public/images/hero-background.jpg'">
                 <div class="geo-tag" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-map-marker-alt"></i> ${log?.gpsCoords || project?.location || 'Sector 4'}
                 </div>
@@ -1666,7 +1861,7 @@ Contract Admin</textarea>
             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Shift Plan Broadcasted to Site', 'success')">Publish Plan</button>
         </div>
     `,
-    
+
     projectDetails: (project) => {
         const escapeHTML = (str) => {
             if (!str) return '';
@@ -1696,7 +1891,7 @@ Contract Admin</textarea>
             <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                 <div class="stat-card" style="margin: 0;">
                     <div class="stat-label">Budget</div>
-                    <div class="stat-value" style="font-size: 18px;">MWK ${project.budgetTotal ? (project.budgetTotal/1000000).toFixed(1) + 'M' : '0'}</div>
+                    <div class="stat-value" style="font-size: 18px;">MWK ${project.budgetTotal ? (project.budgetTotal / 1000000).toFixed(1) + 'M' : '0'}</div>
                 </div>
                 <div class="stat-card" style="margin: 0;">
                     <div class="stat-label">Progress</div>

@@ -11,19 +11,19 @@ const env = require('../config/env');
 const securityHeaders = {
   // Prevent MIME type sniffing
   'X-Content-Type-Options': 'nosniff',
-  
+
   // Prevent clickjacking
   'X-Frame-Options': 'DENY',
-  
+
   // XSS protection (legacy, but still useful)
   'X-XSS-Protection': '1; mode=block',
-  
+
   // Don't send referrer for cross-origin requests
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // Prevent Cross-Origin Resource Sharing leaks
   'Cross-Origin-Opener-Policy': 'same-origin',
-  
+
   // Permissions policy
   'Permissions-Policy': 'geolocation=(self), microphone=()',
 };
@@ -33,11 +33,11 @@ const securityHeaders = {
  */
 const cspDirectives = {
   'default-src': ["'self'"],
-  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
-  'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
-  'font-src': ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-  'img-src': ["'self'", "data:", "https:", "blob:"],
-  'connect-src': ["'self'", "ws:", "wss:", "https:"],
+  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+  'style-src': ["'self'", "'unsafe-inline'"],
+  'font-src': ["'self'", "data:"],
+  'img-src': ["'self'", "data:", "blob:"],
+  'connect-src': ["'self'", "ws:", "wss:"],
   'frame-ancestors': ["'none'"],
   'form-action': ["'self'"],
   'base-uri': ["'self'"],
@@ -62,11 +62,11 @@ function applySecurityHeaders(res) {
   for (const [header, value] of Object.entries(securityHeaders)) {
     res.setHeader(header, value);
   }
-  
+
   // Apply CSP in production only (too restrictive for development)
   if (env.NODE_ENV === 'production') {
     res.setHeader('Content-Security-Policy', buildCSP());
-    
+
     // HSTS - only in production with HTTPS
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
@@ -77,7 +77,7 @@ function applySecurityHeaders(res) {
  */
 function securityMiddleware(req, res, next) {
   applySecurityHeaders(res);
-  
+
   if (typeof next === 'function') {
     return next();
   }
@@ -91,7 +91,7 @@ function securityMiddleware(req, res, next) {
 function bodySizeLimit(maxBytes = 10 * 1024 * 1024) { // 10MB default
   return async (req, res) => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10);
-    
+
     if (contentLength > maxBytes) {
       res.writeHead(413, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -101,7 +101,7 @@ function bodySizeLimit(maxBytes = 10 * 1024 * 1024) { // 10MB default
       }));
       return false;
     }
-    
+
     return true;
   };
 }

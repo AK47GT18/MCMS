@@ -16,6 +16,7 @@ const dailyLogsController = require('../controllers/dailyLogs.controller');
 const issuesController = require('../controllers/issues.controller');
 const procurementController = require('../controllers/procurement.controller');
 const auditController = require('../controllers/audit.controller');
+const roadEstimationController = require('../controllers/roadEstimation.controller');
 const { documentRoutes } = require('../api/documents.api');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
@@ -339,6 +340,25 @@ async function router(req, res) {
     return methodNotAllowed(res, ['GET']);
   }
   
+  // ============================================
+  // ROAD ESTIMATION ROUTES
+  // ============================================
+  if (resource === 'road-estimation') {
+    if (id === 'calculate' && method === 'POST') {
+      return roadEstimationController.calculate(req, res);
+    }
+    if (id === 'save' && method === 'POST') {
+      return roadEstimationController.save(req, res);
+    }
+    if (action === 'toggle-item' && method === 'PATCH') {
+      return roadEstimationController.toggleItem(req, res, id);
+    }
+    if (method === 'GET' && id && !action) {
+      return roadEstimationController.getForProject(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST', 'PATCH']);
+  }
+
   // ============================================
   // DOCUMENT ROUTES
   // ============================================

@@ -206,6 +206,20 @@ async function create(data) {
         });
       }
     }
+
+    // If a field supervisor is allocated, ensure they are also in the notification list
+    if (data.fieldSupervisorId) {
+      const fs = await prisma.user.findUnique({
+        where: { id: data.fieldSupervisorId },
+        select: { id: true, name: true, email: true }
+      });
+      if (fs) {
+        const exists = usersToNotify.some(u => u.id === fs.id);
+        if (!exists) {
+          usersToNotify.push(fs);
+        }
+      }
+    }
     
     if (usersToNotify.length > 0) {
       const title = 'New Project Assigned';
