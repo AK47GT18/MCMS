@@ -1,100 +1,87 @@
-# MCMS Backend
+# MCMS - Road Construction Management System
 
-A vanilla Node.js backend for the MCMS Construction Management System. Built with Prisma, PostgreSQL, WebSockets, and Nodemailer.
+MCMS (Mkaka Construction Management System) is a comprehensive, production-ready platform designed to manage the full lifecycle of road construction projects. It integrates project planning, contract management, real-time logging, asset tracking, and financial oversight into a centralized system.
 
-## Features
+## 🚀 Key Features
 
-- **Authentication**: JWT-based auth with RBAC (Role-Based Access Control).
-- **Database**: PostgreSQL with Prisma ORM.
-- **Real-time**: WebSocket server for live updates and notifications.
-- **Email**: Transactional emails using Nodemailer (Welcome, Notifications, Confirmations).
-- **PWA Support**: Manifest and offline sync endpoints.
-- **REST API**: Standardized API for all entities (Projects, Users, Vendors, etc.).
+-   **Project Management**: Full lifecycle tracking from planning to completion.
+-   **Road Estimation Engine**: Automated cost estimation based on Malawi 2025 RCMS Master Reference.
+-   **Contract & Milestone Tracking**: Manage vendor contracts, versions, and payment milestones.
+-   **Fleet & Asset Management**: Track heavy machinery, maintenance records, and fuel levels.
+-   **Field Operations**: Daily logs, headcount tracking, weather reports, and SOS alerts.
+-   **Financial Oversight**: Requisitions, budget change requests, and transaction logging.
+-   **Governance & Safety**: Safety incident reporting, whistleblower reports, and comprehensive audit logs.
+-   **Role-Based Access**: Specialized dashboards for Project Managers, Finance Directors, Field Supervisors, and more.
 
-## Quick Start
+## 🛠 Tech Stack
 
-For a detailed walkthrough on setting up the environment from scratch, please refer to the **[Installation & Setup Guide](./SETUP_GUIDE.md)**.
+-   **Frontend**: Vanilla HTML/JavaScript with CSS (Modern UI components).
+-   **Backend**: Node.js with built-in HTTP server and routing.
+-   **Database**: PostgreSQL with **Prisma ORM**.
+-   **Security**: JWT Authentication, Bcrypt password hashing, and Rate Limiting.
+-   **Communication**: Automated email notifications via Nodemailer.
 
-1.  **Clone & Install**
+## 📖 Setup Instructions
 
-    ```bash
-    npm install
-    ```
+### 1. Prerequisites
+- **Node.js**: v18+
+- **PostgreSQL**: v14+
+- **Git**
 
-2.  **Configure `.env`**
-    Copy `.env.example` to `.env` and update your database credentials.
-
-3.  **Database Setup**
-
-    ```bash
-    npx prisma db push
-    ```
-
-4.  **Launch**
-    ```bash
-    npm run dev
-    ```
-
-## Running the Server
-
-- **Development Mode**
-
-  ```bash
-  npm start
-  ```
-
-  Or nicely with:
-
-  ```bash
-  node server.js
-  ```
-
-- **Production Mode**
-  ```bash
-  npm start
-  ```
-  (Ensure `NODE_ENV=production` is set in your environment)
-
-## API Documentation
-
-The API is available at `http://localhost:3000/api/v1`.
-
-### Core Endpoints
-
-- **Auth**: `/api/v1/auth` (login, register, me)
-- **Users**: `/api/v1/users`
-- **Projects**: `/api/v1/projects`
-- **Vendors**: `/api/v1/vendors`
-- **Contracts**: `/api/v1/contracts`
-- **Tasks**: `/api/v1/tasks` (Gantt chart data)
-- **Assets**: `/api/v1/assets` (Equipment tracking)
-- **Requisitions**: `/api/v1/requisitions`
-- **Daily Logs**: `/api/v1/daily-logs`
-- **Issues**: `/api/v1/issues`
-- **Procurement**: `/api/v1/procurement`
-
-### Real-time (WebSocket)
-
-Connect to `ws://localhost:3000`.
-
-- authenticate with JWT: `{ "type": "authenticate", "payload": { "token": "..." } }`
-- Listen for events like `notification`, `project:updated`, etc.
-
-## Testing
-
-Run the included test hooks to verify the backend:
-
+### 2. Installation
 ```bash
-node tests/hooks.js
+git clone <repository-url>
+cd MCMS
+npm install
 ```
 
-## Structure
+### 3. Environment Setup
+Create a `.env` file in the root directory:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/mcms?schema=public"
+JWT_SECRET="your-super-secret-key"
+SMTP_HOST="your-smtp-host"
+SMTP_PORT=587
+SMTP_USER="your-email"
+SMTP_PASS="your-password"
+```
 
-- `src/config`: Configuration files (DB, Env, CORS)
-- `src/controllers`: Request handlers
-- `src/services`: Business logic
-- `src/routes`: API route definitions
-- `src/middlewares`: Auth, Validation, Error handling
-- `src/realtime`: WebSocket server and handlers
-- `src/emails`: Email templates and sender
-- `src/pwa`: Offline sync and manifest
+### 4. Database Migration
+```bash
+# Sync the schema to your database
+npx prisma db push
+
+# Generate Prisma Client
+npx prisma generate
+
+# Seed initial data (Roles, Projects, Users)
+npm run db:seed
+```
+
+### 5. Running the App
+```bash
+# Development mode (Server + Client with Browser-Sync)
+npm run dev
+
+# Production mode
+npm start
+```
+-   **Backend API**: `http://localhost:3000/api/v1`
+-   **Frontend**: `http://localhost:3001`
+
+## 📂 Project Structure Overview
+
+-   `/src`: Core backend logic.
+    -   `/controllers`: API request handlers.
+    -   `/services`: Business logic and database interactions.
+    -   `/routes`: API endpoint definitions.
+-   `/components`: Reusable frontend UI modules.
+-   `/prisma`: Database schema (`schema.prisma`) and seed data.
+-   `/public`: Static assets and document uploads.
+-   `server.js`: Application entry point.
+
+## 🛡 Security & Audit
+All critical actions (suspensions, deletions, budget changes) are logged in the `AuditLog` table, capturing the user, timestamp, IP address, and specific changes made.
+
+---
+© 2026 MCMS Solutions. All rights reserved.
