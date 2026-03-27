@@ -23,6 +23,7 @@ export class FormValidator {
             email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
             phone: /^[\d\s\+\-\(\)]{10,}$/, // Min 10 chars, allows format chars
             password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, // 8+ chars, 1 upper, 1 lower, 1 num
+            'strong-password': /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, 
             required: /\S+/, // Non-empty
             url: /^https?:\/\/.+/,
             number: /^\d+$/,
