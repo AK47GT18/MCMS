@@ -17,7 +17,7 @@ const documentsService = {
       throw new AppError('No file uploaded', 400);
     }
 
-    const { title, description, projectId } = data;
+    const { title, description, projectId, documentType } = data;
     const project = await prisma.project.findUnique({
       where: { id: parseInt(projectId) },
       include: { manager: true }
@@ -35,6 +35,7 @@ const documentsService = {
         description,
         originalName: file.originalname,
         currentVersionUrl: fileUrl,
+        documentType: documentType || 'general',
         contractValue: data.contractValue ? parseFloat(data.contractValue) : null,
         projectId: parseInt(projectId),
         uploadedById: userId,
@@ -129,12 +130,13 @@ const documentsService = {
    * Update document details
    */
   async updateDetails(documentId, data) {
-    const { title, description, contractValue } = data;
+    const { title, description, contractValue, documentType } = data;
     return prisma.document.update({
       where: { id: parseInt(documentId) },
       data: {
         title,
         description,
+        documentType: documentType || undefined,
         contractValue: contractValue !== undefined ? parseFloat(contractValue) : undefined
       }
     });

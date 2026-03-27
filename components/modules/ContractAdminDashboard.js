@@ -276,7 +276,9 @@ export class ContractAdminDashboard {
                                     <div style="display:flex; gap:8px;">
                                         <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openVersionDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})">Update</button>
                                         <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openEditDocumentDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})">Edit</button>
-                                        <a href="${doc.currentVersionUrl}" target="_blank" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;"><i class="fas fa-download"></i></a>
+                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openVersionHistoryDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})" title="View Version History"><i class="fas fa-history"></i></button>
+                                        <a href="${doc.currentVersionUrl}" target="_blank" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" title="View Latest in Browser"><i class="fas fa-eye"></i></a>
+                                        <a href="${doc.currentVersionUrl}" download target="_blank" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" title="Download Latest"><i class="fas fa-download"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -315,6 +317,10 @@ export class ContractAdminDashboard {
         window.drawer.open(`Upload New Version: ${doc.title}`, window.DrawerTemplates.uploadDocumentVersion(doc));
     }
 
+    openVersionHistoryDrawer(doc) {
+        window.drawer.open(`Version History`, window.DrawerTemplates.documentVersionHistory(doc));
+    }
+
     // --- Dynamic UI Helpers ---
     openMilestoneDetails(id) {
         const milestone = this.data.milestones.find(m => m.id === id);
@@ -350,6 +356,7 @@ export class ContractAdminDashboard {
 
     async handleUploadDocument() {
         const title = document.getElementById('doc_title').value;
+        const documentType = document.getElementById('doc_type').value;
         const projectId = document.getElementById('doc_project_id').value;
         const description = document.getElementById('doc_description').value;
         const fileInput = document.getElementById('doc_file');
@@ -365,6 +372,7 @@ export class ContractAdminDashboard {
 
         const formData = new FormData();
         formData.append('title', title);
+        formData.append('documentType', documentType);
         formData.append('projectId', projectId);
         formData.append('description', description);
         formData.append('contractValue', contractValue);

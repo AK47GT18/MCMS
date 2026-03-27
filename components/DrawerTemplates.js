@@ -1042,6 +1042,17 @@ export const DrawerTemplates = {
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Document Type</label>
+                <select id="doc_type" class="form-input" style="width:100%; padding:10px;">
+                    <option value="general">General / Other</option>
+                    <option value="vendor_quote">Vendor Quote</option>
+                    <option value="contract">Formal Contract</option>
+                    <option value="blueprint">Blueprint / Design</option>
+                    <option value="insurance">Insurance / Bond</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Associated Project</label>
                 <select id="doc_project_id" class="form-input" style="width:100%; padding:10px;">
                     <option value="">Select Project...</option>
@@ -1069,6 +1080,39 @@ export const DrawerTemplates = {
             </div>
 
             <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUploadDocument()">Upload & Notify PM</button>
+        </div>
+    `,
+
+    documentVersionHistory: (document) => `
+        <div class="drawer-section">
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--blue-light); border-radius: 8px;">
+                <div style="font-weight: 700; color: var(--blue); font-size: 14px;">Version History: ${document.title}</div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--slate-200); text-align: left;">
+                        <th style="padding: 12px 8px;">Version</th>
+                        <th style="padding: 12px 8px;">Date</th>
+                        <th style="padding: 12px 8px;">Notes</th>
+                        <th style="padding: 12px 8px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${(document.versions || []).map(v => `
+                        <tr style="border-bottom: 1px solid var(--slate-100);">
+                            <td style="padding: 12px 8px; font-weight: 600;">v${v.versionNumber}</td>
+                            <td style="padding: 12px 8px;">${new Date(v.createdAt).toLocaleDateString()}</td>
+                            <td style="padding: 12px 8px; color: var(--slate-600); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.changeNotes || '-'}</td>
+                            <td style="padding: 12px 8px;">
+                                <div style="display:flex; gap:4px;">
+                                    <a href="${v.fileUrl}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" title="View in Browser"><i class="fas fa-eye"></i> View</a>
+                                    <a href="${v.fileUrl}" download target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" title="Download File"><i class="fas fa-download"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
         </div>
     `,
 

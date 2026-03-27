@@ -17,6 +17,9 @@ const issuesController = require('../controllers/issues.controller');
 const procurementController = require('../controllers/procurement.controller');
 const auditController = require('../controllers/audit.controller');
 const roadEstimationController = require('../controllers/roadEstimation.controller');
+const inventoryController = require('../controllers/inventory.controller');
+const replenishmentController = require('../controllers/replenishment.controller');
+const reconciliationController = require('../controllers/reconciliation.controller');
 const { documentRoutes } = require('../api/documents.api');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
@@ -357,6 +360,55 @@ async function router(req, res) {
       return roadEstimationController.getForProject(req, res, id);
     }
     return methodNotAllowed(res, ['GET', 'POST', 'PATCH']);
+  }
+
+  // ============================================
+  // INVENTORY ROUTES
+  // ============================================
+  if (resource === 'inventory') {
+    if (id === 'distribute' && method === 'POST') {
+      return inventoryController.distribute(req, res);
+    }
+    if (id === 'consume' && method === 'POST') {
+      return inventoryController.consume(req, res);
+    }
+    if (id === 'sector' && action && method === 'GET') {
+      // url pattern: /inventory/sector/:sectorId => resource='inventory', id='sector', action=':sectorId'
+      return inventoryController.getBySector(req, res, action);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
+  }
+
+  // ============================================
+  // REPLENISHMENT ROUTES
+  // ============================================
+  if (resource === 'replenishment') {
+    if (id === 'project' && action && method === 'GET') {
+      return replenishmentController.getByProject(req, res, action);
+    }
+    if (id === 'request' && method === 'POST') {
+      return replenishmentController.create(req, res);
+    }
+    if (action === 'finance-action' && method === 'POST') {
+      return replenishmentController.financeAction(req, res, id);
+    }
+    if (action === 'pm-action' && method === 'POST') {
+      return replenishmentController.pmAction(req, res, id);
+    }
+    if (action === 'complete' && method === 'POST') {
+      return replenishmentController.complete(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
+  }
+
+  // ============================================
+  // RECONCILIATION ROUTES
+  // ============================================
+  if (resource === 'reconciliation') {
+    if (id && method === 'GET') {
+      return reconciliationController.getReport(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET']);
   }
 
   // ============================================

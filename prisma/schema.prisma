@@ -8,68 +8,70 @@ datasource db {
 }
 
 model User {
-  id                       Int                   @id @default(autoincrement())
-  name                     String                @db.VarChar(100)
-  email                    String                @unique @db.VarChar(255)
-  phone                    String?               @db.VarChar(20)
+  id                       Int                    @id @default(autoincrement())
+  name                     String                 @db.VarChar(100)
+  email                    String                 @unique @db.VarChar(255)
+  phone                    String?                @db.VarChar(20)
   role                     RoleEnum
-  avatarUrl                String?               @map("avatar_url")
+  avatarUrl                String?                @map("avatar_url")
   permissions              String[]
-  passwordHash             String?               @map("password_hash") @db.VarChar(255)
-  lastLoginIp              String?               @map("last_login_ip") @db.Inet
-  isLocked                 Boolean               @default(false) @map("is_locked")
-  isActive                 Boolean               @default(true)  @map("is_active")
-  createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                DateTime?             @map("deleted_at") @db.Timestamptz(6)
-  deletionReason           String?               @map("deletion_reason") @db.VarChar(500)
-  passwordResetExpires     DateTime?             @map("password_reset_expires") @db.Timestamptz(6)
-  passwordResetToken       String?               @map("password_reset_token") @db.VarChar(100)
-  mustChangeEmail          Boolean               @default(false) @map("must_change_email")
-  mustChangePassword       Boolean               @default(false) @map("must_change_password")
-  statusReason             String?               @map("status_reason")
+  passwordHash             String?                @map("password_hash") @db.VarChar(255)
+  lastLoginIp              String?                @map("last_login_ip") @db.Inet
+  isLocked                 Boolean                @default(false) @map("is_locked")
+  isActive                 Boolean                @default(true) @map("is_active")
+  createdAt                DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  deletionReason           String?                @map("deletion_reason") @db.VarChar(500)
+  passwordResetExpires     DateTime?              @map("password_reset_expires") @db.Timestamptz(6)
+  passwordResetToken       String?                @map("password_reset_token") @db.VarChar(100)
+  mustChangeEmail          Boolean                @default(false) @map("must_change_email")
+  mustChangePassword       Boolean                @default(false) @map("must_change_password")
+  statusReason             String?                @map("status_reason")
   assetLogs                AssetLog[]
   auditLogs                AuditLog[]
   budgetChangeRequests     BudgetChangeRequest[]
-  contractVersionsCreated  ContractVersion[]     @relation("ContractVersionCreator")
+  contractVersionsCreated  ContractVersion[]      @relation("ContractVersionCreator")
   dailyLogs                DailyLog[]
-  uploadedDocumentVersions DocumentVersion[]     @relation("DocumentVersionUploader")
-  uploadedDocuments        Document[]            @relation("DocumentUploader")
-  issuesAssigned           Issue[]               @relation("AssignedTo")
-  issuesReported           Issue[]               @relation("ReportedBy")
+  uploadedDocumentVersions DocumentVersion[]      @relation("DocumentVersionUploader")
+  uploadedDocuments        Document[]             @relation("DocumentUploader")
+  issuesAssigned           Issue[]                @relation("AssignedTo")
+  issuesReported           Issue[]                @relation("ReportedBy")
   procurementRequests      ProcurementRequest[]
-  managedProjects          Project[]             @relation("ProjectManager")
-  supervisedProjects       Project[]             @relation("ProjectFieldSupervisor")
-  requisitionsReviewed     Requisition[]         @relation("RequisitionsReviewed")
-  requisitionsSubmitted    Requisition[]         @relation("RequisitionsSubmitted")
+  managedProjects          Project[]              @relation("ProjectManager")
+  supervisedProjects       Project[]              @relation("ProjectFieldSupervisor")
+  requisitionsReviewed     Requisition[]          @relation("RequisitionsReviewed")
+  requisitionsSubmitted    Requisition[]          @relation("RequisitionsSubmitted")
   safetyIncidents          SafetyIncident[]
   transactions             Transaction[]
-  whistleblowerAssigned    WhistleblowerReport[] @relation("AssignedTo")
-  whistleblowerReported    WhistleblowerReport[] @relation("Reporter")
+  whistleblowerAssigned    WhistleblowerReport[]  @relation("AssignedTo")
+  whistleblowerReported    WhistleblowerReport[]  @relation("Reporter")
+  inventoryLogs            InventoryLog[]
+  replenishmentRequests    ReplenishmentRequest[]
 
   @@map("users")
 }
 
 model Project {
-  id                   Int                   @id @default(autoincrement())
-  code                 String                @unique @db.VarChar(20)
-  name                 String                @db.VarChar(255)
-  managerId            Int?                  @map("manager_id")
-  fieldSupervisorId    Int?                  @map("field_supervisor_id")
-  contractValue        Decimal?              @map("contract_value") @db.Decimal(18, 2)
-  budgetTotal          Decimal?              @map("budget_total") @db.Decimal(18, 2)
-  budgetSpent          Decimal?              @default(0) @map("budget_spent") @db.Decimal(18, 2)
-  startDate            DateTime?             @map("start_date") @db.Date
-  endDate              DateTime?             @map("end_date") @db.Date
-  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
-  client               String?               @db.VarChar(255)
-  lat                  Decimal?              @db.Decimal(10, 8)
-  lng                  Decimal?              @db.Decimal(11, 8)
-  projectType          ProjectTypeEnum?      @map("project_type")
-  radius               Int?                  @default(500)
-  suspensionReason     String?               @map("suspension_reason")
-  status               String                @default("planning") @db.VarChar(20)
+  id                   Int                    @id @default(autoincrement())
+  code                 String                 @unique @db.VarChar(20)
+  name                 String                 @db.VarChar(255)
+  managerId            Int?                   @map("manager_id")
+  fieldSupervisorId    Int?                   @map("field_supervisor_id")
+  contractValue        Decimal?               @map("contract_value") @db.Decimal(18, 2)
+  budgetTotal          Decimal?               @map("budget_total") @db.Decimal(18, 2)
+  budgetSpent          Decimal?               @default(0) @map("budget_spent") @db.Decimal(18, 2)
+  startDate            DateTime?              @map("start_date") @db.Date
+  endDate              DateTime?              @map("end_date") @db.Date
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client               String?                @db.VarChar(255)
+  lat                  Decimal?               @db.Decimal(10, 8)
+  lng                  Decimal?               @db.Decimal(11, 8)
+  projectType          ProjectTypeEnum?       @map("project_type")
+  radius               Int?                   @default(500)
+  suspensionReason     String?                @map("suspension_reason")
+  status               String                 @default("planning") @db.VarChar(20)
   assetLogs            AssetLog[]
   assets               Asset[]
   budgetChangeRequests BudgetChangeRequest[]
@@ -77,14 +79,17 @@ model Project {
   dailyLogs            DailyLog[]
   documents            Document[]
   issues               Issue[]
-  manager              User?                 @relation("ProjectManager", fields: [managerId], references: [id])
-  fieldSupervisor      User?                 @relation("ProjectFieldSupervisor", fields: [fieldSupervisorId], references: [id])
+  manager              User?                  @relation("ProjectManager", fields: [managerId], references: [id])
+  fieldSupervisor      User?                  @relation("ProjectFieldSupervisor", fields: [fieldSupervisorId], references: [id])
   requisitions         Requisition[]
   safetyIncidents      SafetyIncident[]
   tasks                Task[]
   transactions         Transaction[]
   whistleblowerReports WhistleblowerReport[]
   roadSpecification    RoadSpecification?
+  sectors              Sector[]
+  budgetControls       BudgetControl[]
+  replenishments       ReplenishmentRequest[]
 
   @@map("projects")
 }
@@ -453,6 +458,7 @@ model Document {
   originalName      String            @map("original_name") @db.VarChar(255)
   currentVersionUrl String            @map("current_version_url")
   status            String            @default("active") @db.VarChar(20)
+  documentType      String            @default("general") @map("document_type") @db.VarChar(50)
   contractValue     Decimal?          @map("contract_value") @db.Decimal(18, 2)
   projectId         Int               @map("project_id")
   uploadedById      Int               @map("uploaded_by_id")
@@ -614,21 +620,21 @@ model RoadSpecification {
 }
 
 model RoadLayer {
-  id             Int               @id @default(autoincrement())
-  specId         Int               @map("spec_id")
-  phaseNumber    Int               @map("phase_number")
-  phaseName      String            @map("phase_name") @db.VarChar(100)
-  materialType   String            @map("material_type") @db.VarChar(150)
-  unit           String            @db.VarChar(20)
-  quantityPerKm  Decimal           @map("quantity_per_km") @db.Decimal(14, 3)
-  totalQuantity  Decimal           @map("total_quantity") @db.Decimal(16, 3)
-  unitCostLow    Decimal           @map("unit_cost_low") @db.Decimal(18, 2)
-  unitCostHigh   Decimal           @map("unit_cost_high") @db.Decimal(18, 2)
-  totalCostLow   Decimal           @map("total_cost_low") @db.Decimal(20, 2)
-  totalCostHigh  Decimal           @map("total_cost_high") @db.Decimal(20, 2)
-  approved       Boolean           @default(true)
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  spec           RoadSpecification @relation(fields: [specId], references: [id], onDelete: Cascade)
+  id            Int               @id @default(autoincrement())
+  specId        Int               @map("spec_id")
+  phaseNumber   Int               @map("phase_number")
+  phaseName     String            @map("phase_name") @db.VarChar(100)
+  materialType  String            @map("material_type") @db.VarChar(150)
+  unit          String            @db.VarChar(20)
+  quantityPerKm Decimal           @map("quantity_per_km") @db.Decimal(14, 3)
+  totalQuantity Decimal           @map("total_quantity") @db.Decimal(16, 3)
+  unitCostLow   Decimal           @map("unit_cost_low") @db.Decimal(18, 2)
+  unitCostHigh  Decimal           @map("unit_cost_high") @db.Decimal(18, 2)
+  totalCostLow  Decimal           @map("total_cost_low") @db.Decimal(20, 2)
+  totalCostHigh Decimal           @map("total_cost_high") @db.Decimal(20, 2)
+  approved      Boolean           @default(true)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  spec          RoadSpecification @relation(fields: [specId], references: [id], onDelete: Cascade)
 
   @@index([specId])
   @@map("road_layers")
@@ -652,4 +658,97 @@ model RoadAccessory {
 
   @@index([specId])
   @@map("road_accessories")
+}
+
+// ============================================
+// LOGISTICS & BUDGET CONTROL MODELS 
+// ============================================
+
+model Sector {
+  id          Int         @id @default(autoincrement())
+  projectId   Int         @map("project_id")
+  name        String      @db.VarChar(255) // e.g., "Sector 1: Km 0-5"
+  description String?
+  startDate   DateTime?   @map("start_date") @db.Date
+  endDate     DateTime?   @map("end_date") @db.Date
+  status      String      @default("pending") @db.VarChar(50)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inventories Inventory[]
+
+  @@index([projectId])
+  @@map("sectors")
+}
+
+model BudgetControl {
+  id             Int      @id @default(autoincrement())
+  projectId      Int      @map("project_id")
+  phase          String?  @db.VarChar(100)
+  category       String   @db.VarChar(100) // e.g., "Aggregates", "Fuel"
+  allocatedLimit Decimal  @map("allocated_limit") @db.Decimal(18, 2)
+  spentAmount    Decimal  @default(0) @map("spent_amount") @db.Decimal(18, 2)
+  status         String   @default("pending_approval") @db.VarChar(20) // pending_approval, active, exhausted
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("budget_controls")
+}
+
+model Inventory {
+  id              Int            @id @default(autoincrement())
+  sectorId        Int            @map("sector_id")
+  materialName    String         @map("material_name") @db.VarChar(255)
+  category        String?        @db.VarChar(100)
+  unit            String         @db.VarChar(20)
+  quantityOnHand  Decimal        @default(0) @map("quantity_on_hand") @db.Decimal(18, 3)
+  lowThreshold    Decimal        @default(0) @map("low_threshold") @db.Decimal(18, 3)
+  lastRestockedAt DateTime?      @map("last_restocked_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sector          Sector         @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  logs            InventoryLog[]
+
+  @@unique([sectorId, materialName])
+  @@map("inventories")
+}
+
+model InventoryLog {
+  id          Int       @id @default(autoincrement())
+  inventoryId Int       @map("inventory_id")
+  userId      Int?      @map("user_id") // Equipment Coordinator (dist), Field Supervisor (cons)
+  type        String    @db.VarChar(20) // IN (distribution), OUT (consumption)
+  quantity    Decimal   @db.Decimal(18, 3)
+  reference   String?   @db.VarChar(255) // waybill, daily log ref
+  notes       String?
+  timestamp   DateTime  @default(now()) @db.Timestamptz(6)
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([inventoryId])
+  @@map("inventory_logs")
+}
+
+model ReplenishmentRequest {
+  id              Int      @id @default(autoincrement())
+  reqCode         String   @unique @map("req_code") @db.VarChar(20)
+  projectId       Int      @map("project_id")
+  sectorId        Int?     @map("sector_id")
+  materialName    String   @map("material_name") @db.VarChar(255)
+  quantityNeeded  Decimal  @map("quantity_needed") @db.Decimal(18, 3)
+  requestedBy     Int?     @map("requested_by") // Equipment Coordinator
+  status          String   @default("pending_finance") @db.VarChar(30) // pending_finance, pending_pm, approved, rejected, delivering, completed
+  estimatedCost   Decimal? @map("estimated_cost") @db.Decimal(18, 2)
+  notes           String?
+  financeComments String?  @map("finance_comments")
+  pmComments      String?  @map("pm_comments")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requester       User?    @relation(fields: [requestedBy], references: [id])
+
+  @@index([projectId])
+  @@map("replenishment_requests")
 }
