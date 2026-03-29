@@ -14,12 +14,19 @@ const emailService = require('../emails/email.service');
  * @param {Object} options - Pagination options
  * @returns {Promise<Object>} Paginated users list
  */
-async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', role, isLocked, search }) {
+async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', role, isLocked, search, unassigned }) {
   const skip = (page - 1) * limit;
   
   const where = {};
   if (role) where.role = role;
   if (isLocked !== undefined) where.isLocked = isLocked;
+  if (unassigned === true || unassigned === 'true') {
+    where.supervisedProjects = {
+      none: {
+        status: { in: ['planning', 'active', 'in_progress'] }
+      }
+    };
+  }
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },

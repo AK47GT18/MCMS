@@ -332,7 +332,7 @@ export const DrawerTemplates = {
 
             <!-- STEP 1: Basic Identity -->
             <div id="wizard-pane-1" class="wizard-pane active" style="animation: fadeIn 0.3s ease;">
-                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px; border-left: 4px solid var(--orange);">
+                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
                     <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Step 1: Project Identity</div>
                     <div style="font-size: 11px; color: var(--slate-500);">Core details and staffing</div>
                 </div>
@@ -385,7 +385,7 @@ export const DrawerTemplates = {
 
             <!-- STEP 2: Road Specification -->
             <div id="wizard-pane-2" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
-                <div style="background: var(--slate-100); padding: 12px; border-radius: 8px; border-left: 4px solid var(--orange); margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                <div style="background: var(--slate-100); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
                     <i class="fas fa-road" style="color: var(--orange); font-size: 20px;"></i>
                     <div>
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">RCMS Road Specification</div>
@@ -452,7 +452,7 @@ export const DrawerTemplates = {
 
             <!-- STEP 3: Accessories Checklist -->
             <div id="wizard-pane-3" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
-                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px; border-left: 4px solid var(--orange);">
+                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
                     <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Step 3: Road Accessories & Safety</div>
                     <div style="font-size: 11px; color: var(--slate-500);">Select additional features required for this specification.</div>
                 </div>

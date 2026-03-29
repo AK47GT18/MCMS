@@ -277,6 +277,7 @@ const paginationSchema = z.object({
   role: z.string().optional(),
   isLocked: z.coerce.boolean().optional(),
   search: z.string().optional(),
+  unassigned: z.coerce.boolean().optional(),
 });
 
 // ============================================

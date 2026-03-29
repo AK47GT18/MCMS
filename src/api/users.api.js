@@ -10,8 +10,7 @@ const users = {
    * Get all users with pagination
    */
   async getAll(params = {}) {
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = params;
-    const queryString = new URLSearchParams({ page, limit, sortBy, sortOrder }).toString();
+    const queryString = new URLSearchParams(params).toString();
     return await client.get(`/users?${queryString}`);
   },
 

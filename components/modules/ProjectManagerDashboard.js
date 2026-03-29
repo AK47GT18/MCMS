@@ -1615,18 +1615,23 @@ export class ProjectManagerDashboard {
         document.getElementById('summary_budget').textContent = `MWK ${new Intl.NumberFormat().format(budget || 0)}`;
     }
 
-    async fetchSupervisors() {
-        console.log('[DEBUG] ProjectManagerDashboard.fetchSupervisors() triggered - v2.1');
-        const select = document.getElementById('proj_supervisor');
+    async fetchSupervisors(selectId = 'proj_supervisor') {
+        const select = document.getElementById(selectId);
         if (!select) return;
 
         try {
-            const result = await users.getByRole('Field_Supervisor');
-            console.log('[DEBUG] fetchSupervisors result:', result);
-            const supervisors = Array.isArray(result) ? result : result.data || [];
+            select.innerHTML = '<option value="">Searching for supervisors...</option>';
+            // Fetch only unassigned field supervisors
+            const response = await users.getAll({ role: 'Field_Supervisor', unassigned: true });
+            const data = response.data || response;
+            const supervisors = Array.isArray(data) ? data : data.users || [];
 
-            select.innerHTML = '<option value="">Select Supervisor</option>' + 
-                supervisors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            if (supervisors.length > 0) {
+                select.innerHTML = '<option value="">Select Supervisor</option>' + 
+                    supervisors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            } else {
+                select.innerHTML = '<option value="">No unassigned supervisors available</option>';
+            }
             
         } catch (error) {
             console.error('[DEBUG] Error fetching supervisors:', error);
@@ -2800,26 +2805,7 @@ export class ProjectManagerDashboard {
             window.toast.show('Failed to submit log', 'error');
         }
     }
-    async fetchSupervisors() {
-        const select = document.getElementById('proj_supervisor');
-        if (!select) return;
-        
-        try {
-            select.innerHTML = '<option value="">Searching for supervisors...</option>';
-            const response = await users.getAll({ role: 'FIELD_SUPERVISOR' });
-            const supervisorList = response.data || response;
-            
-            if (supervisorList && supervisorList.length > 0) {
-                select.innerHTML = '<option value="">Select a Supervisor</option>' + 
-                    supervisorList.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-            } else {
-                select.innerHTML = '<option value="">No supervisors available</option>';
-            }
-        } catch (error) {
-            console.error('Error fetching supervisors:', error);
-            select.innerHTML = '<option value="">Error loading supervisors</option>';
-        }
-    }
+
 
     validateProjectForm() {
         const name = document.getElementById('proj_name')?.value;
