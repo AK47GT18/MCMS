@@ -25,34 +25,28 @@ export const NAV_ITEMS = {
         { 
             section: 'Strategic', 
             items: [
-                { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
-                { label: 'Analytics', icon: ICONS.projects, id: 'analytics' }
+                { label: 'Budget Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true }
             ]
         },
         { 
-            section: 'Operations', 
+            section: 'Resource Management', 
             items: [
-                { label: 'Transaction Entry', icon: ICONS.plus, id: 'transaction', action: 'drawer' },
-                { label: 'Approvals', icon: ICONS.check, id: 'approvals', badge: 5 },
-                { label: 'General Ledger', icon: ICONS.book, id: 'ledger' },
-                { label: 'Reconciliation', icon: ICONS.scale, id: 'reconciliation' }
-            ]
-        },
-        { 
-            section: 'Governance', 
-            items: [
-                { label: 'Budget Control', icon: ICONS.sliders, id: 'bcr' },
-                { label: 'Whistleblower Portal', icon: ICONS.shield, id: 'whistleblower', action: 'drawer', drawerId: 'whistleblowerPortal' },
-                { label: 'Audit Log', icon: ICONS.fingerprint, id: 'audit' },
+                { label: 'Resource Requests', icon: ICONS.check, id: 'approvals', badge: 5 },
                 { label: 'Contracts', icon: ICONS.contract, id: 'contracts' },
                 { label: 'Vendor Registry', icon: ICONS.store, id: 'vendors' }
             ]
         },
-         { 
-            section: 'Reporting', 
+        { 
+            section: 'Budget Control', 
             items: [
-                { label: 'Reports Generator', icon: ICONS.reports, id: 'reports' },
-                { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
+                { label: 'PM Uplift Requests', icon: ICONS.plus, id: 'bcr' }
+            ]
+        },
+        { 
+            section: 'Records', 
+            items: [
+                { label: 'Audit Log', icon: ICONS.fingerprint, id: 'audit' },
+                { label: 'Reports Generator', icon: ICONS.reports, id: 'reports' }
             ]
         }
     ],

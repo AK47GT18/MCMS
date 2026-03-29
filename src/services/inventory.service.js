@@ -186,8 +186,46 @@ async function triggerDepletionAlert(inventory, sector) {
   }
 }
 
+/**
+ * Get all inventory records for a project (across all its sectors)
+ * @param {number} projectId
+ */
+async function getByProject(projectId) {
+  const sectors = await prisma.sector.findMany({
+    where: { projectId },
+    include: {
+      inventories: {
+        include: {
+          logs: {
+            orderBy: { timestamp: 'desc' },
+            take: 5,
+            include: {
+              user: { select: { id: true, name: true, role: true } }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Flatten into a unified list with sector context
+  const inventory = [];
+  for (const sector of sectors) {
+    for (const inv of sector.inventories) {
+      inventory.push({
+        ...inv,
+        sectorName: sector.name,
+        sectorId: sector.id
+      });
+    }
+  }
+
+  return inventory;
+}
+
 module.exports = {
   getBySector,
+  getByProject,
   distribute,
   consume
 };

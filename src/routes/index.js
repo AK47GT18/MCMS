@@ -133,6 +133,9 @@ async function router(req, res) {
     if (action === 'budget' && method === 'GET') {
       return projectsController.getBudget(req, res, id);
     }
+    if (action === 'materials' && method === 'GET') {
+      return projectsController.getMaterials(req, res, id);
+    }
     if (action === 'tasks') {
       if (method === 'GET') return tasksController.getByProject(req, res, id);
       return methodNotAllowed(res, ['GET']);
@@ -375,6 +378,9 @@ async function router(req, res) {
     if (id === 'sector' && action && method === 'GET') {
       // url pattern: /inventory/sector/:sectorId => resource='inventory', id='sector', action=':sectorId'
       return inventoryController.getBySector(req, res, action);
+    }
+    if (id === 'project' && action && method === 'GET') {
+      return inventoryController.getByProject(req, res, action);
     }
     return methodNotAllowed(res, ['GET', 'POST']);
   }

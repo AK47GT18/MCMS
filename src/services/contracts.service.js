@@ -45,7 +45,22 @@ async function create(data, userId) {
     data,
     include: { project: { select: { id: true, name: true, manager: { select: { email: true } } } } },
   });
-  logger.info('Contract created', { contractId: contract.id, refCode: contract.refCode });
+  // Create Initial Version
+  const nextVersionNum = 1;
+  await prisma.contractVersion.create({
+    data: {
+      contractId: contract.id,
+      versionNumber: nextVersionNum,
+      refCode: contract.refCode,
+      title: contract.title,
+      value: contract.value,
+      status: contract.status,
+      changeNotes: 'Initial contract creation',
+      createdById: userId
+    }
+  });
+
+  logger.info('Contract created and version 1 stored', { contractId: contract.id, refCode: contract.refCode });
   
   if (userId) {
     await auditService.log(
@@ -73,7 +88,28 @@ async function update(id, data, userId) {
   if (!existing) throw new AppError('Contract not found', 404);
 
   const contract = await prisma.contract.update({ where: { id }, data });
-  logger.info('Contract updated', { contractId: id });
+  
+  // Create New Version
+  const latestVersion = await prisma.contractVersion.findFirst({
+    where: { contractId: id },
+    orderBy: { versionNumber: 'desc' }
+  });
+
+  const nextVersionNum = (latestVersion?.versionNumber || 0) + 1;
+  await prisma.contractVersion.create({
+    data: {
+      contractId: contract.id,
+      versionNumber: nextVersionNum,
+      refCode: contract.refCode,
+      title: contract.title,
+      value: contract.value,
+      status: contract.status,
+      changeNotes: data.changeNotes || `Contract details updated (v${nextVersionNum})`,
+      createdById: userId
+    }
+  });
+
+  logger.info('Contract updated and version record created', { contractId: id, version: nextVersionNum });
   
   if (userId) {
     await auditService.log(userId, 'UPDATE_CONTRACT', 'Contract', id, data);

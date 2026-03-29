@@ -197,6 +197,21 @@ class App {
                 this.pmModule = module;
             }
 
+            // Expose FM module globally for Finance Director contract creation
+            if (this.currentUser.role === 'Finance Director' || this.currentUser.role === 'Finance_Director') {
+                this.fmModule = module;
+            }
+
+            // Expose EC module globally for Equipment Coordinator distribution
+            if (this.currentUser.role === 'Equipment Coordinator' || this.currentUser.role === 'Equipment_Coordinator') {
+                this.ecModule = module;
+            }
+
+            // Expose FS module globally for Field Supervisor consumption
+            if (this.currentUser.role === 'Field Supervisor' || this.currentUser.role === 'Field_Supervisor') {
+                this.fsModule = module;
+            }
+
             // Expose CA module globally for document interactions
             if (this.currentUser.role === ROLES.CONTRACT_ADMIN || this.currentUser.role === 'Contract Administrator' || this.currentUser.role === 'Contract_Administrator') {
                 this.caModule = module;

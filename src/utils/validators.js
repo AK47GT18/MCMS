@@ -113,7 +113,9 @@ const createContractSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   status: z.enum(['active', 'draft', 'expired', 'cancelled']).optional(),
-  documentUrl: z.string().url().optional(),
+  documentUrl: z.string().optional(),
+  materialsList: z.string().optional(),
+  contractType: z.string().max(50).optional(),
 });
 
 const updateContractSchema = createContractSchema.partial();

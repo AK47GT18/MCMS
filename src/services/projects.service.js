@@ -463,6 +463,77 @@ async function getByManager(managerId) {
   });
 }
 
+/**
+ * Get all materials (layers + accessories) for a project's road specification 
+ * Used by Finance Director when creating contracts to see what materials are needed
+ * @param {number} projectId - Project ID
+ * @returns {Promise<Object>} Materials list from road spec
+ */
+async function getMaterials(projectId) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      budgetTotal: true,
+      roadSpecification: {
+        include: {
+          layers: { orderBy: { phaseNumber: 'asc' } },
+          accessories: true
+        }
+      }
+    }
+  });
+
+  if (!project) throw new AppError('Project not found', 404);
+  if (!project.roadSpecification) {
+    return { project: { id: project.id, code: project.code, name: project.name }, materials: [] };
+  }
+
+  const spec = project.roadSpecification;
+  
+  // Combine layers and accessories into a unified materials list
+  const materials = [];
+
+  for (const layer of spec.layers) {
+    materials.push({
+      id: layer.id,
+      type: 'layer',
+      name: layer.materialType,
+      phase: layer.phaseNumber,
+      quantity: Number(layer.totalQuantity),
+      unit: layer.unit,
+      unitCostLow: Number(layer.unitCostLow),
+      unitCostHigh: Number(layer.unitCostHigh),
+      totalCostLow: Number(layer.totalCostLow),
+      totalCostHigh: Number(layer.totalCostHigh),
+      approved: layer.approved
+    });
+  }
+
+  for (const acc of spec.accessories) {
+    materials.push({
+      id: acc.id,
+      type: 'accessory',
+      name: acc.itemName,
+      phase: null,
+      quantity: Number(acc.totalQuantity),
+      unit: acc.unit,
+      unitCostLow: Number(acc.unitCostLow),
+      unitCostHigh: Number(acc.unitCostHigh),
+      totalCostLow: Number(acc.totalCostLow),
+      totalCostHigh: Number(acc.totalCostHigh),
+      approved: acc.approved
+    });
+  }
+
+  return {
+    project: { id: project.id, code: project.code, name: project.name, budgetTotal: Number(project.budgetTotal) },
+    materials
+  };
+}
+
 module.exports = {
   getAll,
   getById,
@@ -473,4 +544,5 @@ module.exports = {
   getBudgetSummary,
   addToSpent,
   getByManager,
+  getMaterials,
 };

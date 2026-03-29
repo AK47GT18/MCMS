@@ -84,4 +84,15 @@ const getBudget = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, getBudget };
+const getMaterials = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const projectId = validateId(id, res);
+  if (!projectId) return;
+  
+  const result = await projectsService.getMaterials(projectId);
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, update, remove, getBudget, getMaterials };

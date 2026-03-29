@@ -50,8 +50,22 @@ const consume = asyncHandler(async (req, res) => {
   response.success(res, result);
 });
 
+/**
+ * Get inventory for a specific project (across all sectors)
+ */
+const getByProject = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  if (!id) return response.badRequest(res, 'Project ID is required');
+
+  const inventory = await inventoryService.getByProject(parseInt(id, 10));
+  response.success(res, inventory);
+});
+
 module.exports = {
   getBySector,
+  getByProject,
   distribute,
   consume
 };

@@ -52,7 +52,7 @@ async function documentRoutes(req, res) {
 
     // POST /api/v1/documents (New Upload)
     if (url === '/api/v1/documents' && method === 'POST') {
-      await authorize('Contract_Administrator', 'Project_Manager')(req, res, async () => {
+      await authorize('Contract_Administrator', 'Project_Manager', 'Finance_Director')(req, res, async () => {
         upload.single('file')(req, res, async (err) => {
           if (err) return response.error(res, err.message, 400);
           try {

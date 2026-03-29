@@ -2693,32 +2693,74 @@ Contract Admin</textarea>
     `,
 
     newContract: `
-        <div class="drawer-section" style="padding: 24px;">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Contract Title</label>
-                <input type="text" id="cnt-title" class="form-input" placeholder="e.g., Cement Supply Agreement">
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Create Vendor Contract</div>
+                <div style="font-size: 11px; color: var(--slate-500);">Select a project, choose materials, and assign a vendor</div>
             </div>
+
+            <!-- Step 1: Select Project -->
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Contract Type</label>
-                <select id="cnt-type" class="form-input">
-                    <option value="service">Service Agreement</option>
-                    <option value="supply">Supply Contract</option>
-                    <option value="employment">Employment Contract</option>
-                    <option value="lease">Lease Agreement</option>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
+                <select id="contract_project" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;"
+                    onchange="window.app.fmModule?.onContractProjectSelected(this.value)">
+                    <option value="">Loading projects...</option>
                 </select>
             </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Expiry Date</label>
-                <input type="date" id="cnt-expiry" class="form-input">
+
+            <!-- Step 2: Materials (dynamically populated) -->
+            <div id="contract-materials-section" style="display: none; margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Select Materials for This Contract *</label>
+                <div id="contract-materials-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px; padding: 8px;"></div>
+                <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">Check the materials this vendor will supply</div>
             </div>
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Document Upload (PDF)</label>
-                <div style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 32px; text-align: center; color: var(--slate-500); background: var(--slate-50);">
-                    <i class="fas fa-file-pdf" style="font-size: 32px; margin-bottom: 8px;"></i>
-                    <p>Selection required</p>
+
+            <!-- Vendor -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name *</label>
+                <input type="text" id="contract_vendor" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Malawi Cement Ltd">
+            </div>
+
+            <!-- Contract Title -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
+                <input type="text" id="contract_title" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
+            </div>
+
+            <!-- Contract Value -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
+                <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
+            </div>
+
+            <!-- Dates -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
+                    <input type="date" id="contract_start" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
+                </div>
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
+                    <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
                 </div>
             </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleContractUpload()">Upload & Register Contract</button>
+            
+            <!-- Contract Document -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Document (PDF/DOC) *</label>
+                <div id="contract-drop-zone" style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 24px; text-align: center; color: var(--slate-400); background: var(--slate-50); cursor: pointer; transition: all 0.2s ease;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 8px; color: var(--slate-400);"></i>
+                    <div id="contract-file-status" style="font-size: 12px; font-weight: 600;">Drag and drop file here or <span style="color: var(--orange);">browse</span></div>
+                    <div style="font-size: 10px; margin-top: 4px;">PDF or Word documents (Max 10MB)</div>
+                    <input type="file" id="contract_document" accept=".pdf,.doc,.docx" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px; font-weight: 700; background-color: var(--orange); border-color: var(--orange);"
+                onclick="window.app.fmModule?.submitContract()">
+                <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Create Contract
+            </button>
         </div>
     `,
     completeMaintenance: (assetId) => `
@@ -2733,6 +2775,148 @@ Contract Admin</textarea>
                 <input type="number" id="maint-cost" class="form-input" style="width: 100%;" placeholder="0.00">
             </div>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
+        </div>
+    `,
+    initiateBCR: `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project *</label>
+                <select id="bcr_project" class="form-input" style="width: 100%;">
+                    <option value="1">CEN-01 Unilia Library</option>
+                    <option value="2">MZ-05 Mzimba Clinic</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Current Balance (MWK)</label>
+                <input type="text" class="form-input" value="16,000,000" disabled style="background: var(--slate-50);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Required Uplift Amount (MWK) *</label>
+                <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0">
+                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Amount to add to current project budget</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Justification / Reason *</label>
+                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices or Scope creep in foundation work..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">
+                Send Request to PM
+            </button>
+        </div>
+    `,
+    requisitionReview: (reqId) => `
+        <div class="drawer-section">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                   <h3 style="font-size: 18px; font-weight: 700;">Review Requisition: ${reqId}</h3>
+                   <div style="font-size: 12px; color: var(--slate-500);">Forwarded by Equipment Coordinator (Low Stock)</div>
+                </div>
+                <span class="status locked" style="background: var(--orange-light); color: var(--orange);">EC OUT OF STOCK</span>
+            </div>
+
+            <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--slate-200);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Project</span>
+                    <span style="font-size: 13px; font-weight: 700;">CEN-01 Unilia</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Material Requested</span>
+                    <span style="font-size: 13px; font-weight: 700; text-align: right;">Bitumen (G-Grade)<br>20 Drums</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--slate-300); padding-top: 12px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Estimated Value</span>
+                    <span style="font-size: 15px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono';">8,500,000 MWK</span>
+                </div>
+            </div>
+
+            <div style="padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--emerald-light); background: #f0fdf4;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--emerald); margin-bottom: 4px;">Budget Impact Check</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 13px; color: var(--slate-600);">Project Remaining Balance</span>
+                    <span style="font-size: 14px; font-weight: 800; color: var(--emerald);">350,000,000 MWK</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Approval/Rejection Note *</label>
+                <textarea id="requisition_note" class="form-input" rows="3" style="width: 100%; border-radius: 8px; border-color: var(--slate-300);" placeholder="Provide reasoning for this decision..."></textarea>
+                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">This description will be emailed to the Field Supervisor and EC.</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button class="btn btn-secondary" style="width: 100%; justify-content: center; height: 44px; font-weight: 600;" 
+                    onclick="window.app.fmModule?.handleRequisitionAction('${reqId}', 'rejected')">
+                    Decline
+                </button>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 44px; font-weight: 700; background: var(--emerald); border-color: var(--emerald);" 
+                    onclick="window.app.fmModule?.handleRequisitionAction('${reqId}', 'approved')">
+                    Approve Procurement
+                </button>
+            </div>
+        </div>
+    `,
+    reportGenerator: `
+        <div class="drawer-section">
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--slate-900);">Generate System Report</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Select parameters to generate detailed project or financial intelligence.</p>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Report Type *</label>
+                <select id="report_type" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px;">
+                    <option value="pnl">Project Profitability (P&L)</option>
+                    <option value="bva">Budget vs Actual (BvA) - Material Usage</option>
+                    <option value="vendor">Vendor Compliance & Price Variance</option>
+                    <option value="audit">Strategic Master Audit Log</option>
+                    <option value="inventory">Fleet & Asset Utilization</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project Context</label>
+                <select id="report_project" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px;">
+                    <option value="all">Global (All Projects)</option>
+                    <option value="1">CEN-01 Unilia Library</option>
+                    <option value="2">MZ-05 Mzimba Clinic</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
+                    <input type="date" id="report_start" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px;" value="2026-03-01">
+                </div>
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
+                    <input type="date" id="report_end" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px;" value="2026-03-31">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Output Format</label>
+                <div style="display: flex; gap: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="radio" name="report_fmt" value="pdf" checked style="accent-color: var(--orange);"> <i class="fas fa-file-pdf" style="color: var(--red);"></i> PDF
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="radio" name="report_fmt" value="xlsx" style="accent-color: var(--orange);"> <i class="fas fa-file-excel" style="color: var(--emerald);"></i> Excel
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="radio" name="report_fmt" value="json" style="accent-color: var(--orange);"> <i class="fas fa-code" style="color: var(--blue);"></i> API Source
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 50px; font-size: 15px; font-weight: 800; background: var(--slate-900); border-color: var(--slate-900);" 
+                onclick="window.app.fmModule?.handleGenerateReport()">
+                <i class="fas fa-bolt" style="margin-right: 10px; color: var(--orange);"></i> Generate Detailed Intel
+            </button>
         </div>
     `
 };

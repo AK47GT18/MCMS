@@ -38,7 +38,7 @@ const getById = asyncHandler(async (req, res, id) => {
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Contract_Administrator')) return;
+  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
   
   const body = await parseBody(req);
   const data = validateBody(body, createContractSchema, res);
