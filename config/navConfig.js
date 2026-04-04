@@ -90,11 +90,17 @@ export const NAV_ITEMS = {
             section: 'Field Operations',
             items: [
                 { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
+                { label: 'Site Logistics', icon: '<i class="fas fa-truck-ramp-box"></i>', id: 'logistics', badge: 2 },
                 { label: 'Tasks', icon: '<i class="fas fa-list-check"></i>', id: 'tasks' },
                 { label: 'Execution Schedule', icon: '<i class="fas fa-stream"></i>', id: 'gantt' },
-                { label: 'Daily Reports', icon: '<i class="fas fa-camera"></i>', id: 'reports', action: 'drawer', drawerId: 'dailyReport' }, 
-                { label: 'Equipment', icon: '<i class="fas fa-truck-moving"></i>', id: 'equipment' },
-                { label: 'Report Safety Incident', icon: '<i class="fas fa-helmet-safety"></i>', id: 'safety_incident', action: 'drawer', drawerId: 'safetyIncident' }
+                { label: 'Equipment', icon: '<i class="fas fa-truck-moving"></i>', id: 'equipment' }
+            ]
+        },
+        {
+            section: 'Reporting',
+            items: [
+                { label: 'Daily Logs', icon: '<i class="fas fa-camera"></i>', id: 'reports', action: 'drawer', drawerId: 'dailyReport' }, 
+                { label: 'Safety Incident', icon: '<i class="fas fa-helmet-safety"></i>', id: 'safety_incident', action: 'drawer', drawerId: 'safetyIncident' }
             ]
         }
     ],
@@ -124,26 +130,27 @@ export const NAV_ITEMS = {
     ],
     [ROLES.EQUIPMENT_COORDINATOR]: [
         {
-            section: 'Fleet Management',
+            section: 'Resource Operations',
             items: [
                 { label: 'Dashboard', icon: '<i class="fas fa-chart-simple"></i>', id: 'dashboard', active: true },
-                { label: 'Asset Registry', icon: '<i class="fas fa-list"></i>', id: 'registry' },
-                { label: 'Asset Log', icon: '<i class="fas fa-clipboard-list"></i>', id: 'tracking' },
-                { label: 'Check-Out Asset', icon: '<i class="fas fa-right-from-bracket"></i>', id: 'checkout', action: 'drawer', drawerId: 'assignEquipment' }
+                { label: 'Requisition Hub', icon: '<i class="fas fa-clipboard-list"></i>', id: 'requests', badge: 5 },
+                { label: 'Material Inventory', icon: '<i class="fas fa-dolly"></i>', id: 'inventory' },
+                { label: 'Resource Assignment', icon: '<i class="fas fa-key"></i>', id: 'assignment', action: 'drawer', drawerId: 'assignResource' },
+                { label: 'Asset Registry', icon: '<i class="fas fa-truck-pickup"></i>', id: 'registry' }
             ]
         },
         {
-            section: 'Maintenance',
+            section: 'Logistics Control',
             items: [
-                 { label: 'Service Schedule', icon: '<i class="fas fa-wrench"></i>', id: 'maintenance', badge: 2 },
-                 { label: 'Repair Costs', icon: '<i class="fas fa-coins"></i>', id: 'costs' }
+                { label: 'Distribution Log', icon: '<i class="fas fa-route"></i>', id: 'distribution' },
+                { label: 'Service Schedule', icon: '<i class="fas fa-wrench"></i>', id: 'maintenance', badge: 2 }
             ]
         },
         {
              section: 'Reporting',
              items: [
-                 { label: 'Utilization Reports', icon: '<i class="fas fa-chart-pie"></i>', id: 'utilization' },
-                 { label: 'Operator Logs', icon: '<i class="fas fa-id-card"></i>', id: 'operators' },
+                 { label: 'Utilization Reports', icon: '<i class="fas fa-file-contract"></i>', id: 'utilization' },
+                 { label: 'Operator Logs', icon: '<i class="fas fa-user-gear"></i>', id: 'operators' },
                  { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
              ]
         }

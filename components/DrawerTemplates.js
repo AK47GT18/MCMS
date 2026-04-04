@@ -2807,6 +2807,201 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">
+        </div>
+    `,
+
+    suspendProject: `
+        <div class="drawer-section">
+            <input type="hidden" id="suspend_project_id">
+            <div style="background:var(--orange-light); border:1px solid var(--orange); color:var(--orange-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;">
+                <i class="fas fa-exclamation-triangle"></i> This will halt all activities. Project Manager will be notified.
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; background:var(--slate-50);" readonly>
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">Reason for Suspension (Required)</label>
+                <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%;" placeholder="e.g. Budget overflow, safety violation, client request..."></textarea>
+            </div>
+            <button class="btn btn-secondary" style="width:100%; justify-content:center; color:var(--orange); border-color:var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSuspendProject()">Confirm Suspension</button>
+        </div>
+    `,
+
+    editProject: `
+        <div class="drawer-section" style="padding: 24px;">
+            <input type="hidden" id="edit_proj_id">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="edit_proj_name" class="form-input" style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Client / Agency</label>
+                <input type="text" id="edit_proj_client" class="form-input" style="width: 100%;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Budget (MWK)</label>
+                    <input type="number" id="edit_proj_budget" class="form-input" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="edit_proj_status" class="form-input" style="width: 100%;">
+                        <option value="planning">Planning</option>
+                        <option value="active">Active</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="edit_proj_start" class="form-input" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Target Completion</label>
+                    <input type="date" id="edit_proj_end" class="form-input" style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Designated Supervisor</label>
+                <select id="edit_proj_supervisor" class="form-input" style="width: 100%;">
+                    <option value="">Loading supervisors...</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Site Location (Geofence)</label>
+                <div id="edit-project-map" style="height: 200px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--slate-200);"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--slate-500);">
+                    <span>Lat: <span id="edit_proj_lat">--</span></span>
+                    <span>Lng: <span id="edit_proj_lng">--</span></span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project Master</button>
+        </div>
+    `,
+
+    newContract: `
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Create Vendor Contract</div>
+                <div style="font-size: 11px; color: var(--slate-500);">Select a project, choose materials, and assign a vendor</div>
+            </div>
+
+            <!-- Step 1: Select Project -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
+                <select id="contract_project" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;"
+                    onchange="window.app.fmModule?.onContractProjectSelected(this.value)">
+                    <option value="">Loading projects...</option>
+                </select>
+            </div>
+
+            <!-- Step 2: Materials (dynamically populated) -->
+            <div id="contract-materials-section" style="display: none; margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Select Materials for This Contract *</label>
+                <div id="contract-materials-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px; padding: 8px;"></div>
+                <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">Check the materials this vendor will supply</div>
+            </div>
+
+            <!-- Vendor -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name *</label>
+                <input type="text" id="contract_vendor" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Malawi Cement Ltd">
+            </div>
+
+            <!-- Contract Title -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
+                <input type="text" id="contract_title" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
+            </div>
+
+            <!-- Contract Value -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
+                <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
+            </div>
+
+            <!-- Dates -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
+                    <input type="date" id="contract_start" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
+                </div>
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
+                    <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
+                </div>
+            </div>
+            
+            <!-- Contract Document -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Document (PDF/DOC) *</label>
+                <div id="contract-drop-zone" style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 24px; text-align: center; color: var(--slate-400); background: var(--slate-50); cursor: pointer; transition: all 0.2s ease;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 8px; color: var(--slate-400);"></i>
+                    <div id="contract-file-status" style="font-size: 12px; font-weight: 600;">Drag and drop file here or <span style="color: var(--orange);">browse</span></div>
+                    <div style="font-size: 10px; margin-top: 4px;">PDF or Word documents (Max 10MB)</div>
+                    <input type="file" id="contract_document" accept=".pdf,.doc,.docx" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px; font-weight: 700; background-color: var(--orange); border-color: var(--orange);"
+                onclick="window.app.fmModule?.submitContract()">
+                <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Create Contract
+            </button>
+        </div>
+    `,
+    completeMaintenance: (assetId) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Maintenance Performed</label>
+                <textarea id="maint-summary" class="form-input" rows="3" style="width: 100%;" placeholder="Summary of work..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Cost (MWK)</label>
+                <input type="number" id="maint-cost" class="form-input" style="width: 100%;" placeholder="0.00">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
+        </div>
+    `,
+    initiateBCR: `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project *</label>
+                <select id="bcr_project" class="form-input" style="width: 100%;">
+                    <option value="1">CEN-01 Unilia Library</option>
+                    <option value="2">MZ-05 Mzimba Clinic</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Current Balance (MWK)</label>
+                <input type="text" class="form-input" value="16,000,000" disabled style="background: var(--slate-50);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Required Uplift Amount (MWK) *</label>
+                <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0">
+                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Amount to add to current project budget</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Justification / Reason *</label>
+                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices or Scope creep in foundation work..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">
                 Send Request to PM
             </button>
         </div>
@@ -2918,6 +3113,295 @@ Contract Admin</textarea>
                 <i class="fas fa-bolt" style="margin-right: 10px; color: var(--orange);"></i> Generate Detailed Intel
             </button>
         </div>
+    `,
+    materialDistribution: (item) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Issue Material to Project</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming the "Burn" (distribution) of consumable resources from the central store.</p>
+
+            <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--slate-200);">
+                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Item to Issue</div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--slate-900); margin-top: 4px;">${item.name}</div>
+                <div style="font-size: 12px; color: var(--slate-500);">Available Stock: ${item.stock} ${item.unit}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Destination Project *</label>
+                <select id="dist_project" class="form-input" style="width: 100%;">
+                    <option value="1">CEN-01 Unilia Library</option>
+                    <option value="2">MZ-05 Mzimba Clinic</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Quantity to Issue (${item.unit}) *</label>
+                <input type="number" id="dist_qty" class="form-input" style="width: 100%; border-color: var(--blue);" value="10">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Authorized By (Operator/FS Name)</label>
+                <input type="text" id="dist_auth" class="form-input" style="width: 100%;" placeholder="e.g. Kondwani Jere">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--blue); border-color: var(--blue);" onclick="window.app.ecModule?.handleIssueMaterial('${item.id}')">
+                Complete Distribution
+            </button>
+        </div>
+    `,
+    assignResource: `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Logistics Dispatch (Assets & Materials)</h3>
+            
+            <!-- Type Selection -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="text-transform: uppercase; font-size: 11px;">1. Resource Category</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn btn-secondary active-resource" id="btn_machinery" onclick="window.app.ecModule?.toggleResourceType('machinery', this)">Machinery</button>
+                    <button class="btn btn-secondary" id="btn_materials" onclick="window.app.ecModule?.toggleResourceType('materials', this)">Materials</button>
+                </div>
+            </div>
+
+            <!-- Destinations & Personnel -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Project *</label>
+                    <select id="assign_project" class="form-input" style="width: 100%;">
+                        <option value="CEN-01">CEN-01 Unilia</option>
+                        <option value="MZ-05">MZ-05 Mzimba</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Active Phase *</label>
+                    <select id="assign_phase" class="form-input" style="width: 100%;" onchange="window.app.ecModule?.updateMaterialSheet(this.value)">
+                        <option value="">Select Phase</option>
+                        <option value="1">Phase 1: Site Clearance</option>
+                        <option value="2">Phase 2: Earthworks</option>
+                        <option value="3">Phase 3: Sub-base</option>
+                        <option value="4">Phase 4: Base Course</option>
+                        <option value="5">Phase 5: Drainage</option>
+                        <option value="6">Phase 6: Surfacing</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Field Supervisor (Recipient) *</label>
+                <select id="assign_fs" class="form-input" style="width: 100%;">
+                    <option value="Kondwani Jere">Kondwani Jere (CEN-01)</option>
+                    <option value="Lazarous Phiri">Lazarous Phiri (MZ-05)</option>
+                    <option value="Steve Banda">Steve Banda (Floating)</option>
+                </select>
+            </div>
+
+            <!-- Predefined Material Sheet (Dynamic) -->
+            <div id="material_sheet_view" style="display: none; margin-bottom: 24px;">
+                <label class="form-label" style="text-transform: uppercase; font-size: 11px; color: var(--blue);">2. Predefined Material Sheet</label>
+                <div id="material_sheet_container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400); border: 1px dashed var(--slate-200); border-radius: 8px;">
+                        Please select a project phase to load requirements...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Machinery Selection -->
+            <div id="machinery_view" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Select Heavy Asset *</label>
+                    <select id="assign_asset" class="form-input" style="width: 100%;">
+                        <option value="eqp-045">CAT 320D Excavator</option>
+                        <option value="eqp-012">Tata Tipper 10T</option>
+                        <option value="eqp-009">JCB Backhoe</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stationing Mapping -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Working Section / Station (CH) *</label>
+                <input type="text" id="assign_section" class="form-input" style="width: 100%; font-family: 'JetBrains Mono';" placeholder="e.g. KM 12+500">
+                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Precise location for resource mapping</div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
+                onclick="window.app.ecModule?.handleExecuteDispatch()">
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Execute Dispatch & Notify FS
+            </button>
+        </div>
+    `,
+    receiveProcurement: (item) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Acknowledge Material Receipt</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming physical arrival of goods from Finance-approved procurement (Stefan Mwale).</p>
+
+            <div style="background: var(--slate-50); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Item Purchased</span>
+                    <span style="font-size: 13px; font-weight: 700;">${item.name}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Ordered Qty</span>
+                    <span style="font-size: 13px; font-weight: 700; color: var(--blue);">${item.qty} ${item.unit}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Vendor</span>
+                    <span style="font-size: 13px; font-weight: 700; color: var(--slate-700);">${item.vendor}</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Quantity Received *</label>
+                <input type="number" id="receive_qty" class="form-input" style="width: 100%; font-weight: 700;" value="${item.qty}">
+                <div style="font-size: 11px; margin-top: 4px; color: var(--orange-dark);">Note any shortfalls in the description below</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Store Verification Note</label>
+                <textarea id="receive_note" class="form-input" rows="3" style="width: 100%;" placeholder="e.g. All drums sealed and accounted for..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
+                onclick="window.app.ecModule?.handleProcurementReceipt('${item.id}')">
+                Add to Stock Silo
+            </button>
+        </div>
+    `,
+    forwardProcurement: (req) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Forward to Finance (Stock-Out)</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">The current stock is insufficient. Forwarding this to the Finance Director (Stefan Mwale) for urgent procurement.</p>
+
+            <div style="background: var(--red-light); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--red-border);">
+                <div style="font-size: 11px; font-weight: 700; color: var(--red); text-transform: uppercase;">Missing Resource</div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--red); margin-top: 4px;">${req.item}</div>
+                <div style="font-size: 12px; color: var(--red);">Requested Qty: ${req.qty} ${req.unit} | Current Stock: 0</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Internal Note for Finance *</label>
+                <textarea id="forward_note" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Critical stock-out. Local suppliers have stock, but we need FM approval for Purchase Order..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.ecModule?.submitForwardToFinance('${req.id}')">
+                Push to Finance Dashboard
+            </button>
+        </div>
+    `,
+    requestNewAsset: `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">New Asset Procurement Request</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Requesting additional fleet or specialized equipment from Finance.</p>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Asset Category *</label>
+                <select id="req_asset_type" class="form-input" style="width: 100%;">
+                    <option value="Roller">Roller (Compaction)</option>
+                    <option value="Grader">Grader (Leveling)</option>
+                    <option value="Water Bowser">Water Bowser (Suppression)</option>
+                    <option value="Tipper">Tipper Truck (Logistics)</option>
+                    <option value="TLB">TLB (Excavation)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Destination Project *</label>
+                <select id="req_project" class="form-input" style="width: 100%;">
+                    <option value="CEN-01">CEN-01 Unilia</option>
+                    <option value="MZ-05">MZ-05 Mzimba</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Justification (Reason for Request) *</label>
+                <textarea id="req_reason" class="form-input" rows="5" style="width: 100%; border-color: var(--blue-border);" placeholder="Explain why this additional asset is required for the project stage..."></textarea>
+                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Stefan (FM) will review this for budget allocation.</div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--blue); border-color: var(--blue);" 
+                onclick="window.app.ecModule?.handleAssetProcurementRequest()">
+                <i class="fas fa-file-invoice-dollar" style="margin-right: 8px;"></i> Send Request to Finance
+            </button>
+        </div>
+    `,
+    requestResourceFS: `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Field Resource Requisition</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Requesting assets or materials from the Equipment Coordinator.</p>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Resource Category *</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn btn-secondary active-resource" id="fs_btn_machinery" onclick="window.app.fsModule?.toggleRequestType('machinery', this)">Machinery</button>
+                    <button class="btn btn-secondary" id="fs_btn_materials" onclick="window.app.fsModule?.toggleRequestType('materials', this)">Materials</button>
+                </div>
+            </div>
+
+            <div id="fs_machinery_req_view" style="margin-bottom: 20px;">
+                <label class="form-label">Required Machinery *</label>
+                <select id="fs_req_asset" class="form-input" style="width: 100%;">
+                    <option value="Roller">Roller (Compaction)</option>
+                    <option value="Grader">Grader (Leveling)</option>
+                    <option value="Water Bowser">Water Bowser (Suppression)</option>
+                    <option value="Tipper">Tipper Truck (Logistics)</option>
+                </select>
+            </div>
+
+            <div id="fs_material_req_view" style="display: none; margin-bottom: 20px;">
+                <label class="form-label">Required Material *</label>
+                <select id="fs_req_material" class="form-input" style="width: 100%;">
+                    <option value="Cement OPC">Cement OPC (Bags)</option>
+                    <option value="Bitumen G-Grade">Bitumen G-Grade (Drums)</option>
+                    <option value="Diesel Fuel">Diesel Fuel (Liters)</option>
+                </select>
+                <div style="margin-top: 12px;">
+                    <label class="form-label">Quantity *</label>
+                    <input type="number" id="fs_req_qty" class="form-input" style="width: 100%;" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Target Stationing (KM) *</label>
+                <input type="text" id="fs_req_section" class="form-input" style="width: 100%; font-family: 'JetBrains Mono';" placeholder="e.g. KM 12+500">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Priority</label>
+                <select id="fs_req_urgency" class="form-input" style="width: 100%;">
+                    <option value="normal">Normal (Scheduled)</option>
+                    <option value="urgent">Urgent (Stopper)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
+                onclick="window.app.fsModule?.handleSubmitRequisition()">
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Request to EC
+            </button>
+        </div>
+    `,
+    logMaterialBurn: (item) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Log Material Consumption (Burn)</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Recording use of project-owned inventory on site.</p>
+
+            <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Resource</div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--slate-900); margin-top: 4px;">${item.name}</div>
+                <div style="font-size: 12px; color: var(--slate-500);">Current Site Stock: ${item.qty} ${item.unit}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Quantity Consumed (${item.unit}) *</label>
+                <input type="number" id="burn_qty" class="form-input" style="width: 100%; border-color: var(--blue);" value="10">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Stationing / Section (CH) *</label>
+                <input type="text" id="burn_section" class="form-input" style="width: 100%; font-family: 'JetBrains Mono';" placeholder="e.g. KM 12+500">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
+                onclick="window.app.fsModule?.handleExecuteBurn('${item.name}')">
+                <i class="fas fa-fire" style="margin-right: 8px;"></i> Confirm Daily Burn
+            </button>
+        </div>
     `
 };
-
