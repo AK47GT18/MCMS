@@ -48,6 +48,7 @@ model User {
   whistleblowerReported    WhistleblowerReport[]  @relation("Reporter")
   inventoryLogs            InventoryLog[]
   replenishmentRequests    ReplenishmentRequest[]
+  notifications            Notification[]
 
   @@map("users")
 }
@@ -553,6 +554,7 @@ enum RequisitionStatusEnum {
   approved
   rejected
   fraud_flag
+  fulfilled
 
   @@map("requisition_status_enum")
 }
@@ -751,4 +753,25 @@ model ReplenishmentRequest {
 
   @@index([projectId])
   @@map("replenishment_requests")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  type      String   @db.VarChar(30)  // info, success, warning, error
+  icon      String   @db.VarChar(50)  // FontAwesome class
+  title     String   @db.VarChar(255)
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  link      String?  @db.VarChar(255) // optional nav target
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
 }

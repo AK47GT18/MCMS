@@ -45,7 +45,7 @@ const save = asyncHandler(async (req, res) => {
   if (!data) return;
 
   // The client passes the agreed approved budget (which could be the high-end or midpoint)
-  const approvedTotal = req.body.approvedTotal;
+  const approvedTotal = body.approvedTotal;
   if (!approvedTotal) {
     return response.error(res, 'approvedTotal is required', 400);
   }

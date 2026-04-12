@@ -1,112 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to MCMS</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-        }
-    </style>
-</head>
-
-<body style="margin: 0; padding: 0; background-color: #f8fafc; -webkit-font-smoothing: antialiased;">
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, sans-serif; -webkit-font-smoothing: antialiased;">
     <table role="presentation" style="width: 100%; border-collapse: collapse;">
         <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table role="presentation"
-                    style="width: 100%; max-width: 600px; border-collapse: separate; border-spacing: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
-
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 650px; border-collapse: separate; border-spacing: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0;">
+                    
                     <!-- Header -->
                     <tr>
-                        <td style="background: #0f172a; padding: 48px 0; text-align: center;">
-                            <div
-                                style="background-color: rgba(255, 255, 255, 0.1); width: 48px; height: 48px; border-radius: 8px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
-                                        stroke="white" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                    <path
-                                        d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
-                                        stroke="white" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <h1
-                                style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.025em;">
-                                Welcome to MCMS</h1>
+                        <td style="background: #ffffff; padding: 40px 0; text-align: center; border-bottom: 4px solid #f97415;">
+                            <div style="font-size: 56px; line-height: 1; margin-bottom: 12px;">🏗️</div>
+                            <h1 style="color: #0f1729; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Mkaka <span style="color: #f97415;">Construction</span></h1>
                         </td>
                     </tr>
 
                     <!-- Content -->
                     <tr>
-                        <td style="padding: 48px;">
-                            <p style="color: #475569; font-size: 15px; line-height: 1.5; margin: 0 0 24px;">
-                                Hello {{name}},
-                            </p>
-                            <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 32px;">
-                                Your account has been successfully created. You can now access the MCMS platform to
-                                manage construction projects and collaborate with your team.
-                            </p>
+                        <td style="padding: 48px; color: #334155; font-size: 15px; line-height: 1.6;">
+                            <h2 style="color: #0f1729; margin-top: 0; font-size: 20px;">Welcome to MCMS, {{name}}!</h2>
+                            <p style="margin-bottom: 25px;">Your account has been successfully created. You can now access the Mkaka Construction Management System (MCMS) platform to collaborate with your team.</p>
 
                             <!-- Account Details -->
-                            <div
-                                style="background-color: #f1f5f9; border-radius: 8px; padding: 24px; margin-bottom: 32px;">
-                                <div style="margin-bottom: 20px;">
-                                    <p
-                                        style="margin: 0 0 4px 0; color: #64748b; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">
-                                        Email Address</p>
-                                    <p style="margin: 0; color: #0f172a; font-size: 15px; font-weight: 500;">{{email}}
-                                    </p>
+                            <div style="background-color: #f8fafc; border-left: 4px solid #f97415; border-radius: 0 8px 8px 0; padding: 25px; margin-bottom: 35px;">
+                                <div style="margin-bottom: 15px;">
+                                    <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Email Address</p>
+                                    <p style="margin: 0; color: #0f1729; font-size: 15px; font-weight: 600;">{{email}}</p>
                                 </div>
                                 <div>
-                                    <p
-                                        style="margin: 0 0 4px 0; color: #64748b; font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">
-                                        Assigned Role</p>
-                                    <p style="margin: 0; color: #0f172a; font-size: 15px; font-weight: 500;">{{role}}
-                                    </p>
+                                    <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Assigned Role</p>
+                                    <p style="margin: 0; color: #0f1729; font-size: 15px; font-weight: 600;">{{role}}</p>
                                 </div>
                             </div>
 
                             <!-- Action Button -->
-                            <table role="presentation" style="width: 100%; margin: 0 0 32px;">
+                            <table role="presentation" style="width: 100%; margin: 0 0 35px;">
                                 <tr>
-                                    <td>
-                                        <a href="{{loginUrl}}"
-                                            style="background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 14px; display: inline-block;">
-                                            Login to MCMS
-                                        </a>
+                                    <td align="center">
+                                        <a href="{{loginUrl}}" style="background: #f97415; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">Login to Portal</a>
                                     </td>
                                 </tr>
                             </table>
 
                             <!-- Security Notice -->
-                            <div
-                                style="border-left: 3px solid #f59e0b; padding: 16px 24px; background-color: #fffbeb; border-radius: 4px;">
-                                <p style="margin: 0 0 8px; color: #92400e; font-size: 14px; font-weight: 600;">Security
-                                    Requirement</p>
-                                <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;">
-                                    For your protection, you will be prompted to update your initial email and password
-                                    immediately after your first login.
-                                </p>
+                            <div style="padding: 20px; background-color: #fffaf5; border: 1px solid #fed7aa; border-radius: 8px; display: flex; align-items: flex-start; gap: 10px;">
+                                <span style="font-size: 24px;">🔒</span>
+                                <div>
+                                    <p style="margin: 0 0 8px 0; color: #c2410c; font-size: 14px; font-weight: 700;">Security Requirement</p>
+                                    <p style="margin: 0; color: #c2410c; font-size: 14px; line-height: 1.5;">For your protection, you will be prompted to update your initial password immediately after your first login.</p>
+                                </div>
                             </div>
                         </td>
                     </tr>
 
                     <!-- Footer -->
                     <tr>
-                        <td
-                            style="background-color: #f8fafc; padding: 32px 48px; text-align: left; border-top: 1px solid #e2e8f0;">
-                            <p style="color: #64748b; font-size: 12px; margin: 0 0 4px; font-weight: 500;">
-                                MCMS Construction Management System
-                            </p>
-                            <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                                &copy; {{year}} MCMS. All rights reserved.
-                            </p>
+                        <td style="background-color: #f8fafc; padding: 32px 48px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="color: #64748b; font-size: 13px; margin: 0 0 6px; font-weight: 700; text-transform: uppercase;">MCMS Portal</p>
+                            <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; {{year}} Mkaka Construction. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -114,5 +64,4 @@
         </tr>
     </table>
 </body>
-
 </html>

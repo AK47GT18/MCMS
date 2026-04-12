@@ -3,6 +3,7 @@ import { NAV_ITEMS } from '../config/navConfig.js';
 import { DrawerTemplates } from '../components/DrawerTemplates.js';
 import { modal } from '../components/ui/ModalManager.js';
 import { toast } from '../components/ui/ToastManager.js';
+import notificationsApi from '../src/api/notifications.api.js';
 
 // Get current user dynamically (from main.js real auth or fallback to mock)
 const getCurrentUser = () => window.currentUser || mockUser;
@@ -20,12 +21,16 @@ export class AppLayout {
             [ROLES.MANAGING_DIRECTOR]: 'EXECUTIVE',
             [ROLES.SYSTEM_TECHNICIAN]: 'SYSTEM'
         };
+
+        // --- LIVE NOTIFICATION STATE ---
+        this.notifications = [];
+        this.unreadCount = 0;
+        this._wsListenerSetup = false;
     }
 
     render() {
         this.appContainer.innerHTML = '';
         const currentUser = getCurrentUser();
-        // Robust role matching: normalize current role to match config keys (spaces instead of underscores)
         const roleKey = currentUser.role ? currentUser.role.replace(/_/g, ' ') : '';
         const navSections = NAV_ITEMS[roleKey] || NAV_ITEMS[currentUser.role] || [];
         const allItems = navSections.flatMap(s => s.items);
@@ -34,7 +39,6 @@ export class AppLayout {
         const mobileNavHTML = this.generateMobileNav(allItems);
         const topBarHTML = this.generateTopBar();
 
-        // Using semantic classes from updated style.css
         this.appContainer.innerHTML = `
             ${sidebarHTML}
             <div class="app-main">
@@ -47,7 +51,174 @@ export class AppLayout {
         `;
 
         this.attachEventListeners();
+
+        // Load notifications from API
+        this._loadNotifications();
+        // Setup real-time listener
+        this._setupRealtimeNotifications();
     }
+
+    // =============================================
+    // NOTIFICATION DATA LAYER (API + WebSocket)
+    // =============================================
+
+    async _loadNotifications() {
+        try {
+            const result = await notificationsApi.getAll({ limit: 15 });
+            const data = result.data || result;
+
+            this.notifications = (data.notifications || []).map(n => ({
+                id: n.id,
+                type: n.type || 'info',
+                icon: n.icon || 'fa-bell',
+                title: n.title,
+                desc: n.message,
+                time: this._formatTime(n.createdAt),
+                isRead: n.isRead
+            }));
+            this.unreadCount = data.unreadCount || 0;
+
+            this._renderNotificationBadge();
+            this._renderNotificationList();
+        } catch (error) {
+            console.error('[Notifications] Failed to load:', error);
+            // Keep UI functional with empty state
+            this.notifications = [];
+            this.unreadCount = 0;
+            this._renderNotificationBadge();
+            this._renderNotificationList();
+        }
+    }
+
+    _setupRealtimeNotifications() {
+        if (this._wsListenerSetup) return;
+
+        const trySetup = () => {
+            if (window.realtime) {
+                window.realtime.on('NOTIFICATION', (data) => {
+                    console.log('[Notifications][WS] New notification:', data);
+
+                    // Prepend to local list
+                    this.notifications.unshift({
+                        id: data.id,
+                        type: data.type || 'info',
+                        icon: data.icon || 'fa-bell',
+                        title: data.title,
+                        desc: data.message,
+                        time: this._formatTime(data.createdAt || new Date()),
+                        isRead: false
+                    });
+
+                    this.unreadCount++;
+
+                    // Update UI
+                    this._renderNotificationBadge();
+                    this._renderNotificationList();
+
+                    // Show toast for the new notification
+                    if (window.toast) {
+                        window.toast.show(`${data.title}: ${data.message}`, data.type || 'info');
+                    }
+                });
+
+                this._wsListenerSetup = true;
+                console.log('[Notifications] Real-time listener active');
+            } else {
+                setTimeout(trySetup, 2000);
+            }
+        };
+
+        trySetup();
+    }
+
+    _formatTime(dateStr) {
+        if (!dateStr) return 'Just now';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+    }
+
+    _renderNotificationBadge() {
+        const badge = document.getElementById('notif-badge');
+        if (badge) {
+            if (this.unreadCount > 0) {
+                badge.textContent = this.unreadCount > 10 ? '10+' : this.unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+
+    _renderNotificationList() {
+        const list = document.getElementById('notification-list');
+        if (!list) return;
+
+        if (this.notifications.length === 0) {
+            list.innerHTML = `
+                <div style="padding: 32px 16px; text-align: center; color: var(--slate-400);">
+                    <i class="fas fa-bell-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600; font-size: 13px;">No notifications yet</div>
+                    <div style="font-size: 11px; margin-top: 4px;">You're all caught up!</div>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = this.notifications.map(n => `
+            <div class="notification-item ${n.isRead ? 'read' : ''}" data-notif-id="${n.id}" onclick="window.app.layout.handleNotificationClick(${n.id})" style="cursor:pointer; ${!n.isRead ? 'background: #f0f7ff;' : ''}">
+                <div class="notif-icon ${n.type}"><i class="fas ${n.icon}"></i></div>
+                <div class="notif-content">
+                    <div class="notif-title" style="${!n.isRead ? 'font-weight: 800;' : ''}">${n.title}</div>
+                    <div class="notif-desc">${n.desc}</div>
+                    <div class="notif-time">${n.time}</div>
+                </div>
+                ${!n.isRead ? '<div style="width:8px; height:8px; border-radius:50%; background: var(--blue); flex-shrink:0; margin-top: 6px;"></div>' : ''}
+            </div>
+        `).join('');
+    }
+
+    async handleNotificationClick(id) {
+        // Mark as read via API
+        try {
+            await notificationsApi.markRead(id);
+            const notif = this.notifications.find(n => n.id === id);
+            if (notif && !notif.isRead) {
+                notif.isRead = true;
+                this.unreadCount = Math.max(0, this.unreadCount - 1);
+                this._renderNotificationBadge();
+                this._renderNotificationList();
+            }
+        } catch (e) {
+            console.error('[Notifications] Mark read failed:', e);
+        }
+    }
+
+    async handleMarkAllRead() {
+        try {
+            await notificationsApi.markAllRead();
+            this.notifications.forEach(n => n.isRead = true);
+            this.unreadCount = 0;
+            this._renderNotificationBadge();
+            this._renderNotificationList();
+            window.toast?.show('All notifications marked as read.', 'success');
+        } catch (e) {
+            console.error('[Notifications] Mark all read failed:', e);
+        }
+    }
+
+    // =============================================
+    // LAYOUT GENERATION
+    // =============================================
 
     generateSidebar(sections) {
         const currentUser = getCurrentUser();
@@ -109,10 +280,8 @@ export class AppLayout {
 
     generateTopBar() {
         const currentUser = getCurrentUser();
-        // Generic Breadcrumb - Title is updated by main.js
-        const breadcrumbTitle = currentUser.role.toUpperCase();
-        
-        // Notifications & Alerts Logic
+
+        // Alerts strip (role-specific, can be API-driven later)
         let alertHTML = '';
         if (currentUser.role === 'Finance Director') {
              alertHTML = `
@@ -121,9 +290,6 @@ export class AppLayout {
                 </div>
              `;
         }
-
-        // Notification Badge Count
-        const notifCount = this.getNotificationCountForRole(currentUser.role);
 
         return `
             <header class="top-bar hidden-mobile">
@@ -137,20 +303,40 @@ export class AppLayout {
                     <div style="position: relative;">
                         <button id="notification-bell" class="btn btn-secondary" style="border: none; padding: 8px; position: relative;" onclick="window.app.layout.toggleNotifications(event)">
                             <i class="fas fa-bell" style="color: var(--slate-500); font-size: 16px;"></i>
-                            ${this.getNotificationBadgeHTML(notifCount)}
+                            <span id="notif-badge" style="
+                                position: absolute;
+                                top: 0;
+                                right: 0;
+                                background: var(--red);
+                                color: white;
+                                font-size: 10px;
+                                font-weight: 700;
+                                min-width: 16px;
+                                height: 16px;
+                                border-radius: 8px;
+                                display: none;
+                                align-items: center;
+                                justify-content: center;
+                                padding: 0 4px;
+                                border: 2px solid var(--white);
+                                transform: translate(25%, -25%);
+                            ">0</span>
                         </button>
                         
                         <!-- Dropdown -->
                         <div id="notification-dropdown" class="notification-dropdown">
                             <div class="notification-header">
-                                <span>Recent Notifications</span>
-                                <button class="view-all-btn">Mark read</button>
+                                <span>Notifications</span>
+                                <button class="view-all-btn" onclick="window.app.layout.handleMarkAllRead()">Mark all read</button>
                             </div>
-                            <div class="notification-list">
-                                ${this.getRecentNotificationsHTML()}
+                            <div class="notification-list" id="notification-list">
+                                <div style="padding: 24px; text-align: center; color: var(--slate-400);">
+                                    <i class="fas fa-circle-notch fa-spin" style="font-size: 16px;"></i>
+                                    <div style="font-size: 12px; margin-top: 8px;">Loading…</div>
+                                </div>
                             </div>
                             <div class="notification-footer">
-                                <button class="view-all-btn">View All History</button>
+                                <button class="view-all-btn" onclick="window.app.layout._loadNotifications()">Refresh</button>
                             </div>
                         </div>
                     </div>
@@ -167,72 +353,16 @@ export class AppLayout {
         return name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'UR';
     }
 
-    getNotificationCountForRole(role) {
-        if (role === 'Finance Director') return 12;
-        if (role === 'Project Manager') return 5;
-        if (role === 'Field Supervisor') return 2;
-        if (role === 'System Technician') return 4;
-        return 3;
-    }
-
-    getRecentNotificationsHTML() {
-        const currentUser = getCurrentUser();
-        const role = currentUser.role;
-        let notifications = [];
-
-        if (role === 'Finance Director') {
-            notifications = [
-                 { type: 'info', icon: 'fa-wrench', title: 'System Maintenance', desc: 'Scheduled maintenance for tomorrow at 02:00 AM.', time: '10 mins ago' },
-                 { type: 'success', icon: 'fa-check', title: 'Requisition Approved', desc: 'REQ-089 has been final approved.', time: '1 hour ago' },
-                 { type: 'warning', icon: 'fa-exclamation', title: 'Budget Alert', desc: 'Project CEN-01 is approaching 90% budget utilization.', time: '2 hours ago' },
-                 { type: 'info', icon: 'fa-comment', title: 'New Comment', desc: 'Sarah replied to your note on BCR-102.', time: '4 hours ago' }
-            ];
-        } else if (role === 'Project Manager') {
-            notifications = [
-                 { type: 'warning', icon: 'fa-clock', title: 'Schedule Slippage', desc: 'Task 2.4 in CEN-01 is 2 days behind.', time: '30 mins ago' },
-                 { type: 'success', icon: 'fa-file-signature', title: 'Log Verified', desc: 'Field Supervisor submitted daily log for MZ-05.', time: '2 hours ago' },
-                 { type: 'info', icon: 'fa-comment', title: 'Client Message', desc: 'New message from Ministry Rep regarding milestones.', time: '5 hours ago' }
-            ];
-        } else if (role === 'Field Supervisor') {
-            notifications = [
-                 { type: 'info', icon: 'fa-truck', title: 'Delivery Incoming', desc: 'Cement truck for CEN-01 arriving at 14:00.', time: '15 mins ago' },
-                 { type: 'info', icon: 'fa-cloud-sun', title: 'Weather Alert', desc: 'Rain expected tomorrow. Secure loose materials.', time: '1 hour ago' }
-            ];
-        } else if (role === 'System Technician') {
-            notifications = [
-                 { type: 'error', icon: 'fa-shield-virus', title: 'Multiple Login Failures', desc: 'S. Mwale account flagged for security review.', time: '5 mins ago' },
-                 { type: 'warning', icon: 'fa-database', title: 'Sync Warning', desc: 'M. Banda daily report failed to sync (File size limit).', time: '1 hour ago' },
-                 { type: 'success', icon: 'fa-cloud-arrow-up', title: 'Backup Successful', desc: 'Nightly database snapshot stored to S3.', time: '2 hours ago' },
-                 { type: 'info', icon: 'fa-server', title: 'System Patch', desc: 'v2.4.1 available for staging deployment.', time: '6 hours ago' }
-            ];
-        } else {
-             // Generic for other roles
-             notifications = [
-                 { type: 'info', icon: 'fa-info-circle', title: 'System Update', desc: 'New features available.', time: '1 day ago' },
-                 { type: 'warning', icon: 'fa-user-clock', title: 'Timesheet Due', desc: 'Please submit your weekly timesheet.', time: '2 days ago' }
-             ];
-        }
-
-        return notifications.map(n => `
-            <div class="notification-item">
-                <div class="notif-icon ${n.type}"><i class="fas ${n.icon}"></i></div>
-                <div class="notif-content">
-                    <div class="notif-title">${n.title}</div>
-                    <div class="notif-desc">${n.desc}</div>
-                    <div class="notif-time">${n.time}</div>
-                </div>
-            </div>
-        `).join('');
-    }
-
     toggleNotifications(e) {
         if(e) e.stopPropagation();
         const dropdown = document.getElementById('notification-dropdown');
         if (dropdown) {
             dropdown.classList.toggle('show');
             
-            // Add click outside listener once
             if (dropdown.classList.contains('show')) {
+                // Refresh each time it opens
+                this._loadNotifications();
+
                 const closeDropdown = (ev) => {
                     if (!dropdown.contains(ev.target) && !ev.target.closest('#notification-bell')) {
                         dropdown.classList.remove('show');
@@ -253,7 +383,7 @@ export class AppLayout {
             });
         });
 
-        // ... (existing)
+        // Navigation links
         document.querySelectorAll('.nav-link, .mobile-nav-item').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -270,7 +400,6 @@ export class AppLayout {
                     };
                     const title = drawerTitles[drawerId] || 'Details';
                     
-                    // Special handling for issue submission drawer
                     if (drawerId === 'submitComplaint') {
                         const projectId = window.app?.pmModule?.selectedProjectId || null;
                         window.app?.openIssueDrawer(projectId, title);
@@ -290,38 +419,32 @@ export class AppLayout {
     }
 
     setActiveNavItem(id) {
+        // Handle logical aliases (e.g. 'dashboard' vs 'portfolio' for PMs)
+        const aliases = {
+            'dashboard': ['portfolio', 'dashboard'],
+            'portfolio': ['portfolio', 'dashboard']
+        };
+
+        const targetIds = aliases[id] || [id];
+
         document.querySelectorAll('.nav-link, .mobile-nav-item').forEach(el => {
-            if (el.dataset.id === id) {
+            if (targetIds.includes(el.dataset.id)) {
                 el.classList.add('active');
+                
+                // Ensure parent sections or groups are visually highlighted if needed
+                const section = el.closest('.nav-section');
+                if (section) {
+                    section.querySelector('.nav-label').style.color = 'var(--slate-900)';
+                }
             } else {
                 el.classList.remove('active');
+                
+                const section = el.closest('.nav-section');
+                if (section) {
+                    section.querySelector('.nav-label').style.color = 'var(--slate-400)';
+                }
             }
         });
-    }
-
-    getNotificationBadgeHTML(count) {
-        if (!count || count <= 0) return '';
-        const display = count > 10 ? '10+' : count;
-        return `
-            <span style="
-                position: absolute;
-                top: 0;
-                right: 0;
-                background: var(--red);
-                color: white;
-                font-size: 10px;
-                font-weight: 700;
-                min-width: 16px;
-                height: 16px;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0 4px;
-                border: 2px solid var(--white);
-                transform: translate(25%, -25%);
-            ">${display}</span>
-        `;
     }
 
     injectContent(html) {
@@ -331,7 +454,7 @@ export class AppLayout {
     showProfileDrawer() {
         const currentUser = getCurrentUser();
         const contentHTML = `
-            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); text-align: center;">
+            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background) var(--slate-50); text-align: center;">
                 <div style="width: 64px; height: 64px; background: var(--white); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
                     <i class="fas fa-id-card-clip"></i>
                 </div>
@@ -396,7 +519,6 @@ export class AppLayout {
     }
 
     handlePasswordUpdate() {
-        // Mock update
         toast.success('Success', 'Password has been updated successfully.');
         window.drawer.close();
     }
@@ -404,10 +526,11 @@ export class AppLayout {
     handleLogout() {
         modal.confirm('Sign Out', 'Are you sure you want to sign out?', () => {
             window.toast.show('Signing out...', 'info');
-            // Clear auth token
             localStorage.removeItem('mcms_auth_token');
+            // Disconnect WebSocket gracefully
+            if (window.realtime) window.realtime.disconnect();
             setTimeout(() => {
-                window.location.href = 'index.html'; // Redirect to landing/login page
+                window.location.href = 'index.html';
             }, 500);
         });
     }

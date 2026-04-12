@@ -207,40 +207,86 @@ async function sendRoadBudgetApproved(project, spec, layers, accessories, recipi
   const promises = [];
   const formatter = new Intl.NumberFormat('en-MW', { style: 'currency', currency: 'MWK', minimumFractionDigits: 0 });
 
+  const getWrapper = (content) => `
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, sans-serif; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 100%; max-width: 650px; border-collapse: separate; border-spacing: 0; background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: #ffffff; padding: 40px 0; text-align: center; border-bottom: 4px solid #f97415;">
+                            <div style="font-size: 56px; line-height: 1; margin-bottom: 12px;">🏗️</div>
+                            <h1 style="color: #0f1729; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Mkaka <span style="color: #f97415;">Construction</span></h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 48px; color: #334155; font-size: 15px; line-height: 1.6;">
+                            ${content}
+                            
+                            <!-- Action Button -->
+                            <table role="presentation" style="width: 100%; margin: 40px 0 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="${env.FRONTEND_URL}/login" style="background: #f97415; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">View Details / Login</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 32px 48px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="color: #64748b; font-size: 13px; margin: 0 0 6px; font-weight: 700; text-transform: uppercase;">MCMS Portal</p>
+                            <p style="color: #94a3b8; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} Mkaka Construction. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+  `;
+
   // 1. FS Email (Project Spec + Timeline)
   if (recipients.fs) {
-    const fsHtml = `
-      <h2>Road Construction Spec Approved</h2>
-      <p>Hello ${recipients.fs.name},</p>
-      <p>The road specification for <strong>${project.name}</strong> (${project.code}) has been approved and budget is locked. You are the assigned Field Supervisor.</p>
+    const fsHtml = getWrapper(`
+      <h2 style="color: #0f1729; margin-top: 0; font-size: 20px;">Road Construction Spec Approved</h2>
+      <p>Hello <strong>${recipients.fs.name}</strong>,</p>
+      <p>The road specification for <strong>${project.name}</strong> (${project.code}) has been approved and the budget is locked. You are the assigned Field Supervisor.</p>
       
-      <h3>Project Spec</h3>
-      <ul>
-        <li><strong>Road Type:</strong> ${spec.roadType}</li>
-        <li><strong>Length:</strong> ${spec.lengthKm} km</li>
-        <li><strong>Width:</strong> ${spec.widthM} m</li>
-        <li><strong>Terrain:</strong> ${spec.terrain}</li>
-        <li><strong>Zone:</strong> ${spec.geographicZone || 'N/A'}</li>
-      </ul>
+      <div style="background-color: #f8fafc; border-left: 4px solid #f97415; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+        <h3 style="color: #0f1729; margin: 0 0 15px 0; font-size: 16px; text-transform: uppercase;">Project Specification</h3>
+        <ul style="margin: 0; padding-left: 20px; color: #475569;">
+          <li style="margin-bottom: 8px;"><strong>Road Type:</strong> ${spec.roadType}</li>
+          <li style="margin-bottom: 8px;"><strong>Length:</strong> ${spec.lengthKm} km</li>
+          <li style="margin-bottom: 8px;"><strong>Width:</strong> ${spec.widthM} m</li>
+          <li style="margin-bottom: 8px;"><strong>Terrain:</strong> ${spec.terrain}</li>
+          <li><strong>Zone:</strong> ${spec.geographicZone || 'N/A'}</li>
+        </ul>
+      </div>
 
-      <h3>Confirmed Phases</h3>
-      <ul>
-        ${layers.reduce((acc, l) => acc.includes(l.phaseName) ? acc : [...acc, l.phaseName], []).map(p => `<li>${p}</li>`).join('')}
+      <h3 style="color: #0f1729; font-size: 16px; margin-bottom: 15px; text-transform: uppercase;">Confirmed Phases</h3>
+      <ul style="padding-left: 20px; color: #475569;">
+        ${layers.reduce((acc, l) => acc.includes(l.phaseName) ? acc : [...acc, l.phaseName], []).map(p => `<li style="margin-bottom: 6px;">${p}</li>`).join('')}
       </ul>
-      <p>Procurement is now underway. Await equipment assignment from the EC.</p>
-    `;
+      <p style="margin-top: 25px;">Procurement is now underway. Await equipment assignment from the Equipment Coordinator (EC).</p>
+    `);
 
     promises.push(send({
       to: recipients.fs.email,
       subject: `Project Ready: ${project.code} Road Spec Approved`,
       html: fsHtml,
-      text: `Project ${project.code} Road Spec Approved. Check MCMS dashboard for details.`
+      text: `Project ${project.code} Road Spec Approved. Login to MCMS for details.`
     }));
   }
 
   // 2. FM Email (Full Procurement Brief)
   if (recipients.fms && recipients.fms.length > 0) {
-    // Group all items (layers + accessories)
     const allItems = [
       ...layers.map(l => ({ phase: `Ph ${l.phaseNumber}`, name: l.materialType, unit: l.unit, qty: l.totalQuantity, unitCost: l.unitCostHigh, totalCost: l.totalCostHigh })),
       ...accessories.map(a => ({ phase: 'Accessories', name: a.itemName, unit: a.unit, qty: a.totalQuantity, unitCost: a.unitCostHigh, totalCost: a.totalCostHigh }))
@@ -248,76 +294,88 @@ async function sendRoadBudgetApproved(project, spec, layers, accessories, recipi
 
     const tableRows = allItems.map(item => `
       <tr>
-        <td style="border: 1px solid #ddd; padding: 8px;">${item.phase}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${item.qty} ${item.unit}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${formatter.format(item.unitCost)}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;"><strong>${formatter.format(item.totalCost)}</strong></td>
+        <td style="border-bottom: 1px solid #e2e8f0; padding: 12px; color: #64748b;">${item.phase}</td>
+        <td style="border-bottom: 1px solid #e2e8f0; padding: 12px; font-weight: 500;">${item.name}</td>
+        <td style="border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: center;">${item.qty} ${item.unit}</td>
+        <td style="border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: right; color: #64748b;">${formatter.format(item.unitCost)}</td>
+        <td style="border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: right; font-weight: 700; color: #0f1729;">${formatter.format(item.totalCost)}</td>
       </tr>
     `).join('');
 
-    const fmHtml = `
-      <h2>Road Project Procurement Brief</h2>
-      <p>The budget for road project <strong>${project.name}</strong> (${project.code}) has been locked at <strong>${formatter.format(project.budgetTotal)}</strong>.</p>
-      <p>Please review the approved materials below and begin creating Vendor Contracts.</p>
+    const fmHtml = getWrapper(`
+      <h2 style="color: #0f1729; margin-top: 0; font-size: 20px;">Road Project Procurement Brief</h2>
+      <p>The budget for road project <strong>${project.name}</strong> (${project.code}) has been locked at <strong style="color: #f97415; font-size: 16px;">${formatter.format(project.budgetTotal)}</strong>.</p>
+      <p style="margin-bottom: 30px;">Please review the approved materials below and begin creating Vendor Contracts.</p>
       
-      <table style="border-collapse: collapse; width: 100%; text-align: left;">
-        <thead>
-          <tr style="background-color: #f2f2f2;">
-            <th style="border: 1px solid #ddd; padding: 8px;">Phase</th>
-            <th style="border: 1px solid #ddd; padding: 8px;">Material / Item</th>
-            <th style="border: 1px solid #ddd; padding: 8px;">Total Qty</th>
-            <th style="border: 1px solid #ddd; padding: 8px;">Unit Cost</th>
-            <th style="border: 1px solid #ddd; padding: 8px;">Total Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRows}
-        </tbody>
-      </table>
+      <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; text-align: left; font-size: 14px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <thead>
+            <tr style="background-color: #f8fafc;">
+              <th style="border-bottom: 2px solid #e2e8f0; padding: 14px 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Phase</th>
+              <th style="border-bottom: 2px solid #e2e8f0; padding: 14px 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Material / Item</th>
+              <th style="border-bottom: 2px solid #e2e8f0; padding: 14px 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; text-align: center;">Total Qty</th>
+              <th style="border-bottom: 2px solid #e2e8f0; padding: 14px 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; text-align: right;">Unit Cost</th>
+              <th style="border-bottom: 2px solid #e2e8f0; padding: 14px 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; text-align: right;">Total Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
 
-      <div style="margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #0056b3;">
-        <h3>Vendor Contract Guidance</h3>
-        <p>For each material above, please create a new Contract record linked to project <strong>${project.code}</strong>. Ensure you capture:</p>
-        <ul>
-          <li><strong>Vendor Name</strong></li>
-          <li><strong>Contract Type</strong> (Supply Only / Supply & Install / Hire / Labour Only)</li>
-          <li><strong>Materials Being Purchased</strong> (paste from table above)</li>
-          <li><strong>Total Contract Value</strong></li>
+      <div style="margin-top: 35px; padding: 25px; background-color: #fffaf5; border: 1px solid #fed7aa; border-radius: 8px;">
+        <h3 style="color: #f97415; margin: 0 0 15px 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">📝</span> Vendor Contract Guidance
+        </h3>
+        <p style="margin-bottom: 15px;">For each material above, please create a new Contract record linked to project <strong>${project.code}</strong>. Ensure you capture:</p>
+        <ul style="margin: 0; padding-left: 20px; color: #475569;">
+          <li style="margin-bottom: 8px;"><strong>Vendor Name</strong></li>
+          <li style="margin-bottom: 8px;"><strong>Contract Type</strong> (Supply Only / Supply & Install / Hire / Labour Only)</li>
+          <li style="margin-bottom: 8px;"><strong>Materials Being Purchased</strong> (paste from table above)</li>
+          <li style="margin-bottom: 8px;"><strong>Total Contract Value</strong></li>
           <li><strong>Delivery Start & End Dates</strong></li>
         </ul>
-        <p>Remember to upload the signed vendor document PDF to the contract record.</p>
+        <p style="margin-top: 15px; margin-bottom: 0; font-style: italic; color: #64748b;">*Remember to upload the signed vendor document PDF to the contract record.</p>
       </div>
-    `;
+    `);
 
     promises.push(...recipients.fms.map(fm => send({
       to: fm.email,
       subject: `Action Required: Procurement Brief for ${project.code}`,
       html: fmHtml,
-      text: `Procurement Brief for ${project.code}. Please check MCMS for the materials table.`
+      text: `Procurement Brief for ${project.code}. Please login to MCMS.`
     })));
   }
 
   // 3. EC Email (Equipment List)
   if (recipients.ecs && recipients.ecs.length > 0) {
-    const ecHtml = `
-      <h2>Road Project Equipment Assignment</h2>
+    const ecHtml = getWrapper(`
+      <h2 style="color: #0f1729; margin-top: 0; font-size: 20px;">Road Project Equipment Assignment</h2>
       <p>The road specification for <strong>${project.name}</strong> (${project.code}) has been approved.</p>
-      <p><strong>Project Target Start:</strong> ${new Date(project.startDate).toLocaleDateString()}</p>
       
-      <h3>Required Equipment Planner</h3>
-      <p>Please review the requested phases and begin assigning available heavy machinery from the Asset pool to this project.</p>
-      <ul>
-        ${layers.reduce((acc, l) => acc.includes(l.phaseName) ? acc : [...acc, l.phaseName], []).map(p => `<li>${p}</li>`).join('')}
+      <div style="background-color: #f8fafc; border-radius: 8px; padding: 15px 20px; margin: 20px 0; display: inline-block;">
+        <span style="color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px;">Project Target Start</span>
+        <span style="color: #0f1729; font-size: 16px; font-weight: 600;">${new Date(project.startDate).toLocaleDateString()}</span>
+      </div>
+      
+      <h3 style="color: #0f1729; font-size: 16px; margin-bottom: 15px; margin-top: 10px; text-transform: uppercase;">Required Equipment Planner</h3>
+      <p style="margin-bottom: 15px;">Please review the requested phases and begin assigning available heavy machinery from the Asset pool to this project.</p>
+      
+      <ul style="padding-left: 20px; color: #475569; margin-bottom: 25px;">
+        ${layers.reduce((acc, l) => acc.includes(l.phaseName) ? acc : [...acc, l.phaseName], []).map(p => `<li style="margin-bottom: 6px;">${p}</li>`).join('')}
       </ul>
-      <p>The system will suggest specific equipment (Pavers, Graders, Rollers) based on the active phases in the dashboard.</p>
-    `;
+      
+      <div style="background-color: #e0f2fe; border: 1px solid #bae6fd; padding: 15px 20px; border-radius: 8px; color: #0369a1; font-size: 14px;">
+        💡 <strong>System Tip:</strong> The system will suggest specific equipment (Pavers, Graders, Rollers) based on the active phases in the dashboard.
+      </div>
+    `);
 
     promises.push(...recipients.ecs.map(ec => send({
       to: ec.email,
       subject: `Asset Planning: Equipment requested for ${project.code}`,
       html: ecHtml,
-      text: `Equipment requested for ${project.code}. Check active phases in MCMS.`
+      text: `Equipment requested for ${project.code}. Login to MCMS to assign assets.`
     })));
   }
 

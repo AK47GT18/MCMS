@@ -11,12 +11,37 @@ import assets from '../../src/api/assets.api.js';
 import issues from '../../src/api/issues.api.js';
 import tasks from '../../src/api/tasks.api.js';
 import contracts from '../../src/api/contracts.api.js';
+import { realtime } from '../../src/realtime/RealtimeClient.js';
 
 export class ProjectManagerDashboard {
     constructor() {
         this.currentView = 'portfolio';
         this.selectedProjectId = null; 
         this.currentGanttViewMode = 'Day'; 
+        
+        // WebSocket Real-time listeners
+        this.initRealtimeListeners();
+    }
+
+    initRealtimeListeners() {
+        if (!realtime) return;
+
+        // Listen for new issues or updates
+        realtime.on('issue:created', () => {
+            if (this.currentView === 'issues') this.loadIssuesFromAPI(true);
+            this.updateHeaderStats();
+        });
+
+        realtime.on('issue:resolved', () => {
+            if (this.currentView === 'issues') this.loadIssuesFromAPI(true);
+            this.updateHeaderStats();
+        });
+
+        // Wildcard for any issue updates (assigned, escalated, etc.)
+        realtime.on('issue:updated', () => {
+            if (this.currentView === 'issues') this.loadIssuesFromAPI(true);
+            this.updateHeaderStats();
+        });
     }
 
     escapeHTML(str) {
@@ -110,7 +135,7 @@ export class ProjectManagerDashboard {
                   <div class="context-dot"></div>
                   <span style="color: ${stats && stats.budgetUtilization > 100 ? 'var(--red)' : 'var(--emerald)'}; font-weight: 600;">${stats ? stats.budgetUtilization.toFixed(1) : '0.0'}% Utilized</span>
                   <div class="context-dot"></div>
-                  <span style="color: var(--orange);" id="context-pending-logs">0</span> Pending Logs
+                  <span style="color: var(--orange); font-weight: 600;"><span id="context-pending-logs">0</span> Pending Logs</span>
                 </div>
             `;
         }
@@ -122,7 +147,7 @@ export class ProjectManagerDashboard {
                   <div class="context-dot"></div>
                   <span class="context-value" id="context-portfolio-value">MWK ${stats ? (stats.portfolioValue / 1000000000).toFixed(1) + 'B' : '0.0B'}</span> Portfolio Value
                   <div class="context-dot"></div>
-                  <span style="color: var(--orange); font-weight: 600;"><span id="context-pending-logs">3</span> Pending Logs</span>
+                  <span style="color: var(--orange); font-weight: 600;"><span id="context-pending-logs">0</span> Pending Logs</span>
                 </div>
             `;
         }
@@ -338,6 +363,7 @@ export class ProjectManagerDashboard {
                         <button class="btn-icon dropdown-trigger" onclick="event.stopPropagation(); window.app.pmModule.toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-content" style="display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: var(--shadow-md); z-index: 100; border-radius: 4px; border: 1px solid var(--slate-200);">
                             <a href="#" onclick="event.preventDefault(); window.app.pmModule.openEditProjectDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-edit" style="width: 20px;"></i> Edit Details</a>
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.openExtendProjectDrawer('${project.id}');" style="color: var(--orange); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-calendar-plus" style="width: 20px;"></i> Extend Timeline</a>
                             <a href="#" onclick="event.preventDefault(); window.app.pmModule.openSuspendProjectDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-pause-circle" style="width: 20px;"></i> Suspend Project</a>
                             <div style="border-top: 1px solid var(--slate-100); margin: 4px 0;"></div>
                             <a href="#" onclick="event.preventDefault(); window.app.pmModule.handleDeleteProject('${project.id}');" style="color: var(--red); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-trash-alt" style="width: 20px;"></i> Delete</a>
@@ -862,18 +888,21 @@ export class ProjectManagerDashboard {
     getReportsView() {
         setTimeout(() => this.loadReportsData(), 0);
         return `
-            <div class="data-card">
-                <div class="data-card-header">
-                    <div class="card-title">Project Reporting Center</div>
-                    <div style="display: flex; gap: 12px;">
-                        <div style="width: 240px;">
-                            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 6px;">Filter by Project</label>
-                            <select id="report-project-filter" class="form-input" style="width: 100%;" onchange="window.app.pmModule.loadReportsData()">
-                                <option value="all">All Projects</option>
+            <div class="data-card" style="padding: 32px 24px;">
+                <div class="data-card-header" style="margin-bottom: 32px;">
+                    <div>
+                        <div class="card-title" style="font-size: 20px;">Project Reporting Center</div>
+                        <p style="color: var(--slate-500); font-size: 13px; margin-top: 4px;">Download comprehensive project health and field execution data.</p>
+                    </div>
+                    <div style="display: flex; gap: 16px; align-items: flex-end;">
+                        <div style="width: 260px;">
+                            <label style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 6px;">Target Context</label>
+                            <select id="report-project-filter" class="form-input" style="width: 100%; height: 42px;" onchange="window.app.pmModule.loadReportsData()">
+                                <option value="all">Global Workspace (All Projects)</option>
                                 ${this.allProjects ? this.allProjects.map(p => `<option value="${p.id}">${p.name}</option>`).join('') : ''}
                             </select>
                         </div>
-                        <button class="btn btn-primary" style="height: 38px;" onclick="window.app.pmModule.loadReportsData()"><i class="fas fa-sync"></i> Refresh</button>
+                        <button class="btn btn-primary" style="height: 42px; padding: 0 20px;" onclick="window.app.pmModule.loadReportsData()"><i class="fas fa-sync"></i> Refresh Data</button>
                     </div>
                 </div>
 
@@ -887,37 +916,46 @@ export class ProjectManagerDashboard {
     async loadReportsData() {
         const container = document.getElementById('reports-grid-container');
         if (!container) return;
+        
+        const filterEl = document.getElementById('report-project-filter');
+        const selectedProject = filterEl ? filterEl.value : 'all';
 
         try {
-            // Simulated report categories for now as per design requirements
+            // Configured to map directly to the newly built MCMS Reporting APIs
             const reportTypes = [
-                { id: 'status', title: 'Project Status Summary', icon: 'fa-chart-line', bg: 'var(--blue-light)', color: 'var(--blue)', desc: 'Comprehensive timeline adherence, milestone tracking, and risk assessment.' },
-                { id: 'finance', title: 'Financial Expenditure', icon: 'fa-coins', bg: 'var(--emerald-light)', color: 'var(--emerald)', desc: 'Real-time budget consumption by contractor, category, and labor cost variance.' },
-                { id: 'activity', title: 'Site Activity Log', icon: 'fa-hard-hat', bg: 'var(--orange-light)', color: 'var(--orange)', desc: 'Consolidated daily field reports, site attendance, and equipment usage logs.' },
-                { id: 'procurement', title: 'Procurement Tracker', icon: 'fa-truck-loading', bg: '#EEF2FF', color: '#4F46E5', desc: 'Material requisition status, supplier delivery performance, and stock levels.' },
-                { id: 'hse', title: 'HSE & Incident Audit', icon: 'fa-shield-alt', bg: '#FFF1F2', color: '#E11D48', desc: 'Health, Safety, and Environment incident summary and compliance audit history.' },
-                { id: 'labor', title: 'Labor Productivity', icon: 'fa-users-cog', bg: '#F5F3FF', color: '#7C3AED', desc: 'Man-hour analysis, productivity trends, and labor cost per project phase.' }
+                { id: 'pm/portfolio', title: 'Global Portfolio Snapshot', icon: 'fa-project-diagram', bg: 'var(--blue-light)', color: 'var(--blue)', desc: 'Holistic cross-project execution pacing and active bottlenecks.' },
+                { id: 'pm/project-health', title: 'Deep Project Health', icon: 'fa-heartbeat', bg: 'var(--emerald-light)', color: 'var(--emerald)', desc: 'Milestone adherence mapping against timeline baselines.' },
+                { id: 'pm/timeline', title: 'Schedule & Delays', icon: 'fa-calendar-alt', bg: 'var(--indigo-light)', color: 'var(--indigo-dark)', desc: 'Timeline impact analysis, trailing tasks and upcoming deliverables.' },
+                { id: 'finance/budget', title: 'Financial Expenditure', icon: 'fa-coins', bg: 'var(--orange-light)', color: 'var(--orange-dark)', desc: 'Cross-functional budget utilization and labor cost burn rate analysis.' },
+                { id: 'field/daily-logs', title: 'Site Activity Log', icon: 'fa-hard-hat', bg: 'var(--slate-100)', color: 'var(--slate-700)', desc: 'Consolidated field reports, delays, headcounts and site climate.' },
+                { id: 'ops/safety', title: 'HSE & Incident Audit', icon: 'fa-shield-alt', bg: '#FFF1F2', color: '#E11D48', desc: 'Centralized Health, Safety, and Environment incident audit.' }
             ];
 
-            container.innerHTML = reportTypes.map(report => `
-                <div class="data-card" style="padding:0; display: flex; flex-direction: column;">
+            container.innerHTML = reportTypes.map(report => {
+                const apiPath = `/api/v1/reports/${report.id}?${selectedProject !== 'all' ? 'projectId=' + selectedProject + '&' : ''}`;
+                return `
+                <div class="data-card" style="padding:0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
                     <div style="padding: 24px; text-align:center; border-bottom: 1px solid var(--slate-100); flex: 1;">
                         <div style="width: 56px; height: 56px; background: ${report.bg}; color: ${report.color}; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px;">
                             <i class="fas ${report.icon}"></i>
                         </div>
                         <div style="font-weight:700; font-size: 16px; margin-bottom:8px; color: var(--slate-900);">${report.title}</div>
-                        <p style="font-size:12px; color:var(--slate-500); line-height: 1.5;">${report.desc}</p>
+                        <p style="font-size:13px; color:var(--slate-500); line-height: 1.5; padding: 0 10px;">${report.desc}</p>
                     </div>
-                    <div style="padding: 12px; background: var(--slate-50); display: flex; gap: 8px; justify-content: center;">
-                        <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;" onclick="window.toast.show('Generating PDF...', 'info')"><i class="fas fa-file-pdf" style="color: #ef4444;"></i> PDF</button>
-                        <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;" onclick="window.toast.show('Generating Excel...', 'info')"><i class="fas fa-file-excel" style="color: #10b981;"></i> XLSX</button>
+                    <div style="padding: 16px; background: #fafafa; display: flex; gap: 12px; justify-content: center;">
+                        <a href="${apiPath}format=pdf" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; flex: 1; justify-content: center; text-decoration: none;">
+                            <i class="fas fa-file-pdf" style="color: #ef4444;"></i> Download PDF
+                        </a>
+                        <a href="${apiPath}format=csv" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; flex: 1; justify-content: center; text-decoration: none;">
+                            <i class="fas fa-file-excel" style="color: #10b981;"></i> Download CSV
+                        </a>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
         } catch (error) {
             console.error('Failed to load reports:', error);
-            container.innerHTML = this.renderEmptyState('Failed to load reporting modules.');
+            container.innerHTML = this.renderEmptyState('Failed to format reporting modules safely.');
         }
     }
 
@@ -1121,10 +1159,10 @@ export class ProjectManagerDashboard {
         `;
     }
 
-    initializeProjectMap(retryCount = 0) {
+    initializeProjectMap(retryCount = 0, containerId = 'project-map', initialCoords = null) {
         // Wait for drawer animation and DOM rendering
         setTimeout(() => {
-            const mapContainer = document.getElementById('project-map');
+            const mapContainer = document.getElementById(containerId);
             if (!mapContainer) return;
 
             // Use the isolated Leaflet engine
@@ -1133,7 +1171,7 @@ export class ProjectManagerDashboard {
             if (!LeafletEngine || typeof LeafletEngine.map !== 'function') {
                 if (retryCount < 5) {
                     console.log(`[Map] Leaflet engine (MKAKA_L) not ready (Attempt ${retryCount + 1}), retrying...`);
-                    return this.initializeProjectMap(retryCount + 1);
+                    return this.initializeProjectMap(retryCount + 1, containerId, initialCoords);
                 }
                 console.error("Leaflet engine failure.", { 
                     MKAKA_L: !!window.MKAKA_L, 
@@ -1144,16 +1182,16 @@ export class ProjectManagerDashboard {
                 return;
             }
 
-            console.log("[Map] Using isolated Leaflet engine:", LeafletEngine.version);
+            console.log(`[Map] Using isolated Leaflet engine for ${containerId}:`, LeafletEngine.version);
             // Clear loading state
             mapContainer.innerHTML = '';
 
-            // Default center (Lilongwe, Malawi)
-            const defaultCoords = [-13.9626, 33.7741];
+            // Default center or passed center
+            const defaultCoords = initialCoords ? [initialCoords.lat, initialCoords.lng] : [-13.9626, 33.7741];
             
             try {
                 // Initialize map using isolated engine
-                const map = LeafletEngine.map('project-map').setView(defaultCoords, 13);
+                const map = LeafletEngine.map(containerId).setView(defaultCoords, initialCoords ? 15 : 13);
 
                 // Add OpenStreetMap tiles
                 LeafletEngine.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1307,7 +1345,7 @@ export class ProjectManagerDashboard {
         this.initializeVerificationMap(lat, lng, project?.lat, project?.lng, project?.radius);
     }
 
-    updateCoords(lat, lng) {
+    updateCoords(lat, lng) { ['proj_lat', 'edit_proj_lat'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = Number(lat).toFixed(6); }); ['proj_lng', 'edit_proj_lng'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = Number(lng).toFixed(6); }); return; 
         const latEl = document.getElementById('proj_lat');
         const lngEl = document.getElementById('proj_lng');
         if (latEl) latEl.textContent = lat.toFixed(6);
@@ -1639,7 +1677,7 @@ export class ProjectManagerDashboard {
         }
     }
 
-    updateCoords(lat, lng) {
+    updateCoords(lat, lng) { ['proj_lat', 'edit_proj_lat'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = Number(lat).toFixed(6); }); ['proj_lng', 'edit_proj_lng'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = Number(lng).toFixed(6); }); return; 
         const latEl = document.getElementById('proj_lat');
         const lngEl = document.getElementById('proj_lng');
         if (latEl) latEl.textContent = lat.toFixed(6);
@@ -1811,24 +1849,32 @@ export class ProjectManagerDashboard {
         `;
     }
 
-    async loadIssuesFromAPI() {
+    async loadIssuesFromAPI(isPolling = false) {
         const container = document.getElementById('issues-table-container');
         if (!container) return;
 
         try {
-            const response = await issues.getAll({ limit: 50 });
+            // Force cache bypass for real-time updates
+            const response = await issues.getAll({ limit: 50 }, { skipCache: true });
             const data = response.data || response;
             const issuesList = Array.isArray(data) ? data : data.issues || [];
 
             if (issuesList.length === 0) {
                 container.innerHTML = this.renderEmptyState('No active issues or governance alerts.');
-                return;
+            } else {
+                container.innerHTML = this.renderIssuesTable(issuesList);
             }
-
-            container.innerHTML = this.renderIssuesTable(issuesList);
         } catch (error) {
             console.error('Failed to load issues:', error);
-            container.innerHTML = this.renderEmptyState('Failed to load issues registry.');
+            if (!isPolling) {
+                container.innerHTML = this.renderEmptyState('Failed to load issues registry.');
+            }
+        }
+
+        // Real-time polling logic
+        if (this.currentView === 'issues') {
+            if (this._issuesPollingTimer) clearTimeout(this._issuesPollingTimer);
+            this._issuesPollingTimer = setTimeout(() => this.loadIssuesFromAPI(true), 15000); // Poll every 15s
         }
     }
 
@@ -2433,8 +2479,8 @@ export class ProjectManagerDashboard {
              
              const latEl = document.getElementById('edit_proj_lat');
              const lngEl = document.getElementById('edit_proj_lng');
-             if (latEl) latEl.textContent = (project.lat || -13.9626).toFixed(6);
-             if (lngEl) lngEl.textContent = (project.lng || 33.7741).toFixed(6);
+             if (latEl) latEl.textContent = Number(project.lat || -13.9626).toFixed(6);
+             if (lngEl) lngEl.textContent = Number(project.lng || 33.7741).toFixed(6);
 
              this.fetchSupervisors('edit_proj_supervisor').then(() => {
                  setVal('edit_proj_supervisor', project.managerId || project.manager_id);
@@ -2446,6 +2492,35 @@ export class ProjectManagerDashboard {
                  radius: project.radius || 500
              });
          });
+    }
+
+    async handleUpdateProject() {
+        const id = document.getElementById('edit_proj_id').value;
+        const data = {
+            name: document.getElementById('edit_proj_name').value,
+            client: document.getElementById('edit_proj_client').value,
+            status: document.getElementById('edit_proj_status').value,
+            budget: parseFloat(document.getElementById('edit_proj_budget').value),
+            startDate: document.getElementById('edit_proj_start').value,
+            endDate: document.getElementById('edit_proj_end').value,
+            managerId: document.getElementById('edit_proj_supervisor').value,
+            lat: parseFloat(document.getElementById('edit_proj_lat').textContent),
+            lng: parseFloat(document.getElementById('edit_proj_lng').textContent)
+        };
+
+        if (!data.name || !data.managerId) {
+            window.toast.show('Project name and supervisor are mandatory', 'error');
+            return;
+        }
+
+        try {
+            await projects.update(id, data);
+            window.toast.show('Project master updated successfully', 'success');
+            window.drawer.close();
+            this.loadProjectsFromAPI(); // Refresh table and stats
+        } catch (error) {
+            window.toast.show(error.message, 'error');
+        }
     }
 
     openSuspendProjectDrawer(id) {
@@ -2487,6 +2562,81 @@ export class ProjectManagerDashboard {
          } catch (error) {
              window.toast.show(error.message, 'error');
          }
+    }
+
+    // --- PROJECT EXTENSION ---
+    openExtendProjectDrawer(id) {
+        if (!id) return;
+        projects.getById(id).then(response => {
+            const project = response.data || response;
+            window.drawer.open('Extend Project Timeline', window.DrawerTemplates.extendProject(project));
+
+            // Live preview: show days being added
+            setTimeout(() => {
+                const newEndInput = document.getElementById('extend_new_end');
+                if (newEndInput) {
+                    newEndInput.addEventListener('change', () => {
+                        const currentEnd = document.getElementById('extend_current_end').value;
+                        const newEnd = newEndInput.value;
+                        if (currentEnd && newEnd) {
+                            const days = Math.round((new Date(newEnd) - new Date(currentEnd)) / (1000*60*60*24));
+                            const preview = document.getElementById('extend_preview');
+                            const previewText = document.getElementById('extend_preview_text');
+                            if (days > 0) {
+                                preview.style.display = 'block';
+                                previewText.textContent = `Extension of ${days} day(s). All trailing tasks and contracts will shift by ${days} day(s).`;
+                            } else {
+                                preview.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            }, 200);
+        });
+    }
+
+    async handleExtendProject() {
+        const projectId = document.getElementById('extend_project_id')?.value;
+        const newEndDate = document.getElementById('extend_new_end')?.value;
+        const reason = document.getElementById('extend_reason')?.value;
+
+        if (!newEndDate) {
+            window.toast.show('Please select a new end date', 'error');
+            return;
+        }
+        if (!reason) {
+            window.toast.show('Please provide a reason for extension', 'error');
+            return;
+        }
+
+        try {
+            window.toast.show('Extending project timeline...', 'info');
+            const response = await fetch(`/api/v1/projects/${projectId}/extend`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: JSON.stringify({ newEndDate, reason }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || result.message || 'Extension failed');
+            }
+
+            const data = result.data || result;
+            window.toast.show(
+                `Project extended by ${data.extension?.shiftDays || '?'} days. ${data.cascade?.shifted || 0} tasks shifted. ${data.notified || 0} stakeholders notified.`,
+                'success'
+            );
+            window.drawer.close();
+            this.loadProjectsFromAPI();
+            this.renderGanttChart();
+        } catch (error) {
+            window.toast.show(error.message, 'error');
+        }
     }
 
     // --- REVIEW & APPROVAL HANDLERS ---
@@ -2548,6 +2698,55 @@ export class ProjectManagerDashboard {
         } catch (error) {
             console.error('Requisition rejection failed:', error);
             window.toast.show(error.message || 'Failed to reject requisition', 'error');
+        }
+    }
+
+    async updateHeaderStats() {
+        try {
+            // Fetch comprehensive dashboard data - Skip cache for real-time accuracy
+            const [logsRes, projectsRes, issuesRes] = await Promise.all([
+                client.get('/daily-logs', { status: 'pending', skipCache: true }),
+                client.get('/projects', { skipCache: true }),
+                client.get('/issues', { status: 'open', skipCache: true })
+            ]);
+
+            const pendingLogs = (logsRes.data || logsRes || []).length;
+            const openIssues = (issuesRes.data || issuesRes || []).length;
+            const allProjects = projectsRes.data || projectsRes || [];
+            const stats = this.calculateDashboardStats(allProjects);
+
+            // Update DOM directly if elements exist
+            // 1. Context Navbar Strip
+            const activeProjectsEl = document.getElementById('context-active-projects');
+            if (activeProjectsEl) activeProjectsEl.innerText = stats.activeProjects;
+
+            const portfolioValueEl = document.getElementById('context-portfolio-value');
+            if (portfolioValueEl) portfolioValueEl.innerText = `MWK ${(stats.portfolioValue / 1000000000).toFixed(1)}B`;
+
+            const pendingLogsEl = document.getElementById('context-pending-logs');
+            if (pendingLogsEl) {
+                pendingLogsEl.innerText = pendingLogs;
+                pendingLogsEl.parentElement.style.opacity = pendingLogs > 0 ? '1' : '0.5';
+            }
+
+            // 2. Main Stats Grid (Portfolio View)
+            const statBudgetHealth = document.getElementById('stat-budget-health');
+            if (statBudgetHealth) {
+                const health = stats.totalBudget ? ((1 - (stats.totalSpent / stats.totalBudget)) * 100).toFixed(0) : 100;
+                statBudgetHealth.innerText = `${health}%`;
+            }
+
+            const statPendingReviews = document.getElementById('stat-pending-reviews');
+            if (statPendingReviews) statPendingReviews.innerText = pendingLogs;
+
+            const statPortfolioValue = document.getElementById('stat-portfolio-value');
+            if (statPortfolioValue) statPortfolioValue.innerText = `MWK ${(stats.portfolioValue / 1000000).toFixed(0)}M`;
+
+            const statActiveProjects = document.getElementById('stat-active-projects');
+            if (statActiveProjects) statActiveProjects.innerText = stats.activeProjects;
+
+        } catch (error) {
+            console.error('Failed to update header stats:', error);
         }
     }
 

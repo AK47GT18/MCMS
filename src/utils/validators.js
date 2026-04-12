@@ -221,10 +221,23 @@ const createDailyLogSchema = z.object({
   expenseCategory: z.string().max(50).optional(),
   expenseReason: z.string().optional(),
   isSos: z.boolean().optional(),
+  taskId: z.number().int().positive().optional(),
+  progressIncrement: z.number().int().min(0).max(100).optional(),
 });
 
 const updateDailyLogSchema = z.object({
   pmApproved: z.boolean().optional(),
+  status: z.enum(['pending', 'approved', 'rejected']).optional(),
+  rejectionReason: z.string().optional(),
+});
+
+// ============================================
+// PROJECT EXTENSION SCHEMA
+// ============================================
+
+const extendProjectSchema = z.object({
+  newEndDate: z.string().min(1, 'New end date is required'),
+  reason: z.string().min(1, 'Extension reason is required'),
 });
 
 // ============================================
@@ -243,9 +256,10 @@ const createIssueSchema = z.object({
 });
 
 const updateIssueSchema = z.object({
-  status: z.enum(['open', 'investigating', 'resolved', 'closed']).optional(),
+  status: z.enum(['open', 'in_progress', 'investigating', 'resolved', 'closed']).optional(),
   resolutionNotes: z.string().optional(),
   assignedTo: z.number().int().positive().optional(),
+  resolvedAt: z.string().nullable().optional(),
 });
 
 // ============================================
@@ -325,6 +339,8 @@ module.exports = {
   // Procurement
   createProcurementSchema,
   updateProcurementSchema,
+  // Project Extension
+  extendProjectSchema,
   // Common
   paginationSchema,
 };

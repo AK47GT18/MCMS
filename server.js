@@ -220,15 +220,32 @@ async function start() {
     
     // Start listening
     server.listen(env.PORT, () => {
+      const os = require('os');
+      const networkInterfaces = os.networkInterfaces();
+      let lanIp = 'localhost';
+      
+      for (const name of Object.keys(networkInterfaces)) {
+        for (const net of networkInterfaces[name]) {
+          if (net.family === 'IPv4' && !net.internal) {
+            lanIp = net.address;
+            break;
+          }
+        }
+        if (lanIp !== 'localhost') break;
+      }
+
       const baseUrl = `http://localhost:${env.PORT}`;
+      const lanUrl = `http://${lanIp}:${env.PORT}`;
+      
       console.log('');
       console.log('╔══════════════════════════════════════════════════════╗');
       console.log('║                                                      ║');
       console.log('║   🚀 MCMS Full-Stack Server                          ║');
       console.log('║                                                      ║');
-      console.log(`║   Frontend:  ${baseUrl.padEnd(28)} ║`);
-      console.log(`║   API/Docs:  ${(baseUrl + '/api/v1/health').padEnd(28)} ║`);
-      console.log(`║   WebSocket: ws://localhost:${env.PORT.toString().padEnd(22)} ║`);
+      console.log(`║   Local:     ${baseUrl.padEnd(31)} ║`);
+      console.log(`║   Network:   ${lanUrl.padEnd(31)} ║`);
+      console.log(`║   API/Docs:  ${(baseUrl + '/api/v1/health').padEnd(31)} ║`);
+      console.log(`║   WebSocket: ws://${lanIp.padEnd(15)}:${env.PORT.toString().padEnd(10)} ║`);
       console.log('║                                                      ║');
       console.log('║   Press Ctrl+C to stop                               ║');
       console.log('║                                                      ║');

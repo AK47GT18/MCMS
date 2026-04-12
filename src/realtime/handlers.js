@@ -82,10 +82,18 @@ function emitSosAlert(log) {
  * Emit an issue alert
  */
 function emitIssueAlert(issue, action = 'created') {
+  const eventMap = {
+    created: EVENTS.ISSUE_CREATED,
+    assigned: EVENTS.ISSUE_ASSIGNED,
+    resolved: EVENTS.ISSUE_RESOLVED,
+    escalated: EVENTS.ISSUE_ESCALATED,
+    updated: EVENTS.ISSUE_UPDATED || 'issue:updated'
+  };
+  
   const payload = {
-    type: action === 'created' ? EVENTS.ISSUE_CREATED : EVENTS.ISSUE_ESCALATED,
+    type: eventMap[action] || EVENTS.ISSUE_UPDATED || 'issue:updated',
     priority: issue.priority === 'Critical' ? PRIORITY.CRITICAL : PRIORITY.HIGH,
-    title: `Issue ${action}`,
+    title: `Issue ${action.charAt(0).toUpperCase() + action.slice(1)}`,
     message: `${issue.category || 'Issue'}: ${issue.description?.substring(0, 100)}`,
     data: {
       issueId: issue.id,
@@ -100,9 +108,10 @@ function emitIssueAlert(issue, action = 'created') {
     websocket.notifyUser(issue.assignedTo, 'notification', payload);
   }
   
-  // Broadcast to project channel if applicable
+  // Broadcast to project channel and projects channel
   if (issue.projectId) {
-    websocket.broadcastToChannel(`project:${issue.projectId}`, EVENTS.ISSUE_CREATED, payload);
+    websocket.broadcastToChannel(`project:${issue.projectId}`, payload.type, payload);
+    websocket.broadcastToChannel('projects', payload.type, payload);
   }
 }
 

@@ -20,7 +20,12 @@ const roadEstimationController = require('../controllers/roadEstimation.controll
 const inventoryController = require('../controllers/inventory.controller');
 const replenishmentController = require('../controllers/replenishment.controller');
 const reconciliationController = require('../controllers/reconciliation.controller');
+const notificationsController = require('../controllers/notifications.controller');
+const safetyIncidentsController = require('../controllers/safetyIncidents.controller');
+const whistleblowerController = require('../controllers/whistleblower.controller');
+const budgetChangesController = require('../controllers/budgetChanges.controller');
 const { documentRoutes } = require('../api/documents.api');
+const reportsController = require('../controllers/reports.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
@@ -41,6 +46,7 @@ function parseUrl(url) {
     resource: parts[0] || '',
     id: parts[1] || null,
     action: parts[2] || null,
+    subAction: parts[3] || null,
   };
 }
 
@@ -135,6 +141,12 @@ async function router(req, res) {
     }
     if (action === 'materials' && method === 'GET') {
       return projectsController.getMaterials(req, res, id);
+    }
+    if (action === 'extend' && method === 'POST') {
+      return projectsController.extendProject(req, res, id);
+    }
+    if (action === 'progress' && method === 'GET') {
+      return projectsController.getProgress(req, res, id);
     }
     if (action === 'tasks') {
       if (method === 'GET') return tasksController.getByProject(req, res, id);
@@ -232,6 +244,12 @@ async function router(req, res) {
     if (action === 'checkin' && method === 'POST') {
       return assetsController.checkIn(req, res, id);
     }
+    if (action === 'issue' && method === 'PUT') {
+      return assetsController.flagIssue(req, res, id);
+    }
+    if (action === 'resolve' && method === 'PUT') {
+      return assetsController.resolveIssue(req, res, id);
+    }
     if (method === 'GET') return assetsController.getById(req, res, id);
     if (method === 'PUT' || method === 'PATCH') return assetsController.update(req, res, id);
     if (method === 'DELETE') return assetsController.remove(req, res, id);
@@ -258,6 +276,9 @@ async function router(req, res) {
     }
     if (action === 'flag-fraud' && method === 'POST') {
       return requisitionsController.flagFraud(req, res, id);
+    }
+    if (action === 'fulfill' && method === 'POST') {
+      return requisitionsController.fulfill(req, res, id);
     }
     if (method === 'GET') return requisitionsController.getById(req, res, id);
     return methodNotAllowed(res, ['GET']);
@@ -414,7 +435,61 @@ async function router(req, res) {
     if (id && method === 'GET') {
       return reconciliationController.getReport(req, res, id);
     }
-    return methodNotAllowed(res, ['GET']);
+    if (id && action === 'lock' && method === 'POST') {
+      return reconciliationController.lock(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
+  }
+
+  // ============================================
+  // SAFETY INCIDENTS ROUTES
+  // ============================================
+  if (resource === 'safety-incidents') {
+    if (!id && method === 'GET') {
+      return safetyIncidentsController.getAll(req, res);
+    }
+    if (!id && method === 'POST') {
+      return safetyIncidentsController.create(req, res);
+    }
+    if (id && action === 'status' && (method === 'PUT' || method === 'PATCH')) {
+      return safetyIncidentsController.updateStatus(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST', 'PUT', 'PATCH']);
+  }
+
+  // ============================================
+  // WHISTLEBLOWER ROUTES
+  // ============================================
+  if (resource === 'whistleblower') {
+    if (!id && method === 'GET') {
+      return whistleblowerController.getAll(req, res);
+    }
+    if (!id && method === 'POST') {
+      return whistleblowerController.create(req, res);
+    }
+    if (id && action === 'status' && (method === 'PUT' || method === 'PATCH')) {
+      return whistleblowerController.updateStatus(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST', 'PUT', 'PATCH']);
+  }
+
+  // ============================================
+  // BUDGET CHANGE ROUTES
+  // ============================================
+  if (resource === 'budget-changes') {
+    if (!id && method === 'GET') {
+      return budgetChangesController.getAll(req, res);
+    }
+    if (!id && method === 'POST') {
+      return budgetChangesController.create(req, res);
+    }
+    if (id && action === 'approve' && method === 'POST') {
+      return budgetChangesController.approve(req, res, id);
+    }
+    if (id && action === 'reject' && method === 'POST') {
+      return budgetChangesController.reject(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST', 'PUT', 'PATCH']);
   }
 
   // ============================================
@@ -425,6 +500,91 @@ async function router(req, res) {
     if (handled !== false) return;
   }
   
+  // ============================================
+  // NOTIFICATION ROUTES
+  // ============================================
+  if (resource === 'notifications') {
+    if (id === 'count' && method === 'GET') {
+      return notificationsController.getUnreadCount(req, res);
+    }
+    if (id === 'read-all' && method === 'PUT') {
+      return notificationsController.markAllRead(req, res);
+    }
+    if (action === 'read' && method === 'PUT') {
+      return notificationsController.markRead(req, res, id);
+    }
+    if (!id && method === 'GET') {
+      return notificationsController.getAll(req, res);
+    }
+    if (!id && method === 'POST') {
+      return notificationsController.create(req, res);
+    }
+    return methodNotAllowed(res, ['GET', 'POST', 'PUT']);
+  }
+
+  // ============================================
+  // REPORTS ROUTES
+  // ============================================
+  if (resource === 'reports') {
+    if (method !== 'GET') return methodNotAllowed(res, ['GET']);
+    const { id: role, action: reportName, subAction } = parseUrl(req.url);
+
+    // PM Reports
+    if (role === 'pm') {
+      if (reportName === 'portfolio') return reportsController.pmPortfolio(req, res);
+      if (reportName === 'project-health' && subAction) return reportsController.pmProjectHealth(req, res, subAction);
+      if (reportName === 'timeline') return reportsController.pmTimeline(req, res);
+    }
+    // Finance Reports
+    if (role === 'finance') {
+      if (reportName === 'budget') return reportsController.financeBudget(req, res);
+      if (reportName === 'requisitions') return reportsController.financeRequisitions(req, res);
+      if (reportName === 'top-vendors') return reportsController.financeTopVendors(req, res);
+      if (reportName === 'spend-categories') return reportsController.financeSpendCategories(req, res);
+    }
+    // Field Reports
+    if (role === 'field') {
+      if (reportName === 'daily-logs' && subAction) return reportsController.fieldDailyLogs(req, res, subAction);
+      if (reportName === 'top-materials' && subAction) return reportsController.fieldTopMaterials(req, res, subAction);
+      if (reportName === 'burn-rate' && subAction) return reportsController.fieldBurnRate(req, res, subAction);
+      if (reportName === 'headcount' && subAction) return reportsController.fieldHeadcount(req, res, subAction);
+      if (reportName === 'task-progress' && subAction) return reportsController.fieldDailyLogs(req, res, subAction);
+    }
+    // Contract Reports
+    if (role === 'contracts') {
+      if (reportName === 'status') return reportsController.contractsStatus(req, res);
+      if (reportName === 'milestones') return reportsController.contractsMilestones(req, res);
+    }
+    // Equipment Reports
+    if (role === 'equipment') {
+      if (reportName === 'utilization') return reportsController.equipmentUtilization(req, res);
+      if (reportName === 'top-deployed') return reportsController.equipmentTopDeployed(req, res);
+      if (reportName === 'maintenance-costs') return reportsController.equipmentMaintenanceCosts(req, res);
+    }
+    // Ops Reports
+    if (role === 'ops') {
+      if (reportName === 'dashboard') return reportsController.opsDashboard(req, res);
+      if (reportName === 'issues') return reportsController.opsIssues(req, res);
+      if (reportName === 'top-issues') return reportsController.opsTopIssues(req, res);
+      if (reportName === 'safety') return reportsController.opsSafety(req, res);
+    }
+    // Executive Reports
+    if (role === 'executive') {
+      if (reportName === 'summary') return reportsController.execSummary(req, res);
+      if (reportName === 'risks') return reportsController.execRisks(req, res);
+      if (reportName === 'project-rankings') return reportsController.execProjectRankings(req, res);
+    }
+    // System Reports
+    if (role === 'system') {
+      if (reportName === 'health') return reportsController.sysHealth(req, res);
+      if (reportName === 'audit') return reportsController.sysAudit(req, res);
+      if (reportName === 'top-actions') return reportsController.sysTopActions(req, res);
+      if (reportName === 'integrity') return reportsController.sysIntegrity(req, res);
+    }
+
+    return response.notFound(res, 'Report endpoint');
+  }
+
   // Not found
   return response.notFound(res, 'Endpoint');
 }

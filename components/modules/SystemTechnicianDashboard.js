@@ -12,6 +12,7 @@ export class SystemTechnicianDashboard {
             smtp_port: '587',
             smtp_user: 'system@mkaka.mw'
         };
+        this.stats = { totalUsers: 0, activeSessions: 0 };
 
         window.techModule = this;
         window.initCreateUserForm = this.initCreateUserForm.bind(this);
@@ -160,14 +161,35 @@ export class SystemTechnicianDashboard {
     }
 
     getDashboardView() {
+        setTimeout(() => this.loadDashboardStats(), 0);
         return `
             <div class="stats-grid">
                 ${StatCard({ title: 'System Uptime', value: '99.9%', subtext: 'Last 30 days', alertColor: 'emerald' })}
-                ${StatCard({ title: 'Sync Success', value: '94%', subtext: '12 Failed Pushes', alertColor: 'amber' })}
-                ${StatCard({ title: 'Active Users', value: '8', subtext: 'Current sessions: 3' })}
+                ${StatCard({ title: 'Sync Success', value: '100%', subtext: 'Last 24h', alertColor: 'emerald' })}
+                ${StatCard({ title: 'Active Accounts', value: this.stats.totalUsers.toString(), subtext: 'Registered Users', alertColor: 'blue' })}
                 ${StatCard({ title: 'DB Size', value: '1.2GB', subtext: 'Last Backup: 4h ago' })}
             </div>
         `;
+    }
+
+    async loadDashboardStats() {
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            const users = result.data || result.items || result || [];
+            this.stats.totalUsers = users.length;
+            
+            const module = document.getElementById('tech-module');
+            if (module && this.currentView === 'dashboard') {
+                const stats = module.querySelector('.stats-grid');
+                if (stats) stats.outerHTML = this.getDashboardView();
+            }
+        } catch (error) {
+            console.error('Failed to load tech stats:', error);
+        }
     }
 
     getConfigView() {

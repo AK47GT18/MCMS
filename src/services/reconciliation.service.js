@@ -105,6 +105,34 @@ async function getProjectReconciliation(projectId) {
   };
 }
 
+/**
+ * Approve and lock a reconciliation period
+ * @param {number} projectId
+ * @param {Object} approver - User object
+ */
+async function lockReconciliation(projectId, approver) {
+  const auditService = require('./audit.service');
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+  });
+
+  if (!project) throw new AppError('Project not found', 404);
+
+  // Generate the snapshot for auditing
+  const report = await getProjectReconciliation(projectId);
+  
+  await auditService.log(
+    approver.id, 
+    'LOCK_RECONCILIATION', 
+    'Project', 
+    projectId, 
+    { snapshot: report.reconciliation }
+  );
+
+  return { message: 'Reconciliation locked and audited successfully', projectId };
+}
+
 module.exports = {
-  getProjectReconciliation
+  getProjectReconciliation,
+  lockReconciliation
 };

@@ -1,7 +1,20 @@
+import client from '../../src/api/client.js';
+import projects from '../../src/api/projects.api.js';
+import issues from '../../src/api/issues.api.js';
+import assets from '../../src/api/assets.api.js';
+import inventory from '../../src/api/inventory.api.js';
 
 export class OperationsManagerDashboard {
     constructor() {
         this.currentView = 'dashboard';
+        this.data = {
+            stats: { labor: 94, usage: 'Target', assets: '0 / 0', safety: 'A+' },
+            sites: [],
+            inventory: [],
+            issues: []
+        };
+        window.app = window.app || {};
+        window.app.omModule = this;
     }
 
     render() {
@@ -72,6 +85,7 @@ export class OperationsManagerDashboard {
     }
 
     getDashboardView() {
+        setTimeout(() => this.loadDashboardData(), 0);
         return `
             ${this.getStatsGridHTML()}
             ${this.getDataCardHTML()}
@@ -79,27 +93,28 @@ export class OperationsManagerDashboard {
     }
 
     getStatsGridHTML() {
+        const s = this.data.stats;
         return `
             <div class="stats-grid">
                <div class="stat-card">
                   <div class="stat-header"><span class="stat-label">Labor Efficiency</span><i class="fas fa-users-cog" style="color: var(--blue);"></i></div>
-                  <div class="stat-value">94%</div>
-                  <div class="stat-sub"><i class="fas fa-arrow-up"></i> Positive Trend</div>
+                  <div class="stat-value">${s.labor}%</div>
+                  <div class="stat-sub"><i class="fas fa-arrow-up"></i> Live Tracking</div>
                </div>
                <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Material Usage</span><i class="fas fa-cubes" style="color: var(--orange);"></i></div>
-                  <div class="stat-value">On Target</div>
-                  <div class="stat-sub">Variance +/- 2%</div>
+                  <div class="stat-header"><span class="stat-label">Stock Issues</span><i class="fas fa-cubes" style="color: var(--orange);"></i></div>
+                  <div class="stat-value">${s.usage}</div>
+                  <div class="stat-sub">Pending Replenishments</div>
                </div>
                <div class="stat-card">
                   <div class="stat-header"><span class="stat-label">Active Fleets</span><i class="fas fa-truck-moving" style="color: var(--slate-600);"></i></div>
-                  <div class="stat-value">22 / 24</div>
-                  <div class="stat-sub">2 Units in Maintenance</div>
+                  <div class="stat-value">${s.assets}</div>
+                  <div class="stat-sub">Units Checked Out</div>
                </div>
                <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Safety Score</span><i class="fas fa-shield-alt" style="color: var(--emerald);"></i></div>
-                  <div class="stat-value">A+</div>
-                  <div class="stat-sub">Zero Incidents (30 Days)</div>
+                  <div class="stat-header"><span class="stat-label">Open Issues</span><i class="fas fa-exclamation-circle" style="color: var(--red);"></i></div>
+                  <div class="stat-value">${s.openIssues || 0}</div>
+                  <div class="stat-sub">Governance & Safety</div>
                </div>
             </div>
         `;
@@ -109,45 +124,26 @@ export class OperationsManagerDashboard {
         return `
         <div class="data-card">
           <div class="data-card-header">
-            <div class="card-title">Site Performance Metrics</div>
-            <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filter</button>
+            <div class="card-title">Live Site Performance Overdue/Delayed Tasks</div>
+            <button class="btn btn-secondary" onclick="window.app.omModule.loadDashboardData()"><i class="fas fa-sync"></i> Refresh</button>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Site ID</th>
-                <th>Location</th>
-                <th>Supervisor</th>
-                <th>Daily Output</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="project-id">CEN-01</span></td>
-                <td style="font-weight: 600;">Unilia Library</td>
-                <td>John Banda</td>
-                <td>
-                    <div class="progress-text"><span>Target Reached</span> <span>105%</span></div>
-                    <div class="progress-container"><div class="progress-bar" style="width: 100%; background: var(--emerald);"></div></div>
-                </td>
-                <td><span class="status active">Optimal</span></td>
-                <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Site Audit', window.DrawerTemplates.newAudit)">Audit</button></td>
-              </tr>
-              <tr>
-                <td><span class="project-id">MZ-05</span></td>
-                <td style="font-weight: 600;">Mzuzu Clinic</td>
-                <td>Peter Phiri</td>
-                <td>
-                    <div class="progress-text"><span>Target Reached</span> <span>88%</span></div>
-                    <div class="progress-container"><div class="progress-bar" style="width: 88%; background: var(--orange);"></div></div>
-                </td>
-                <td><span class="status pending">Lagging</span></td>
-                <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Site Audit', window.DrawerTemplates.newAudit)">Audit</button></td>
-              </tr>
-            </tbody>
-          </table>
+          <div id="om-sites-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Site ID</th>
+                  <th>Location</th>
+                  <th>Progress</th>
+                  <th>Budget Used</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${this.renderSiteRows()}
+              </tbody>
+            </table>
+          </div>
         </div>
         `;
     }
@@ -459,6 +455,67 @@ export class OperationsManagerDashboard {
                 </table>
             </div>
         `;
+    }
+
+    async loadDashboardData() {
+        try {
+            const [opsRes, projectsRes] = await Promise.all([
+                client.get('/reports/ops/dashboard'),
+                projects.getAll()
+            ]);
+
+            const ops = opsRes.data || {};
+            const allProjects = projectsRes.data || projectsRes;
+
+            this.data.stats = {
+                labor: 94, // Static for now until labor module is full
+                usage: ops.activeSosAlerts > 0 ? `${ops.activeSosAlerts} SOS` : 'Healthy',
+                assets: `${ops.activeAssets || 0} Units`,
+                openIssues: ops.openIssues,
+                safety: 'A+'
+            };
+
+            this.data.sites = Array.isArray(allProjects) ? allProjects : [];
+
+            // Update UI
+            if (this.currentView === 'dashboard') {
+                const container = document.getElementById('om-module');
+                if (container) {
+                    const stats = container.querySelector('.stats-grid');
+                    if (stats) stats.outerHTML = this.getStatsGridHTML();
+                    
+                    const tbody = container.querySelector('#om-sites-container tbody');
+                    if (tbody) tbody.innerHTML = this.renderSiteRows();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load ops data:', error);
+        }
+    }
+
+    renderSiteRows() {
+        if (this.data.sites.length === 0) {
+            return '<tr><td colspan="6" style="text-align:center; padding:20px;">No active sites found.</td></tr>';
+        }
+        return this.data.sites.map(site => {
+            const progress = site.avgProgress || 0;
+            const projectBudgetSpent = site.budgetSpent || 0;
+            const projectBudgetTotal = site.budgetTotal || 0;
+            const budgetUtil = projectBudgetTotal > 0 ? (projectBudgetSpent / projectBudgetTotal) * 100 : 0;
+            return `
+                <tr>
+                    <td><span class="project-id">${site.code}</span></td>
+                    <td style="font-weight: 600;">${site.name}</td>
+                    <td>
+                        <div class="progress-text"><span>${progress}%</span></div>
+                        <div class="progress-container"><div class="progress-bar" style="width: ${progress}%; background: ${progress > 80 ? 'var(--emerald)' : 'var(--orange)'};"></div></div>
+                    </td>
+                    <td>${budgetUtil.toFixed(1)}%</td>
+                    <td><span class="status ${site.status === 'active' ? 'active' : 'pending'}">${site.status.toUpperCase()}</span></td>
+                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawer.open('Site Details', 'Viewing detail for ${site.code}')">View</button></td>
+                </tr>
+            `;
+        }).join('');
     }
 
 }

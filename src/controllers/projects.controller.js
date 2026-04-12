@@ -95,4 +95,37 @@ const getMaterials = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, getBudget, getMaterials };
+const extendProject = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const projectId = validateId(id, res);
+  if (!projectId) return;
+
+  const body = await parseBody(req);
+  
+  if (!body.newEndDate) {
+    response.error(res, 'newEndDate is required', 400);
+    return;
+  }
+  if (!body.reason) {
+    response.error(res, 'Extension reason is required', 400);
+    return;
+  }
+
+  const result = await projectsService.extendProject(projectId, body.newEndDate, body.reason, user);
+  response.success(res, result);
+});
+
+const getProgress = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const projectId = validateId(id, res);
+  if (!projectId) return;
+
+  const progress = await projectsService.calculateProgress(projectId);
+  response.success(res, { projectId, progress });
+});
+
+module.exports = { getAll, getById, create, update, remove, getBudget, getMaterials, extendProject, getProgress };

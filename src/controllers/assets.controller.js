@@ -3,6 +3,9 @@
  */
 
 const assetsService = require('../services/assets.service');
+const websocket = require('../realtime/websocket');
+const notifService = require('../services/notification.service');
+const auditService = require('../services/audit.service');
 const { validateBody, validateId, parseBody, parseQuery } = require('../middlewares/validate.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { createAssetSchema, updateAssetSchema, paginationSchema } = require('../utils/validators');
@@ -79,6 +82,46 @@ const checkOut = asyncHandler(async (req, res, id) => {
   
   const body = await parseBody(req);
   const result = await assetsService.checkOut(assetId, user.id, body.projectId);
+
+  // Broadcast asset dispatched
+  websocket.broadcastToChannel('assets', 'ASSET_DISPATCHED', {
+    assetId,
+    projectId: body.projectId,
+    userId: user.id,
+    asset: result
+  });
+
+  // Create persistent notification for the PM and FS of the project
+  try {
+    const project = await require('../config/database').prisma.project.findUnique({
+      where: { id: parseInt(body.projectId) }
+    });
+    if (project) {
+       await notifService.create({
+          userId: project.managerId,
+          type: 'info', icon: 'fa-truck-monster',
+          title: 'Asset Dispatched',
+          message: `${result.name} (${result.assetCode || 'ID:' + result.id}) has been dispatched to your project.`
+       });
+       if (project.fieldSupervisorId) {
+           await notifService.create({
+               userId: project.fieldSupervisorId,
+               type: 'info', icon: 'fa-truck-monster',
+               title: 'Equipment Arriving',
+               message: `${result.name} (${result.assetCode || 'ID:' + result.id}) is en-route to your site.`
+           });
+       }
+    }
+  } catch (e) {
+    console.error('Notif create failed:', e.message);
+  }
+
+  // Permanent Audit Log
+  await auditService.logFromRequest(req, 'DISPATCHED', 'Asset', result.id, result.assetCode, {
+    destinationProjectId: body.projectId,
+    assetName: result.name
+  });
+
   response.success(res, result);
 });
 
@@ -91,6 +134,31 @@ const checkIn = asyncHandler(async (req, res, id) => {
   
   const body = await parseBody(req);
   const result = await assetsService.checkIn(assetId, user.id, body.fuelLevel);
+
+  // Broadcast asset returned
+  websocket.broadcastToChannel('assets', 'ASSET_RETURNED', {
+    assetId,
+    userId: user.id,
+    asset: result
+  });
+
+  // Create persistent notification for EC
+  try {
+    await notifService.notifyRole('Equipment_Coordinator', {
+      type: 'success', icon: 'fa-warehouse',
+      title: 'Equipment Returned',
+      message: `${result.name} (${result.assetCode || 'ID:' + result.id}) has been checked in from the field.`
+    });
+  } catch(e) {
+    console.error('Notif create failed:', e.message);
+  }
+
+  // Permanent Audit Log
+  await auditService.logFromRequest(req, 'RETURNED (Check-in)', 'Asset', result.id, result.assetCode, {
+    assetName: result.name,
+    fuelLevel: body.fuelLevel
+  });
+
   response.success(res, result);
 });
 
@@ -102,4 +170,48 @@ const getAvailable = asyncHandler(async (req, res) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, checkOut, checkIn, getAvailable };
+const flagIssue = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const assetId = validateId(id, res);
+  if (!assetId) return;
+  
+  const body = await parseBody(req);
+  const result = await assetsService.flagIssue(assetId, user.id, body.description);
+
+  // Notify EC
+  try {
+    const notifService = require('../services/notification.service');
+    await notifService.notifyRole('Equipment_Coordinator', {
+      type: 'error', icon: 'fa-triangle-exclamation',
+      title: 'Equipment Breakdown Reported',
+      message: `${result.name} (${result.assetCode}) was flagged for maintenance by ${user.name}.`
+    });
+  } catch(e) {}
+
+  await auditService.logFromRequest(req, 'FLAGGED_DEFECTIVE', 'Asset', result.id, result.assetCode, {
+    description: body.description
+  });
+
+  response.success(res, result);
+});
+
+const resolveIssue = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const assetId = validateId(id, res);
+  if (!assetId) return;
+  
+  const body = await parseBody(req);
+  const result = await assetsService.resolveIssue(assetId, user.id, body.resolutionNotes);
+
+  await auditService.logFromRequest(req, 'ISSUE_RESOLVED', 'Asset', result.id, result.assetCode, {
+    resolutionNotes: body.resolutionNotes
+  });
+
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, update, remove, checkOut, checkIn, getAvailable, flagIssue, resolveIssue };

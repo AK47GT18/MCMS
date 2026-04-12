@@ -62,7 +62,30 @@ async function create(data, userId) {
 }
 
 async function approve(id, reviewerId) {
-  const requisition = await prisma.requisition.update({
+  const requisition = await prisma.requisition.findUnique({
+    where: { id },
+    include: { project: true }
+  });
+
+  if (!requisition) throw new AppError('Requisition not found', 404);
+  
+  if (requisition.status !== 'pending') {
+     throw new AppError(`Cannot approve a requisition that is currently ${requisition.status}`, 400);
+  }
+
+  // GAP 3: Strict Budget Enforcement
+  if (requisition.project && requisition.project.budgetTotal) {
+    const totalBudget = Number(requisition.project.budgetTotal);
+    const spentSoFar = Number(requisition.project.budgetSpent || 0);
+    const reqAmount = Number(requisition.totalAmount);
+
+    if (spentSoFar + reqAmount > totalBudget) {
+      const excess = (spentSoFar + reqAmount) - totalBudget;
+      throw new AppError(`Budget Exceeded: This requisition pushes the project K${excess.toLocaleString()} over budget. Approval blocked.`, 400);
+    }
+  }
+
+  const updatedRequisition = await prisma.requisition.update({
     where: { id },
     data: {
       status: 'approved',
@@ -82,18 +105,18 @@ async function approve(id, reviewerId) {
   logger.info('Requisition approved', { reqId: id, reviewerId });
   
   // Emit realtime event
-  handlers.emitRequisitionStatus(requisition, 'approved', reviewerId);
+  handlers.emitRequisitionStatus(updatedRequisition, 'approved', reviewerId);
   
   // Email notification to submitter
-  if (requisition.submitter) {
+  if (updatedRequisition.submitter) {
     emailService.sendNotification(
-      requisition.submitter,
+      updatedRequisition.submitter,
       'Requisition Approved',
-      `Your requisition ${requisition.reqCode} has been approved.`,
+      `Your requisition ${updatedRequisition.reqCode} has been approved.`,
     ).catch(err => logger.error('Email notification failed', { error: err.message }));
   }
   
-  return requisition;
+  return updatedRequisition;
 }
 
 async function reject(id, reviewerId, reason) {
@@ -162,4 +185,42 @@ async function getPending() {
   });
 }
 
-module.exports = { getAll, getById, create, approve, reject, flagFraud, getPending };
+async function fulfill(id, fulfillerId, sectorId = 1) {
+  // Find requisition and items
+  const requisition = await prisma.requisition.findUnique({
+    where: { id },
+    include: { items: true, project: true }
+  });
+
+  if (!requisition) throw new AppError('Requisition not found', 404);
+  if (requisition.status !== 'approved') {
+    throw new AppError(`Cannot fulfill a requisition with status: ${requisition.status}. Must be 'approved'.`, 400);
+  }
+
+  const inventoryService = require('./inventory.service');
+
+  // Fulfill each item
+  if (requisition.items && requisition.items.length > 0) {
+    for (const item of requisition.items) {
+      await inventoryService.distribute({
+        sectorId: sectorId,
+        materialName: item.itemName,
+        unit: 'Units', // Generic unit if unavailable from reqItem
+        quantity: item.quantity,
+        reference: requisition.reqCode || `REQ-${id}`,
+        notes: `Fulfilled requisition GRN`
+      }, { id: fulfillerId });
+    }
+  }
+
+  // Complete the flow
+  const updatedRequisition = await prisma.requisition.update({
+    where: { id },
+    data: { status: 'fulfilled' }
+  });
+
+  logger.info('Requisition fulfilled (GRN Processed)', { reqId: id, fulfillerId });
+  return updatedRequisition;
+}
+
+module.exports = { getAll, getById, create, approve, reject, flagFraud, getPending, fulfill };

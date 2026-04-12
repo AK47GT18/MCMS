@@ -1,12 +1,22 @@
 import { StatCard } from '../ui/StatCard.js';
 import { notificationService } from '../../src/services/notifications.service.js';
+import client from '../../src/api/client.js';
+import projects from '../../src/api/projects.api.js';
+import requisitions from '../../src/api/requisitions.api.js';
+import contracts from '../../src/api/contracts.api.js';
+import audit from '../../src/api/audit.api.js';
 
 export class FinanceDashboard {
     constructor() {
         this.currentView = 'dashboard';
-        this.data = {};
+        this.data = {
+            stats: { available: 0, committed: 0, ecRequests: 0, pmUplifts: 0 },
+            projects: [],
+            auditLogs: [],
+            requisitions: []
+        };
         
-        // Register this module globally so Drawer templates can access its methods
+        // Register this module globally
         window.app = window.app || {};
         window.app.fmModule = this;
     }
@@ -42,12 +52,14 @@ export class FinanceDashboard {
     }
 
     getDashboardView() {
+        setTimeout(() => this.loadDashboardData(), 0);
+        const s = this.data.stats;
         return `
             <div class="stats-grid">
-                ${StatCard({ title: 'Available Funds', value: '725.5M', subtext: 'Total across all projects', alertColor: 'emerald' })}
-                ${StatCard({ title: 'Committed', value: '1.2B', subtext: 'In active vendor contracts', alertColor: 'blue' })}
-                ${StatCard({ title: 'EC Requests', value: '8', subtext: 'Awaiting stock procurement', alertColor: 'orange' })}
-                ${StatCard({ title: 'PM Uplifts', value: '2', subtext: 'Pending additional funding', alertColor: 'red' })}
+                ${StatCard({ title: 'Available Funds', value: this.formatCurrency(s.available), subtext: 'Total across all projects', alertColor: 'emerald' })}
+                ${StatCard({ title: 'Committed', value: this.formatCurrency(s.committed), subtext: 'In active vendor contracts', alertColor: 'blue' })}
+                ${StatCard({ title: 'EC Requests', value: s.ecRequests, subtext: 'Awaiting stock procurement', alertColor: 'orange' })}
+                ${StatCard({ title: 'PM Uplifts', value: s.pmUplifts, subtext: 'Pending additional funding', alertColor: 'red' })}
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
@@ -230,34 +242,26 @@ export class FinanceDashboard {
     }
 
     getRecordsView() {
+        setTimeout(() => {
+            this.loadAuditData();
+        }, 0);
         return `
             <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px;">
                 <div class="data-card">
                     <div class="data-card-header">
                         <div class="card-title">Master Audit Log & System History</div>
-                        <button class="btn btn-secondary"><i class="fas fa-filter"></i> Search</button>
+                        <button class="btn btn-secondary" onclick="window.app.fmModule.loadAuditData()"><i class="fas fa-sync"></i> Refresh</button>
                     </div>
-                    <table>
-                        <thead>
-                            <tr><th>Timestamp</th><th>Action</th><th>Module</th><th>User</th><th>Details</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style="font-size: 11px; color: var(--slate-500);">Mar 29, 12:15</td>
-                                <td><span class="status active">Procurement</span></td>
-                                <td>Contracts</td>
-                                <td>Stefan Mwale</td>
-                                <td>New Contract: Bitumen Supply (REQ-089)</td>
-                            </tr>
-                            <tr>
-                                <td style="font-size: 11px; color: var(--slate-500);">Mar 29, 11:30</td>
-                                <td><span class="status pending">Budget</span></td>
-                                <td>Uplift</td>
-                                <td>Stefan Mwale</td>
-                                <td>Requested Uplift for MZ-05 from Project Manager</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div id="audit-log-container">
+                        <table>
+                            <thead>
+                                <tr><th>Timestamp</th><th>Action</th><th>Target</th><th>User</th><th>Details</th></tr>
+                            </thead>
+                            <tbody>
+                                ${this.renderAuditRows()}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="data-card">
@@ -265,14 +269,20 @@ export class FinanceDashboard {
                         <div class="card-title">Generated Reports</div>
                     </div>
                     <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                        <button class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px;">
-                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Project Profitability Report
-                        </button>
-                        <button class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px;">
-                            <i class="fas fa-file-excel" style="color: var(--emerald);"></i> Material Usage BvA
-                        </button>
+                        <a href="/api/v1/reports/finance/budget?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Budget Overview (PDF)
+                        </a>
+                        <a href="/api/v1/reports/finance/requisitions?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Requisition Analysis (PDF)
+                        </a>
+                        <a href="/api/v1/reports/finance/top-vendors?format=csv" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                            <i class="fas fa-file-excel" style="color: var(--emerald);"></i> Top Vendors (CSV)
+                        </a>
+                        <a href="/api/v1/reports/finance/spend-categories?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Spend Categories (PDF)
+                        </a>
                         <button class="btn btn-primary" style="margin-top: 12px; justify-content: center;" onclick="window.drawer.open('Report Generator', window.DrawerTemplates.reportGenerator)">
-                            Create New Report
+                            Custom Report
                         </button>
                     </div>
                 </div>
@@ -417,6 +427,71 @@ export class FinanceDashboard {
             console.error('Uplift error:', error);
             window.toast.show('Failed to submit uplift request.', 'error');
         }
+    }
+
+    async loadDashboardData() {
+        try {
+            const [budgetRes, pendingReqs] = await Promise.all([
+                client.get('/reports/finance/budget'),
+                requisitions.getPending()
+            ]);
+
+            const budget = budgetRes.data || {};
+            const reqs = pendingReqs.data || pendingReqs;
+
+            this.data.stats = {
+                available: budget.totalBudget - budget.totalSpent,
+                committed: budget.totalSpent, // Simplified for now
+                ecRequests: reqs.length,
+                pmUplifts: 0 // Mocked for now until we have an endpoint
+            };
+
+            // Re-render if we are still on dashboard
+            if (this.currentView === 'dashboard') {
+                const container = document.getElementById('finance-module');
+                if (container) {
+                    const content = document.getElementById('finance-content-area');
+                    if (content) content.innerHTML = this.getCurrentViewHTML();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load finance stats:', error);
+        }
+    }
+
+    async loadAuditData() {
+        try {
+            const res = await client.get('/reports/system/audit?limit=20');
+            this.data.auditLogs = (res.data && res.data.rows) ? res.data.rows : [];
+            
+            const tbody = document.querySelector('#audit-log-container tbody');
+            if (tbody) {
+                tbody.innerHTML = this.renderAuditRows();
+            }
+        } catch (error) {
+            console.error('Failed to load audit logs:', error);
+        }
+    }
+
+    renderAuditRows() {
+        if (this.data.auditLogs.length === 0) {
+            return `<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--slate-400);">No audit records found.</td></tr>`;
+        }
+        return this.data.auditLogs.map(log => `
+            <tr>
+                <td style="font-size: 11px; color: var(--slate-500);">${new Date(log.timestamp).toLocaleString()}</td>
+                <td><span class="status active" style="font-size: 10px;">${log.action}</span></td>
+                <td>${log.targetType || '-'}</td>
+                <td>${log.userName || 'System'}</td>
+                <td style="font-size: 12px; color: var(--slate-600); max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${log.targetCode || 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
+    formatCurrency(val) {
+        if (val >= 1000000000) return (val / 1000000000).toFixed(1) + 'B';
+        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+        return val.toLocaleString();
     }
 
     handleGenerateReport() {

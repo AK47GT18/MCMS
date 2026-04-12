@@ -174,8 +174,15 @@ async function create(data, userId) {
 
 async function update(id, data) {
   await getById(id);
-  const issue = await prisma.issue.update({ where: { id }, data });
+  const issue = await prisma.issue.update({ 
+    where: { id }, 
+    data,
+    include: {
+      project: { select: { id: true, code: true, name: true } }
+    }
+  });
   logger.info('Issue updated', { issueId: id });
+  handlers.emitIssueAlert(issue, 'updated');
   return issue;
 }
 
@@ -187,8 +194,12 @@ async function resolve(id, resolutionNotes) {
       resolutionNotes,
       resolvedAt: new Date(),
     },
+    include: {
+      project: { select: { id: true, code: true, name: true } }
+    }
   });
   logger.info('Issue resolved', { issueId: id });
+  handlers.emitIssueAlert(issue, 'resolved');
   return issue;
 }
 

@@ -55,6 +55,13 @@ const requisitions = {
   async getPending() {
     return await client.get('/requisitions/pending');
   },
+
+  /**
+   * Fulfill approved requisition (GRN Intake)
+   */
+  async fulfill(id, sectorId = 1) {
+    return await client.post(`/requisitions/${id}/fulfill`, { sectorId });
+  }
 };
 
 export default requisitions;

@@ -62,6 +62,20 @@ const assets = {
   async getAvailable() {
     return await client.get('/assets?status=available');
   },
+
+  /**
+   * Flag asset issue (Breakdown)
+   */
+  async flagIssue(id, description) {
+    return await client.put(`/assets/${id}/issue`, { description });
+  },
+
+  /**
+   * Resolve asset maintenance issue
+   */
+  async resolveIssue(id, resolutionNotes) {
+    return await client.put(`/assets/${id}/resolve`, { resolutionNotes });
+  }
 };
 
 export default assets;

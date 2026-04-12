@@ -3,6 +3,7 @@ import { currentUser as mockUser, ROLES } from './config/roles.js'; // Keep as f
 import { drawer } from './components/DrawerManager.js';
 import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
 import issues from './src/api/issues.api.js';
+import { realtime } from './src/realtime/RealtimeClient.js';
 import './components/ui/ToastManager.js';
 import './components/ui/ModalManager.js';
 
@@ -142,11 +143,25 @@ class App {
             // Expose currentUser globally for templates
             window.currentUser = this.currentUser;
             
+            // Initialize real-time WebSocket connection
+            this.realtime = realtime;
+            window.realtime = realtime;
+            realtime.connect();
+            realtime.subscribe('projects');
+            realtime.subscribe('logistics');
+            realtime.subscribe('assets');
+            realtime.subscribe('requisitions');
+            console.log('[WS] Real-time client initialized');
+
             // Render Shell
             this.layout.render();
 
-            // Initial Page Load
-            await this.loadPage('dashboard');
+            // Initial Page Load - Attempt to restore last session view
+            const lastPage = localStorage.getItem('mcms_last_page');
+            const initialPage = lastPage || 'dashboard';
+            console.log(`[INIT] Loading initial page: ${initialPage}`);
+            await this.loadPage(initialPage);
+            this.layout.setActiveNavItem(initialPage);
 
             // Listen for navigation events
             window.addEventListener('navigate', (e) => {
@@ -159,6 +174,9 @@ class App {
     }
 
     async loadPage(pageId) {
+        // Persist current page for session recovery
+        localStorage.setItem('mcms_last_page', pageId);
+        
         // Route-level permission control
         const ROUTE_PERMISSIONS = {
             'dashboard': [], // All authenticated users

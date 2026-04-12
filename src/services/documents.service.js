@@ -4,6 +4,7 @@ const emailService = require('../emails/email.service');
 const logger = require('../utils/logger');
 const path = require('path');
 const fs = require('fs');
+const websocket = require('../realtime/websocket');
 
 /**
  * Service to handle document-related operations
@@ -108,6 +109,17 @@ const documentsService = {
         }
       }
     });
+
+    // Globally Broadcast Version Obsolescence (Drawing Superseded)
+    try {
+      websocket.broadcastToChannel('project_' + document.projectId, 'DRAWING_SUPERSEDED', {
+        documentId: docId,
+        newVersion: nextVersion,
+        title: document.title
+      });
+    } catch(e) {
+      logger.error('Failed to broadcast DRAWING_SUPERSEDED event', e);
+    }
 
     // Notify Project Manager
     if (document.project.manager && document.project.manager.email) {

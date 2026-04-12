@@ -9,16 +9,16 @@ const issues = {
   /**
    * Get all issues with pagination
    */
-  async getAll(params = {}) {
+  async getAll(params = {}, options = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return await client.get(`/issues${queryString ? '?' + queryString : ''}`);
+    return await client.get(`/issues${queryString ? '?' + queryString : ''}`, options);
   },
 
   /**
    * Get issue by ID
    */
-  async getById(id) {
-    return await client.get(`/issues/${id}`);
+  async getById(id, options = {}) {
+    return await client.get(`/issues/${id}`, options);
   },
 
   /**
@@ -52,8 +52,8 @@ const issues = {
   /**
    * Get open issues
    */
-  async getOpen() {
-    return await client.get('/issues?status=open');
+  async getOpen(options = {}) {
+    return await client.get('/issues?status=open', options);
   },
 };
 

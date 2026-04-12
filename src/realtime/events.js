@@ -38,6 +38,8 @@ const EVENTS = {
   ISSUE_ASSIGNED: 'issue:assigned',
   ISSUE_RESOLVED: 'issue:resolved',
   ISSUE_ESCALATED: 'issue:escalated',
+  ISSUE_UPDATED: 'issue:updated',
+  ISSUE_DELETED: 'issue:deleted',
   
   // Asset events
   ASSET_CHECKED_OUT: 'asset:checked_out',

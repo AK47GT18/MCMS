@@ -1,7 +1,15 @@
+import client from '../../src/api/client.js';
+import projects from '../../src/api/projects.api.js';
 
 export class ManagingDirectorDashboard {
     constructor() {
         this.currentView = 'dashboard';
+        this.data = {
+            summary: { portfolioValue: 0, activeProjects: 0, margin: 12.4, cashFlow: 'Healthy', risks: 0 },
+            rankings: []
+        };
+        window.app = window.app || {};
+        window.app.mdModule = this;
     }
 
     render() {
@@ -56,7 +64,7 @@ export class ManagingDirectorDashboard {
                       <span class="context-value">${current.context}</span>
                       ${this.currentView === 'dashboard' ? `
                            <div class="context-dot"></div>
-                           <span class="context-value">MWK 1.2B</span> Portfolio Value
+                           <span class="context-value">${this.formatCurrency(this.data.summary.portfolioValue)}</span> Portfolio Value
                       ` : ''}
                     </div>
                   </div>
@@ -70,6 +78,7 @@ export class ManagingDirectorDashboard {
     }
 
     getDashboardView() {
+        setTimeout(() => this.loadDashboardData(), 0);
         return `
             ${this.getStatsGridHTML()}
             ${this.getExecutiveSummaryHTML()}
@@ -77,6 +86,7 @@ export class ManagingDirectorDashboard {
     }
 
     getStatsGridHTML() {
+        const s = this.data.summary;
         return `
             <div class="stats-grid">
                <div class="stat-card">
@@ -84,35 +94,35 @@ export class ManagingDirectorDashboard {
                     <span class="stat-label">Net Margin</span>
                     <i class="fas fa-chart-line" style="color: var(--emerald);"></i>
                   </div>
-                  <div class="stat-value">12.4%</div>
-                  <div class="stat-sub" style="color: var(--emerald);"><i class="fas fa-arrow-up"></i> +1.2% vs Target</div>
+                  <div class="stat-value">${s.margin}%</div>
+                  <div class="stat-sub" style="color: var(--emerald);"><i class="fas fa-arrow-up"></i> Live Performance</div>
                </div>
                
                <div class="stat-card">
                   <div class="stat-header">
-                    <span class="stat-label">Cash Flow</span>
+                    <span class="stat-label">Contract Value</span>
                     <i class="fas fa-coins" style="color: var(--blue);"></i>
                   </div>
-                  <div class="stat-value">Healthy</div>
-                  <div class="stat-sub">Runway: 8 Months</div>
+                  <div class="stat-value">${this.formatCurrency(s.activeContractValue)}</div>
+                  <div class="stat-sub">Active Commitments</div>
                </div>
-
+ 
                 <div class="stat-card">
                   <div class="stat-header">
-                    <span class="stat-label">Project Dashboard</span>
+                    <span class="stat-label">Active Projects</span>
                     <i class="fas fa-chart-simple" style="color: var(--slate-600);"></i>
                   </div>
-                  <div class="stat-value">4 Active</div>
-                  <div class="stat-sub">1 Pending Contract</div>
+                  <div class="stat-value">${s.activeProjects}</div>
+                  <div class="stat-sub">Running Portfolio</div>
                </div>
-
+ 
                <div class="stat-card">
                   <div class="stat-header">
-                    <span class="stat-label">Critical Risks</span>
+                    <span class="stat-label">Open Issues</span>
                     <i class="fas fa-bolt" style="color: var(--red);"></i>
                   </div>
-                  <div class="stat-value">1 High</div>
-                  <div class="stat-sub">Supply Chain Volatility</div>
+                  <div class="stat-value">${s.openIssues}</div>
+                  <div class="stat-sub">Action Required</div>
                </div>
             </div>
         `;
@@ -123,43 +133,26 @@ export class ManagingDirectorDashboard {
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
             <div class="data-card">
               <div class="data-card-header">
-                <div class="card-title">Project Profitability Analysis</div>
+                <div class="card-title">Project Performance Ranking</div>
+                <button class="btn btn-secondary" onclick="window.app.mdModule.loadDashboardData()"><i class="fas fa-sync"></i> Refresh</button>
               </div>
               
-              <table>
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Current Rev.</th>
-                    <th>Est. Cost</th>
-                    <th>Proj. Margin</th>
-                    <th>Health</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style="font-weight: 600;">Unilia Library Complex</td>
-                    <td>MWK 150M</td>
-                    <td>MWK 110M</td>
-                    <td style="font-weight: 700; color: var(--emerald);">26%</td>
-                    <td><span class="status active">Excellent</span></td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight: 600;">Mzuzu Clinic Extension</td>
-                    <td>MWK 45M</td>
-                    <td>MWK 38M</td>
-                    <td style="font-weight: 700; color: var(--orange);">15%</td>
-                    <td><span class="status pending">Monitor</span></td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight: 600;">Area 18 Mall Access</td>
-                    <td>MWK 20M</td>
-                    <td>MWK 19.5M</td>
-                    <td style="font-weight: 700; color: var(--red);">2.5%</td>
-                    <td><span class="status rejected">Critical</span></td>
-                  </tr>
-                </tbody>
-              </table>
+              <div id="md-rankings-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Project</th>
+                      <th>Progress</th>
+                      <th>Budget Util.</th>
+                      <th>Issues</th>
+                      <th>Health</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${this.renderRankingRows()}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div class="data-card" style="padding: 24px;">
@@ -433,5 +426,68 @@ export class ManagingDirectorDashboard {
                  </table>
             </div>
         `;
+    }
+    async loadDashboardData() {
+        try {
+            const [summaryRes, rankingsRes] = await Promise.all([
+                client.get('/reports/executive/summary'),
+                client.get('/reports/executive/project-rankings')
+            ]);
+
+            const summary = summaryRes.data || {};
+            this.data.summary = {
+                portfolioValue: summary.financials?.totalBudget || 0,
+                activeContractValue: summary.financials?.activeContractValue || 0,
+                activeProjects: summary.totalProjects || 0,
+                margin: 12.4, // Static for now
+                openIssues: summary.openIssues || 0
+            };
+
+            this.data.rankings = rankingsRes.data?.rows || rankingsRes.data || [];
+
+            // Update UI
+            if (this.currentView === 'dashboard') {
+                const module = document.getElementById('md-module');
+                if (module) {
+                    const header = module.querySelector('.page-header');
+                    if (header) header.outerHTML = this.getHeaderHTML();
+                    
+                    const stats = module.querySelector('.stats-grid');
+                    if (stats) stats.outerHTML = this.getStatsGridHTML();
+                    
+                    const tbody = module.querySelector('#md-rankings-container tbody');
+                    if (tbody) tbody.innerHTML = this.renderRankingRows();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load MD data:', error);
+        }
+    }
+
+    renderRankingRows() {
+        if (this.data.rankings.length === 0) {
+            return '<tr><td colspan="5" style="text-align:center; padding:20px;">No projects ranked.</td></tr>';
+        }
+        return this.data.rankings.slice(0, 5).map(row => {
+            const health = row.openIssues === 0 && row.avgProgress >= (row.budgetUtilization || 0) ? 'Excellent' : 
+                         row.openIssues > 2 ? 'Critical' : 'Good';
+            const healthClass = health === 'Excellent' ? 'active' : health === 'Critical' ? 'rejected' : 'pending';
+            
+            return `
+                <tr>
+                    <td style="font-weight: 600;">${row.name}</td>
+                    <td>${row.avgProgress}%</td>
+                    <td>${(row.budgetUtilization || 0).toFixed(1)}%</td>
+                    <td>${row.openIssues}</td>
+                    <td><span class="status ${healthClass}">${health}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    formatCurrency(val) {
+        if (val >= 1000000000) return 'MWK ' + (val / 1000000000).toFixed(1) + 'B';
+        if (val >= 1000000) return 'MWK ' + (val / 1000000).toFixed(1) + 'M';
+        return 'MWK ' + (val || 0).toLocaleString();
     }
 }

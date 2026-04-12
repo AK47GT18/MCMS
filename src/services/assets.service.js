@@ -121,4 +121,65 @@ async function getAvailable() {
   });
 }
 
-module.exports = { getAll, getById, create, update, remove, checkOut, checkIn, getAvailable };
+async function flagIssue(id, reporterId, description) {
+  const asset = await prisma.asset.update({
+    where: { id },
+    data: {
+      status: 'maintenance',
+      condition: 'Poor',
+      assetLogs: {
+        create: {
+          userId: reporterId,
+          action: 'flagged_issue',
+          fuelLevelAtAction: -1
+        }
+      },
+      maintenanceRecords: {
+        create: {
+          serviceDate: new Date(),
+          type: 'corrective',
+          description: description || 'Field Supervisor reported a breakdown.'
+        }
+      }
+    }
+  });
+
+  logger.info('Asset flagged for issue/maintenance', { assetId: id, reporterId });
+  
+  // Realtime notification
+  handlers.emitAssetEvent(asset, 'maintenance');
+
+  return asset;
+}
+
+async function resolveIssue(id, resolverId, resolutionNotes) {
+  const asset = await getById(id);
+  if (asset.status !== 'maintenance') {
+    throw new AppError('Asset is not currently in maintenance status', 400);
+  }
+
+  const updatedAsset = await prisma.asset.update({
+    where: { id },
+    data: {
+      status: 'available',
+      condition: 'Good',
+      lastMaintenanceAt: new Date(),
+      assetLogs: {
+        create: {
+          userId: resolverId,
+          action: 'issue_resolved',
+          fuelLevelAtAction: -1
+        }
+      }
+    }
+  });
+
+  logger.info('Asset issue resolved', { assetId: id, resolverId });
+  
+  // Realtime notification
+  handlers.emitAssetEvent(updatedAsset, 'available');
+
+  return updatedAsset;
+}
+
+module.exports = { getAll, getById, create, update, remove, checkOut, checkIn, getAvailable, flagIssue, resolveIssue };

@@ -534,6 +534,119 @@ async function getMaterials(projectId) {
   };
 }
 
+/**
+ * Extend a project's end date and cascade to all affected tasks, contracts, and notifications
+ * @param {number} projectId
+ * @param {string} newEndDate - ISO date string
+ * @param {string} reason - Reason for extension
+ * @param {Object} approver - The PM user who approves this extension
+ */
+async function extendProject(projectId, newEndDate, reason, approver) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: {
+      manager: { select: { id: true, name: true, email: true } },
+      fieldSupervisor: { select: { id: true, name: true, email: true } },
+      contracts: { select: { id: true, endDate: true } },
+    },
+  });
+
+  if (!project) throw new AppError('Project not found', 404);
+
+  const oldEndDate = project.endDate;
+  const newEnd = new Date(newEndDate);
+
+  if (!oldEndDate) throw new AppError('Project has no existing end date to extend', 400);
+  if (newEnd <= new Date(oldEndDate)) throw new AppError('New end date must be after current end date', 400);
+
+  const shiftMs = newEnd.getTime() - new Date(oldEndDate).getTime();
+  const shiftDays = Math.round(shiftMs / (1000 * 60 * 60 * 24));
+
+  // 1. Update project end date
+  const updatedProject = await prisma.project.update({
+    where: { id: projectId },
+    data: { endDate: newEnd },
+  });
+
+  // 2. Cascade extension to tasks
+  const tasksService = require('./tasks.service');
+  const cascadeResult = await tasksService.cascadeExtension(projectId, shiftMs, new Date(oldEndDate));
+
+  // 3. Extend associated contract end dates
+  let contractsUpdated = 0;
+  for (const contract of project.contracts) {
+    if (contract.endDate) {
+      await prisma.contract.update({
+        where: { id: contract.id },
+        data: { endDate: new Date(new Date(contract.endDate).getTime() + shiftMs) },
+      });
+      contractsUpdated++;
+    }
+  }
+
+  // 4. Audit trail
+  await auditService.log(
+    approver.id, 'EXTEND_PROJECT', 'Project', projectId,
+    { oldEndDate, newEndDate: newEnd.toISOString(), shiftDays, reason, tasksShifted: cascadeResult.shifted, contractsUpdated }
+  );
+
+  // 5. Notify all project stakeholders
+  const emailService = require('../emails/email.service');
+  const notificationTargets = [];
+
+  // Get all role-holders for this project
+  if (project.manager) notificationTargets.push(project.manager);
+  if (project.fieldSupervisor) notificationTargets.push(project.fieldSupervisor);
+
+  // Get finance, contract admin, equipment coordinator, ops manager roles
+  const stakeholders = await prisma.user.findMany({
+    where: {
+      role: { in: ['Finance_Director', 'Contract_Administrator', 'Equipment_Coordinator', 'Operations_Manager', 'Managing_Director'] },
+      isActive: true,
+      isLocked: false,
+    },
+    select: { id: true, name: true, email: true, role: true },
+  });
+  notificationTargets.push(...stakeholders);
+
+  // Send notifications (non-blocking)
+  const message = `Project ${project.code} ("${project.name}") has been extended by ${shiftDays} days. New end date: ${newEnd.toLocaleDateString()}. Reason: ${reason}. ${cascadeResult.shifted} tasks and ${contractsUpdated} contracts were automatically adjusted.`;
+
+  for (const target of notificationTargets) {
+    emailService.sendNotification(target, `Project Extended: ${project.code}`, message)
+      .catch(e => logger.error('Extension notification failed', { to: target.email, error: e.message }));
+
+    // In-app notification
+    prisma.notification.create({
+      data: {
+        userId: target.id,
+        type: 'PROJECT_EXTENDED',
+        title: `Project Extended: ${project.code}`,
+        message,
+        projectId,
+      },
+    }).catch(e => logger.error('In-app notification failed', e));
+  }
+
+  logger.info('Project extended successfully', { projectId, shiftDays, tasksShifted: cascadeResult.shifted });
+
+  return {
+    project: updatedProject,
+    extension: { oldEndDate, newEndDate: newEnd, shiftDays, reason },
+    cascade: cascadeResult,
+    contractsUpdated,
+    notified: notificationTargets.length,
+  };
+}
+
+/**
+ * Calculate aggregate progress from all tasks
+ */
+async function calculateProgress(projectId) {
+  const tasksService = require('./tasks.service');
+  return tasksService.calculateProjectProgress(projectId);
+}
+
 module.exports = {
   getAll,
   getById,
@@ -545,4 +658,6 @@ module.exports = {
   addToSpent,
   getByManager,
   getMaterials,
+  extendProject,
+  calculateProgress,
 };

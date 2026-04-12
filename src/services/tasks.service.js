@@ -28,7 +28,7 @@ async function getByProject(projectId) {
 
 async function getByStatus(status) {
   return prisma.task.findMany({
-    where: { status },
+    where: { statusClass: status },
     orderBy: { startDate: 'asc' },
     include: {
       dependency: { select: { id: true, name: true } },
@@ -74,8 +74,29 @@ async function create(data) {
   return task;
 }
 
+async function cascadeShift(taskId, shiftMs) {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { dependents: true }
+  });
+  if (!task || task.dependents.length === 0) return;
+
+  for (const dependent of task.dependents) {
+    const newStartDate = new Date(dependent.startDate.getTime() + shiftMs);
+    const newEndDate = new Date(dependent.endDate.getTime() + shiftMs);
+    
+    await prisma.task.update({
+      where: { id: dependent.id },
+      data: { startDate: newStartDate, endDate: newEndDate }
+    });
+    
+    // Recursive call for domino effect
+    await cascadeShift(dependent.id, shiftMs);
+  }
+}
+
 async function update(id, data) {
-  await getById(id);
+  const originalTask = await getById(id);
   
   // Convert date strings to ISO-8601 DateTime format if present
   const convertToDateTime = (dateString) => {
@@ -96,6 +117,20 @@ async function update(id, data) {
 
   const task = await prisma.task.update({ where: { id }, data: processedData });
   logger.info('Task updated', { taskId: id });
+
+  // GANTT CASCADE ALGORITHM
+  // If endDate shifted, cascade the shift to all downstream dependents
+  if (processedData.endDate && originalTask.endDate) {
+    const oldTime = originalTask.endDate.getTime();
+    const newTime = processedData.endDate.getTime();
+    const shiftMs = newTime - oldTime;
+    
+    if (shiftMs !== 0) {
+      logger.info('Cascading Gantt shift downstream', { taskId: id, shiftDays: shiftMs / (1000 * 60 * 60 * 24) });
+      await cascadeShift(id, shiftMs);
+    }
+  }
+
   return task;
 }
 
@@ -114,4 +149,59 @@ async function updateProgress(id, progress) {
   return task;
 }
 
-module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress };
+/**
+ * Cascade extension: shifts all tail-end tasks when project end date extends
+ * @param {number} projectId
+ * @param {number} shiftMs - milliseconds to shift
+ * @param {Date} oldEndDate - the previous project end date
+ */
+async function cascadeExtension(projectId, shiftMs, oldEndDate) {
+  // Find tasks that are near the project's old end date (within last 30% of project)
+  const allTasks = await prisma.task.findMany({
+    where: { projectId },
+    orderBy: { endDate: 'asc' },
+    include: { dependents: true },
+  });
+
+  if (allTasks.length === 0) return { shifted: 0 };
+
+  const shifted = [];
+  
+  // Shift all tasks proportionally
+  for (const task of allTasks) {
+    const taskEnd = new Date(task.endDate);
+    // Only shift tasks whose end date is at or beyond 70% of the old project timeline
+    if (oldEndDate && taskEnd >= new Date(oldEndDate.getTime() - Math.abs(shiftMs))) {
+      const newStartDate = new Date(task.startDate.getTime() + shiftMs);
+      const newEndDate = new Date(task.endDate.getTime() + shiftMs);
+
+      await prisma.task.update({
+        where: { id: task.id },
+        data: { startDate: newStartDate, endDate: newEndDate },
+      });
+
+      shifted.push({ taskId: task.id, name: task.name, oldEnd: task.endDate, newEnd: newEndDate });
+    }
+  }
+
+  logger.info('Cascade extension completed', { projectId, tasksShifted: shifted.length, shiftDays: shiftMs / (1000 * 60 * 60 * 24) });
+  return { shifted: shifted.length, tasks: shifted };
+}
+
+/**
+ * Calculate aggregate project progress from all tasks
+ * @param {number} projectId
+ * @returns {number} 0-100
+ */
+async function calculateProjectProgress(projectId) {
+  const tasks = await prisma.task.findMany({
+    where: { projectId },
+    select: { progress: true },
+  });
+
+  if (tasks.length === 0) return 0;
+  const avg = Math.round(tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / tasks.length);
+  return avg;
+}
+
+module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress, cascadeShift, cascadeExtension, calculateProjectProgress };

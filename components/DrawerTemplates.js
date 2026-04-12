@@ -751,8 +751,9 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    dailyProgressLog: `
+    dailyProgressLog: (taskId = null) => `
         <div class="drawer-section">
+            <input type="hidden" id="daily-log-task-id" value="${taskId || ''}" />
             <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
                 <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining
             </div>
@@ -769,7 +770,7 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Narrative / Progress Log</label>
-                 <textarea class="form-input" rows="2" placeholder="Describe work done today... (e.g. Finished north section)"></textarea>
+                 <textarea id="daily-narrative" class="form-input" rows="2" placeholder="Describe work done today... (e.g. Finished north section)"></textarea>
             </div>
 
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
@@ -805,7 +806,7 @@ export const DrawerTemplates = {
              <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Progress Completion</label>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <input type="range" class="form-input" style="flex:1;" min="0" max="100" value="45" oninput="this.nextElementSibling.innerText = this.value + '%'">
+                    <input type="range" id="daily-progress-increment" class="form-input" style="flex:1;" min="0" max="100" value="45" oninput="this.nextElementSibling.innerText = this.value + '%'">
                     <span style="font-weight:700; font-size:14px; width:40px;">45%</span>
                 </div>
             </div>
@@ -834,10 +835,13 @@ export const DrawerTemplates = {
             </div>
 
             <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).handleDailyLogSubmit({ 
-                expense: document.getElementById('daily-expense').value, 
-                category: document.getElementById('expense-category').value,
-                details: document.getElementById('expense-details').value,
-                sos: document.getElementById('sos-toggle').checked 
+                taskId: document.getElementById('daily-log-task-id')?.value,
+                progressIncrement: document.getElementById('daily-progress-increment')?.value,
+                narrative: document.getElementById('daily-narrative')?.value,
+                expense: document.getElementById('daily-expense')?.value, 
+                category: document.getElementById('expense-category')?.value,
+                details: document.getElementById('expense-details')?.value,
+                sos: document.getElementById('sos-toggle')?.checked 
             })">Submit Update</button>
         </div>
     `,
@@ -2829,61 +2833,72 @@ Contract Admin</textarea>
     `,
 
     editProject: `
-        <div class="drawer-section" style="padding: 24px;">
+        <div class="drawer-section" style="padding-bottom: 80px;">
             <input type="hidden" id="edit_proj_id">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="edit_proj_name" class="form-input" style="width: 100%;">
+            
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Project Identity Revision</div>
+                <div style="font-size: 11px; color: var(--slate-500);">Update core details and site staffing</div>
             </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Client / Agency</label>
-                <input type="text" id="edit_proj_client" class="form-input" style="width: 100%;">
+
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
+                <input type="text" id="edit_proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label class="form-label">Budget (MWK)</label>
-                    <input type="number" id="edit_proj_budget" class="form-input" style="width: 100%;">
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
+                <input type="text" id="edit_proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
+                    <input type="number" id="edit_proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Status</label>
-                    <select id="edit_proj_status" class="form-input" style="width: 100%;">
-                        <option value="planning">Planning</option>
-                        <option value="active">Active</option>
-                        <option value="on_hold">On Hold</option>
-                        <option value="completed">Completed</option>
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Status</label>
+                    <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-weight:600;">
+                        <option value="planning">PLANNING</option>
+                        <option value="active">ACTIVE</option>
+                        <option value="on_hold">ON HOLD</option>
+                        <option value="completed">COMPLETED</option>
                     </select>
                 </div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" id="edit_proj_start" class="form-input" style="width: 100%;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
+                    <input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Target Completion</label>
-                    <input type="date" id="edit_proj_end" class="form-input" style="width: 100%;">
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Target End Date</label>
+                    <input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
                 </div>
             </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Designated Supervisor</label>
-                <select id="edit_proj_supervisor" class="form-input" style="width: 100%;">
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Field Supervisor</label>
+                <select id="edit_proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
                     <option value="">Loading supervisors...</option>
                 </select>
             </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Site Location (Geofence)</label>
-                <div id="edit-project-map" style="height: 200px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--slate-200);"></div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--slate-500);">
-                    <span>Lat: <span id="edit_proj_lat">--</span></span>
-                    <span>Lng: <span id="edit_proj_lng">--</span></span>
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Geofence)</label>
+                <div id="edit-project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Redrawing Map...</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="edit_proj_lat">--</span></div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Long: <span id="edit_proj_lng">--</span></div>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project Master</button>
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; z-index: 10;">
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project Master</button>
+            </div>
         </div>
     `,
 
@@ -3403,5 +3418,68 @@ Contract Admin</textarea>
                 <i class="fas fa-fire" style="margin-right: 8px;"></i> Confirm Daily Burn
             </button>
         </div>
-    `
+    `,
+
+    extendProject: (project) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; border: 1px solid var(--orange); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-calendar-plus" style="color: var(--orange); font-size: 20px;"></i>
+                <div>
+                    <div style="font-weight: 700; color: var(--orange-hover); font-size: 14px;">Extend Project Timeline</div>
+                    <div style="font-size: 11px; color: var(--orange);">This will cascade to all tasks, contracts & notify stakeholders</div>
+                </div>
+            </div>
+
+            <input type="hidden" id="extend_project_id" value="${project?.id || ''}">
+
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Project</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${project?.name || '---'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Code</div>
+                        <div style="font-weight: 600; color: var(--slate-600);">${project?.code || '---'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Current End Date</label>
+                    <input type="date" id="extend_current_end" class="form-input" style="width: 100%; padding: 10px; background: var(--slate-50);" value="${project?.endDate ? project.endDate.split('T')[0] : ''}" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--orange); margin-bottom: 6px; text-transform: uppercase;">New End Date</label>
+                    <input type="date" id="extend_new_end" class="form-input" style="width: 100%; padding: 10px; border-color: var(--orange);" min="${project?.endDate ? project.endDate.split('T')[0] : ''}">
+                </div>
+            </div>
+
+            <div id="extend_preview" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #15803d;">
+                <i class="fas fa-info-circle"></i> <span id="extend_preview_text"></span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Reason for Extension *</label>
+                <textarea id="extend_reason" class="form-input" rows="3" style="width: 100%; padding: 10px;" placeholder="e.g. Weather delays, scope change, material shortages..."></textarea>
+            </div>
+
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 12px; color: var(--slate-600);">
+                <div style="font-weight: 700; margin-bottom: 6px;"><i class="fas fa-bell"></i> What happens:</div>
+                <ul style="margin: 0; padding-left: 16px; line-height: 1.8;">
+                    <li>Project end date updated to new date</li>
+                    <li>All trailing tasks shifted proportionally</li>
+                    <li>Associated contract end dates extended</li>
+                    <li>Email notification sent to all project roles</li>
+                    <li>Action logged to immutable audit trail</li>
+                </ul>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" 
+                onclick="window.app.pmModule.handleExtendProject()">
+                <i class="fas fa-calendar-plus" style="margin-right: 8px;"></i> Approve & Extend Timeline
+            </button>
+        </div>
+    `,
 };
