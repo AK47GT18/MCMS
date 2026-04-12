@@ -440,10 +440,10 @@ export class FinanceDashboard {
             const reqs = pendingReqs.data || pendingReqs;
 
             this.data.stats = {
-                available: budget.totalBudget - budget.totalSpent,
-                committed: budget.totalSpent, // Simplified for now
-                ecRequests: reqs.length,
-                pmUplifts: 0 // Mocked for now until we have an endpoint
+                available: (budget.totalBudget || 0) - (budget.totalSpent || 0),
+                committed: budget.totalSpent || 0,
+                ecRequests: Array.isArray(reqs) ? reqs.length : 0,
+                pmUplifts: 0
             };
 
             // Re-render if we are still on dashboard
@@ -477,21 +477,25 @@ export class FinanceDashboard {
         if (this.data.auditLogs.length === 0) {
             return `<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--slate-400);">No audit records found.</td></tr>`;
         }
-        return this.data.auditLogs.map(log => `
-            <tr>
-                <td style="font-size: 11px; color: var(--slate-500);">${new Date(log.timestamp).toLocaleString()}</td>
-                <td><span class="status active" style="font-size: 10px;">${log.action}</span></td>
-                <td>${log.targetType || '-'}</td>
-                <td>${log.userName || 'System'}</td>
-                <td style="font-size: 12px; color: var(--slate-600); max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${log.targetCode || 'N/A'}</td>
-            </tr>
-        `).join('');
+        return this.data.auditLogs.map(log => {
+            const dateStr = log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A';
+            return `
+                <tr>
+                    <td style="font-size: 11px; color: var(--slate-500);">${dateStr}</td>
+                    <td><span class="status active" style="font-size: 10px;">${log.action || 'Unknown'}</span></td>
+                    <td>${log.targetType || '-'}</td>
+                    <td>${log.userName || 'System'}</td>
+                    <td style="font-size: 12px; color: var(--slate-600); max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${log.targetCode || 'N/A'}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     formatCurrency(val) {
+        if (val === undefined || val === null || isNaN(val)) return '0';
         if (val >= 1000000000) return (val / 1000000000).toFixed(1) + 'B';
         if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-        return val.toLocaleString();
+        return Number(val).toLocaleString();
     }
 
     handleGenerateReport() {

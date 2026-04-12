@@ -35,6 +35,14 @@ export class EquipmentCoordinatorDashboard {
 
         // --- REAL-TIME LISTENERS ---
         this._setupRealtimeListeners();
+
+        // --- INITIAL DATA LOAD (Non-recursive) ---
+        setTimeout(() => {
+            this._loadInventory();
+            this._loadProcurementReceipts();
+            this._loadAssets();
+            this._loadRequisitions();
+        }, 100);
     }
 
     _setupRealtimeListeners() {
@@ -141,6 +149,8 @@ export class EquipmentCoordinatorDashboard {
     // =============================================
 
     async _loadInventory() {
+        if (this.isLoadingInventory) return;
+        this.isLoadingInventory = true;
         try {
             // Get inventory for the first project's first sector, or fetch all
             const result = await client.get('/inventory/project/1');
@@ -163,10 +173,14 @@ export class EquipmentCoordinatorDashboard {
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load inventory:', error);
+        } finally {
+            this.isLoadingInventory = false;
         }
     }
 
     async _loadRequisitions() {
+        if (this.isLoadingRequisitions) return;
+        this.isLoadingRequisitions = true;
         try {
             // Load approved requisitions ready for GRN/Intake
             const result = await requisitions.getAll({ status: 'approved' });
@@ -175,10 +189,14 @@ export class EquipmentCoordinatorDashboard {
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load requisitions:', error);
+        } finally {
+            this.isLoadingRequisitions = false;
         }
     }
 
     async _loadProcurementReceipts() {
+        if (this.isLoadingProc) return;
+        this.isLoadingProc = true;
         try {
             const result = await procurement.getAll({ status: 'purchased' });
             const data = result.data || result;
@@ -193,10 +211,14 @@ export class EquipmentCoordinatorDashboard {
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load procurement receipts:', error);
+        } finally {
+            this.isLoadingProc = false;
         }
     }
 
     async _loadAssets() {
+        if (this.isLoadingAssets) return;
+        this.isLoadingAssets = true;
         try {
             const result = await assets.getAll();
             const data = result.data || result;
@@ -204,10 +226,14 @@ export class EquipmentCoordinatorDashboard {
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load assets:', error);
+        } finally {
+            this.isLoadingAssets = false;
         }
     }
 
     async _loadDistributionLogs() {
+        if (this.isLoadingLogs) return;
+        this.isLoadingLogs = true;
         try {
             // Get inventory logs (distribution records)
             const result = await client.get('/inventory/project/1');
@@ -235,6 +261,8 @@ export class EquipmentCoordinatorDashboard {
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load distribution logs:', error);
+        } finally {
+            this.isLoadingLogs = false;
         }
     }
 
@@ -250,13 +278,6 @@ export class EquipmentCoordinatorDashboard {
     // =============================================
 
     getDashboardView() {
-        // Trigger async data load
-        setTimeout(() => {
-            this._loadInventory();
-            this._loadProcurementReceipts();
-            this._loadDistributionLogs();
-        }, 0);
-
         const lowStockCount = Object.values(this.inventory).filter(i => i.qty <= i.thresh).length;
         const inventoryEntries = Object.entries(this.inventory);
 
@@ -329,15 +350,6 @@ export class EquipmentCoordinatorDashboard {
 
     getResourceHubView() {
         const activeTab = this.hubActiveTab || 'field';
-
-        // Load appropriate data
-        setTimeout(() => {
-            if (activeTab === 'fm') {
-                this._loadProcurementReceipts();
-            } else {
-                this._loadRequisitions();
-            }
-        }, 0);
 
         const fieldCount = this.requisitionQueue.length;
         const fmCount = this.pendingReceipts.length;
@@ -419,7 +431,6 @@ export class EquipmentCoordinatorDashboard {
     }
 
     getInventoryView() {
-        setTimeout(() => this._loadInventory(), 0);
 
         const entries = Object.entries(this.inventory);
         return `
@@ -452,7 +463,6 @@ export class EquipmentCoordinatorDashboard {
     }
 
     getDistributionLogView() {
-        setTimeout(() => this._loadDistributionLogs(), 0);
 
         return `
             <div class="data-card">
@@ -487,7 +497,6 @@ export class EquipmentCoordinatorDashboard {
     }
 
     getRegistryView() {
-        setTimeout(() => this._loadAssets(), 0);
 
         return `
             <div class="data-card">
@@ -529,7 +538,6 @@ export class EquipmentCoordinatorDashboard {
 
     getOperatorsView() {
         // Load assets with operator info
-        setTimeout(() => this._loadAssets(), 0);
 
         const activeAssets = this.assetRegistry.filter(a => a.status === 'checked_out');
 
@@ -563,7 +571,6 @@ export class EquipmentCoordinatorDashboard {
     }
 
     getMaintenanceView() {
-        setTimeout(() => this._loadAssets(), 0);
 
         return `
             <div class="data-card">
@@ -628,11 +635,42 @@ export class EquipmentCoordinatorDashboard {
 
     switchHubTab(tabId) {
         this.hubActiveTab = tabId;
+        if (tabId === 'fm') {
+            this._loadProcurementReceipts();
+        } else {
+            this._loadRequisitions();
+        }
         window.app.loadPage(this.currentView);
     }
 
     switchView(view) {
         this.currentView = view;
+        
+        // Load appropriate data for the specific view
+        switch(view) {
+            case 'dashboard':
+                this._loadInventory();
+                this._loadProcurementReceipts();
+                this._loadDistributionLogs();
+                break;
+            case 'inventory':
+            case 'distribution':
+                this._loadInventory();
+                break;
+            case 'requests':
+                if (this.hubActiveTab === 'fm') {
+                    this._loadProcurementReceipts();
+                } else {
+                    this._loadRequisitions();
+                }
+                break;
+            case 'registry':
+            case 'operators':
+            case 'maintenance':
+                this._loadAssets();
+                break;
+        }
+
         window.app.loadPage(this.currentView);
     }
 
