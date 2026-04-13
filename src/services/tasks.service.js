@@ -204,4 +204,75 @@ async function calculateProjectProgress(projectId) {
   return avg;
 }
 
-module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress, cascadeShift, cascadeExtension, calculateProjectProgress };
+/**
+ * Auto-generate default construction phase tasks for a new road works project.
+ * Tasks are proportionally spaced across the project timeline with dependency chains.
+ * 
+ * @param {number} projectId - The newly created project ID
+ * @param {Date|string} projectStart - Project start date
+ * @param {Date|string} projectEnd - Project end date
+ * @returns {Promise<Array>} Created tasks
+ */
+async function generateDefaultTasks(projectId, projectStart, projectEnd) {
+  const start = new Date(projectStart);
+  const end = new Date(projectEnd);
+  const totalDays = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+
+  // Road Works construction phases with percentage of total timeline
+  // Phases are ordered sequentially; each depends on the previous one
+  const ROAD_PHASES = [
+    { name: 'Site Clearance & Survey',          pct: 0.08, status: 'planned' },
+    { name: 'Earthworks & Grading',             pct: 0.15, status: 'planned' },
+    { name: 'Sub-base Layer Construction',       pct: 0.12, status: 'planned' },
+    { name: 'Base Course Construction',          pct: 0.12, status: 'planned' },
+    { name: 'Drainage & Culvert Installation',   pct: 0.10, status: 'planned' },
+    { name: 'Surface / Binder Course',           pct: 0.15, status: 'planned' },
+    { name: 'Wearing Course & Surfacing',        pct: 0.12, status: 'planned' },
+    { name: 'Road Furniture & Markings',         pct: 0.08, status: 'planned' },
+    { name: 'Defects Liability & Handover',      pct: 0.08, status: 'planned' },
+  ];
+
+  const createdTasks = [];
+  let cursor = new Date(start);
+
+  for (let i = 0; i < ROAD_PHASES.length; i++) {
+    const phase = ROAD_PHASES[i];
+    const durationDays = Math.max(1, Math.round(totalDays * phase.pct));
+
+    const taskStart = new Date(cursor);
+    const taskEnd = new Date(cursor);
+    taskEnd.setDate(taskEnd.getDate() + durationDays);
+
+    // Ensure last task doesn't exceed project end date
+    if (taskEnd > end) taskEnd.setTime(end.getTime());
+
+    const taskData = {
+      projectId,
+      name: phase.name,
+      startDate: taskStart,
+      endDate: taskEnd,
+      progress: 0,
+      statusClass: phase.status,
+      // Link to previous task as dependency (sequential chain)
+      dependencyId: createdTasks.length > 0 ? createdTasks[createdTasks.length - 1].id : null,
+    };
+
+    const task = await prisma.task.create({ data: taskData });
+    createdTasks.push(task);
+
+    // Move cursor to the end of this task for the next phase
+    cursor = new Date(taskEnd);
+  }
+
+  logger.info('Default road tasks generated', {
+    projectId,
+    taskCount: createdTasks.length,
+    totalDays,
+    firstTask: createdTasks[0]?.name,
+    lastTask: createdTasks[createdTasks.length - 1]?.name,
+  });
+
+  return createdTasks;
+}
+
+module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress, cascadeShift, cascadeExtension, calculateProjectProgress, generateDefaultTasks };

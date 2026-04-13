@@ -299,6 +299,10 @@ export class AppLayout {
                 <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
                     ${alertHTML}
                     
+                    <button class="btn btn-secondary btn-sm" style="margin-right: 12px; font-size: 11px; padding: 6px 10px; background: white; border-color: var(--slate-200); color: var(--orange-600); font-weight: 700;" onclick="window.drawer.open('Request Timeline Extension', window.DrawerTemplates.requestTimelineExtension); setTimeout(() => { document.getElementById('ext-req-project-id').value = window.app?.pmModule?.selectedProjectId || window.app?.fsModule?.assignedProject?.id || window.app?.caModule?.selectedProjectId || ''; }, 100);">
+                        <i class="fas fa-calendar-plus" style="margin-right: 4px;"></i> Extend Timeline
+                    </button>
+
                     <!-- Notification Bell Wrapper -->
                     <div style="position: relative;">
                         <button id="notification-bell" class="btn btn-secondary" style="border: none; padding: 8px; position: relative;" onclick="window.app.layout.toggleNotifications(event)">

@@ -3482,4 +3482,84 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
+
+    // ============================================================
+    // GANTT PHASE EDITOR  (PM opens from Gantt toolbar)
+    // ============================================================
+    ganttPhaseEditor: `
+        <div style="padding: 0;">
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Edit Construction Phases</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Adjust start/end dates for auto-generated phases. Changes cascade downstream.</div>
+                </div>
+                <i class="fas fa-construction" style="font-size: 22px; color: var(--orange);"></i>
+            </div>
+
+            <div id="phase-editor-loading" style="padding: 48px; text-align: center; color: var(--slate-400);">
+                <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: var(--orange); display: block; margin-bottom: 12px;"></i>
+                Loading phases...
+            </div>
+
+            <div id="phase-editor-content" style="display: none;">
+                <div id="phase-editor-list" style="padding: 16px 24px;"></div>
+
+                <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: var(--slate-50); display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.pmModule.handlePhaseEditorSave()">
+                        <i class="fas fa-save" style="margin-right: 8px;"></i>Save All Phase Dates
+                    </button>
+                </div>
+            </div>
+        </div>
+    `,
+
+    // ============================================================
+    // REQUEST TIMELINE EXTENSION  (any role submits to PM)
+    // ============================================================
+    requestTimelineExtension: `
+        <div style="padding: 0;">
+            <div style="padding: 16px 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-bottom: 4px solid var(--orange);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 48px; height: 48px; background: var(--orange); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0;">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 800; font-size: 16px; color: var(--slate-900);">Request Timeline Extension</div>
+                        <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">This request will be sent to the Project Manager for approval.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 24px;">
+                <input type="hidden" id="ext-req-project-id">
+
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Current Project End Date</div>
+                    <div id="ext-req-current-end" style="font-size: 18px; font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">—</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Requested New End Date <span style="color: var(--red);">*</span></label>
+                    <input type="date" id="ext-req-new-date" class="form-input" style="width: 100%; font-weight: 700; font-size: 15px; font-family: 'JetBrains Mono';">
+                    <div id="ext-req-days-badge" style="margin-top: 6px; font-size: 12px; color: var(--orange); font-weight: 700; display: none;">
+                        <i class="fas fa-clock"></i> <span id="ext-req-days-text"></span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Justification <span style="color: var(--red);">*</span></label>
+                    <textarea id="ext-req-justification" class="form-input" rows="5" style="width: 100%; resize: vertical; line-height: 1.6;" placeholder="Minimum 20 characters. Explain the reason for the extension clearly — e.g. weather delays, scope changes, design revisions..."></textarea>
+                    <div id="ext-req-char-count" style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">0 / 20 min</div>
+                </div>
+
+                <div id="ext-req-warning" style="display: none; background: var(--red-light); border: 1px solid var(--red); color: var(--red-dark); padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px;"></div>
+
+                <button id="ext-req-submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);"
+                    onclick="(window.app.pmModule || window.app.fsModule || window.app.ecModule || window.app.fmModule || window.app.caModule || window.app.omModule).handleSubmitExtensionRequest()">
+                    <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Extension Request
+                </button>
+            </div>
+        </div>
+    `,
 };

@@ -24,6 +24,7 @@ const notificationsController = require('../controllers/notifications.controller
 const safetyIncidentsController = require('../controllers/safetyIncidents.controller');
 const whistleblowerController = require('../controllers/whistleblower.controller');
 const budgetChangesController = require('../controllers/budgetChanges.controller');
+const timelineExtensionController = require('../controllers/timelineExtension.controller');
 const { documentRoutes } = require('../api/documents.api');
 const reportsController = require('../controllers/reports.controller');
 const response = require('../utils/response');
@@ -490,6 +491,25 @@ async function router(req, res) {
       return budgetChangesController.reject(req, res, id);
     }
     return methodNotAllowed(res, ['GET', 'POST', 'PUT', 'PATCH']);
+  }
+
+  // ============================================
+  // TIMELINE EXTENSION ROUTES
+  // ============================================
+  if (resource === 'timeline-extensions') {
+    if (!id && method === 'GET') {
+      return timelineExtensionController.getAll(req, res);
+    }
+    if (!id && method === 'POST') {
+      return timelineExtensionController.create(req, res);
+    }
+    if (id && action === 'approve' && method === 'POST') {
+      return timelineExtensionController.approve(req, res, id);
+    }
+    if (id && action === 'reject' && method === 'POST') {
+      return timelineExtensionController.reject(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
   }
 
   // ============================================

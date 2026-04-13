@@ -49,6 +49,8 @@ model User {
   inventoryLogs            InventoryLog[]
   replenishmentRequests    ReplenishmentRequest[]
   notifications            Notification[]
+  extensionRequestsMade    ProjectExtensionRequest[] @relation("ExtensionRequester")
+  extensionRequestsReviewed ProjectExtensionRequest[] @relation("ExtensionReviewer")
 
   @@map("users")
 }
@@ -91,6 +93,7 @@ model Project {
   sectors              Sector[]
   budgetControls       BudgetControl[]
   replenishments       ReplenishmentRequest[]
+  extensionRequests    ProjectExtensionRequest[]
 
   @@map("projects")
 }
@@ -753,6 +756,31 @@ model ReplenishmentRequest {
 
   @@index([projectId])
   @@map("replenishment_requests")
+}
+
+// ============================================
+// PROJECT EXTENSION REQUESTS
+// ============================================
+
+model ProjectExtensionRequest {
+  id             Int       @id @default(autoincrement())
+  projectId      Int       @map("project_id")
+  requestedById  Int       @map("requested_by_id")
+  reviewedById   Int?      @map("reviewed_by_id")
+  currentEndDate DateTime  @map("current_end_date") @db.Date
+  requestedEndDate DateTime @map("requested_end_date") @db.Date
+  justification  String
+  status         String    @default("pending") @db.VarChar(20) // pending, approved, rejected
+  pmComment      String?   @map("pm_comment")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestedBy    User      @relation("ExtensionRequester", fields: [requestedById], references: [id])
+  reviewedBy     User?     @relation("ExtensionReviewer", fields: [reviewedById], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+  @@map("project_extension_requests")
 }
 
 // ============================================

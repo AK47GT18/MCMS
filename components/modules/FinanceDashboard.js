@@ -13,7 +13,8 @@ export class FinanceDashboard {
             stats: { available: 0, committed: 0, ecRequests: 0, pmUplifts: 0 },
             projects: [],
             auditLogs: [],
-            requisitions: []
+            requisitions: [],
+            budgetChanges: []
         };
         
         // Register this module globally
@@ -62,89 +63,10 @@ export class FinanceDashboard {
                 ${StatCard({ title: 'PM Uplifts', value: s.pmUplifts, subtext: 'Pending additional funding', alertColor: 'red' })}
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
-                <!-- Project 1: CEN-01 -->
-                <div class="data-card">
-                    <div style="padding: 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">CEN-01 Unilia Library</h3>
-                                <div style="font-size: 12px; color: var(--slate-500);">Road Specification Module Active</div>
-                            </div>
-                            <span class="status active">On Track</span>
-                        </div>
-
-                        <div style="margin-bottom: 24px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                <span style="color: var(--slate-600);">Budget Utilization</span>
-                                <span style="font-weight: 700; color: var(--slate-900);">65%</span>
-                            </div>
-                            <div style="height: 12px; background: var(--slate-100); border-radius: 6px; overflow: hidden; display: flex;">
-                                <div style="width: 45%; background: var(--blue); height: 100%;" title="Actual Spent: 45%"></div>
-                                <div style="width: 20%; background: var(--orange); height: 100%; opacity: 0.7;" title="Committed: 20%"></div>
-                            </div>
-                            <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px;">
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <div style="width: 8px; height: 8px; background: var(--blue); border-radius: 2px;"></div>
-                                    <span style="color: var(--slate-500);">Spent (450M)</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <div style="width: 8px; height: 8px; background: var(--orange); border-radius: 2px;"></div>
-                                    <span style="color: var(--slate-500);">Committed (200M)</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 4px; margin-left: auto;">
-                                    <span style="font-weight: 700; color: var(--emerald);">Remaining: 350M MWK</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.app.fmModule?.loadContractsView()">Contracts</button>
-                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.requestPMUplift('CEN-01')">Request Uplift</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 2: MZ-05 -->
-                <div class="data-card">
-                    <div style="padding: 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                            <div>
-                                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">MZ-05 Mzimba Clinic</h3>
-                                <div style="font-size: 12px; color: var(--slate-500);">Non-Road Construction</div>
-                            </div>
-                            <span class="status delayed">Critical (92%)</span>
-                        </div>
-
-                        <div style="margin-bottom: 24px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                <span style="color: var(--slate-600);">Budget Utilization</span>
-                                <span style="font-weight: 700; color: var(--red);">92%</span>
-                            </div>
-                            <div style="height: 12px; background: var(--slate-100); border-radius: 6px; overflow: hidden; display: flex;">
-                                <div style="width: 85%; background: var(--red); height: 100%;" title="Actual Spent: 85%"></div>
-                                <div style="width: 7%; background: var(--orange); height: 100%; opacity: 0.7;" title="Committed: 7%"></div>
-                            </div>
-                            <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px;">
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <div style="width: 8px; height: 8px; background: var(--red); border-radius: 2px;"></div>
-                                    <span style="color: var(--slate-500);">Spent (184M)</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <div style="width: 8px; height: 8px; background: var(--orange); border-radius: 2px;"></div>
-                                    <span style="color: var(--slate-500);">Committed (14M)</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 4px; margin-left: auto;">
-                                    <span style="font-weight: 700; color: var(--red);">Remaining: 16M MWK</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;">Contracts</button>
-                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.requestPMUplift('MZ-05')">Request Uplift</button>
-                        </div>
-                    </div>
+            <div id="fm-projects-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+                <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div>Loading project budgets...</div>
                 </div>
             </div>
 
@@ -153,28 +75,15 @@ export class FinanceDashboard {
                     <div class="card-title">Pending Resource Requisitions (EC Forwarded)</div>
                     <button class="btn btn-secondary" onclick="window.app.fmModule?.switchView('approvals')">Process All</button>
                 </div>
-                <table>
-                   <thead>
-                      <tr>
-                         <th>ID</th><th>Project</th><th>Material Items</th><th>Requested By</th><th>Amount (MWK)</th><th>Status</th>
-                      </tr>
-                   </thead>
-                   <tbody>
-                      <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('REQ-089'))">
-                         <td><span class="project-id">REQ-089</span></td>
-                         <td style="font-weight: 600;">CEN-01 Unilia</td>
-                         <td>Bitumen (G-Grade) x 20 Drums</td>
-                         <td>Mkanda (FS) via EC</td>
-                         <td style="font-family: 'JetBrains Mono'; font-weight: 700;">8,500,000</td>
-                         <td><span class="status locked" style="background: var(--orange-light); color: var(--orange);">EC OUT OF STOCK</span></td>
-                      </tr>
-                   </tbody>
-                </table>
+                <div id="fm-pending-reqs-table">
+                    <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div>
+                </div>
             </div>
         `;
     }
 
     getResourceApprovalsView() {
+        setTimeout(() => this.loadPendingRequisitions(), 0);
         return `
             <div class="data-card">
                <div class="data-card-header">
@@ -184,59 +93,24 @@ export class FinanceDashboard {
                      <button class="btn btn-primary" onclick="window.toast.show('Processing batch...', 'info')">Bulk Approve</button>
                   </div>
                </div>
-               <table>
-                  <thead>
-                     <tr>
-                        <th>Req ID</th><th>Project</th><th>Material Items</th><th>Requested By</th><th style="text-align:right">Value (MWK)</th><th>Budget Check</th><th>Action</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('REQ-089'))">
-                        <td><span class="project-id">REQ-089</span></td>
-                        <td>CEN-01 Unilia</td>
-                        <td>Bitumen (G-Grade) x 20 Drums</td>
-                        <td>Mkanda (FS) via EC</td>
-                        <td style="text-align:right; font-family: 'JetBrains Mono'; font-weight: 700;">8,500,000</td>
-                        <td><span class="status active">Healthy (350M Rem)</span></td>
-                        <td><button class="btn btn-action" style="padding: 4px 8px; font-size: 11px;">Review & Approve</button></td>
-                     </tr>
-                     <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('REQ-104'))">
-                        <td><span class="project-id">REQ-104</span></td>
-                        <td>MZ-05 Clinic</td>
-                        <td>Reinforcement Steel Bars (12mm) x 50 Units</td>
-                        <td>Jere (FS) via EC</td>
-                        <td style="text-align:right; font-family: 'JetBrains Mono'; font-weight: 700;">18,200,000</td>
-                        <td><span class="status delayed" style="background: #FEF2F2; color: var(--red);">Critical (16M Rem)</span></td>
-                        <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Exceeds Budget</button></td>
-                     </tr>
-                  </tbody>
-               </table>
+               <div id="fm-approvals-table">
+                   <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading requisitions...</div>
+               </div>
             </div>
         `;
     }
 
     getBudgetControlView() {
+        setTimeout(() => this.loadBudgetChanges(), 0);
         return `
             <div class="data-card">
                <div class="data-card-header">
                   <div class="card-title">PM Budget Uplift Requests</div>
                   <button class="btn btn-action" onclick="window.drawer.open('Initiate Budget Uplift', window.DrawerTemplates.initiateBCR)"><i class="fas fa-plus"></i> New Request</button>
                </div>
-               <table>
-                  <thead>
-                     <tr><th>Uplift ID</th><th>Project</th><th>Reason</th><th style="text-align:right">Current</th><th style="text-align:right">Requested</th><th>Status</th></tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><span class="project-id">BCR-102</span></td>
-                        <td>MZ-05 Clinic</td>
-                        <td>Material Price Escalation</td>
-                        <td style="text-align:right; font-family: 'JetBrains Mono';">200M</td>
-                        <td style="text-align:right; font-family: 'JetBrains Mono';">+25M</td>
-                        <td><span class="status locked">Awaiting PM Approval</span></td>
-                     </tr>
-                  </tbody>
-               </table>
+               <div id="fm-bcr-table">
+                   <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading uplift requests...</div>
+               </div>
             </div>
         `;
     }
@@ -393,7 +267,7 @@ export class FinanceDashboard {
             
             window.toast.show(`Requisition ${reqId} has been ${status} successfully.`, 'success');
             window.drawer.close();
-            this.render();
+            this.switchView(this.currentView);
         } catch (error) {
             console.error('Workflow error:', error);
             window.toast.show('Failed to process requisition action.', 'error');
@@ -429,24 +303,33 @@ export class FinanceDashboard {
         }
     }
 
+    // =============================================
+    // DATA LOADERS (API-BACKED)
+    // =============================================
+
     async loadDashboardData() {
         try {
-            const [budgetRes, pendingReqs] = await Promise.all([
+            const [budgetRes, pendingReqs, projectsRes, bcrRes] = await Promise.all([
                 client.get('/reports/finance/budget'),
-                requisitions.getPending()
+                requisitions.getPending(),
+                client.get('/projects?limit=50'),
+                client.get('/budget-changes').catch(() => ({ data: [] }))
             ]);
 
             const budget = budgetRes.data || {};
             const reqs = pendingReqs.data || pendingReqs;
+            const projectsList = projectsRes.data?.projects || projectsRes.data || [];
+            const bcrList = Array.isArray(bcrRes.data) ? bcrRes.data : (bcrRes.data?.items || []);
 
+            this.data.projects = Array.isArray(projectsList) ? projectsList : [];
             this.data.stats = {
                 available: (budget.totalBudget || 0) - (budget.totalSpent || 0),
                 committed: budget.totalSpent || 0,
                 ecRequests: Array.isArray(reqs) ? reqs.length : 0,
-                pmUplifts: 0
+                pmUplifts: bcrList.filter(b => b.status === 'Pending').length
             };
 
-            // Re-render if we are still on dashboard
+            // Re-render stats
             if (this.currentView === 'dashboard') {
                 const container = document.getElementById('finance-module');
                 if (container) {
@@ -454,8 +337,204 @@ export class FinanceDashboard {
                     if (content) content.innerHTML = this.getCurrentViewHTML();
                 }
             }
+
+            // Render dynamic project cards
+            this._renderProjectCards();
+            // Render pending requisitions on dashboard
+            this._renderDashboardReqs(reqs);
         } catch (error) {
             console.error('Failed to load finance stats:', error);
+        }
+    }
+
+    _renderProjectCards() {
+        const grid = document.getElementById('fm-projects-grid');
+        if (!grid || this.data.projects.length === 0) {
+            if (grid) grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-building" style="font-size: 32px; margin-bottom: 12px;"></i><div style="font-weight: 600;">No projects found</div></div>`;
+            return;
+        }
+
+        grid.innerHTML = this.data.projects.slice(0, 6).map(project => {
+            const budgetTotal = Number(project.budgetTotal) || 0;
+            const budgetSpent = Number(project.budgetSpent) || 0;
+            const remaining = budgetTotal - budgetSpent;
+            const utilPct = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
+            const isCritical = utilPct >= 85;
+            const statusLabel = isCritical ? 'Critical' : project.status === 'active' ? 'On Track' : (project.status || 'Planning');
+            const statusClass = isCritical ? 'delayed' : 'active';
+            const barColor = isCritical ? 'var(--red)' : 'var(--blue)';
+
+            return `
+                <div class="data-card">
+                    <div style="padding: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">${project.code} ${project.name}</h3>
+                                <div style="font-size: 12px; color: var(--slate-500);">${project.projectType ? project.projectType.replace(/_/g, ' ') : 'Construction'}</div>
+                            </div>
+                            <span class="status ${statusClass}">${statusLabel} (${utilPct}%)</span>
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                <span style="color: var(--slate-600);">Budget Utilization</span>
+                                <span style="font-weight: 700; color: ${isCritical ? 'var(--red)' : 'var(--slate-900)'};">${utilPct}%</span>
+                            </div>
+                            <div style="height: 12px; background: var(--slate-100); border-radius: 6px; overflow: hidden; display: flex;">
+                                <div style="width: ${Math.min(utilPct, 100)}%; background: ${barColor}; height: 100%;" title="Spent: ${utilPct}%"></div>
+                            </div>
+                            <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px;">
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <div style="width: 8px; height: 8px; background: ${barColor}; border-radius: 2px;"></div>
+                                    <span style="color: var(--slate-500);">Spent (${this.formatCurrency(budgetSpent)})</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 4px; margin-left: auto;">
+                                    <span style="font-weight: 700; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'};">Remaining: ${this.formatCurrency(remaining)} MWK</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.app.fmModule?.loadContractsView()">Contracts</button>
+                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.requestPMUplift('${project.code}')">Request Uplift</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    _renderDashboardReqs(reqs) {
+        const container = document.getElementById('fm-pending-reqs-table');
+        if (!container) return;
+
+        const reqsList = Array.isArray(reqs) ? reqs : [];
+        if (reqsList.length === 0) {
+            container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-check-circle" style="color: var(--emerald); margin-right: 8px;"></i>No pending requisitions</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Project</th><th>Material Items</th><th>Requested By</th><th>Amount (MWK)</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    ${reqsList.slice(0, 5).map(req => {
+                        const items = req.items || [];
+                        const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
+                        return `
+                            <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('${req.reqCode || 'REQ-' + req.id}'))">
+                                <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
+                                <td style="font-weight: 600;">${req.project?.name || req.project?.code || 'Project'}</td>
+                                <td>${desc}</td>
+                                <td>${req.submittedBy?.name || 'Field'} via EC</td>
+                                <td style="font-family: 'JetBrains Mono'; font-weight: 700;">${Number(req.totalAmount || 0).toLocaleString()}</td>
+                                <td><span class="status locked" style="background: var(--orange-light); color: var(--orange);">${(req.status || 'PENDING').toUpperCase()}</span></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async loadPendingRequisitions() {
+        const container = document.getElementById('fm-approvals-table');
+        if (!container) return;
+
+        try {
+            const result = await requisitions.getPending();
+            const reqs = Array.isArray(result) ? result : (result.data || []);
+
+            if (reqs.length === 0) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i><div style="font-weight: 600;">No pending requisitions</div></div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr><th>Req ID</th><th>Project</th><th>Material Items</th><th>Requested By</th><th style="text-align:right">Value (MWK)</th><th>Budget Check</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        ${reqs.map(req => {
+                            const items = req.items || [];
+                            const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
+                            const totalAmt = Number(req.totalAmount || 0);
+                            const projBudget = Number(req.project?.budgetTotal || 0);
+                            const projSpent = Number(req.project?.budgetSpent || 0);
+                            const remaining = projBudget - projSpent;
+                            const isOverBudget = totalAmt > remaining && remaining > 0;
+                            const isCritical = remaining < totalAmt * 0.5;
+
+                            return `
+                                <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('${req.reqCode || 'REQ-' + req.id}'))">
+                                    <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
+                                    <td>${req.project?.name || req.project?.code || 'Project'}</td>
+                                    <td>${desc}</td>
+                                    <td>${req.submittedBy?.name || 'Field'} via EC</td>
+                                    <td style="text-align:right; font-family: 'JetBrains Mono'; font-weight: 700;">${totalAmt.toLocaleString()}</td>
+                                    <td><span class="status ${isCritical ? 'delayed' : 'active'}" style="background: ${isCritical ? '#FEF2F2' : '#F0FDF4'}; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'};">${isCritical ? 'Critical' : 'Healthy'} (${this.formatCurrency(remaining)} Rem)</span></td>
+                                    <td>${isOverBudget
+                                        ? `<button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Exceeds Budget</button>`
+                                        : `<button class="btn btn-action" style="padding: 4px 8px; font-size: 11px;">Review & Approve</button>`
+                                    }</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Failed to load requisitions:', error);
+            container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">${error.message}</div>`;
+        }
+    }
+
+    async loadBudgetChanges() {
+        const container = document.getElementById('fm-bcr-table');
+        if (!container) return;
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/budget-changes', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to load budget changes');
+            const result = await response.json();
+            const bcrList = Array.isArray(result.data) ? result.data : (result.items || result || []);
+
+            if (bcrList.length === 0) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i><div style="font-weight: 600;">No uplift requests</div></div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr><th>Uplift ID</th><th>Project</th><th>Reason</th><th style="text-align:right">Current</th><th style="text-align:right">Requested</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        ${bcrList.map(bcr => {
+                            const statusMap = { 'Pending': 'locked', 'Approved': 'active', 'Rejected': 'delayed' };
+                            return `
+                                <tr>
+                                    <td><span class="project-id">BCR-${bcr.id}</span></td>
+                                    <td>${bcr.project?.name || 'Project #' + bcr.projectId}</td>
+                                    <td>${bcr.reason || 'No reason provided'}</td>
+                                    <td style="text-align:right; font-family: 'JetBrains Mono';">${this.formatCurrency(Number(bcr.project?.budgetTotal || 0))}</td>
+                                    <td style="text-align:right; font-family: 'JetBrains Mono';">+${this.formatCurrency(Number(bcr.amount || 0))}</td>
+                                    <td><span class="status ${statusMap[bcr.status] || 'locked'}">${bcr.status || 'Pending'}</span></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Failed to load budget changes:', error);
+            container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">${error.message}</div>`;
         }
     }
 
@@ -513,7 +592,14 @@ export class FinanceDashboard {
 
     switchView(view) {
         this.currentView = view;
-        this.render();
+        // Use the global app page loader for proper DOM re-injection
+        if (window.app && typeof window.app.loadPage === 'function') {
+            window.app.loadPage(view);
+        } else {
+            // Fallback: re-render into content area
+            const content = document.getElementById('finance-content-area');
+            if (content) content.innerHTML = this.getCurrentViewHTML();
+        }
     }
 
     // --- CONTRACT HANDLERS ---
@@ -645,6 +731,6 @@ export class FinanceDashboard {
 
     loadContractsView() {
         this.currentView = 'contracts';
-        this.render();
+        this.switchView('contracts');
     }
 }

@@ -491,6 +491,9 @@ export class ProjectManagerDashboard {
                          </div>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
+                        <button class="btn btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="window.app.pmModule.openPhaseEditor()">
+                            <i class="fas fa-edit"></i> Edit Phases
+                        </button>
                         <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="window.app.pmModule.scrollToToday()">
                             <i class="fas fa-crosshairs"></i> Today
                         </button>
@@ -657,6 +660,160 @@ export class ProjectManagerDashboard {
             const el = document.getElementById('gantt');
             if (el) {
                 el.innerHTML = `<div style="padding:20px; color:red; font-weight:bold;">Gantt Error: ${e.message}</div>`;
+            }
+        }
+    }
+
+    // ============================================
+    // GANTT PHASE EXECUTOR & EXTENSION LOGIC
+    // ============================================
+    
+    async openPhaseEditor() {
+        if (!this.selectedProjectId) {
+            window.toast?.show('Select a project first', 'error');
+            return;
+        }
+
+        window.drawer.open('Edit Construction Phases', window.DrawerTemplates.ganttPhaseEditor);
+        
+        try {
+            const tasksApi = await import('../../src/api/tasks.api.js');
+            const response = await tasksApi.default.getByProject(this.selectedProjectId);
+            const data = response.data || response;
+            const tasksList = Array.isArray(data) ? data : data.tasks || [];
+            
+            const listEl = document.getElementById('phase-editor-list');
+            const loadingEl = document.getElementById('phase-editor-loading');
+            const contentEl = document.getElementById('phase-editor-content');
+            
+            if (!listEl || !loadingEl || !contentEl) return;
+            
+            loadingEl.style.display = 'none';
+            contentEl.style.display = 'block';
+            
+            if (tasksList.length === 0) {
+                listEl.innerHTML = '<div style="color:var(--slate-500);text-align:center;padding:20px;">No phases generated for this project yet.</div>';
+                return;
+            }
+
+            // Save state
+            this.ganttPhaseEditorTasks = tasksList;
+
+            listEl.innerHTML = tasksList.map((t, idx) => `
+                <div class="form-group" style="margin-bottom: 16px; background: white; padding: 12px; border: 1px solid var(--slate-200); border-radius: 6px;">
+                    <div style="font-weight: 700; color: var(--slate-800); font-size: 13px; margin-bottom: 8px;">Phase ${idx + 1}: ${this.escapeHTML(t.name)}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">Start Date</label>
+                            <input type="date" id="phase-start-${t.id}" class="form-input" style="width: 100%; padding: 6px; font-size: 12px;" value="${t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : ''}">
+                        </div>
+                        <div>
+                            <label style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">End Date</label>
+                            <input type="date" id="phase-end-${t.id}" class="form-input" style="width: 100%; padding: 6px; font-size: 12px;" value="${t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : ''}">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Failed to load tasks for editor', error);
+            window.toast?.show('Failed to load tasks', 'error');
+        }
+    }
+
+    async handlePhaseEditorSave() {
+        if (!this.ganttPhaseEditorTasks) return;
+        
+        const btn = document.querySelector('button[onclick="window.app.pmModule.handlePhaseEditorSave()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        btn.disabled = true;
+
+        try {
+            const tasksApi = await import('../../src/api/tasks.api.js');
+            const updates = [];
+            for (const t of this.ganttPhaseEditorTasks) {
+                const s = document.getElementById(`phase-start-${t.id}`)?.value;
+                const e = document.getElementById(`phase-end-${t.id}`)?.value;
+                if (!s || !e) continue;
+                
+                const origS = t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : '';
+                const origE = t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : '';
+                
+                if (s !== origS || e !== origE) {
+                    updates.push(tasksApi.default.update(t.id, { startDate: s, endDate: e }));
+                }
+            }
+            
+            if (updates.length > 0) {
+                await Promise.all(updates);
+                window.toast?.show(`Updated ${updates.length} phases and cascaded dependencies`, 'success');
+                this.renderGanttChart(); 
+            } else {
+                window.toast?.show('No changes detected', 'info');
+            }
+            window.drawer.close();
+            
+        } catch (error) {
+            console.error('Failed to save phases', error);
+            window.toast?.show('Error saving phases', 'error');
+        } finally {
+            if (btn) {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
+    }
+
+    async handleSubmitExtensionRequest() {
+        const projectIdStr = document.getElementById('ext-req-project-id')?.value;
+        const newDate = document.getElementById('ext-req-new-date')?.value;
+        const justification = document.getElementById('ext-req-justification')?.value;
+        const warningEl = document.getElementById('ext-req-warning');
+        
+        let projectId = projectIdStr;
+        if (!projectId && window.app?.pmModule?.selectedProjectId) projectId = window.app.pmModule.selectedProjectId;
+        if (!projectId && window.app?.fsModule?.assignedProject?.id) projectId = window.app.fsModule.assignedProject.id;
+        if (!projectId && window.app?.caModule?.selectedProjectId) projectId = window.app.caModule.selectedProjectId;
+        
+        if (warningEl) warningEl.style.display = 'none';
+
+        if (!projectId) {
+            if (warningEl) { warningEl.textContent = "Error: No project selected or found. Go to a project view first."; warningEl.style.display = 'block'; }
+            return;
+        }
+
+        if (!newDate) {
+            if (warningEl) { warningEl.textContent = "Please select a requested end date."; warningEl.style.display = 'block'; }
+            return;
+        }
+
+        if (!justification || justification.trim().length < 20) {
+            if (warningEl) { warningEl.textContent = "Justification must be at least 20 characters explaining the delay."; warningEl.style.display = 'block'; }
+            return;
+        }
+
+        const btn = document.getElementById('ext-req-submit-btn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        btn.disabled = true;
+
+        try {
+            const timelineApi = await import('../../src/api/timelineExtensions.api.js');
+            await timelineApi.default.create({
+                projectId,
+                requestedEndDate: newDate,
+                justification: justification.trim()
+            });
+            window.toast?.show('Timeline extension requested. PM notified.', 'success');
+            window.drawer.close();
+        } catch (error) {
+            if (warningEl) { warningEl.textContent = error.message || 'Failed to submit request'; warningEl.style.display = 'block'; }
+            console.error('Extension request error:', error);
+        } finally {
+            if (btn) {
+                btn.innerHTML = origText;
+                btn.disabled = false;
             }
         }
     }
@@ -2496,14 +2653,17 @@ export class ProjectManagerDashboard {
 
     async handleUpdateProject() {
         const id = document.getElementById('edit_proj_id').value;
+        const projectType = document.getElementById('edit_proj_type')?.value || 'road_works';
+
         const data = {
             name: document.getElementById('edit_proj_name').value,
             client: document.getElementById('edit_proj_client').value,
             status: document.getElementById('edit_proj_status').value,
-            budget: parseFloat(document.getElementById('edit_proj_budget').value),
-            startDate: document.getElementById('edit_proj_start').value,
-            endDate: document.getElementById('edit_proj_end').value,
-            managerId: document.getElementById('edit_proj_supervisor').value,
+            budgetTotal: parseFloat(document.getElementById('edit_proj_budget').value),
+            startDate: new Date(document.getElementById('edit_proj_start').value).toISOString(),
+            endDate: new Date(document.getElementById('edit_proj_end').value).toISOString(),
+            managerId: parseInt(document.getElementById('edit_proj_supervisor').value),
+            projectType: projectType,
             lat: parseFloat(document.getElementById('edit_proj_lat').textContent),
             lng: parseFloat(document.getElementById('edit_proj_lng').textContent)
         };
@@ -2593,6 +2753,103 @@ export class ProjectManagerDashboard {
                 }
             }, 200);
         });
+    }
+
+    async handlePhaseEditorSave() {
+        if (!this.ganttPhaseEditorTasks) return;
+        
+        const btn = document.querySelector('button[onclick="window.app.pmModule.handlePhaseEditorSave()"]');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        btn.disabled = true;
+
+        try {
+            const tasksApi = await import('../../src/api/tasks.api.js');
+            const updates = [];
+            for (const t of this.ganttPhaseEditorTasks) {
+                const s = document.getElementById(`phase-start-${t.id}`)?.value;
+                const e = document.getElementById(`phase-end-${t.id}`)?.value;
+                if (!s || !e) continue;
+                
+                const origS = t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : '';
+                const origE = t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : '';
+                
+                if (s !== origS || e !== origE) {
+                    updates.push(tasksApi.default.update(t.id, { startDate: s, endDate: e }));
+                }
+            }
+            
+            if (updates.length > 0) {
+                await Promise.all(updates);
+                window.toast?.show(`Updated ${updates.length} phases and cascaded dependencies`, 'success');
+                this.renderGanttChart(); 
+            } else {
+                window.toast?.show('No changes detected', 'info');
+            }
+            window.drawer.close();
+            
+        } catch (error) {
+            console.error('Failed to save phases', error);
+            window.toast?.show('Error saving phases', 'error');
+        } finally {
+            if (btn) {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
+    }
+
+    async handleSubmitExtensionRequest() {
+        const projectIdStr = document.getElementById('ext-req-project-id')?.value;
+        const newDate = document.getElementById('ext-req-new-date')?.value;
+        const justification = document.getElementById('ext-req-justification')?.value;
+        const warningEl = document.getElementById('ext-req-warning');
+        
+        let projectId = projectIdStr;
+        if (!projectId && window.app?.pmModule?.selectedProjectId) projectId = window.app.pmModule.selectedProjectId;
+        if (!projectId && window.app?.fsModule?.assignedProject?.id) projectId = window.app.fsModule.assignedProject.id;
+        if (!projectId && window.app?.caModule?.selectedProjectId) projectId = window.app.caModule.selectedProjectId;
+        
+        if (warningEl) warningEl.style.display = 'none';
+
+        if (!projectId) {
+            if (warningEl) { warningEl.textContent = "Error: No project selected or found. Go to a project view first."; warningEl.style.display = 'block'; }
+            return;
+        }
+
+        if (!newDate) {
+            if (warningEl) { warningEl.textContent = "Please select a requested end date."; warningEl.style.display = 'block'; }
+            return;
+        }
+
+        if (!justification || justification.trim().length < 20) {
+            if (warningEl) { warningEl.textContent = "Justification must be at least 20 characters explaining the delay."; warningEl.style.display = 'block'; }
+            return;
+        }
+
+        const btn = document.getElementById('ext-req-submit-btn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        btn.disabled = true;
+
+        try {
+            const timelineApi = await import('../../src/api/timelineExtensions.api.js');
+            await timelineApi.default.create({
+                projectId,
+                requestedEndDate: newDate,
+                justification: justification.trim()
+            });
+            window.toast?.show('Timeline extension requested. PM notified.', 'success');
+            window.drawer.close();
+        } catch (error) {
+            if (warningEl) { warningEl.textContent = error.message || 'Failed to submit request'; warningEl.style.display = 'block'; }
+            console.error('Extension request error:', error);
+        } finally {
+            if (btn) {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
     }
 
     async handleExtendProject() {

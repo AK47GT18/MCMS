@@ -18,7 +18,8 @@ function validateBody(body, schema, res) {
     const result = schema.safeParse(body);
     
     if (!result.success) {
-      const errors = result.error.errors.map(err => ({
+      const issues = result.error.issues || [];
+      const errors = issues.map(err => ({
         field: err.path.join('.'),
         message: err.message,
       }));

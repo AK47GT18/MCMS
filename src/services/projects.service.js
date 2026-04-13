@@ -177,6 +177,31 @@ async function create(data) {
   });
   
   logger.info('Project created', { projectId: project.id, code: project.code });
+
+  // ============================================
+  // AUTO-GENERATE GANTT TASKS (Road Works)
+  // ============================================
+  if (data.startDate && data.endDate) {
+    try {
+      const tasksService = require('./tasks.service');
+      const generatedTasks = await tasksService.generateDefaultTasks(
+        project.id,
+        data.startDate,
+        data.endDate
+      );
+      logger.info('Auto-generated Gantt tasks for new project', {
+        projectId: project.id,
+        code: project.code,
+        tasksCreated: generatedTasks.length,
+      });
+    } catch (taskError) {
+      // Non-blocking: log but don't fail project creation
+      logger.error('Failed to auto-generate tasks for project', {
+        projectId: project.id,
+        error: taskError.message,
+      });
+    }
+  }
   
   // Send notifications to key roles + explicitly to the assigned manager
   try {
