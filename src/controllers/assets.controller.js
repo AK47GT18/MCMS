@@ -8,7 +8,7 @@ const notifService = require('../services/notification.service');
 const auditService = require('../services/audit.service');
 const { validateBody, validateId, parseBody, parseQuery } = require('../middlewares/validate.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
-const { createAssetSchema, updateAssetSchema, paginationSchema } = require('../utils/validators');
+const { createAssetSchema, updateAssetSchema, paginationSchema, assetCheckOutSchema, assetCheckInSchema, assetFlagIssueSchema, assetResolveIssueSchema } = require('../utils/validators');
 const response = require('../utils/response');
 const { asyncHandler } = require('../middlewares/error.middleware');
 
@@ -81,12 +81,15 @@ const checkOut = asyncHandler(async (req, res, id) => {
   if (!assetId) return;
   
   const body = await parseBody(req);
-  const result = await assetsService.checkOut(assetId, user.id, body.projectId);
+  const data = validateBody(body, assetCheckOutSchema, res);
+  if (!data) return;
+
+  const result = await assetsService.checkOut(assetId, user.id, data.projectId);
 
   // Broadcast asset dispatched
   websocket.broadcastToChannel('assets', 'ASSET_DISPATCHED', {
     assetId,
-    projectId: body.projectId,
+    projectId: data.projectId,
     userId: user.id,
     asset: result
   });
@@ -118,7 +121,7 @@ const checkOut = asyncHandler(async (req, res, id) => {
 
   // Permanent Audit Log
   await auditService.logFromRequest(req, 'DISPATCHED', 'Asset', result.id, result.assetCode, {
-    destinationProjectId: body.projectId,
+    destinationProjectId: data.projectId,
     assetName: result.name
   });
 
@@ -133,7 +136,10 @@ const checkIn = asyncHandler(async (req, res, id) => {
   if (!assetId) return;
   
   const body = await parseBody(req);
-  const result = await assetsService.checkIn(assetId, user.id, body.fuelLevel);
+  const data = validateBody(body, assetCheckInSchema, res);
+  if (!data) return;
+
+  const result = await assetsService.checkIn(assetId, user.id, data.fuelLevel);
 
   // Broadcast asset returned
   websocket.broadcastToChannel('assets', 'ASSET_RETURNED', {
@@ -156,7 +162,7 @@ const checkIn = asyncHandler(async (req, res, id) => {
   // Permanent Audit Log
   await auditService.logFromRequest(req, 'RETURNED (Check-in)', 'Asset', result.id, result.assetCode, {
     assetName: result.name,
-    fuelLevel: body.fuelLevel
+    fuelLevel: data.fuelLevel
   });
 
   response.success(res, result);
@@ -178,7 +184,10 @@ const flagIssue = asyncHandler(async (req, res, id) => {
   if (!assetId) return;
   
   const body = await parseBody(req);
-  const result = await assetsService.flagIssue(assetId, user.id, body.description);
+  const data = validateBody(body, assetFlagIssueSchema, res);
+  if (!data) return;
+
+  const result = await assetsService.flagIssue(assetId, user.id, data.description);
 
   // Notify EC
   try {
@@ -191,7 +200,7 @@ const flagIssue = asyncHandler(async (req, res, id) => {
   } catch(e) {}
 
   await auditService.logFromRequest(req, 'FLAGGED_DEFECTIVE', 'Asset', result.id, result.assetCode, {
-    description: body.description
+    description: data.description
   });
 
   response.success(res, result);
@@ -205,10 +214,13 @@ const resolveIssue = asyncHandler(async (req, res, id) => {
   if (!assetId) return;
   
   const body = await parseBody(req);
-  const result = await assetsService.resolveIssue(assetId, user.id, body.resolutionNotes);
+  const data = validateBody(body, assetResolveIssueSchema, res);
+  if (!data) return;
+
+  const result = await assetsService.resolveIssue(assetId, user.id, data.resolutionNotes);
 
   await auditService.logFromRequest(req, 'ISSUE_RESOLVED', 'Asset', result.id, result.assetCode, {
-    resolutionNotes: body.resolutionNotes
+    resolutionNotes: data.resolutionNotes
   });
 
   response.success(res, result);

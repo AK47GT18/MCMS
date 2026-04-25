@@ -1,13 +1,19 @@
 const safetyIncidentsService = require('../services/safetyIncidents.service');
 const { asyncHandler } = require('../middlewares/error.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
+const { parseBody, validateBody } = require('../middlewares/validate.middleware');
+const { createSafetyIncidentSchema } = require('../utils/validators');
 const response = require('../utils/response');
 
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  const data = { ...req.body, reporterId: user.id };
-  const incident = await safetyIncidentsService.create(data);
+  
+  const body = await parseBody(req);
+  const data = validateBody(body, createSafetyIncidentSchema, res);
+  if (!data) return;
+
+  const incident = await safetyIncidentsService.create({ ...data, reporterId: user.id });
   response.success(res, incident, 201);
 });
 

@@ -184,6 +184,22 @@ const createAssetSchema = z.object({
 
 const updateAssetSchema = createAssetSchema.partial();
 
+const assetCheckOutSchema = z.object({
+  projectId: z.coerce.number().int().positive(),
+});
+
+const assetCheckInSchema = z.object({
+  fuelLevel: z.coerce.number().int().min(0).max(100).optional(),
+});
+
+const assetFlagIssueSchema = z.object({
+  description: z.string().min(1),
+});
+
+const assetResolveIssueSchema = z.object({
+  resolutionNotes: z.string().optional(),
+});
+
 // ============================================
 // REQUISITION SCHEMAS
 // ============================================
@@ -205,6 +221,14 @@ const createRequisitionSchema = z.object({
 const updateRequisitionSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected', 'fraud_flag']).optional(),
   fraudCheck: z.boolean().optional(),
+});
+
+const rejectRequisitionSchema = z.object({
+  reason: z.string().min(1),
+});
+
+const fulfillRequisitionSchema = z.object({
+  sectorId: z.coerce.number().int().positive().optional(),
 });
 
 // ============================================
@@ -232,6 +256,7 @@ const createDailyLogSchema = z.object({
   progressIncrement: z.number().int().min(0).max(100).optional(),
   submissionLat: z.coerce.number().optional(),
   submissionLng: z.coerce.number().optional(),
+  photos: z.array(z.any()).optional(), // Added for evidence
 });
 
 const updateDailyLogSchema = z.object({
@@ -290,6 +315,39 @@ const updateProcurementSchema = z.object({
 });
 
 // ============================================
+// INVENTORY SCHEMAS
+// ============================================
+
+const inventoryDistributeSchema = z.object({
+  sectorId: z.coerce.number().int().positive(),
+  materialName: z.string().min(1),
+  quantity: z.coerce.number().positive(),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const inventoryConsumeSchema = z.object({
+  sectorId: z.coerce.number().int().positive(),
+  materialName: z.string().min(1),
+  quantity: z.coerce.number().positive(),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// ============================================
+// SAFETY INCIDENT SCHEMAS
+// ============================================
+
+const createSafetyIncidentSchema = z.object({
+  projectId: z.coerce.number().int().positive(),
+  type: z.string().min(1),
+  description: z.string().min(1),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  location: z.string().optional(),
+  photos: z.array(z.any()).optional(),
+});
+
+// ============================================
 // PAGINATION SCHEMA
 // ============================================
 
@@ -339,15 +397,27 @@ module.exports = {
   // Requisition
   createRequisitionSchema,
   updateRequisitionSchema,
+  rejectRequisitionSchema,
+  fulfillRequisitionSchema,
   // Daily Log
   createDailyLogSchema,
   updateDailyLogSchema,
+  // Asset Actions
+  assetCheckOutSchema,
+  assetCheckInSchema,
+  assetFlagIssueSchema,
+  assetResolveIssueSchema,
   // Issue
   createIssueSchema,
   updateIssueSchema,
   // Procurement
   createProcurementSchema,
   updateProcurementSchema,
+  // Inventory
+  inventoryDistributeSchema,
+  inventoryConsumeSchema,
+  // Safety
+  createSafetyIncidentSchema,
   // Project Extension
   extendProjectSchema,
   // Common

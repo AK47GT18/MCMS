@@ -9,7 +9,7 @@ const auditService = require('../services/audit.service');
 const { validateBody, validateId, parseBody, parseQuery } = require('../middlewares/validate.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { hasMinimumRole } = require('../middlewares/rbac.middleware');
-const { createRequisitionSchema, paginationSchema } = require('../utils/validators');
+const { createRequisitionSchema, paginationSchema, rejectRequisitionSchema, fulfillRequisitionSchema } = require('../utils/validators');
 const response = require('../utils/response');
 const { asyncHandler } = require('../middlewares/error.middleware');
 
@@ -119,7 +119,10 @@ const reject = asyncHandler(async (req, res, id) => {
   if (!reqId) return;
   
   const body = await parseBody(req);
-  const result = await requisitionsService.reject(reqId, user.id, body.reason);
+  const data = validateBody(body, rejectRequisitionSchema, res);
+  if (!data) return;
+
+  const result = await requisitionsService.reject(reqId, user.id, data.reason);
 
   websocket.broadcastToChannel('requisitions', 'REQUISITION_REJECTED', {
     requisitionId: reqId,
@@ -134,14 +137,14 @@ const reject = asyncHandler(async (req, res, id) => {
         userId: result.submittedById,
         type: 'error', icon: 'fa-times-circle',
         title: 'Requisition Rejected',
-        message: `Your requisition ${result.reqCode || '#' + reqId} was rejected. Reason: ${body.reason || 'Not specified'}`
+        message: `Your requisition ${result.reqCode || '#' + reqId} was rejected. Reason: ${data.reason || 'Not specified'}`
       });
     }
   } catch (e) { console.error('Notif create failed:', e.message); }
 
   // Permanent Audit Log
   await auditService.logFromRequest(req, 'REJECTED', 'Requisition', result.id, result.reqCode, {
-    reason: body.reason || 'Not specified'
+    reason: data.reason || 'Not specified'
   });
 
   response.success(res, result);
@@ -185,7 +188,10 @@ const fulfill = asyncHandler(async (req, res, id) => {
   if (!reqId) return;
 
   const body = await parseBody(req);
-  const sectorId = body.sectorId || 1; // Default to sector 1 if not specified
+  const data = validateBody(body, fulfillRequisitionSchema, res);
+  if (!data) return;
+
+  const sectorId = data.sectorId || 1; // Default to sector 1 if not specified
   
   const result = await requisitionsService.fulfill(reqId, user.id, sectorId);
 
