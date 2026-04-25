@@ -691,14 +691,21 @@ export const DrawerTemplates = {
             </div>
 
             <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Photo Evidence (Required)</label>
-                <div style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 20px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;" onclick="window.toast.show('Camera launched', 'info')">
-                    <i class="fas fa-camera" style="font-size: 20px; margin-bottom: 8px;"></i>
-                    <div style="font-weight: 600; font-size: 12px;">Tap to Take Photo</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label style="display:block; font-size:12px; font-weight:600;">Photo Evidence (Required)</label>
+                    <span id="photo-counter-dailyReport" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
+                </div>
+                <label id="photo-add-btn-dailyReport" onclick="return window.handleCameraClick(event, 'dailyReport')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
+                    <div style="font-weight: 600; font-size: 11px;">Tap to Take Photo (max 10)</div>
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'dailyReport')">
+                </label>
+                <div id="photo-preview-dailyReport" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                    <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%" onclick="window.drawer.close(); window.toast.show('Daily Log & Expenses Submitted', 'success')">Submit Daily Log</button>
+            <button class="btn btn-primary" style="width:100%" onclick="if (!window.validatePhotos('dailyReport')) return; window.drawer.close(); window.toast.show('Daily Log & Expenses Submitted', 'success')">Submit Daily Log</button>
         </div>
     `,
 
@@ -717,10 +724,17 @@ export const DrawerTemplates = {
                 <input type="text" class="form-input" placeholder="Enter Name..." style="width:100%; padding:10px;">
              </div>
              <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Photo Evidence (Location Verification)</label>
-                <div style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 20px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;" onclick="window.toast.show('Camera launched', 'info')">
-                    <i class="fas fa-camera" style="font-size: 20px; margin-bottom: 8px;"></i>
-                    <div style="font-weight: 600; font-size: 12px;">Capture Asset at Location</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label class="form-label" style="margin:0;">Photo Evidence (Location Verification)</label>
+                    <span id="photo-counter-assetVerify" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
+                </div>
+                <label id="photo-add-btn-assetVerify" onclick="return window.handleCameraClick(event, 'assetVerify')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
+                    <div style="font-weight: 600; font-size: 11px;">Capture Asset at Location (max 10)</div>
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'assetVerify')">
+                </label>
+                <div id="photo-preview-assetVerify" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                    <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>
                 </div>
             </div>
               <div class="form-group" style="margin-bottom:16px;">
@@ -729,7 +743,7 @@ export const DrawerTemplates = {
                      <input type="checkbox" checked> <span style="font-size:13px;">Received in Good Order</span>
                 </div>
              </div>
-             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Arrival Confirmed & Coordinator Notified', 'success')">Confirm Receipt</button>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="if (!window.validatePhotos('assetVerify')) return; window.drawer.close(); window.toast.show('Arrival Confirmed & Coordinator Notified', 'success')">Confirm Receipt</button>
          </div>
     `,
 
@@ -753,8 +767,23 @@ export const DrawerTemplates = {
                  <label class="form-label">Notes / Obstacles</label>
                  <textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="e.g. Hit rock layer, slower progress..."></textarea>
             </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label class="form-label" style="margin:0;">Progress Photos</label>
+                    <span id="photo-counter-taskUpdate" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
+                </div>
+                <label id="photo-add-btn-taskUpdate" onclick="return window.handleCameraClick(event, 'taskUpdate')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
+                    <div style="font-weight: 600; font-size: 11px;">Tap to Take Photo (max 10)</div>
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'taskUpdate')">
+                </label>
+                <div id="photo-preview-taskUpdate" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                    <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>
+                </div>
+            </div>
             
-            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Task Progress Updated', 'success')">Update Progress</button>
+            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="if (!window.validatePhotos('taskUpdate')) return; window.drawer.close(); window.toast.show('Task Progress Updated', 'success')">Update Progress</button>
         </div>
     `,
 
@@ -781,32 +810,18 @@ export const DrawerTemplates = {
             </div>
 
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
-                <label class="form-label" style="color:var(--slate-700); font-weight:700;"><i class="fas fa-coins"></i> Daily Spending Logic</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <label class="form-label" style="color:var(--slate-700); font-weight:700; margin:0;"><i class="fas fa-coins"></i> Daily Expenses</label>
+                    <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.addExpenseRow()"><i class="fas fa-plus"></i> Add Item</button>
+                </div>
                 
-                <div class="form-group" style="margin-top:12px;">
-                    <label class="form-label">Amount Spent (MWK)</label>
-                    <input type="number" id="daily-expense" class="form-input" placeholder="0" oninput="
-                        const bal = 800000 - (this.value || 0);
-                        document.getElementById('wallet-balance').innerText = bal.toLocaleString();
-                        document.getElementById('wallet-balance').style.color = bal < 0 ? '#ef4444' : 'white';
-                    ">
+                <div id="expense-rows" style="display:flex; flex-direction:column; gap:8px;">
+                    <!-- Rows will be injected here -->
                 </div>
-
-                <div class="form-group" style="margin-top:12px;">
-                    <label class="form-label">Expense Category</label>
-                    <select id="expense-category" class="form-input">
-                        <option value="">Select Category...</option>
-                        <option value="Labor">Casual Labor / Wages</option>
-                        <option value="Materials">Materials Purchase</option>
-                        <option value="Fuel">Fuel / Transport</option>
-                        <option value="Equipment">Equipment Rental</option>
-                        <option value="Other">Other / Miscellaneous</option>
-                    </select>
-                </div>
-
-                 <div class="form-group" style="margin-top:12px;">
-                    <label class="form-label">Expense Details (What was it used for?)</label>
-                    <input type="text" id="expense-details" class="form-input" placeholder="e.g. 50 bags of cement, day labor for 3 men...">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed var(--slate-300); font-weight:700;">
+                    <span style="font-size:12px; color:var(--slate-600);">Total Expense:</span>
+                    <span id="daily-total-expense" style="color:var(--orange); font-size:14px;">0 MWK</span>
                 </div>
             </div>
 
@@ -815,6 +830,21 @@ export const DrawerTemplates = {
                 <div style="display:flex; align-items:center; gap:12px;">
                     <input type="range" id="daily-progress-increment" class="form-input" style="flex:1;" min="0" max="100" value="45" oninput="this.nextElementSibling.innerText = this.value + '%'">
                     <span style="font-weight:700; font-size:14px; width:40px;">45%</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label class="form-label" style="margin:0;">Progress Photos</label>
+                    <span id="photo-counter-progressLog" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
+                </div>
+                <label id="photo-add-btn-progressLog" onclick="return window.handleCameraClick(event, 'progressLog')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
+                    <div style="font-weight: 600; font-size: 11px;">Tap to Take Photo (max 10)</div>
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'progressLog')">
+                </label>
+                <div id="photo-preview-progressLog" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                    <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>
                 </div>
             </div>
 
@@ -841,24 +871,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="
-                const btn = this;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Acquiring GPS...';
-                btn.disabled = true;
-                (window.app.pmModule || window.app.fsModule || window.app.caModule).handleDailyLogSubmit({ 
-                    taskId: document.getElementById('daily-log-task-id')?.value,
-                    progressIncrement: document.getElementById('daily-progress-increment')?.value,
-                    narrative: document.getElementById('daily-narrative')?.value,
-                    expense: document.getElementById('daily-expense')?.value, 
-                    category: document.getElementById('expense-category')?.value,
-                    details: document.getElementById('expense-details')?.value,
-                    sos: document.getElementById('sos-toggle')?.checked 
-                }).finally(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
-            "><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
+            <button id="daily-log-submit-btn" class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="window.submitDailyProgressLog(this)"><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
         </div>
     `,
 
@@ -918,7 +931,11 @@ export const DrawerTemplates = {
             </div>
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Type</label><select style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;"><option>Injury</option><option>Near Miss</option><option>Property Damage</option></select></div>
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Description</label><textarea style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" rows="3"></textarea></div>
-            <div style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 24px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; transition: 0.2s; margin-bottom: 16px;"><i class="fas fa-camera"></i> Capture Scene</div>
+            <div class="form-label">Evidence (Optional)</div>
+            <label style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 24px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; transition: 0.2s; margin-bottom: 16px; display: block;">
+                <i class="fas fa-camera"></i> Capture Scene
+                <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.toast.show('Evidence attached!', 'success')">
+            </label>
             <button class="btn btn-primary" style="width:100%; background: var(--red); border-color: var(--red);" onclick="window.drawer.close(); window.toast.show('Alert sent to HQ', 'error')">Submit Alert</button>
         </div>
     `,

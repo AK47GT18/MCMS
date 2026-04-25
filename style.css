@@ -397,18 +397,8 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Mobile Nav */
-.mobile-nav {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--white);
-    border-top: 1px solid var(--slate-200);
-    padding: 8px;
-    justify-content: space-around;
-    z-index: 50;
-}
+.mobile-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); border-top: 1px solid var(--slate-200); padding: 8px 16px; z-index: 50; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; gap: 24px; justify-content: flex-start; }
+.mobile-nav::-webkit-scrollbar { display: none; }
 .mobile-nav-item {
     display: flex;
     flex-direction: column;
@@ -422,7 +412,7 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
 .mobile-nav-item i { font-size: 18px; margin-bottom: 4px; }
 
 /* Responsive Visibility */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .hidden-mobile { display: none !important; }
     .mobile-nav { display: flex; }
     .app-main { padding-bottom: 60px; }
@@ -933,3 +923,41 @@ tbody td { padding: 12px 20px; font-size: 13px; color: var(--slate-700); vertica
     height: auto !important;
 }
 
+/* --- FIELD SUPERVISOR MOBILE RESPONSIVENESS & GANTT OVERLAY --- */
+.gantt-landscape-prompt {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    /* General Mobile Layout Tweaks */
+    .content { padding: 12px; }
+    .page-header { padding: 16px 20px; }
+    .page-title { font-size: 20px; }
+    
+    /* Make tables fully scrollable without breaking container */
+    .table-container, .data-card-body table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Gantt Portrait Override */
+    @media (orientation: portrait) {
+        .gantt-landscape-prompt {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 41, 0.95);
+            z-index: 10;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        .gantt-target {
+            opacity: 0; /* Hide actual chart to prevent scrolling mess */
+            pointer-events: none;
+        }
+    }
+}

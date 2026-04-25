@@ -48,7 +48,7 @@ async function getById(id) {
 
 async function create(data, userId) {
   // Extract progress increment if provided in the payload
-  const { progressIncrement, task_id, submissionLat, submissionLng, ...logData } = data;
+  const { progressIncrement, task_id, submissionLat, submissionLng, expenseItems, ...logData } = data;
 
   // Validate geofence
   const project = await prisma.project.findUnique({
@@ -67,7 +67,11 @@ async function create(data, userId) {
     );
 
     if (!geofenceResult.isWithin) {
-      throw new AppError(`Submission rejected: You are outside the project geofence (${geofenceResult.distanceMeters}m away).`, 400);
+      if (geofenceResult.distanceMeters === null) {
+        throw new AppError('Submission rejected: Project coordinates are not configured in the system.', 400);
+      } else {
+        throw new AppError(`Submission rejected: You are outside the project geofence (${Math.round(geofenceResult.distanceMeters)}m away).`, 400);
+      }
     }
     locationVerified = true;
   } else {
@@ -83,6 +87,11 @@ async function create(data, userId) {
       submissionLat,
       submissionLng,
       locationVerified,
+      ...(expenseItems && expenseItems.length > 0 && {
+        expenses: {
+          create: expenseItems
+        }
+      })
     },
     include: {
       project: { select: { id: true, code: true } },

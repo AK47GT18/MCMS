@@ -3,8 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mkaka Construction Management System</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f97415">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
+    
     <link rel="stylesheet" href="style.css">
     <link href="vendor/fonts/inter.css" rel="stylesheet">
     <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
@@ -45,6 +53,19 @@
         <!-- App content injected here -->
         <div class="flex items-center justify-center min-h-screen w-full">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        </div>
+    </div>
+
+    <!-- WebRTC Camera Modal (Hidden by default) -->
+    <div id="webrtc-camera-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="background:var(--white); padding:20px; border-radius:12px; width:90%; max-width:500px; text-align:center;">
+            <h3 style="margin-top:0; margin-bottom:16px; font-size:16px;">Take Photo (PC Camera)</h3>
+            <video id="webrtc-video" autoplay playsinline style="width:100%; max-height:60vh; background:#000; border-radius:8px; margin-bottom:16px;"></video>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn btn-secondary" onclick="window.closeWebcamModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="window.captureFromWebcam()"><i class="fas fa-camera"></i> Snap Photo</button>
+            </div>
+            <canvas id="webrtc-canvas" style="display:none;"></canvas>
         </div>
     </div>
 </body>

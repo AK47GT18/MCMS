@@ -235,6 +235,20 @@ CREATE TABLE daily_logs (
 );
 
 -- ============================================
+-- TABLE: daily_log_expenses
+-- ============================================
+CREATE TABLE daily_log_expenses (
+    id SERIAL PRIMARY KEY,
+    daily_log_id INT NOT NULL REFERENCES daily_logs(id) ON DELETE CASCADE,
+    category VARCHAR(50) NOT NULL,
+    quantity NUMERIC(10,2) NOT NULL,
+    unit_price NUMERIC(18,2) NOT NULL,
+    total_cost NUMERIC(18,2) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
 -- TABLE: safety_incidents
 -- ============================================
 CREATE TABLE safety_incidents (
@@ -376,6 +390,7 @@ CREATE INDEX idx_requisitions_project ON requisitions(project_id);
 CREATE INDEX idx_requisitions_status ON requisitions(status);
 CREATE INDEX idx_transactions_project ON transactions(project_id);
 CREATE INDEX idx_daily_logs_project_date ON daily_logs(project_id, log_date);
+CREATE INDEX idx_daily_log_expenses_log ON daily_log_expenses(daily_log_id);
 CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_procurement_status ON procurement_requests(status);

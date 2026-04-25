@@ -185,7 +185,7 @@ class APIClient {
       requestPromise.finally(() => {
         this.pendingRequests.delete(config._requestId);
         this.abortControllers.delete(config._requestId);
-      });
+      }).catch(() => {}); // Prevent unhandled rejection from the finally chain
     }
     
     return requestPromise;

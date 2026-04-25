@@ -536,8 +536,320 @@ class App {
     }
 }
 
+window.EXPENSE_RATES = {
+    'Fuel': 3000,
+    'Cement': 25000,
+    'Aggregate': 40000,
+    'Labor': 15000,
+    'Equipment': 100000
+};
+
+window.calculateExpenses = () => {
+    const rows = document.querySelectorAll('.expense-item-row');
+    let total = 0;
+    rows.forEach(row => {
+        const cat = row.querySelector('.exp-cat').value;
+        const qty = parseFloat(row.querySelector('.exp-qty').value) || 0;
+        const rate = window.EXPENSE_RATES[cat] || 0;
+        const cost = qty * rate;
+        row.querySelector('.exp-cost').innerText = cost.toLocaleString() + ' MWK';
+        total += cost;
+    });
+    const totalEl = document.getElementById('daily-total-expense');
+    if (totalEl) totalEl.innerText = total.toLocaleString() + ' MWK';
+    
+    // Update wallet
+    const balEl = document.getElementById('wallet-balance');
+    if (balEl) {
+        const bal = 800000 - total;
+        balEl.innerText = bal.toLocaleString();
+        balEl.style.color = bal < 0 ? '#ef4444' : 'white';
+    }
+};
+
+window.addExpenseRow = () => {
+    const container = document.getElementById('expense-rows');
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'expense-item-row';
+    div.style.cssText = 'display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; align-items:end; padding-bottom:8px; border-bottom:1px solid var(--slate-200);';
+    div.innerHTML = `
+        <div>
+            <label style="font-size:10px; color:var(--slate-500);">Category</label>
+            <select class="form-input exp-cat" style="padding:4px 8px; font-size:12px;" onchange="window.calculateExpenses()">
+                <option value="">Select...</option>
+                <option value="Fuel">Fuel (3k/L)</option>
+                <option value="Cement">Cement (25k/bag)</option>
+                <option value="Aggregate">Aggregate (40k/ton)</option>
+                <option value="Labor">Labor (15k/day)</option>
+                <option value="Equipment">Equipment (100k/hr)</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-size:10px; color:var(--slate-500);">Qty</label>
+            <input type="number" class="form-input exp-qty" style="padding:4px 8px; font-size:12px;" min="1" value="1" oninput="window.calculateExpenses()">
+        </div>
+        <div>
+            <label style="font-size:10px; color:var(--slate-500);">Cost</label>
+            <div class="exp-cost" style="font-size:12px; font-weight:700; padding:6px 0;">0 MWK</div>
+        </div>
+        <button class="btn btn-secondary" style="padding:4px 8px; color:var(--red); border-color:var(--red-light); background:var(--red-light);" onclick="this.parentElement.remove(); window.calculateExpenses()"><i class="fas fa-times"></i></button>
+    `;
+    container.appendChild(div);
+};
+
+// =============================================
+// PHOTO GALLERY SYSTEM (Min 3, Max 10)
+// =============================================
+window.photoGalleries = {};
+
+window.initPhotoGallery = (galleryId) => {
+    if (!window.photoGalleries[galleryId]) {
+        window.photoGalleries[galleryId] = [];
+    }
+};
+
+window.handlePhotoCapture = (input, galleryId) => {
+    window.initPhotoGallery(galleryId);
+    const gallery = window.photoGalleries[galleryId];
+    const files = Array.from(input.files);
+    
+    for (const file of files) {
+        if (gallery.length >= 10) {
+            window.toast.show('Maximum 10 photos allowed!', 'warning');
+            break;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            gallery.push({ name: file.name, dataUrl: e.target.result, file: file, timestamp: Date.now() });
+            window.renderPhotoGallery(galleryId);
+        };
+        reader.readAsDataURL(file);
+    }
+    // Reset input so same file can be re-selected
+    input.value = '';
+};
+
+// --- WebRTC PC Camera Fallback ---
+window.activeWebcamStream = null;
+window.activeGalleryId = null;
+
+window.handleCameraClick = (event, galleryId) => {
+    // Detect if desktop (not mobile)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (!isMobile) {
+        event.preventDefault(); // Stop file picker
+        window.activeGalleryId = galleryId;
+        const modal = document.getElementById('webrtc-camera-modal');
+        const video = document.getElementById('webrtc-video');
+        if (modal && video) {
+            modal.style.display = 'flex';
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    window.activeWebcamStream = stream;
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error('Webcam access failed:', err);
+                    window.toast.show('Webcam access denied. Please allow camera permissions.', 'error');
+                    window.closeWebcamModal();
+                });
+        }
+        return false;
+    }
+    return true; // Let mobile native camera open
+};
+
+window.closeWebcamModal = () => {
+    const modal = document.getElementById('webrtc-camera-modal');
+    if (modal) modal.style.display = 'none';
+    if (window.activeWebcamStream) {
+        window.activeWebcamStream.getTracks().forEach(track => track.stop());
+        window.activeWebcamStream = null;
+    }
+    window.activeGalleryId = null;
+};
+
+window.captureFromWebcam = () => {
+    const video = document.getElementById('webrtc-video');
+    const canvas = document.getElementById('webrtc-canvas');
+    if (!video || !canvas || !window.activeGalleryId) return;
+
+    // Check limit
+    window.initPhotoGallery(window.activeGalleryId);
+    const gallery = window.photoGalleries[window.activeGalleryId];
+    if (gallery.length >= 10) {
+        window.toast.show('Maximum 10 photos allowed!', 'warning');
+        return;
+    }
+
+    // Draw video frame to canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Get data URL
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    gallery.push({
+        name: `webcam-${Date.now()}.jpg`,
+        dataUrl: dataUrl,
+        file: null, // No native file object, we will rely on base64 for submission if needed
+        timestamp: Date.now()
+    });
+
+    window.renderPhotoGallery(window.activeGalleryId);
+    window.toast.show('Photo snapped!', 'success');
+};
+// ---------------------------------
+
+window.removePhoto = (galleryId, index) => {
+    if (window.photoGalleries[galleryId]) {
+        window.photoGalleries[galleryId].splice(index, 1);
+        window.renderPhotoGallery(galleryId);
+    }
+};
+
+window.renderPhotoGallery = (galleryId) => {
+    const gallery = window.photoGalleries[galleryId] || [];
+    const container = document.getElementById(`photo-preview-${galleryId}`);
+    const counter = document.getElementById(`photo-counter-${galleryId}`);
+    const addBtn = document.getElementById(`photo-add-btn-${galleryId}`);
+    
+    if (!container) return;
+    
+    // Update counter
+    if (counter) {
+        const count = gallery.length;
+        let color = 'var(--red)';
+        if (count >= 3 && count <= 10) color = 'var(--emerald)';
+        else if (count > 0) color = 'var(--orange)';
+        counter.innerHTML = `<span style="color:${color}; font-weight:700;">${count}</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span>`;
+    }
+    
+    // Show/hide add button at max
+    if (addBtn) {
+        addBtn.style.display = gallery.length >= 10 ? 'none' : 'block';
+    }
+    
+    // Render thumbnails
+    if (gallery.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>';
+        return;
+    }
+    
+    container.innerHTML = gallery.map((photo, i) => `
+        <div style="position:relative; width:72px; height:72px; flex-shrink:0; border-radius:8px; overflow:hidden; border:2px solid var(--slate-200);">
+            <img src="${photo.dataUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Photo ${i+1}">
+            <button onclick="window.removePhoto('${galleryId}', ${i})" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-times"></i>
+            </button>
+            <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.5); color:white; font-size:8px; text-align:center; padding:1px;">${i+1}</div>
+        </div>
+    `).join('');
+};
+
+window.validatePhotos = (galleryId) => {
+    const gallery = window.photoGalleries[galleryId] || [];
+    if (gallery.length < 3) {
+        window.toast.show(`Minimum 3 photos required! You have ${gallery.length}.`, 'error');
+        return false;
+    }
+    if (gallery.length > 10) {
+        window.toast.show('Maximum 10 photos allowed!', 'error');
+        return false;
+    }
+
+    // Check for 10-minute expiry
+    const now = Date.now();
+    for (let i = 0; i < gallery.length; i++) {
+        if (gallery[i].timestamp && (now - gallery[i].timestamp > 600000)) { // 10 minutes
+            window.photoGalleries[galleryId] = []; // WIPE GALLERY
+            window.renderPhotoGallery(galleryId);
+            window.toast.show('Photos expired (10 min limit). Please retake.', 'error');
+            return false;
+        }
+    }
+
+    return true;
+};
+
+window.submitDailyProgressLog = (btn) => {
+    if (!window.validatePhotos('progressLog')) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying site coordinates...';
+    btn.disabled = true;
+
+    const rows = document.querySelectorAll('.expense-item-row');
+    const items = Array.from(rows).map(row => {
+        const cat = row.querySelector('.exp-cat').value;
+        const qty = parseFloat(row.querySelector('.exp-qty').value) || 0;
+        const rate = window.EXPENSE_RATES[cat] || 0;
+        return { category: cat, quantity: qty, unitPrice: rate, totalCost: qty * rate, description: '' };
+    }).filter(i => i.category && i.quantity > 0);
+
+    // Find whichever module has handleDailyLogSubmit
+    const module = [window.app.pmModule, window.app.fsModule, window.app.caModule]
+        .find(m => m && typeof m.handleDailyLogSubmit === 'function');
+    
+    if (!module) {
+        // Fallback: use pmModule directly since that's where the method is defined
+        window.toast.show('Submitting via project manager module...', 'info');
+        const pm = window.app.pmModule;
+        if (!pm) {
+            window.toast.show('No module available to handle submission', 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+    }
+
+    (module || window.app.pmModule).handleDailyLogSubmit({
+        taskId: document.getElementById('daily-log-task-id')?.value,
+        progressIncrement: document.getElementById('daily-progress-increment')?.value,
+        narrative: document.getElementById('daily-narrative')?.value,
+        expenseItems: items,
+        sos: document.getElementById('sos-toggle')?.checked
+    }).finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+};
+
 // Start App
 document.addEventListener('DOMContentLoaded', async () => {
+    // PWA Install Prompt Logic
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        let installBtn = document.getElementById('pwa-install-btn');
+        if (!installBtn) {
+            installBtn = document.createElement('button');
+            installBtn.id = 'pwa-install-btn';
+            installBtn.innerHTML = '<i class="fas fa-download"></i> Install App';
+            installBtn.style.cssText = 'position:fixed; bottom:80px; right:20px; z-index:9999; background:var(--orange); color:white; border:none; border-radius:50px; padding:12px 24px; font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(249,116,21,0.4); display:flex; align-items:center; gap:8px; cursor:pointer;';
+            document.body.appendChild(installBtn);
+        }
+        
+        installBtn.addEventListener('click', async () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        });
+    });
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('/service-worker.js');
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        } catch (err) {
+            console.warn('ServiceWorker registration failed: ', err);
+        }
+    }
+
     // Globals for Inline Handlers
     const { DrawerTemplates } = await import('./components/DrawerTemplates.js');
     window.DrawerTemplates = DrawerTemplates;

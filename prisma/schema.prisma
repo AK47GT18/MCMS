@@ -330,9 +330,25 @@ model DailyLog {
   project          Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   submitter        User?                 @relation(fields: [submittedBy], references: [id])
   tasks            Task?                 @relation(fields: [task_id], references: [id])
+  expenses         DailyLogExpense[]
 
   @@index([projectId, logDate])
   @@map("daily_logs")
+}
+
+model DailyLogExpense {
+  id          Int      @id @default(autoincrement())
+  dailyLogId  Int      @map("daily_log_id")
+  category    String   @db.VarChar(50)
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @map("unit_price") @db.Decimal(18, 2)
+  totalCost   Decimal  @map("total_cost") @db.Decimal(18, 2)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  dailyLog    DailyLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+
+  @@index([dailyLogId])
+  @@map("daily_log_expenses")
 }
 
 model SafetyIncident {

@@ -264,8 +264,8 @@ export class AppLayout {
     }
 
     generateMobileNav(items) {
-        const linksHTML = items.slice(0, 4).map(item => `
-            <a href="#" class="mobile-nav-item ${item.active ? 'active' : ''}" data-id="${item.id}">
+        const linksHTML = items.map(item => `
+            <a href="#" class="mobile-nav-item ${item.active ? 'active' : ''}" data-id="${item.id}" ${item.action ? `data-action="${item.action}"` : ''} ${item.drawerId ? `data-drawer-id="${item.drawerId}"` : ''}>
                 ${item.icon}
                 <span>${item.label}</span>
             </a>

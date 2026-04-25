@@ -2,6 +2,7 @@ import client from '../../src/api/client.js';
 import inventoryApi from '../../src/api/inventory.api.js';
 import assets from '../../src/api/assets.api.js';
 import tasks from '../../src/api/tasks.api.js';
+import dailyLogs from '../../src/api/dailyLogs.api.js';
 
 export class FieldSupervisorDashboard {
     constructor() {
@@ -551,8 +552,16 @@ export class FieldSupervisorDashboard {
                         </select>
                     </div>
                 </div>
-                <div id="gantt-chart-container" style="overflow-x:auto; background: white; min-height: 400px; padding: 20px; border: 1px solid var(--slate-100); border-radius: 8px;">
-                    <div id="gantt" style="position: relative; min-height: 350px;"></div>
+                </div>
+                <div id="gantt-chart-container" style="position: relative; overflow-x:auto; background: white; min-height: 400px; padding: 20px; border: 1px solid var(--slate-100); border-radius: 8px;">
+                    <div class="gantt-landscape-prompt">
+                        <div style="text-align: center; color: white;">
+                            <i class="fas fa-mobile-alt" style="font-size: 40px; margin-bottom: 15px; transform: rotate(90deg); display: block;"></i>
+                            <h3 style="margin-bottom: 10px;">Rotate Device</h3>
+                            <p style="font-size: 14px;">Please rotate your phone to landscape mode to view the schedule properly.</p>
+                        </div>
+                    </div>
+                    <div id="gantt" class="gantt-target" style="position: relative; min-height: 350px;"></div>
                 </div>
             </div>
         `;
@@ -646,5 +655,63 @@ export class FieldSupervisorDashboard {
 
     scrollToToday() {
         if (this.ganttInstance?.scroll_today) this.ganttInstance.scroll_today();
+    }
+
+    async handleDailyLogSubmit(payloadOverride = null) {
+        try {
+            // Get location if available
+            let lat = null, lng = null;
+            if (navigator.geolocation) {
+                try {
+                    window.toast.show('Verifying site coordinates...', 'info');
+                    const pos = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { 
+                            enableHighAccuracy: true, 
+                            timeout: 10000 
+                        });
+                    });
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                } catch (e) {
+                    console.warn('GPS capture failed:', e);
+                    if (e.code === 1) {
+                        throw new Error('Location permission denied. Please enable GPS in your browser/device settings to submit logs.');
+                    }
+                    throw new Error('Could not verify location. Please ensure location services are enabled and you have internet/GPS connection.');
+                }
+            } else {
+                throw new Error('Geolocation is not supported by your browser.');
+            }
+
+            window.toast.show('Uploading site log...', 'info');
+            
+            // Build payload
+            const payload = {
+                projectId: this.assignedProject?.id || 1, // Fallback for testing
+                logDate: new Date().toISOString().split('T')[0],
+                narrative: payloadOverride?.narrative || document.getElementById('daily-narrative')?.value || 'Daily Progress',
+                status: 'submitted',
+                submissionLat: lat,
+                submissionLng: lng
+            };
+            
+            // Add extra fields if payload override provided
+            if (payloadOverride) {
+                if (payloadOverride.taskId) payload.taskId = parseInt(payloadOverride.taskId);
+                if (payloadOverride.progressIncrement) payload.progressIncrement = parseInt(payloadOverride.progressIncrement);
+                if (payloadOverride.expenseItems) payload.expenseItems = payloadOverride.expenseItems;
+                if (payloadOverride.sos) payload.isSos = true;
+            }
+
+            await dailyLogs.create(payload);
+            window.toast.show('Daily progress logged successfully', 'success');
+            window.drawer.close();
+            this._loadDashboardStats(); // Refresh stats 
+        } catch (error) {
+            console.error('Log submission error:', error);
+            let errorMsg = error.response?.data?.message || error.message || 'Failed to submit log';
+            errorMsg = errorMsg.replace('ValidationError: ', '').replace('AppError: ', '');
+            window.toast.show(errorMsg, 'error');
+        }
     }
 }

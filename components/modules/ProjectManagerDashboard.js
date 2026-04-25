@@ -3259,7 +3259,7 @@ export class ProjectManagerDashboard {
             let lat = null, lng = null;
             if (navigator.geolocation) {
                 try {
-                    window.toast.show('Acquiring GPS location...', 'info');
+                    window.toast.show('Verifying site coordinates...', 'info');
                     const pos = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(resolve, reject, { 
                             enableHighAccuracy: true, 
@@ -3270,7 +3270,10 @@ export class ProjectManagerDashboard {
                     lng = pos.coords.longitude;
                 } catch (e) {
                     console.warn('GPS capture failed:', e);
-                    throw new Error('Could not verify location. Please ensure location services are enabled.');
+                    if (e.code === 1) {
+                        throw new Error('Location permission denied. Please enable GPS in your browser/device settings to submit logs.');
+                    }
+                    throw new Error('Could not verify location. Please ensure location services are enabled and you have internet/GPS connection.');
                 }
             } else {
                 throw new Error('Geolocation is not supported by your browser.');
@@ -3292,9 +3295,7 @@ export class ProjectManagerDashboard {
             if (payloadOverride) {
                 if (payloadOverride.taskId) payload.taskId = parseInt(payloadOverride.taskId);
                 if (payloadOverride.progressIncrement) payload.progressIncrement = parseInt(payloadOverride.progressIncrement);
-                if (payloadOverride.expense) payload.expenseAmount = parseFloat(payloadOverride.expense);
-                if (payloadOverride.category) payload.expenseCategory = payloadOverride.category;
-                if (payloadOverride.details) payload.expenseReason = payloadOverride.details;
+                if (payloadOverride.expenseItems) payload.expenseItems = payloadOverride.expenseItems;
                 if (payloadOverride.sos) payload.isSos = true;
             }
 
@@ -3304,7 +3305,9 @@ export class ProjectManagerDashboard {
             this.render(); 
         } catch (error) {
             console.error('Log submission error:', error);
-            window.toast.show(error.message || 'Failed to submit log', 'error');
+            let errorMsg = error.response?.data?.message || error.message || 'Failed to submit log';
+            errorMsg = errorMsg.replace('ValidationError: ', '').replace('AppError: ', '');
+            window.toast.show(errorMsg, 'error');
         }
     }
 

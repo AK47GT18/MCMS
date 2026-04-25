@@ -220,6 +220,13 @@ const createDailyLogSchema = z.object({
   expenseAmount: z.number().positive().optional(),
   expenseCategory: z.string().max(50).optional(),
   expenseReason: z.string().optional(),
+  expenseItems: z.array(z.object({
+    category: z.string(),
+    quantity: z.number().positive(),
+    unitPrice: z.number().positive(),
+    totalCost: z.number().positive(),
+    description: z.string().optional()
+  })).optional(),
   isSos: z.boolean().optional(),
   taskId: z.number().int().positive().optional(),
   progressIncrement: z.number().int().min(0).max(100).optional(),
