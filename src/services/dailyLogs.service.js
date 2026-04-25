@@ -7,6 +7,7 @@ const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 const handlers = require('../realtime/handlers');
+const { checkGeofence } = require('../utils/geofence');
 
 async function getAll({ page = 1, limit = 20, projectId, startDate, endDate }) {
   const skip = (page - 1) * limit;
@@ -47,7 +48,31 @@ async function getById(id) {
 
 async function create(data, userId) {
   // Extract progress increment if provided in the payload
-  const { progressIncrement, task_id, ...logData } = data;
+  const { progressIncrement, task_id, submissionLat, submissionLng, ...logData } = data;
+
+  // Validate geofence
+  const project = await prisma.project.findUnique({
+    where: { id: data.projectId },
+    select: { id: true, lat: true, lng: true, radius: true }
+  });
+
+  if (!project) throw new AppError('Project not found', 404);
+
+  let locationVerified = false;
+  if (submissionLat && submissionLng) {
+    const geofenceResult = checkGeofence(
+      Number(submissionLat), Number(submissionLng),
+      Number(project.lat || 0), Number(project.lng || 0),
+      project.radius || 500
+    );
+
+    if (!geofenceResult.isWithin) {
+      throw new AppError(`Submission rejected: You are outside the project geofence (${geofenceResult.distanceMeters}m away).`, 400);
+    }
+    locationVerified = true;
+  } else {
+    throw new AppError('Location coordinates are required to submit a daily log.', 400);
+  }
 
   const log = await prisma.dailyLog.create({
     data: {
@@ -55,6 +80,9 @@ async function create(data, userId) {
       task_id: task_id,
       submittedBy: userId,
       logDate: new Date(data.logDate),
+      submissionLat,
+      submissionLng,
+      locationVerified,
     },
     include: {
       project: { select: { id: true, code: true } },

@@ -372,6 +372,13 @@ export const DrawerTemplates = {
                 </div>
 
                 <div style="margin-bottom: 16px;">
+                    <div style="margin-bottom: 12px;">
+                        <label style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:4px;">
+                            <span>Geofence Radius (meters)</span>
+                            <span id="proj_radius_val">500m</span>
+                        </label>
+                        <input type="range" id="proj_radius_input" min="50" max="5000" step="50" value="500" style="width:100%; accent-color:var(--orange);" oninput="document.getElementById('proj_radius_val').innerText = this.value + 'm'; if(window.app.pmModule && window.app.pmModule.geofenceCircle) { window.app.pmModule.geofenceCircle.setRadius(this.value); }">
+                    </div>
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
                     <div id="project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Loading Map...</div>
@@ -834,15 +841,24 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).handleDailyLogSubmit({ 
-                taskId: document.getElementById('daily-log-task-id')?.value,
-                progressIncrement: document.getElementById('daily-progress-increment')?.value,
-                narrative: document.getElementById('daily-narrative')?.value,
-                expense: document.getElementById('daily-expense')?.value, 
-                category: document.getElementById('expense-category')?.value,
-                details: document.getElementById('expense-details')?.value,
-                sos: document.getElementById('sos-toggle')?.checked 
-            })">Submit Update</button>
+            <button class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> Acquiring GPS...';
+                btn.disabled = true;
+                (window.app.pmModule || window.app.fsModule || window.app.caModule).handleDailyLogSubmit({ 
+                    taskId: document.getElementById('daily-log-task-id')?.value,
+                    progressIncrement: document.getElementById('daily-progress-increment')?.value,
+                    narrative: document.getElementById('daily-narrative')?.value,
+                    expense: document.getElementById('daily-expense')?.value, 
+                    category: document.getElementById('expense-category')?.value,
+                    details: document.getElementById('expense-details')?.value,
+                    sos: document.getElementById('sos-toggle')?.checked 
+                }).finally(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+            "><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
         </div>
     `,
 
@@ -2886,6 +2902,13 @@ Contract Admin</textarea>
             </div>
 
             <div style="margin-bottom: 16px;">
+                <div style="margin-bottom: 12px;">
+                    <label style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:4px;">
+                        <span>Geofence Radius (meters)</span>
+                        <span id="edit_proj_radius_val">500m</span>
+                    </label>
+                    <input type="range" id="edit_proj_radius_input" min="50" max="5000" step="50" value="500" style="width:100%; accent-color:var(--orange);" oninput="document.getElementById('edit_proj_radius_val').innerText = this.value + 'm'; if(window.app.pmModule && window.app.pmModule.geofenceCircle) { window.app.pmModule.geofenceCircle.setRadius(this.value); }">
+                </div>
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Geofence)</label>
                 <div id="edit-project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
                     <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Redrawing Map...</div>

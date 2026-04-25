@@ -1366,7 +1366,7 @@ export class ProjectManagerDashboard {
                     color: 'var(--orange)',
                     fillColor: 'var(--orange)',
                     fillOpacity: 0.15,
-                    radius: 500
+                    radius: initialCoords && initialCoords.radius ? initialCoords.radius : 500
                 }).addTo(map);
 
                 // Add Search Control (Geocoder)
@@ -2648,6 +2648,14 @@ export class ProjectManagerDashboard {
                  lng: project.lng || 33.7741,
                  radius: project.radius || 500
              });
+
+             const radiusVal = project.radius || 500;
+             const radEl = document.getElementById('edit_proj_radius_input');
+             if (radEl) {
+                 radEl.value = radiusVal;
+                 const radValEl = document.getElementById('edit_proj_radius_val');
+                 if (radValEl) radValEl.innerText = radiusVal + 'm';
+             }
          });
     }
 
@@ -2665,7 +2673,8 @@ export class ProjectManagerDashboard {
             managerId: parseInt(document.getElementById('edit_proj_supervisor').value),
             projectType: projectType,
             lat: parseFloat(document.getElementById('edit_proj_lat').textContent),
-            lng: parseFloat(document.getElementById('edit_proj_lng').textContent)
+            lng: parseFloat(document.getElementById('edit_proj_lng').textContent),
+            radius: parseInt(document.getElementById('edit_proj_radius_input')?.value || 500)
         };
 
         if (!data.name || !data.managerId) {
@@ -3244,21 +3253,58 @@ export class ProjectManagerDashboard {
         }
     }
 
-    async handleDailyLogSubmit() {
+    async handleDailyLogSubmit(payloadOverride = null) {
         try {
+            // Get location if available
+            let lat = null, lng = null;
+            if (navigator.geolocation) {
+                try {
+                    window.toast.show('Acquiring GPS location...', 'info');
+                    const pos = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { 
+                            enableHighAccuracy: true, 
+                            timeout: 10000 
+                        });
+                    });
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                } catch (e) {
+                    console.warn('GPS capture failed:', e);
+                    throw new Error('Could not verify location. Please ensure location services are enabled.');
+                }
+            } else {
+                throw new Error('Geolocation is not supported by your browser.');
+            }
+
             window.toast.show('Uploading site log...', 'info');
-            await dailyLogs.create({
-                projectId: this.selectedProjectId,
+            
+            // Build payload
+            const payload = {
+                projectId: this.selectedProjectId || (window.app.fsModule ? window.app.fsModule.assignedProject?.id : null),
                 date: new Date().toISOString().split('T')[0],
-                narrative: document.getElementById('log-narrative')?.value || 'Daily Progress',
-                status: 'submitted'
-            });
+                narrative: payloadOverride?.narrative || document.getElementById('log-narrative')?.value || 'Daily Progress',
+                status: 'submitted',
+                submissionLat: lat,
+                submissionLng: lng
+            };
+            
+            // Add extra fields if payload override provided
+            if (payloadOverride) {
+                if (payloadOverride.taskId) payload.taskId = parseInt(payloadOverride.taskId);
+                if (payloadOverride.progressIncrement) payload.progressIncrement = parseInt(payloadOverride.progressIncrement);
+                if (payloadOverride.expense) payload.expenseAmount = parseFloat(payloadOverride.expense);
+                if (payloadOverride.category) payload.expenseCategory = payloadOverride.category;
+                if (payloadOverride.details) payload.expenseReason = payloadOverride.details;
+                if (payloadOverride.sos) payload.isSos = true;
+            }
+
+            await dailyLogs.create(payload);
             window.toast.show('Daily progress logged successfully', 'success');
             window.drawer.close();
             this.render(); 
         } catch (error) {
             console.error('Log submission error:', error);
-            window.toast.show('Failed to submit log', 'error');
+            window.toast.show(error.message || 'Failed to submit log', 'error');
         }
     }
 

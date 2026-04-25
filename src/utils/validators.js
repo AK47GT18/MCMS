@@ -223,6 +223,8 @@ const createDailyLogSchema = z.object({
   isSos: z.boolean().optional(),
   taskId: z.number().int().positive().optional(),
   progressIncrement: z.number().int().min(0).max(100).optional(),
+  submissionLat: z.coerce.number().optional(),
+  submissionLng: z.coerce.number().optional(),
 });
 
 const updateDailyLogSchema = z.object({
