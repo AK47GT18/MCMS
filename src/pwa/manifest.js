@@ -21,43 +21,13 @@ function getManifest() {
     orientation: 'any',
     icons: [
       {
-        src: '/icons/icon-72x72.png',
-        sizes: '72x72',
-        type: 'image/png',
-        purpose: 'any maskable',
-      },
-      {
-        src: '/icons/icon-96x96.png',
-        sizes: '96x96',
-        type: 'image/png',
-        purpose: 'any maskable',
-      },
-      {
-        src: '/icons/icon-128x128.png',
-        sizes: '128x128',
-        type: 'image/png',
-        purpose: 'any maskable',
-      },
-      {
-        src: '/icons/icon-144x144.png',
-        sizes: '144x144',
-        type: 'image/png',
-        purpose: 'any maskable',
-      },
-      {
-        src: '/icons/icon-192x192.png',
+        src: '/icon-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any maskable',
       },
       {
-        src: '/icons/icon-384x384.png',
-        sizes: '384x384',
-        type: 'image/png',
-        purpose: 'any maskable',
-      },
-      {
-        src: '/icons/icon-512x512.png',
+        src: '/icon-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any maskable',
@@ -72,14 +42,12 @@ function getManifest() {
       {
         name: 'Dashboard',
         short_name: 'Dashboard',
-        url: '/dashboard',
-        icons: [{ src: '/icons/dashboard.png', sizes: '96x96' }],
+        url: '/dashboard.html',
       },
       {
         name: 'Projects',
         short_name: 'Projects',
-        url: '/projects',
-        icons: [{ src: '/icons/projects.png', sizes: '96x96' }],
+        url: '/dashboard.html#projects',
       },
     ],
   };

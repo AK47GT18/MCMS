@@ -16,7 +16,11 @@ export class FieldSupervisorDashboard {
         this.assignedProject = null;
         this.siteAssets = [];
         this.dailyLogsCount = 0;
-        this.safetyDays = 124; // Mocked for now, but wired for future
+        this.safetyDays = 124;
+
+        this.inventoryLoaded = false;
+        this.assetsLoaded = false;
+        this.tasksLoaded = false;
 
         // Register module globally for template access
         window.app = window.app || {};
@@ -42,7 +46,7 @@ export class FieldSupervisorDashboard {
             });
             window.realtime.on('ASSET_DISPATCHED', (data) => {
                 console.log('[FS][WS] Asset dispatched to site:', data);
-                window.toast?.show('Equipment dispatched to your site!', 'info');
+                console.log('[FS] Equipment dispatched to site');
                 if (this.currentView === 'logistics' || this.currentView === 'equipment') {
                     this._loadSiteAssets();
                 }
@@ -72,9 +76,10 @@ export class FieldSupervisorDashboard {
                     inventoryId: item.id
                 };
             });
-
+            this.inventoryLoaded = true;
             this._refreshCurrentView();
         } catch (error) {
+            this.inventoryLoaded = true;
             console.error('[FS] Failed to load site inventory:', error);
         }
     }
@@ -84,8 +89,10 @@ export class FieldSupervisorDashboard {
             const result = await assets.getAll({ status: 'checked_out' });
             const data = result.data || result;
             this.siteAssets = Array.isArray(data) ? data : (data.items || []);
+            this.assetsLoaded = true;
             this._refreshCurrentView();
         } catch (error) {
+            this.assetsLoaded = true;
             console.error('[FS] Failed to load site assets:', error);
         }
     }
@@ -308,9 +315,11 @@ export class FieldSupervisorDashboard {
                     <div class="card-title">Site Material Inventory</div>
                     <button class="btn btn-secondary" onclick="window.app.fsModule._loadSiteInventory()"><i class="fas fa-sync"></i> Refresh</button>
                 </div>
-                ${entries.length === 0
+                ${!this.inventoryLoaded 
                 ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading site inventory from server…</div></div>'
-                : `<table>
+                : (entries.length === 0 
+                    ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-box-open" style="font-size:24px; margin-bottom:12px; display:block;"></i><div>No materials currently assigned to this site.</div></div>'
+                    : `<table>
                         <thead>
                             <tr><th>Material</th><th>On-Site Stock</th><th>Sector</th><th style="text-align: right;">Action</th></tr>
                         </thead>
@@ -327,6 +336,7 @@ export class FieldSupervisorDashboard {
                             `).join('')}
                         </tbody>
                     </table>`
+                )
             }
             </div>
 
@@ -334,9 +344,11 @@ export class FieldSupervisorDashboard {
                 <div class="data-card-header">
                     <div class="card-title" style="color: var(--blue);">Site Equipment</div>
                 </div>
-                ${this.siteAssets.length === 0
-                ? '<div style="padding: 24px; text-align: center; color: var(--slate-400);">No equipment currently assigned to site.</div>'
-                : `<table>
+                ${!this.assetsLoaded
+                ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Checking site equipment fleet…</div></div>'
+                : (this.siteAssets.length === 0
+                    ? '<div style="padding: 32px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size:24px; margin-bottom:12px; display:block; opacity: 0.5;"></i>No equipment currently assigned to site.</div>'
+                    : `<table>
                         <thead><tr><th>Asset</th><th>Code</th><th>Status</th><th style="text-align: right;">Action</th></tr></thead>
                         <tbody>
                             ${this.siteAssets.map(asset => `
@@ -357,6 +369,7 @@ export class FieldSupervisorDashboard {
                             `).join('')}
                         </tbody>
                     </table>`
+                )
             }
             </div>
         `;
@@ -407,7 +420,7 @@ export class FieldSupervisorDashboard {
         const isMachinery = document.getElementById('fs_btn_machinery')?.classList.contains('active');
         const item = isMachinery ? document.getElementById('fs_req_asset')?.value : document.getElementById('fs_req_material')?.value;
         const qty = isMachinery ? 1 : document.getElementById('fs_req_qty')?.value;
-        window.toast.show('Transmitting request to Equipment Coordinator…', 'info');
+        console.log('[FS] Transmitting request to Equipment Coordinator…');
 
         try {
             // Submit via API
@@ -420,10 +433,10 @@ export class FieldSupervisorDashboard {
 
             setTimeout(() => {
                 window.drawer.close();
-                window.toast.show(`Request for ${item} submitted with ${urgency} priority.`, 'success');
+                console.log(`[FS] Request for ${item} submitted.`);
             }, 800);
         } catch (error) {
-            window.toast.show('Request failed: ' + (error.message || 'Server error'), 'error');
+            console.error('[FS] Request failed:', error);
         }
     }
 
@@ -432,7 +445,7 @@ export class FieldSupervisorDashboard {
         const item = this.incomingLogistics.find(i => i.id === id);
         if (!item) return;
 
-        window.toast.show(`Acknowledging receipt of ${item.item}…`, 'info');
+        console.log(`[FS] Acknowledging receipt of ${item.item}…`);
 
         // Update via API
         if (item.type !== 'Machinery' && item.qty) {
@@ -446,27 +459,21 @@ export class FieldSupervisorDashboard {
             }).then(() => {
                 this.incomingLogistics = this.incomingLogistics.filter(i => i.id !== id);
                 this._loadSiteInventory();
-                window.toast.show('Logistics intake complete. Inventory updated.', 'success');
+                console.log('[FS] Logistics intake complete. Inventory updated.');
             }).catch(err => {
-                window.toast.show('Intake failed: ' + err.message, 'error');
+                console.error('[FS] Intake failed:', err);
             });
         }
     }
 
     async handleExecuteBurn(name) {
         const qty = Number(document.getElementById('burn_qty')?.value);
-        if (!qty) {
-            window.toast.show('Please specify quantity.', 'warning');
-            return;
-        }
+        if (!qty) return;
 
         const material = this.siteInventory[name];
-        if (!material || material.qty < qty) {
-            window.toast.show('Insufficient site stock for this burn.', 'error');
-            return;
-        }
+        if (!material || material.qty < qty) return;
 
-        window.toast.show('Recording material consumption…', 'info');
+        console.log('[FS] Recording material consumption…');
 
         try {
             await inventoryApi.consume({
@@ -480,10 +487,10 @@ export class FieldSupervisorDashboard {
             setTimeout(() => {
                 window.drawer.close();
                 this._loadSiteInventory();
-                window.toast.show(`Consumed ${qty} units at ${section}. Stock updated.`, 'success');
+                console.log(`[FS] Consumed ${qty} units. Stock updated.`);
             }, 600);
         } catch (error) {
-            window.toast.show('Consumption failed: ' + (error.message || 'Server error'), 'error');
+            console.error('[FS] Consumption failed:', error);
         }
     }
 
@@ -646,9 +653,11 @@ export class FieldSupervisorDashboard {
                 <div class="card-title">On-Site Equipment</div>
                 <button class="btn btn-primary" onclick="window.drawer.open('Request Equipment', window.DrawerTemplates.requestResourceFS)"><i class="fas fa-plus"></i> Request</button>
               </div>
-              ${this.siteAssets.length === 0
-                ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading equipment…</div></div>'
-                : `<table>
+              ${!this.assetsLoaded
+                ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Syncing site fleet status…</div></div>'
+                : (this.siteAssets.length === 0
+                    ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-loading" style="font-size:24px; margin-bottom:12px; display:block;"></i>No equipment assigned to this workstation.</div>'
+                    : `<table>
                     <thead><tr><th>Asset</th><th>ID</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                         ${this.siteAssets.map(asset => `
@@ -662,6 +671,7 @@ export class FieldSupervisorDashboard {
                         `).join('')}
                     </tbody>
                 </table>`
+                )
             }
             </div>
         `;
@@ -682,7 +692,7 @@ export class FieldSupervisorDashboard {
             let lat = null, lng = null;
             if (navigator.geolocation) {
                 try {
-                    window.toast.show('Verifying site coordinates...', 'info');
+                    console.log('[FS] Verifying site coordinates...');
                     const pos = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
                             enableHighAccuracy: true,
@@ -702,7 +712,7 @@ export class FieldSupervisorDashboard {
                 throw new Error('Geolocation is not supported by your browser.');
             }
 
-            window.toast.show('Uploading site log...', 'info');
+            console.log('[FS] Uploading site log...');
 
             // Build payload
             const payload = {
@@ -723,14 +733,14 @@ export class FieldSupervisorDashboard {
             }
 
             await dailyLogs.create(payload);
-            window.toast.show('Daily progress logged successfully', 'success');
+            console.log('[FS] Daily progress logged successfully');
             window.drawer.close();
             this._loadDashboardStats(); // Refresh stats 
         } catch (error) {
             console.error('Log submission error:', error);
             let errorMsg = error.response?.data?.message || error.message || 'Failed to submit log';
             errorMsg = errorMsg.replace('ValidationError: ', '').replace('AppError: ', '');
-            window.toast.show(errorMsg, 'error');
+            console.error('[FS] Log submission error:', error);
         }
     }
 }

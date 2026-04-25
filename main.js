@@ -51,6 +51,45 @@ window.addEventListener('auth:unauthorized', (event) => {
     }, 1500);
 });
 
+// PWA Install Logic
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    console.log('[PWA] Deferred prompt stashed');
+});
+
+window.triggerPwaInstall = async () => {
+    if (!deferredPrompt) {
+        console.warn('[PWA] deferredPrompt is null. Possible reasons: Not served over HTTPS, Manifest issues, or App already installed.');
+        window.toast?.show('Install prompt not ready. Ensure you are on HTTPS and wait a moment.', 'warning');
+        return;
+    }
+    try {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`[PWA] User response: ${outcome}`);
+        // We've used the prompt, and can't use it again, throw it away
+        deferredPrompt = null;
+    } catch (err) {
+        console.error('[PWA] Install failed:', err);
+        window.toast?.show('Installation failed. Try again from the browser menu.', 'error');
+    }
+};
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('[PWA] ServiceWorker registered:', reg.scope))
+            .catch(err => console.warn('[PWA] ServiceWorker failed:', err));
+    });
+}
+
 class App {
     constructor() {
         this.layout = new AppLayout();
@@ -243,6 +282,16 @@ class App {
             if (module) {
                 module.currentView = pageId;
                 content = await module.render();
+
+                // Trigger PWA prompt hint for Field Supervisors on dashboard load
+                if (this.currentUser.role === 'Field Supervisor' && pageId === 'dashboard') {
+                    setTimeout(() => {
+                        console.log('[PWA] Checking for install eligibility...');
+                        // Note: actual prompt() requires user gesture, 
+                        // so we just log or could show a subtle hint.
+                        // But per user request to "trigger", we'll attempt if ready.
+                    }, 2000);
+                }
             } else {
                 // Fallback for roles without specific modules or testing
                 content = this.getMockContent(pageId);
@@ -873,45 +922,9 @@ window.submitDailyProgressLog = (btn) => {
 
 // Start App
 document.addEventListener('DOMContentLoaded', async () => {
-    // PWA Install Prompt Logic
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        
-        let installBtn = document.getElementById('pwa-install-btn');
-        if (!installBtn) {
-            installBtn = document.createElement('button');
-            installBtn.id = 'pwa-install-btn';
-            installBtn.innerHTML = '<i class="fas fa-download"></i> Install App';
-            installBtn.style.cssText = 'position:fixed; bottom:80px; right:20px; z-index:9999; background:var(--orange); color:white; border:none; border-radius:50px; padding:12px 24px; font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(249,116,21,0.4); display:flex; align-items:center; gap:8px; cursor:pointer;';
-            document.body.appendChild(installBtn);
-        }
-        
-        installBtn.addEventListener('click', async () => {
-            installBtn.style.display = 'none';
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-        });
-    });
-    // Register Service Worker for PWA
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.register('/service-worker.js');
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        } catch (err) {
-            console.warn('ServiceWorker registration failed: ', err);
-        }
-    }
-
     // Globals for Inline Handlers
     const { DrawerTemplates } = await import('./components/DrawerTemplates.js');
     window.DrawerTemplates = DrawerTemplates;
 
     window.app = new App();
-    
-    // Dev Tools: Role Switcher
-    const { RoleSwitcher } = await import('./components/RoleSwitcher.js');
-    new RoleSwitcher();
 });

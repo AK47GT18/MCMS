@@ -189,6 +189,41 @@ export const DrawerTemplates = {
                         <div style="font-size: 11px; color: var(--slate-500);">Log site delays or technical issues</div>
                     </div>
                 </button>
+
+                <div style="height: 1px; background: var(--slate-100); margin: 8px 0;"></div>
+
+                <!-- Profile Button -->
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.app.layout.showProfileDrawer()">
+                    <div style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.1); color: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">My Profile</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Account settings & credentials</div>
+                    </div>
+                </button>
+
+                <!-- Download App (PWA) -->
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.triggerPwaInstall()">
+                    <div style="width: 32px; height: 32px; background: rgba(249, 116, 21, 0.1); color: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-campground"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Install Work App</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Fast access from your home screen</div>
+                    </div>
+                </button>
+
+                <!-- Logout -->
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: #FFF1F2; border: 1px solid #FECACA; box-shadow: var(--shadow-sm);" onclick="window.app.layout.handleLogout()">
+                    <div style="width: 32px; height: 32px; background: white; color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #FECACA;">
+                        <i class="fas fa-power-off"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--red);">Logout Session</div>
+                        <div style="font-size: 11px; color: #B91C1C; opacity: 0.8;">Securely sign out of MCMS</div>
+                    </div>
+                </button>
             </div>
         </div>
     `,
@@ -920,11 +955,11 @@ export const DrawerTemplates = {
             </div>
 
             <!-- Workflow Wallet Card -->
-            <div style="background:var(--slate-900); color:white; padding:16px; border-radius:8px; margin-bottom:20px;">
-                <div style="font-size:11px; text-transform:uppercase; color:var(--slate-400); font-weight:700;">Project Wallet</div>
-                <div style="font-size:24px; font-weight:700; margin:4px 0;">MWK <span id="wallet-balance">800,000</span></div>
-                <div style="font-size:11px; color:var(--slate-400);">of MWK 5,000,000 Allocated</div>
-                <div style="height:4px; background:rgba(255,255,255,0.1); margin-top:12px; border-radius:2px;">
+            <div style="background:white; color:var(--slate-900); border: 1px solid var(--slate-200); padding:16px; border-radius:8px; margin-bottom:20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <div style="font-size:11px; text-transform:uppercase; color:var(--slate-500); font-weight:700;">Project Wallet</div>
+                <div style="font-size:24px; font-weight:800; margin:4px 0; color:var(--slate-900);">MWK <span id="wallet-balance">800,000</span></div>
+                <div style="font-size:11px; color:var(--slate-500); font-weight: 500;">of MWK 5,000,000 Allocated</div>
+                <div style="height:6px; background:var(--slate-100); margin-top:12px; border-radius:3px; overflow: hidden;">
                     <div style="width:16%; height:100%; background:var(--emerald);"></div>
                 </div>
             </div>

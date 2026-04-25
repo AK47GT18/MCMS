@@ -743,19 +743,19 @@ tbody td {
         grid-template-columns: 1fr !important;
     }
 
-    /* Bottom Sheet Style Drawer for Mobile */
+    /* Bottom Sheet Style Drawer for Mobile - now Full Screen */
     .drawer-panel {
-        top: auto;
+        top: 0;
         bottom: 0;
         right: 0;
         width: 100% !important;
         max-width: none !important;
-        height: auto !important;
-        max-height: 85vh;
-        border-radius: 20px 20px 0 0;
+        height: 100% !important;
+        max-height: 100vh;
+        border-radius: 0;
         transform: translateY(100%);
         /* Slide up from bottom */
-        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+        box-shadow: none;
     }
 
     .drawer-panel.show {
