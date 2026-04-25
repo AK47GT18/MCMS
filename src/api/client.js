@@ -380,4 +380,6 @@ class APIClient {
 
 // Export singleton instance
 export const client = new APIClient();
+// Force Vite HMR
+console.log('API Client loaded (HMR fix)');
 export default client;

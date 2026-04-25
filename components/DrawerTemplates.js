@@ -109,7 +109,131 @@ export const DrawerTemplates = {
             <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
         </div>
     `,
+    safetyIncident: `
+        <div class="drawer-section" style="padding-top: 12px;">
+            <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
+            <div style="background: var(--red-light); padding: 16px; border-radius: 8px; border: 1px solid var(--red-border); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-helmet-safety" style="color: var(--red); font-size: 20px;"></i>
+                <div style="font-weight: 700; color: var(--red); font-size: 14px;">Report Safety Incident</div>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Incident Type</label>
+                <select class="form-input">
+                    <option>Near Miss</option>
+                    <option>Minor Injury</option>
+                    <option>Major Injury</option>
+                    <option>Equipment Damage</option>
+                    <option>Environmental Incident</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" rows="4" placeholder="Provide details of the incident..."></textarea>
+            </div>
 
+            <div class="form-group" style="margin-bottom: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label class="form-label" style="margin:0;">Incident Evidence</label>
+                    <span id="photo-counter-safetyIncident" style="font-size:11px; color:var(--slate-500);"><span style="font-weight:700;">0</span>/10 photos</span>
+                </div>
+                <label id="photo-add-btn-safetyIncident" onclick="return window.handleCameraClick(event, 'safetyIncident')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
+                    <div style="font-weight: 600; font-size: 11px;">Capture Scene / Injury Evidence</div>
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'safetyIncident')">
+                </label>
+                <div id="photo-preview-safetyIncident" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                    <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px; width:100%;">No evidence attached.</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Safety incident reported. HQ notified.', 'error'); window.drawer.close();">Submit Incident Report</button>
+        </div>
+    `,
+    reportingMenu: `
+        <div class="drawer-section" style="padding-top: 12px;">
+            <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
+            <div style="margin-bottom: 24px; text-align: center;">
+                <div style="width: 48px; height: 48px; background: var(--slate-100); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px;">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">Project Reporting</h3>
+                <p style="font-size: 13px; color: var(--slate-500);">Select a report type to submit</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Daily Log', window.DrawerTemplates.dailyProgressLog())">
+                    <div style="width: 32px; height: 32px; background: rgba(249, 116, 21, 0.1); color: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Daily Progress Log</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Log work done, expenses and photos</div>
+                    </div>
+                </button>
+
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident)">
+                    <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-helmet-safety"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Safety Incident</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Report injuries or near-misses</div>
+                    </div>
+                </button>
+
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint)">
+                    <div style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); color: var(--amber); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Report Issue / Delay</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Log site delays or technical issues</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    `,
+
+    submitComplaint: `
+        <div class="drawer-section">
+            <div style="background: var(--amber-light); padding: 16px; border-radius: 8px; border: 1px solid var(--amber-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-exclamation-triangle" style="color: var(--amber-dark); font-size: 20px;"></i>
+                <div style="font-weight: 700; color: var(--amber-dark); font-size: 14px;">Report Site Issue / Delay</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Issue Category</label>
+                <select class="form-input">
+                    <option>Material Shortage</option>
+                    <option>Weather Delay</option>
+                    <option>Equipment Breakdown</option>
+                    <option>Technical Clarification Needed</option>
+                    <option>Labor Dispute</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Severity</label>
+                <div style="display: flex; gap: 12px;">
+                    <label style="flex: 1; border: 1px solid var(--slate-200); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
+                        <input type="radio" name="severity" value="low"> <div style="font-size: 11px;">Low</div>
+                    </label>
+                    <label style="flex: 1; border: 1px solid var(--amber); background: var(--amber-light); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
+                        <input type="radio" name="severity" value="medium" checked> <div style="font-size: 11px; font-weight: 700;">Medium</div>
+                    </label>
+                    <label style="flex: 1; border: 1px solid var(--red); background: var(--red-light); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
+                        <input type="radio" name="severity" value="high"> <div style="font-size: 11px; font-weight: 700;">High</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Details</label>
+                <textarea class="form-input" rows="5" placeholder="Describe the issue and expected impact on schedule..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Issue reported to PM and Operations.', 'info'); window.drawer.close();">Submit Report</button>
+        </div>
+    `,
 
 
 
@@ -788,7 +912,8 @@ export const DrawerTemplates = {
     `,
 
     dailyProgressLog: (taskId = null) => `
-        <div class="drawer-section">
+        <div class="drawer-section" style="padding-top: 12px;">
+            <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <input type="hidden" id="daily-log-task-id" value="${taskId || ''}" />
             <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
                 <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining

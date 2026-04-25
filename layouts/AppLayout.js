@@ -35,8 +35,21 @@ export class AppLayout {
         const navSections = NAV_ITEMS[roleKey] || NAV_ITEMS[currentUser.role] || [];
         const allItems = navSections.flatMap(s => s.items);
 
+        // Optimize mobile nav: limit to 5 items max for better UX
+        let mobileItems = allItems;
+        if (currentUser.role === ROLES.FIELD_SUPERVISOR && allItems.length > 5) {
+            mobileItems = allItems.slice(0, 4);
+            mobileItems.push({
+                label: 'Reporting',
+                icon: '<i class="fas fa-clipboard-check"></i>',
+                id: 'mobile_reporting',
+                action: 'drawer',
+                drawerId: 'reportingMenu'
+            });
+        }
+
         const sidebarHTML = this.generateSidebar(navSections);
-        const mobileNavHTML = this.generateMobileNav(allItems);
+        const mobileNavHTML = this.generateMobileNav(mobileItems);
         const topBarHTML = this.generateTopBar();
 
         this.appContainer.innerHTML = `

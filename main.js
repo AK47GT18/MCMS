@@ -614,15 +614,52 @@ window.handlePhotoCapture = (input, galleryId) => {
     const gallery = window.photoGalleries[galleryId];
     const files = Array.from(input.files);
     
+    if (files.length === 0) return;
+
     for (const file of files) {
+        // 1. Basic Type Validation
+        if (!file.type.startsWith('image/')) {
+            window.toast.show(`Invalid file type: ${file.name}. Please select an image.`, 'error');
+            continue;
+        }
+
+        // 2. Size Validation (Max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            window.toast.show(`Image too large: ${file.name}. Max size is 10MB.`, 'warning');
+            continue;
+        }
+
         if (gallery.length >= 10) {
-            window.toast.show('Maximum 10 photos allowed!', 'warning');
+            window.toast.show('Maximum 10 photos allowed per log!', 'warning');
             break;
         }
+
         const reader = new FileReader();
+        window.toast.show('Optimizing image...', 'info');
+        
         reader.onload = (e) => {
-            gallery.push({ name: file.name, dataUrl: e.target.result, file: file, timestamp: Date.now() });
-            window.renderPhotoGallery(galleryId);
+            // Verify image integrity by creating an image object
+            const img = new Image();
+            img.onload = () => {
+                gallery.push({ 
+                    name: file.name, 
+                    dataUrl: e.target.result, 
+                    file: file, 
+                    timestamp: Date.now(),
+                    metadata: {
+                        size: file.size,
+                        type: file.type,
+                        width: img.width,
+                        height: img.height
+                    }
+                });
+                window.renderPhotoGallery(galleryId);
+                window.toast.show('Evidence captured and validated.', 'success');
+            };
+            img.onerror = () => {
+                window.toast.show(`Corrupted image detected: ${file.name}`, 'error');
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
@@ -813,7 +850,7 @@ window.submitDailyProgressLog = (btn) => {
     }).finally(() => {
         btn.innerHTML = originalText;
         btn.disabled = false;
-    });
+    }).catch(e => console.warn('Caught rejected promise at top level:', e));
 };
 
 // Start App

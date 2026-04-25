@@ -61,7 +61,7 @@ export class FieldSupervisorDashboard {
             const projectId = this.assignedProject?.id || 1;
             const result = await client.get(`/inventory/project/${projectId}`);
             const items = Array.isArray(result) ? result : (result.data || []);
-            
+
             this.siteInventory = {};
             items.forEach(item => {
                 this.siteInventory[item.materialName] = {
@@ -92,7 +92,7 @@ export class FieldSupervisorDashboard {
 
     async _loadDashboardStats() {
         try {
-            const result = await client.get('/daily-logs', { 
+            const result = await client.get('/daily-logs', {
                 projectId: this.assignedProject?.id,
                 date: new Date().toISOString().split('T')[0]
             });
@@ -119,7 +119,7 @@ export class FieldSupervisorDashboard {
         const container = document.getElementById('fs-content-area');
         if (container) {
             let contentHTML = '';
-            switch(this.currentView) {
+            switch (this.currentView) {
                 case 'dashboard': contentHTML = this.getDashboardView(); break;
                 case 'tasks': contentHTML = this.getTasksView(); break;
                 case 'gantt': contentHTML = this.getGanttView(); break;
@@ -142,8 +142,8 @@ export class FieldSupervisorDashboard {
         }, 0);
 
         let contentHTML = '';
-        
-        switch(this.currentView) {
+
+        switch (this.currentView) {
             case 'dashboard': contentHTML = this.getDashboardView(); break;
             case 'tasks': contentHTML = this.getTasksView(); break;
             case 'gantt': contentHTML = this.getGanttView(); break;
@@ -187,14 +187,24 @@ export class FieldSupervisorDashboard {
                       </span>
                     </div>
                   </div>
-                  <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" onclick="window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS)">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>Request Resource</span>
-                    </button>
-                    <button class="btn btn-action" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                  <div style="display:flex; gap:8px; align-items: center;">
+                    <!-- Primary Mobile Action (Reduced size) -->
+                    <button class="btn btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
                         <i class="fas fa-camera"></i>
-                        <span>Submit Progress</span>
+                        <span>Daily Log</span>
+                    </button>
+                    
+                    <!-- Desktop-only Actions in Header -->
+                    <div class="hidden-mobile" style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary" onclick="window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS)">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Request Resource</span>
+                        </button>
+                    </div>
+
+                    <!-- Reporting Menu Trigger for Mobile -->
+                    <button class="btn btn-secondary hidden-desktop" style="padding: 6px 10px;" onclick="window.drawer.open('Reporting', window.DrawerTemplates.reportingMenu)">
+                        <i class="fas fa-ellipsis-v"></i>
                     </button>
                   </div>
                 </div>
@@ -231,7 +241,26 @@ export class FieldSupervisorDashboard {
                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px;">
+            <div class="stats-grid action-tiles" style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                    <div style="color: var(--orange); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-camera"></i></div>
+                    <div style="font-weight: 800; font-size: 13px;">Daily Log</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS)">
+                    <div style="color: var(--blue); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-plus-circle"></i></div>
+                    <div style="font-weight: 800; font-size: 13px;">Request</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident)">
+                    <div style="color: var(--red); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-helmet-safety"></i></div>
+                    <div style="font-weight: 800; font-size: 13px;">Incident</div>
+                </div>
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint)">
+                    <div style="color: var(--amber); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div style="font-weight: 800; font-size: 13px;">Issue</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px;">
                 <div class="data-card">
                     <div class="data-card-header"><div class="card-title">Live Site Activity</div></div>
                     <div style="padding: 24px;">
@@ -280,8 +309,8 @@ export class FieldSupervisorDashboard {
                     <button class="btn btn-secondary" onclick="window.app.fsModule._loadSiteInventory()"><i class="fas fa-sync"></i> Refresh</button>
                 </div>
                 ${entries.length === 0
-                    ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading site inventory from server…</div></div>'
-                    : `<table>
+                ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading site inventory from server…</div></div>'
+                : `<table>
                         <thead>
                             <tr><th>Material</th><th>On-Site Stock</th><th>Sector</th><th style="text-align: right;">Action</th></tr>
                         </thead>
@@ -292,13 +321,13 @@ export class FieldSupervisorDashboard {
                                     <td style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 15px; color: ${data.qty === 0 ? 'var(--red)' : 'var(--slate-900)'};">${data.qty} ${data.unit}</td>
                                     <td style="font-size: 12px; color: var(--slate-500);">${data.sectorName || '--'}</td>
                                     <td style="text-align: right;">
-                                        <button class="btn btn-secondary" onclick="window.drawer.open('Log Burn', window.DrawerTemplates.logMaterialBurn(${JSON.stringify({name, ...data}).replace(/"/g, '&quot;')}))" ${data.qty === 0 ? 'disabled' : ''}>Log Consumption</button>
+                                        <button class="btn btn-secondary" onclick="window.drawer.open('Log Burn', window.DrawerTemplates.logMaterialBurn(${JSON.stringify({ name, ...data }).replace(/"/g, '&quot;')}))" ${data.qty === 0 ? 'disabled' : ''}>Log Consumption</button>
                                     </td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>`
-                }
+            }
             </div>
 
             <div class="data-card">
@@ -306,8 +335,8 @@ export class FieldSupervisorDashboard {
                     <div class="card-title" style="color: var(--blue);">Site Equipment</div>
                 </div>
                 ${this.siteAssets.length === 0
-                    ? '<div style="padding: 24px; text-align: center; color: var(--slate-400);">No equipment currently assigned to site.</div>'
-                    : `<table>
+                ? '<div style="padding: 24px; text-align: center; color: var(--slate-400);">No equipment currently assigned to site.</div>'
+                : `<table>
                         <thead><tr><th>Asset</th><th>Code</th><th>Status</th><th style="text-align: right;">Action</th></tr></thead>
                         <tbody>
                             ${this.siteAssets.map(asset => `
@@ -318,17 +347,17 @@ export class FieldSupervisorDashboard {
                                         <span class="status ${asset.status === 'maintenance' ? 'locked' : (asset.status === 'checked_out' ? 'active' : 'pending')}" style="${asset.status === 'maintenance' ? 'background: var(--red-light); color: var(--red);' : ''}">${(asset.status || '').replace(/_/g, ' ')}</span>
                                     </td>
                                     <td style="text-align: right;">
-                                        ${asset.status !== 'maintenance' ? 
-                                          `<button class="btn btn-secondary" onclick="window.app.fsModule.handleReportBreakdown('${asset.id}', '${asset.name}')" style="color: var(--red); border-color: var(--red-light);">
+                                        ${asset.status !== 'maintenance' ?
+                        `<button class="btn btn-secondary" onclick="window.app.fsModule.handleReportBreakdown('${asset.id}', '${asset.name}')" style="color: var(--red); border-color: var(--red-light);">
                                              <i class="fas fa-triangle-exclamation"></i> Report Breakdown
                                            </button>` : `<span style="font-size: 12px; color: var(--slate-400);">In Maintenance</span>`
-                                        }
+                    }
                                     </td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>`
-                }
+            }
             </div>
         `;
     }
@@ -527,7 +556,7 @@ export class FieldSupervisorDashboard {
         setTimeout(() => this.renderGanttChart(), 100);
 
         const viewModes = ['Day', 'Week', 'Month', 'Year'];
-        const viewModeOptions = viewModes.map(m => 
+        const viewModeOptions = viewModes.map(m =>
             `<option value="${m}" ${this.currentGanttViewMode === m ? 'selected' : ''}>${m}</option>`
         ).join('');
 
@@ -620,7 +649,7 @@ export class FieldSupervisorDashboard {
 
     getEquipmentView() {
         setTimeout(() => this._loadSiteAssets(), 0);
-        
+
         return `
             <div class="data-card">
               <div class="data-card-header">
@@ -643,7 +672,7 @@ export class FieldSupervisorDashboard {
                         `).join('')}
                     </tbody>
                 </table>`
-              }
+            }
             </div>
         `;
     }
@@ -665,9 +694,9 @@ export class FieldSupervisorDashboard {
                 try {
                     window.toast.show('Verifying site coordinates...', 'info');
                     const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                            enableHighAccuracy: true, 
-                            timeout: 10000 
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000
                         });
                     });
                     lat = pos.coords.latitude;
@@ -684,7 +713,7 @@ export class FieldSupervisorDashboard {
             }
 
             window.toast.show('Uploading site log...', 'info');
-            
+
             // Build payload
             const payload = {
                 projectId: this.assignedProject?.id || 1, // Fallback for testing
@@ -694,7 +723,7 @@ export class FieldSupervisorDashboard {
                 submissionLat: lat,
                 submissionLng: lng
             };
-            
+
             // Add extra fields if payload override provided
             if (payloadOverride) {
                 if (payloadOverride.taskId) payload.taskId = parseInt(payloadOverride.taskId);
