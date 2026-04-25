@@ -355,11 +355,11 @@ model SafetyIncident {
   id              Int       @id @default(autoincrement())
   projectId       Int?      @map("project_id")
   reportedBy      Int?      @map("reported_by")
-  incidentType    String?   @map("incident_type") @db.VarChar(50)
-  siteArea        String?   @map("site_area") @db.VarChar(100)
-  personsInvolved String?   @map("persons_involved")
+  type            String?   @db.VarChar(50)
+  severity        String?   @default("medium") @db.VarChar(20)
+  location        String?   @db.VarChar(100)
   description     String?
-  photoUrl        String?   @map("photo_url")
+  photos          Json?
   status          String    @default("open") @db.VarChar(20)
   resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz(6)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
