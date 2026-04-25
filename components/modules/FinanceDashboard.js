@@ -671,6 +671,9 @@ export class FinanceDashboard {
     }
 
     renderContractsTable(contracts) {
+        // Store contracts for later lookup
+        this._contractsMap = contracts;
+
         const formatValue = (v) => v ? (Number(v) / 1000000).toFixed(1) + 'M' : '-';
         const rows = contracts.map(c => `
             <tr>
@@ -679,11 +682,20 @@ export class FinanceDashboard {
                 <td>${c.vendorName || '-'}</td>
                 <td style="font-family:'JetBrains Mono';">${formatValue(c.value)}</td>
                 <td><span class="status active">${c.status || 'Active'}</span></td>
-                <td><button class="btn btn-secondary" style="padding:4px 8px;">View</button></td>
+                <td><button class="btn btn-secondary" style="padding:4px 8px;" onclick="window.app.fmModule?.viewContract(${c.id})">View</button></td>
             </tr>
         `).join('');
 
         return `<table><thead><tr><th>Ref</th><th>Title</th><th>Vendor</th><th>Value</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    viewContract(id) {
+        const contract = this._contractsMap?.find(c => c.id === id);
+        if (contract) {
+            window.drawer.open('Contract Details', window.DrawerTemplates.contractView(contract));
+        } else {
+            window.toast.show('Contract data not found locally.', 'error');
+        }
     }
 
     async loadContractProjects() {

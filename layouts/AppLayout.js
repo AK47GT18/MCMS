@@ -295,23 +295,12 @@ export class AppLayout {
     generateTopBar() {
         const currentUser = getCurrentUser();
 
-        // Alerts strip (role-specific, can be API-driven later)
-        let alertHTML = '';
-        if (currentUser.role === 'Finance Director') {
-             alertHTML = `
-                <div style="background: #FEF2F2; color: var(--red); padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #FECACA;">
-                    <i class="fas fa-triangle-exclamation"></i> 1 Active Fraud Alert
-                </div>
-             `;
-        }
-
         return `
             <header class="top-bar hidden-mobile">
                 <div class="breadcrumb">
                     <span>Workspace</span>
                  </div>
                 <div style="margin-left: auto; display: flex; gap: 16px; align-items: center;">
-                    ${alertHTML}
                     
                     ${currentUser.role !== 'Project_Manager' && currentUser.role !== 'Project Manager' ? `
                     <button class="btn btn-secondary btn-sm" style="margin-right: 12px; font-size: 11px; padding: 6px 10px; background: white; border-color: var(--slate-200); color: var(--orange-600); font-weight: 700;" onclick="window.app.layout.openTimelineExtensionDrawer()">

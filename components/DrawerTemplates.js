@@ -381,6 +381,70 @@ export const DrawerTemplates = {
          </div>
     `,
 
+    contractView: (contract) => `
+        <div style="padding: 0;">
+            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: linear-gradient(to right, var(--slate-50), #fff);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${contract.refCode || 'CTR-' + contract.id}</div>
+                        <div style="color: var(--slate-500); font-size: 13px; font-weight: 500;">${contract.title}</div>
+                    </div>
+                    <span class="status active" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em;">${contract.status || 'ACTIVE'}</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor / Party</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.vendorName || '-'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Contract Value</div>
+                        <div style="font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono'; font-size: 15px;">MWK ${(Number(contract.value || 0)).toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Start Date</div>
+                        <div style="font-weight: 600; color: var(--slate-700);">${contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Expiry Date</div>
+                        <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 24px;">
+                <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Contract Documents</h4>
+                
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                    <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; border: 1px solid var(--slate-200);">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">Signed_Contract_Final.pdf</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">2.4 MB • Uploaded on ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : '---'}</div>
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.toast.show('Opening document preview...', 'info')">
+                        <i class="fas fa-external-link-alt"></i>
+                    </button>
+                </div>
+
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start;">
+                    <i class="fas fa-shield-check" style="color: #16a34a; font-size: 18px; margin-top: 2px;"></i>
+                    <div style="font-size: 13px; color: #15803d; line-height: 1.5;">
+                        <strong>Compliance Status:</strong> This contract is active and all associated insurance policies are valid. No payment blocks detected.
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--slate-900);" onclick="window.toast.show('Downloading contract bundle...', 'info')">
+                        <i class="fas fa-download" style="margin-right: 8px;"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    `,
+
     requestFunds: `
         <div class="drawer-section">
             <div style="margin-bottom: 24px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover); display: flex; gap: 12px; align-items: center;">
