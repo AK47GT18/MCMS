@@ -609,36 +609,44 @@ window.initPhotoGallery = (galleryId) => {
     }
 };
 
-window.handlePhotoCapture = (input, galleryId) => {
+window.handlePhotoCapture = async (input, galleryId) => {
     window.initPhotoGallery(galleryId);
     const gallery = window.photoGalleries[galleryId];
     const files = Array.from(input.files);
     
     if (files.length === 0) return;
 
-    for (const file of files) {
-        // 1. Basic Type Validation
-        if (!file.type.startsWith('image/')) {
-            window.toast.show(`Invalid file type: ${file.name}. Please select an image.`, 'error');
-            continue;
+    // Request GPS once for this batch
+    let geo = null;
+    try {
+        if (navigator.geolocation) {
+            const pos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { 
+                    enableHighAccuracy: true, 
+                    timeout: 5000 
+                });
+            });
+            geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         }
+    } catch (e) {
+        console.warn('GPS tagging failed for photo:', e);
+    }
 
-        // 2. Size Validation (Max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            window.toast.show(`Image too large: ${file.name}. Max size is 10MB.`, 'warning');
+    for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+            window.toast.show(`Invalid file type: ${file.name}`, 'error');
             continue;
         }
 
         if (gallery.length >= 10) {
-            window.toast.show('Maximum 10 photos allowed per log!', 'warning');
+            window.toast.show('Maximum 10 photos allowed!', 'warning');
             break;
         }
 
         const reader = new FileReader();
-        window.toast.show('Optimizing image...', 'info');
+        window.toast.show('Processing & Tagging...', 'info');
         
         reader.onload = (e) => {
-            // Verify image integrity by creating an image object
             const img = new Image();
             img.onload = () => {
                 gallery.push({ 
@@ -646,6 +654,7 @@ window.handlePhotoCapture = (input, galleryId) => {
                     dataUrl: e.target.result, 
                     file: file, 
                     timestamp: Date.now(),
+                    location: geo, // Attached GPS tag
                     metadata: {
                         size: file.size,
                         type: file.type,
@@ -654,16 +663,13 @@ window.handlePhotoCapture = (input, galleryId) => {
                     }
                 });
                 window.renderPhotoGallery(galleryId);
-                window.toast.show('Evidence captured and validated.', 'success');
-            };
-            img.onerror = () => {
-                window.toast.show(`Corrupted image detected: ${file.name}`, 'error');
+                const geoTagText = geo ? `[Tagged at ${geo.lat.toFixed(4)}, ${geo.lng.toFixed(4)}]` : '[GPS Missing]';
+                window.toast.show(`Evidence captured ${geoTagText}`, 'success');
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
-    // Reset input so same file can be re-selected
     input.value = '';
 };
 
@@ -707,7 +713,7 @@ window.closeWebcamModal = () => {
     window.activeGalleryId = null;
 };
 
-window.captureFromWebcam = () => {
+window.captureFromWebcam = async () => {
     const video = document.getElementById('webrtc-video');
     const canvas = document.getElementById('webrtc-canvas');
     if (!video || !canvas || !window.activeGalleryId) return;
@@ -720,6 +726,17 @@ window.captureFromWebcam = () => {
         return;
     }
 
+    // Capture GPS
+    let geo = null;
+    try {
+        if (navigator.geolocation) {
+            const pos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+            });
+            geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        }
+    } catch(e) { console.warn('GPS failed for webcam capture'); }
+
     // Draw video frame to canvas
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -731,12 +748,13 @@ window.captureFromWebcam = () => {
     gallery.push({
         name: `webcam-${Date.now()}.jpg`,
         dataUrl: dataUrl,
-        file: null, // No native file object, we will rely on base64 for submission if needed
-        timestamp: Date.now()
+        file: null, 
+        timestamp: Date.now(),
+        location: geo // GPS Tagging
     });
 
     window.renderPhotoGallery(window.activeGalleryId);
-    window.toast.show('Photo snapped!', 'success');
+    window.toast.show(geo ? `Photo snapped with GPS tag!` : 'Photo snapped (GPS missing)', 'success');
 };
 // ---------------------------------
 

@@ -716,7 +716,6 @@ export class EquipmentCoordinatorDashboard {
         const project = document.getElementById('assign_project')?.value;
         const phase = document.getElementById('assign_phase')?.value;
         const supervisor = document.getElementById('assign_fs')?.value;
-        const section = document.getElementById('assign_section')?.value;
         const isMachinery = document.getElementById('btn_machinery')?.classList.contains('active');
 
         window.toast.show('Executing logistics dispatch…', 'info');
@@ -734,7 +733,7 @@ export class EquipmentCoordinatorDashboard {
                             category: 'Construction',
                             unit: mat.unit,
                             quantity: qty,
-                            reference: section,
+                            reference: 'Site Dispatch',
                             notes: `Dispatched to ${supervisor} at ${project}`
                         });
                     } catch (err) {
@@ -747,8 +746,7 @@ export class EquipmentCoordinatorDashboard {
         await notificationService.sendEmail({
             to: supervisor,
             subject: `Dispatch Notification: ${isMachinery ? 'Machinery' : 'Materials'} En-Route`,
-            body: `Greetings. A dispatch of ${isMachinery ? 'Assets' : 'Construction Materials'} has been authorized for Site ${project}.`,
-            description: `Stationing Destination: ${section}`
+            body: `Greetings. A dispatch of ${isMachinery ? 'Assets' : 'Construction Materials'} has been authorized for Site ${project}.`
         });
 
         setTimeout(() => {

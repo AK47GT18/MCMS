@@ -3395,12 +3395,6 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <!-- Stationing Mapping -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Working Section / Station (CH) *</label>
-                <input type="text" id="assign_section" class="form-input" style="width: 100%; font-family: 'JetBrains Mono';" placeholder="e.g. KM 12+500">
-                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Precise location for resource mapping</div>
-            </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
                 onclick="window.app.ecModule?.handleExecuteDispatch()">
@@ -3538,10 +3532,6 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Target Stationing (KM) *</label>
-                <input type="text" id="fs_req_section" class="form-input" style="width: 100%; font-family: 'JetBrains Mono';" placeholder="e.g. KM 12+500">
-            </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Priority</label>
@@ -3573,10 +3563,6 @@ Contract Admin</textarea>
                 <input type="number" id="burn_qty" class="form-input" style="width: 100%; border-color: var(--blue);" value="10">
             </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Stationing / Section (CH) *</label>
-                <input type="text" id="burn_section" class="form-input" style="width: 100%; font-family: 'JetBrains Mono';" placeholder="e.g. KM 12+500">
-            </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
                 onclick="window.app.fsModule?.handleExecuteBurn('${item.name}')">

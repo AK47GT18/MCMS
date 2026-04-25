@@ -407,14 +407,6 @@ export class FieldSupervisorDashboard {
         const isMachinery = document.getElementById('fs_btn_machinery')?.classList.contains('active');
         const item = isMachinery ? document.getElementById('fs_req_asset')?.value : document.getElementById('fs_req_material')?.value;
         const qty = isMachinery ? 1 : document.getElementById('fs_req_qty')?.value;
-        const section = document.getElementById('fs_req_section')?.value;
-        const urgency = document.getElementById('fs_req_urgency')?.value;
-
-        if (!section) {
-            window.toast.show('Please specify the workstation (KM section).', 'warning');
-            return;
-        }
-
         window.toast.show('Transmitting request to Equipment Coordinator…', 'info');
 
         try {
@@ -463,10 +455,8 @@ export class FieldSupervisorDashboard {
 
     async handleExecuteBurn(name) {
         const qty = Number(document.getElementById('burn_qty')?.value);
-        const section = document.getElementById('burn_section')?.value;
-
-        if (!qty || !section) {
-            window.toast.show('Please specify quantity and stationing.', 'warning');
+        if (!qty) {
+            window.toast.show('Please specify quantity.', 'warning');
             return;
         }
 
