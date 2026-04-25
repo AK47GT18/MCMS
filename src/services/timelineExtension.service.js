@@ -237,12 +237,12 @@ async function approve(id, pmUser, pmComment) {
     message: `Your extension request for ${req.project.code} has been approved by ${pmUser.name}. New end date: ${formatDate(req.requestedEndDate)}.`,
   });
 
-  // Email to requester
+  // Email to all users except PM
   const extensionDays = daysDiff(req.currentEndDate, req.requestedEndDate);
   const html = emailWrapper(`
     <h2 style="color:#0f1729;margin-top:0;font-size:20px;">✅ Timeline Extension Approved</h2>
-    <p>Hello <strong>${req.requestedBy.name}</strong>,</p>
-    <p>Great news! Your timeline extension request for project <strong style="color:#f97415;">${req.project.name}</strong> (${req.project.code}) has been <strong style="color:#16a34a;">approved</strong> by Project Manager <strong>${pmUser.name}</strong>.</p>
+    <p>Hello,</p>
+    <p>A timeline extension request for project <strong style="color:#f97415;">${req.project.name}</strong> (${req.project.code}) has been <strong style="color:#16a34a;">approved</strong> by Project Manager <strong>${pmUser.name}</strong>.</p>
 
     <div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:20px 24px;border-radius:0 8px 8px 0;margin:24px 0;">
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
@@ -252,31 +252,38 @@ async function approve(id, pmUser, pmComment) {
       </table>
     </div>
 
-    ${pmComment ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin:16px 0;"><p style="margin:0;color:#475569;font-style:italic;"><strong>PM Note:</strong> "${pmComment}"</p></div>` : ''}
+    <div style="background:#fffbf5;border:1px solid #fed7aa;border-radius:8px;padding:20px 24px;margin:24px 0;">
+      <h3 style="margin:0 0 10px;font-size:14px;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;">Requested Justification</h3>
+      <p style="margin:0;color:#475569;font-style:italic;">"${req.justification}"</p>
+    </div>
+
+    ${pmComment ? `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px 24px;margin:16px 0;">
+      <h3 style="margin:0 0 10px;font-size:14px;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">PM Approval Reason</h3>
+      <p style="margin:0;color:#475569;font-style:italic;">"${pmComment}"</p>
+    </div>
+    ` : ''}
 
     <p>The Gantt chart schedule has been automatically updated. All downstream tasks have been cascaded accordingly.</p>
   `);
 
-  emailService.send({
-    to: req.requestedBy.email,
-    subject: `✅ Timeline Extension Approved: ${req.project.code}`,
-    html,
-  }).catch(e => logger.error('Approval email failed', { error: e.message }));
-
-  // Also email PM's own record (CC)
-  if (req.project.fieldSupervisor?.email) {
-    const fsHtml = emailWrapper(`
-      <h2 style="color:#0f1729;margin-top:0;font-size:20px;">Project Timeline Extended</h2>
-      <p>Hello <strong>${req.project.fieldSupervisor.name}</strong>,</p>
-      <p>The timeline for project <strong style="color:#f97415;">${req.project.name}</strong> (${req.project.code}) has been extended by +${extensionDays} days.</p>
-      <p><strong>New completion date: ${formatDate(req.requestedEndDate)}</strong></p>
-      <p>The Gantt chart and task schedule have been updated. Please ensure your site programme is adjusted accordingly.</p>
-    `);
-    emailService.send({
-      to: req.project.fieldSupervisor.email,
-      subject: `Timeline Updated: ${req.project.code} — New End Date ${formatDate(req.requestedEndDate)}`,
-      html: fsHtml,
-    }).catch(e => logger.error('FS extension email failed', { error: e.message }));
+  try {
+    const usersToNotify = await prisma.user.findMany({
+      where: { isActive: true, deletedAt: null, id: { not: pmUser.id } },
+      select: { email: true }
+    });
+    
+    usersToNotify.forEach(u => {
+      if (u.email) {
+        emailService.send({
+          to: u.email,
+          subject: `✅ Timeline Extension Approved: ${req.project.code}`,
+          html,
+        }).catch(e => logger.error('Approval broadcast email failed', { error: e.message, email: u.email }));
+      }
+    });
+  } catch (e) {
+    logger.error('Failed to fetch users for broadcast', { error: e.message });
   }
 
   await prisma.auditLog.create({

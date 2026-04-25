@@ -127,7 +127,7 @@ async function create(data, userId) {
         html: `
           <h2 style="color:#111827;">New Issue Reported</h2>
           <p>Hello <strong>${pmName}</strong>,</p>
-          <p>A new issue has been reported on project <strong>${projectName}</strong>:</p>
+          <p>A new issue has been reported on project <strong>${projectName}</strong> by <strong>${reporterName}</strong>.</p>
           
           <div style="background:#f8fafc; border-left:4px solid #f97316; padding:16px; margin:16px 0; border-radius:4px;">
             <p><strong>Issue Code:</strong> ${issue.issueCode}</p>
