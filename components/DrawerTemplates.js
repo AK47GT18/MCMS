@@ -3363,7 +3363,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    assignResource: `
+    assignResource: (projects = []) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Logistics Dispatch (Assets & Materials)</h3>
             
@@ -3381,8 +3381,10 @@ Contract Admin</textarea>
                 <div class="form-group">
                     <label class="form-label">Project *</label>
                     <select id="assign_project" class="form-input" style="width: 100%;">
-                        <option value="CEN-01">CEN-01 Unilia</option>
-                        <option value="MZ-05">MZ-05 Mzimba</option>
+                        ${projects.length === 0 
+                            ? '<option value="1">CEN-01 Unilia</option><option value="2">MZ-05 Mzimba</option>'
+                            : projects.map(p => `<option value="${p.id}">${p.code} ${p.name}</option>`).join('')
+                        }
                     </select>
                 </div>
                 <div class="form-group">
@@ -3703,7 +3705,7 @@ Contract Admin</textarea>
     // ============================================================
     // REQUEST TIMELINE EXTENSION  (any role submits to PM)
     // ============================================================
-    requestTimelineExtension: `
+    requestTimelineExtension: (projects = []) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-bottom: 4px solid var(--orange);">
                 <div style="display: flex; align-items: center; gap: 14px;">
@@ -3718,7 +3720,13 @@ Contract Admin</textarea>
             </div>
 
             <div style="padding: 24px;">
-                <input type="hidden" id="ext-req-project-id">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Select Project <span style="color: var(--red);">*</span></label>
+                    <select id="ext-req-project-id" class="form-input" style="width: 100%;" onchange="window.app.layout?.handleTimelineProjectChange(this.value, ${JSON.stringify(projects).replace(/"/g, '&quot;')})">
+                        <option value="">Select a project...</option>
+                        ${projects.map(p => `<option value="${p.id}">${p.code} ${p.name}</option>`).join('')}
+                    </select>
+                </div>
 
                 <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Current Project End Date</div>
@@ -3727,7 +3735,7 @@ Contract Admin</textarea>
 
                 <div class="form-group" style="margin-bottom: 18px;">
                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Requested New End Date <span style="color: var(--red);">*</span></label>
-                    <input type="date" id="ext-req-new-date" class="form-input" style="width: 100%; font-weight: 700; font-size: 15px; font-family: 'JetBrains Mono';">
+                    <input type="date" id="ext-req-new-date" class="form-input" style="width: 100%; font-weight: 700; font-size: 15px; font-family: 'JetBrains Mono';" onchange="window.app.layout?.updateExtensionBadge()">
                     <div id="ext-req-days-badge" style="margin-top: 6px; font-size: 12px; color: var(--orange); font-weight: 700; display: none;">
                         <i class="fas fa-clock"></i> <span id="ext-req-days-text"></span>
                     </div>
@@ -3735,14 +3743,19 @@ Contract Admin</textarea>
 
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Justification <span style="color: var(--red);">*</span></label>
-                    <textarea id="ext-req-justification" class="form-input" rows="5" style="width: 100%; resize: vertical; line-height: 1.6;" placeholder="Minimum 20 characters. Explain the reason for the extension clearly — e.g. weather delays, scope changes, design revisions..."></textarea>
+                    <textarea id="ext-req-justification" class="form-input" rows="5" style="width: 100%; resize: vertical; line-height: 1.6;" placeholder="Minimum 20 characters. Explain the reason for the extension clearly — e.g. weather delays, scope changes, design revisions..." oninput="window.app.layout?.updateCharCount(this.value)"></textarea>
                     <div id="ext-req-char-count" style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">0 / 20 min</div>
                 </div>
 
                 <div id="ext-req-warning" style="display: none; background: var(--red-light); border: 1px solid var(--red); color: var(--red-dark); padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px;"></div>
 
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 12px; color: #0369a1;">
+                    <div style="font-weight: 700; margin-bottom: 4px;"><i class="fas fa-info-circle"></i> Submission Impact:</div>
+                    <div style="line-height: 1.5;">This will create a formal request for the Project Manager. If approved, all downstream milestones and vendor contracts will be adjusted accordingly.</div>
+                </div>
+
                 <button id="ext-req-submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);"
-                    onclick="(window.app.pmModule || window.app.fsModule || window.app.ecModule || window.app.fmModule || window.app.caModule || window.app.omModule).handleSubmitExtensionRequest()">
+                    onclick="window.app.layout?.handleSubmitExtensionRequest()">
                     <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Extension Request
                 </button>
             </div>

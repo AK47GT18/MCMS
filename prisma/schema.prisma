@@ -75,6 +75,7 @@ model Project {
   radius               Int?                   @default(500)
   suspensionReason     String?                @map("suspension_reason")
   status               String                 @default("planning") @db.VarChar(20)
+  currentPhase         Int                    @default(1) @map("current_phase")
   assetLogs            AssetLog[]
   assets               Asset[]
   budgetChangeRequests BudgetChangeRequest[]
@@ -131,15 +132,49 @@ model Contract {
   documentUrl   String?            @map("document_url")
   createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vendorId      Int?               @map("vendor_id")
   vendorName    String?            @map("vendor_name") @db.VarChar(255)
   contractType  String?            @map("contract_type") @db.VarChar(50)
   materialsList String?            @map("materials_list")
   versions      ContractVersion[]
   project       Project?           @relation(fields: [projectId], references: [id])
+  vendor        Vendor?            @relation(fields: [vendorId], references: [id])
+  items         ContractItem[]
   milestones    Milestone[]
 
   @@index([projectId])
+  @@index([vendorId])
   @@map("contracts")
+}
+
+model Vendor {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(255)
+  category  String?    @db.VarChar(100)
+  riskLevel String     @default("low") @map("risk_level") @db.VarChar(20)
+  rating    Decimal?   @db.Decimal(3, 2)
+  isActive  Boolean    @default(true) @map("is_active")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contracts Contract[]
+
+  @@map("vendors")
+}
+
+model ContractItem {
+  id           Int      @id @default(autoincrement())
+  contractId   Int      @map("contract_id")
+  materialName String   @map("material_name") @db.VarChar(255)
+  quantity     Decimal  @db.Decimal(18, 3)
+  unit         String   @db.VarChar(20)
+  unitPrice    Decimal  @map("unit_price") @db.Decimal(18, 2)
+  totalCost    Decimal  @map("total_cost") @db.Decimal(18, 2)
+  receivedQty  Decimal  @default(0) @map("received_qty") @db.Decimal(18, 3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  contract     Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@map("contract_items")
 }
 
 model Milestone {

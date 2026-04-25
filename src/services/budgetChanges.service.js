@@ -27,7 +27,6 @@ async function getAll(options = {}) {
     where,
     include: {
       requester: { select: { id: true, name: true, email: true } },
-      approver: { select: { id: true, name: true, email: true } },
       project: { select: { id: true, name: true, budgetTotal: true } },
     },
     orderBy: { createdAt: 'desc' },

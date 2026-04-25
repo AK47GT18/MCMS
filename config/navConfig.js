@@ -25,7 +25,8 @@ export const NAV_ITEMS = {
         { 
             section: 'Strategic', 
             items: [
-                { label: 'Budget Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true }
+                { label: 'Budget Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
+                { label: 'Procurement', icon: ICONS.check, id: 'procurement' }
             ]
         },
         { 

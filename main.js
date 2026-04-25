@@ -63,8 +63,21 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 window.triggerPwaInstall = async () => {
     if (!deferredPrompt) {
-        console.warn('[PWA] deferredPrompt is null. Possible reasons: Not served over HTTPS, Manifest issues, or App already installed.');
-        window.toast?.show('Install prompt not ready. Ensure you are on HTTPS and wait a moment.', 'warning');
+        // Show manual install instructions since beforeinstallprompt
+        // won't fire on self-signed certs
+        const isAndroid = /android/i.test(navigator.userAgent);
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        
+        let msg = '';
+        if (isAndroid) {
+            msg = '📲 To install: Tap the ⋮ menu (top right) → "Add to Home screen" or "Install app"';
+        } else if (isIOS) {
+            msg = '📲 To install: Tap the Share button (bottom) → "Add to Home Screen"';
+        } else {
+            msg = '📲 To install: Use your browser menu → "Install" or "Add to Home screen"';
+        }
+        
+        alert(msg);
         return;
     }
     try {
@@ -77,7 +90,7 @@ window.triggerPwaInstall = async () => {
         deferredPrompt = null;
     } catch (err) {
         console.error('[PWA] Install failed:', err);
-        window.toast?.show('Installation failed. Try again from the browser menu.', 'error');
+        alert('📲 To install: Use your browser menu (⋮) → "Add to Home screen"');
     }
 };
 
@@ -220,7 +233,7 @@ class App {
         const ROUTE_PERMISSIONS = {
             'dashboard': [], // All authenticated users
             'users': ['System_Technician', 'System Technician', 'Project_Manager', 'Project Manager'],
-            'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director', 'Project_Manager', 'Project Manager'],
+            'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director', 'Project_Manager', 'Project Manager', 'Finance_Director', 'Finance Director'],
             'config': ['System_Technician', 'System Technician'],
             'finance': ['Finance_Director', 'Managing_Director', 'Finance Director', 'Managing Director'],
             'accounting': ['Finance_Director', 'Finance Director'],

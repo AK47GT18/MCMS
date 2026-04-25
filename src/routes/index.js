@@ -27,6 +27,7 @@ const budgetChangesController = require('../controllers/budgetChanges.controller
 const timelineExtensionController = require('../controllers/timelineExtension.controller');
 const { documentRoutes } = require('../api/documents.api');
 const reportsController = require('../controllers/reports.controller');
+const assetSchedulerController = require('../controllers/assetScheduler.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
@@ -258,6 +259,19 @@ async function router(req, res) {
   }
   
   // ============================================
+  // ASSET SCHEDULER ROUTES
+  // ============================================
+  if (resource === 'assets-scheduler') {
+    if (id === 'conflicts' && method === 'GET') {
+      return assetSchedulerController.getConflicts(req, res);
+    }
+    if (id === 'recommendations' && action && method === 'GET') {
+      return assetSchedulerController.getRecommendations(req, res, action);
+    }
+    return methodNotAllowed(res, ['GET']);
+  }
+
+  // ============================================
   // REQUISITIONS ROUTES
   // ============================================
   if (resource === 'requisitions') {
@@ -336,6 +350,9 @@ async function router(req, res) {
       if (method === 'POST') return procurementController.create(req, res);
       return methodNotAllowed(res, ['GET', 'POST']);
     }
+    if (id === 'project-status' && action && method === 'GET') {
+      return procurementController.getProjectStatus(req, res, action);
+    }
     if (action === 'pm-approve' && method === 'POST') {
       return procurementController.pmApprove(req, res, id);
     }
@@ -396,6 +413,12 @@ async function router(req, res) {
     }
     if (id === 'consume' && method === 'POST') {
       return inventoryController.consume(req, res);
+    }
+    if (id === 'incoming-shipments' && method === 'GET') {
+      return inventoryController.getIncomingShipments(req, res);
+    }
+    if (id === 'receive-shipment' && method === 'POST') {
+      return inventoryController.receiveShipment(req, res);
     }
     if (id === 'sector' && action && method === 'GET') {
       // url pattern: /inventory/sector/:sectorId => resource='inventory', id='sector', action=':sectorId'

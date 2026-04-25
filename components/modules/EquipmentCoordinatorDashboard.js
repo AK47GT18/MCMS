@@ -5,6 +5,7 @@ import inventoryApi from '../../src/api/inventory.api.js';
 import assets from '../../src/api/assets.api.js';
 import requisitions from '../../src/api/requisitions.api.js';
 import procurement from '../../src/api/procurement.api.js';
+import schedulerApi from '../../src/api/scheduler.api.js';
 
 export class EquipmentCoordinatorDashboard {
     constructor() {
@@ -17,6 +18,7 @@ export class EquipmentCoordinatorDashboard {
         this.pendingReceipts = [];
         this.requisitionQueue = [];
         this.assetRegistry = [];
+        this.conflicts = [];
         this.isLoading = false;
 
         // Phase material mapping (static reference data)
@@ -42,6 +44,7 @@ export class EquipmentCoordinatorDashboard {
             this._loadProcurementReceipts();
             this._loadAssets();
             this._loadRequisitions();
+            this._loadConflicts();
         }, 100);
     }
 
@@ -130,7 +133,7 @@ export class EquipmentCoordinatorDashboard {
                     </div>
                   </div>
                   <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" onclick="window.drawer.open('Logistics Dispatch', window.DrawerTemplates.assignResource)">
+                    <button class="btn btn-secondary" onclick="window.app.ecModule?.openDispatchDrawer()">
                         <i class="fas fa-paper-plane"></i>
                         <span>Immediate Dispatch</span>
                     </button>
@@ -198,21 +201,215 @@ export class EquipmentCoordinatorDashboard {
         if (this.isLoadingProc) return;
         this.isLoadingProc = true;
         try {
-            const result = await procurement.getAll({ status: 'purchased' });
-            const data = result.data || result;
-            const items = Array.isArray(data) ? data : (data.items || data.procurements || []);
+            const result = await inventoryApi.getIncomingShipments();
+            const items = Array.isArray(result) ? result : (result.data || []);
             this.pendingReceipts = items.map(p => ({
-                id: p.reqCode || `PROC-${p.id}`,
-                name: p.vehicleName || p.itemName || 'Unknown',
-                qty: p.quantity || 1,
-                unit: p.unit || 'Units',
-                vendor: p.vendorName || p.supplier || 'Supplier'
+                id: p.id, // ContractItem ID
+                contractRef: p.contractRef,
+                name: p.materialName,
+                qty: p.pendingQty,
+                totalQty: p.totalQty,
+                unit: p.unit,
+                vendor: p.vendorName,
+                projectName: p.projectName
             }));
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load procurement receipts:', error);
         } finally {
             this.isLoadingProc = false;
+        }
+    }
+
+    async _loadConflicts() {
+        if (this.isLoadingConflicts) return;
+        this.isLoadingConflicts = true;
+        try {
+            const result = await schedulerApi.getConflicts();
+            this.conflicts = Array.isArray(result) ? result : (result.data || []);
+            this._refreshCurrentView();
+        } catch (error) {
+            console.error('[EC] Failed to load conflicts:', error);
+        } finally {
+            this.isLoadingConflicts = false;
+        }
+    }
+
+    async handleProcurementReceipt(contractItemId) {
+        const qty = document.getElementById('receive_qty')?.value;
+        const note = document.getElementById('receive_note')?.value;
+
+        if (!qty || qty <= 0) {
+            window.toast?.show('Please enter a valid quantity.', 'warning');
+            return;
+        }
+
+        try {
+            await inventoryApi.receiveShipment({
+                contractItemId,
+                receivedQty: parseFloat(qty),
+                note
+            });
+            window.toast?.show('Material received and added to inventory silo.', 'success');
+            window.drawer?.close();
+            this._loadProcurementReceipts();
+            this._loadInventory();
+        } catch (error) {
+            console.error('[EC] Receipt failed:', error);
+            window.toast?.show(error.message || 'Failed to record receipt.', 'error');
+        }
+    }
+
+    syncFMProcurement() {
+        this._loadProcurementReceipts();
+        window.toast?.show('Syncing procurement data...', 'info');
+    }
+
+    syncFMProcurement() {
+        this._loadProcurementReceipts();
+        window.toast?.show('Syncing procurement data...', 'info');
+    }
+
+    async openDispatchDrawer() {
+        try {
+            // Load projects to populate the drawer
+            const result = await client.get('/projects');
+            const projects = Array.isArray(result) ? result : (result.data || []);
+            this.projects = projects;
+            
+            window.drawer?.open('Logistics Dispatch', window.DrawerTemplates.assignResource(projects));
+        } catch (error) {
+            console.error('Failed to load projects for dispatch:', error);
+            // Fallback with empty projects
+            window.drawer?.open('Logistics Dispatch', window.DrawerTemplates.assignResource([]));
+        }
+    }
+
+    toggleResourceType(type, btn) {
+        // Toggle active button style
+        document.querySelectorAll('.active-resource').forEach(el => el.classList.remove('active-resource', 'btn-primary'));
+        btn.classList.add('active-resource', 'btn-primary');
+
+        const machineryView = document.getElementById('machinery_view');
+        const materialView = document.getElementById('material_sheet_view');
+
+        if (type === 'machinery') {
+            machineryView.style.display = 'block';
+            materialView.style.display = 'none';
+        } else {
+            machineryView.style.display = 'none';
+            materialView.style.display = 'block';
+        }
+    }
+
+    async updateMaterialSheet(phase) {
+        const container = document.getElementById('material_sheet_container');
+        const assetSelect = document.getElementById('assign_asset');
+        
+        if (!phase) {
+            container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400);">Please select a project phase...</div>';
+            return;
+        }
+
+        // 1. Update Materials
+        const materials = this.phaseMaterials[phase] || [];
+        if (materials.length === 0) {
+            container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400);">No predefined materials for this phase.</div>';
+        } else {
+            container.innerHTML = materials.map(m => `
+                <div style="background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500);">${m.name}</div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                        <input type="number" class="form-input phase-mat-qty" data-name="${m.name}" data-unit="${m.unit}" style="width: 60px; padding: 4px;" value="0">
+                        <span style="font-size: 12px; color: var(--slate-400);">${m.unit}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 2. Load Recommendations for Machinery
+        try {
+            // Hardcoded project ID 1 for now or get from select
+            const projectId = document.getElementById('assign_project')?.value || 1;
+            const recommendations = await schedulerApi.getRecommendations(projectId);
+            
+            if (assetSelect) {
+                assetSelect.innerHTML = '<option value="">Select Asset</option>';
+                recommendations.forEach(rec => {
+                    const group = document.createElement('optgroup');
+                    group.label = `Recommended: ${rec.category}`;
+                    rec.available.forEach(asset => {
+                        const opt = document.createElement('option');
+                        opt.value = asset.id;
+                        opt.textContent = `${asset.assetCode || 'EQP'} - ${asset.name}`;
+                        group.appendChild(opt);
+                    });
+                    assetSelect.appendChild(group);
+                });
+
+                // Add other available assets not in recommendations
+                const otherAssets = this.assetRegistry.filter(a => a.status === 'available');
+                const otherGroup = document.createElement('optgroup');
+                otherGroup.label = "All Available Assets";
+                otherAssets.forEach(asset => {
+                    const opt = document.createElement('option');
+                    opt.value = asset.id;
+                    opt.textContent = `${asset.assetCode || 'EQP'} - ${asset.name}`;
+                    otherGroup.appendChild(opt);
+                });
+                assetSelect.appendChild(otherGroup);
+            }
+        } catch (e) {
+            console.error('Failed to load recommendations:', e);
+        }
+    }
+
+    async handleExecuteDispatch() {
+        const projectId = document.getElementById('assign_project')?.value;
+        const phase = document.getElementById('assign_phase')?.value;
+        const fsName = document.getElementById('assign_fs')?.value;
+        const type = document.querySelector('.active-resource')?.id === 'btn_machinery' ? 'machinery' : 'materials';
+
+        if (!projectId || !phase) {
+            window.toast?.show('Please select project and phase.', 'warning');
+            return;
+        }
+
+        try {
+            if (type === 'machinery') {
+                const assetId = document.getElementById('assign_asset')?.value;
+                if (!assetId) return window.toast?.show('Select an asset to dispatch.', 'warning');
+                
+                await assets.checkOut(assetId, { projectId, note: `Dispatched for Phase ${phase} to ${fsName}` });
+                window.toast?.show(`Asset ${assetId} dispatched to ${fsName}.`, 'success');
+            } else {
+                // Dispatch materials
+                const inputs = document.querySelectorAll('.phase-mat-qty');
+                let count = 0;
+                for (const input of inputs) {
+                    const qty = parseFloat(input.value);
+                    if (qty > 0) {
+                        await inventoryApi.distribute({
+                            sectorId: 1, // Defaulting to central for now
+                            materialName: input.dataset.name,
+                            unit: input.dataset.unit,
+                            quantity: qty,
+                            reference: `Phase ${phase} Dispatch`,
+                            notes: `Dispatched to ${fsName}`
+                        });
+                        count++;
+                    }
+                }
+                if (count === 0) return window.toast?.show('No quantities entered.', 'warning');
+                window.toast?.show(`Successfully dispatched ${count} materials.`, 'success');
+            }
+
+            window.drawer?.close();
+            this._loadAssets();
+            this._loadInventory();
+        } catch (error) {
+            console.error('Dispatch failed:', error);
+            window.toast?.show(error.message || 'Dispatch failed.', 'error');
         }
     }
 
@@ -303,6 +500,40 @@ export class EquipmentCoordinatorDashboard {
                     </div>
                 </div>
 
+                <div class="data-card" style="margin-top: 24px; grid-column: 1 / -1;">
+                    <div class="data-card-header">
+                        <div class="card-title"><i class="fas fa-exclamation-triangle" style="color: var(--orange);"></i> Intelligence: Asset Conflict Monitor</div>
+                        <button class="btn btn-secondary" onclick="window.app.ecModule?._loadConflicts()"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        ${this.conflicts.length === 0
+                            ? '<div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 13px;"><i class="fas fa-check-circle" style="color: var(--emerald); font-size: 20px; margin-bottom: 8px;"></i><div>No asset conflicts detected across active projects.</div></div>'
+                            : `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+                                ${this.conflicts.map(c => `
+                                    <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 16px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                            <span style="font-weight: 800; color: #92400e; text-transform: uppercase; font-size: 11px;">Conflict: ${c.category}</span>
+                                            <span class="status locked" style="background: #fef3c7; color: #92400e; font-size: 10px;">${c.shortfall} Unit Shortfall</span>
+                                        </div>
+                                        <div style="font-size: 12px; color: #b45309; margin-bottom: 12px;">
+                                            <strong>Required By:</strong> ${c.neededBy.map(n => n.projectName).join(', ')}
+                                        </div>
+                                        <div style="background: white; border-radius: 8px; padding: 10px; border: 1px solid #fde68a;">
+                                            <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); margin-bottom: 4px;">SYSTEM SUGGESTION</div>
+                                            <div style="font-size: 13px; font-weight: 600; color: #92400e;">
+                                                Prioritize <span style="text-decoration: underline;">${c.resolution.priorityProjectName}</span>
+                                            </div>
+                                            <div style="font-size: 11px; color: #b45309; margin-top: 2px;">${c.resolution.reason}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            `
+                        }
+                    </div>
+                </div>
+
                 <div class="data-card">
                     <div class="data-card-header">
                         <div class="card-title">Logistics Status</div>
@@ -375,13 +606,14 @@ export class EquipmentCoordinatorDashboard {
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Inv ID</th><th>Material Name</th><th>Supplier</th><th>Qty Ordered</th><th style="text-align: right;">Action</th></tr>
+                        <tr><th>Contract</th><th>Material</th><th>Project</th><th>Supplier</th><th>Pending Qty</th><th style="text-align: right;">Action</th></tr>
                     </thead>
                     <tbody>
                         ${this.pendingReceipts.map(item => `
                             <tr>
-                                <td><span class="project-id">${item.id}</span></td>
+                                <td><span class="project-id">${item.contractRef}</span></td>
                                 <td style="font-weight: 700;">${item.name}</td>
+                                <td>${item.projectName || '--'}</td>
                                 <td>${item.vendor}</td>
                                 <td style="font-weight: 800; color: var(--blue);">${item.qty} ${item.unit}</td>
                                 <td style="text-align: right;">

@@ -71,6 +71,20 @@ const assets = {
   },
 
   /**
+   * Check out asset to project
+   */
+  async checkOut(id, data) {
+    return await client.post(`/assets/${id}/checkout`, data);
+  },
+
+  /**
+   * Check in asset from project
+   */
+  async checkIn(id, data) {
+    return await client.post(`/assets/${id}/checkin`, data);
+  },
+
+  /**
    * Resolve asset maintenance issue
    */
   async resolveIssue(id, resolutionNotes) {

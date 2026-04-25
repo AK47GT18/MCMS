@@ -4,7 +4,7 @@ import client from '../../src/api/client.js';
 import projects from '../../src/api/projects.api.js';
 import requisitions from '../../src/api/requisitions.api.js';
 import contracts from '../../src/api/contracts.api.js';
-import audit from '../../src/api/audit.api.js';
+
 
 export class FinanceDashboard {
     constructor() {
@@ -12,7 +12,7 @@ export class FinanceDashboard {
         this.data = {
             stats: { available: 0, committed: 0, ecRequests: 0, pmUplifts: 0 },
             projects: [],
-            auditLogs: [],
+
             requisitions: [],
             budgetChanges: []
         };
@@ -42,11 +42,11 @@ export class FinanceDashboard {
     getCurrentViewHTML() {
         switch(this.currentView) {
             case 'dashboard': return this.getDashboardView();
+            case 'procurement': return this.getProcurementView();
             case 'approvals': return this.getResourceApprovalsView();
             case 'contracts': return this.getContractsView();
             case 'vendors': return this.getVendorsView();
             case 'bcr': return this.getBudgetControlView();
-            case 'audit':
             case 'reports': return this.getRecordsView();
             default: return this.getPlaceholderView(this.currentView);
         }
@@ -80,6 +80,100 @@ export class FinanceDashboard {
                 </div>
             </div>
         `;
+    }
+
+    getProcurementView() {
+        setTimeout(() => this.loadProcurementData(), 0);
+        return `
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title">Project Procurement Status</div>
+                    <div style="display:flex; gap:8px;">
+                        <select id="procurement_project_select" class="form-input" style="width: 250px;" onchange="window.app.fmModule.loadProcurementData()">
+                            <option value="">Select Project...</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-file-contract"></i> Procure Materials</button>
+                    </div>
+                </div>
+                <div id="fm-procurement-content">
+                    <div style="padding: 40px; text-align: center; color: var(--slate-400);">
+                        <i class="fas fa-box-open" style="font-size: 32px; margin-bottom: 12px;"></i>
+                        <div>Select a project to view its material requirements and procurement status.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async loadProcurementData() {
+        // Load projects if not loaded
+        const select = document.getElementById('procurement_project_select');
+        if (select && select.options.length <= 1) {
+            try {
+                const res = await client.get('/projects?status=active');
+                const projects = res.data?.data || res.data || [];
+                projects.forEach(p => {
+                    select.add(new Option(p.name, p.id));
+                });
+            } catch (e) { console.error('Failed to load projects', e); }
+        }
+
+        const projectId = select?.value;
+        const container = document.getElementById('fm-procurement-content');
+        if (!projectId || !container) return;
+
+        container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading procurement status...</div>`;
+
+        try {
+            const res = await client.get(`/procurement/project-status/${projectId}`);
+            const data = res.data;
+            
+            if (!data.materials || data.materials.length === 0) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);">No materials required for this project's current phase.</div>`;
+                return;
+            }
+
+            const rows = data.materials.map(m => `
+                <tr>
+                    <td style="font-weight: 600;">${m.materialName}</td>
+                    <td style="text-align: right;">${Number(m.requiredQuantity).toLocaleString()} ${m.unit}</td>
+                    <td style="text-align: right; color: var(--emerald);">${Number(m.procuredQuantity).toLocaleString()} ${m.unit}</td>
+                    <td style="text-align: right; color: ${m.remainingQuantity > 0 ? 'var(--red)' : 'var(--slate-500)'};">${Number(m.remainingQuantity).toLocaleString()} ${m.unit}</td>
+                    <td style="width: 200px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="flex:1; height:8px; background:var(--slate-200); border-radius:4px; overflow:hidden;">
+                                <div style="height:100%; width:${m.percentComplete}%; background: ${m.percentComplete >= 100 ? 'var(--emerald)' : 'var(--orange)'};"></div>
+                            </div>
+                            <span style="font-size:11px; font-weight:600; width:40px;">${m.percentComplete}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <div style="padding: 16px; background: var(--slate-50); border-bottom: 1px solid var(--border); display: flex; gap: 24px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Active Contracts</div>
+                        <div style="font-size: 18px; font-weight: 800;">${data.totalContracts}</div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th style="text-align: right;">Required (Budget)</th>
+                            <th style="text-align: right;">Procured</th>
+                            <th style="text-align: right;">Remaining</th>
+                            <th>Fulfillment Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Failed to load procurement status:', error);
+            container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">${error.response?.data?.message || error.message}</div>`;
+        }
     }
 
     getResourceApprovalsView() {
@@ -116,49 +210,27 @@ export class FinanceDashboard {
     }
 
     getRecordsView() {
-        setTimeout(() => {
-            this.loadAuditData();
-        }, 0);
         return `
-            <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px;">
-                <div class="data-card">
-                    <div class="data-card-header">
-                        <div class="card-title">Master Audit Log & System History</div>
-                        <button class="btn btn-secondary" onclick="window.app.fmModule.loadAuditData()"><i class="fas fa-sync"></i> Refresh</button>
-                    </div>
-                    <div id="audit-log-container">
-                        <table>
-                            <thead>
-                                <tr><th>Timestamp</th><th>Action</th><th>Target</th><th>User</th><th>Details</th></tr>
-                            </thead>
-                            <tbody>
-                                ${this.renderAuditRows()}
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title">Generated Reports</div>
                 </div>
-                
-                <div class="data-card">
-                    <div class="data-card-header">
-                        <div class="card-title">Generated Reports</div>
-                    </div>
-                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                        <a href="/api/v1/reports/finance/budget?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Budget Overview (PDF)
-                        </a>
-                        <a href="/api/v1/reports/finance/requisitions?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Requisition Analysis (PDF)
-                        </a>
-                        <a href="/api/v1/reports/finance/top-vendors?format=csv" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                            <i class="fas fa-file-excel" style="color: var(--emerald);"></i> Top Vendors (CSV)
-                        </a>
-                        <a href="/api/v1/reports/finance/spend-categories?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                            <i class="fas fa-file-pdf" style="color: var(--red);"></i> Spend Categories (PDF)
-                        </a>
-                        <button class="btn btn-primary" style="margin-top: 12px; justify-content: center;" onclick="window.drawer.open('Report Generator', window.DrawerTemplates.reportGenerator)">
-                            Custom Report
-                        </button>
-                    </div>
+                <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                    <a href="/api/v1/reports/finance/budget?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                        <i class="fas fa-file-pdf" style="color: var(--red);"></i> Budget Overview (PDF)
+                    </a>
+                    <a href="/api/v1/reports/finance/requisitions?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                        <i class="fas fa-file-pdf" style="color: var(--red);"></i> Requisition Analysis (PDF)
+                    </a>
+                    <a href="/api/v1/reports/finance/top-vendors?format=csv" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                        <i class="fas fa-file-excel" style="color: var(--emerald);"></i> Top Vendors (CSV)
+                    </a>
+                    <a href="/api/v1/reports/finance/spend-categories?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
+                        <i class="fas fa-file-pdf" style="color: var(--red);"></i> Spend Categories (PDF)
+                    </a>
+                    <button class="btn btn-primary" style="margin-top: 12px; justify-content: center;" onclick="window.drawer.open('Report Generator', window.DrawerTemplates.reportGenerator)">
+                        Custom Report
+                    </button>
                 </div>
             </div>
         `;
@@ -226,11 +298,12 @@ export class FinanceDashboard {
     getHeaderHTML() {
         const headers = {
             'dashboard': { title: 'Budget Dashboard', context: 'Strategic Health & Overruns' },
+            'procurement': { title: 'Procurement Dashboard', context: 'Material Pipeline Tracking' },
             'approvals': { title: 'Resource Hub', context: 'Procurement Gatekeeping' },
             'contracts': { title: 'Vendor Contracts', context: 'Milestones & Commitments' },
             'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
             'bcr': { title: 'PM Uplift Requests', context: 'Budget Extensions' },
-            'audit': { title: 'Audit Trail', context: 'Immutable Records' },
+
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' }
         };
 
@@ -538,37 +611,7 @@ export class FinanceDashboard {
         }
     }
 
-    async loadAuditData() {
-        try {
-            const res = await client.get('/reports/system/audit?limit=20');
-            this.data.auditLogs = (res.data && res.data.rows) ? res.data.rows : [];
-            
-            const tbody = document.querySelector('#audit-log-container tbody');
-            if (tbody) {
-                tbody.innerHTML = this.renderAuditRows();
-            }
-        } catch (error) {
-            console.error('Failed to load audit logs:', error);
-        }
-    }
 
-    renderAuditRows() {
-        if (this.data.auditLogs.length === 0) {
-            return `<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--slate-400);">No audit records found.</td></tr>`;
-        }
-        return this.data.auditLogs.map(log => {
-            const dateStr = log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A';
-            return `
-                <tr>
-                    <td style="font-size: 11px; color: var(--slate-500);">${dateStr}</td>
-                    <td><span class="status active" style="font-size: 10px;">${log.action || 'Unknown'}</span></td>
-                    <td>${log.targetType || '-'}</td>
-                    <td>${log.userName || 'System'}</td>
-                    <td style="font-size: 12px; color: var(--slate-600); max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${log.targetCode || 'N/A'}</td>
-                </tr>
-            `;
-        }).join('');
-    }
 
     formatCurrency(val) {
         if (val === undefined || val === null || isNaN(val)) return '0';

@@ -4,6 +4,7 @@ import { DrawerTemplates } from '../components/DrawerTemplates.js';
 import { modal } from '../components/ui/ModalManager.js';
 import { toast } from '../components/ui/ToastManager.js';
 import notificationsApi from '../src/api/notifications.api.js';
+import client from '../src/api/client.js';
 
 // Get current user dynamically (from main.js real auth or fallback to mock)
 const getCurrentUser = () => window.currentUser || mockUser;
@@ -313,7 +314,7 @@ export class AppLayout {
                     ${alertHTML}
                     
                     ${currentUser.role !== 'Project_Manager' && currentUser.role !== 'Project Manager' ? `
-                    <button class="btn btn-secondary btn-sm" style="margin-right: 12px; font-size: 11px; padding: 6px 10px; background: white; border-color: var(--slate-200); color: var(--orange-600); font-weight: 700;" onclick="window.drawer.open('Request Timeline Extension', window.DrawerTemplates.requestTimelineExtension); setTimeout(() => { document.getElementById('ext-req-project-id').value = window.app?.pmModule?.selectedProjectId || window.app?.fsModule?.assignedProject?.id || window.app?.caModule?.selectedProjectId || ''; }, 100);">
+                    <button class="btn btn-secondary btn-sm" style="margin-right: 12px; font-size: 11px; padding: 6px 10px; background: white; border-color: var(--slate-200); color: var(--orange-600); font-weight: 700;" onclick="window.app.layout.openTimelineExtensionDrawer()">
                         <i class="fas fa-calendar-plus" style="margin-right: 4px;"></i> Extend Timeline
                     </button>
                     ` : ''}
@@ -537,8 +538,110 @@ export class AppLayout {
         window.drawer.open('User Profile', contentHTML);
     }
 
+    async openTimelineExtensionDrawer() {
+        try {
+            const result = await client.get('/projects');
+            const data = result.data || result || [];
+            
+            window.drawer.open('Request Timeline Extension', DrawerTemplates.requestTimelineExtension(data));
+        } catch (error) {
+            console.error('Failed to load projects:', error);
+            window.drawer.open('Request Timeline Extension', DrawerTemplates.requestTimelineExtension([]));
+        }
+    }
+
+    handleTimelineProjectChange(projectId, projects) {
+        const project = projects.find(p => p.id == projectId);
+        const endContainer = document.getElementById('ext-req-current-end');
+        if (endContainer) {
+            if (project && project.endDate) {
+                const date = new Date(project.endDate);
+                endContainer.textContent = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                // Set min date for new end date
+                const minDate = project.endDate.split('T')[0];
+                document.getElementById('ext-req-new-date').min = minDate;
+            } else {
+                endContainer.textContent = '—';
+            }
+        }
+        this.updateExtensionBadge();
+    }
+
+    updateExtensionBadge() {
+        const currentEndStr = document.getElementById('ext-req-current-end')?.textContent;
+        const newEndStr = document.getElementById('ext-req-new-date')?.value;
+        const badge = document.getElementById('ext-req-days-badge');
+        const text = document.getElementById('ext-req-days-text');
+
+        if (currentEndStr && currentEndStr !== '—' && newEndStr) {
+            const current = new Date(currentEndStr);
+            const next = new Date(newEndStr);
+            const diffTime = next - current;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 0) {
+                text.textContent = `Extension: +${diffDays} days`;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    updateCharCount(val) {
+        const count = val.length;
+        const el = document.getElementById('ext-req-char-count');
+        if (el) {
+            el.textContent = `${count} / 20 min`;
+            el.style.color = count >= 20 ? 'var(--emerald)' : 'var(--slate-400)';
+        }
+    }
+
+    async handleSubmitExtensionRequest() {
+        const projectId = document.getElementById('ext-req-project-id')?.value;
+        const newDate = document.getElementById('ext-req-new-date')?.value;
+        const justification = document.getElementById('ext-req-justification')?.value;
+        const warning = document.getElementById('ext-req-warning');
+        const btn = document.getElementById('ext-req-submit-btn');
+
+        if (!projectId || !newDate || !justification) {
+            warning.textContent = 'Please fill in all required fields.';
+            warning.style.display = 'block';
+            return;
+        }
+
+        if (justification.length < 20) {
+            warning.textContent = 'Justification must be at least 20 characters.';
+            warning.style.display = 'block';
+            return;
+        }
+
+        warning.style.display = 'none';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
+
+        try {
+            const result = await client.post('/timeline-extensions', { 
+                projectId: parseInt(projectId), 
+                requestedEndDate: newDate, 
+                justification 
+            });
+
+            toast.show('Timeline extension request submitted to PM.', 'success');
+            window.drawer.close();
+        } catch (error) {
+            console.error('Submission error:', error);
+            warning.textContent = 'Failed to submit request. Please try again.';
+            warning.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Extension Request';
+        }
+    }
+
     handlePasswordUpdate() {
-        toast.success('Success', 'Password has been updated successfully.');
+        toast.show('Password has been updated successfully.', 'success');
         window.drawer.close();
     }
 

@@ -14,13 +14,15 @@
  */
 
 const http = require('http');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 // Load environment first
 require('dotenv').config();
 
-// Import modules
+// ... existing imports ...
 const env = require('./src/config/env');
 const database = require('./src/config/database');
 const { applyCors } = require('./src/config/cors');
@@ -39,9 +41,44 @@ const { applySecurityHeaders, bodySizeLimit } = require('./src/middlewares/secur
 const checkBodySize = bodySizeLimit(10 * 1024 * 1024);
 
 /**
- * Create the HTTP server
+ * SSL/HTTPS Setup - auto-generates certs via scripts/generate-cert.js if missing
  */
-const server = http.createServer(async (req, res) => {
+function getSSLOptions() {
+  const keyPath = path.join(__dirname, 'key.pem');
+  const certPath = path.join(__dirname, 'cert.pem');
+
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    console.log('🔐 SSL Certificates missing. Auto-generating...');
+    try {
+      execSync('node scripts/generate-cert.js', { cwd: __dirname, stdio: 'inherit' });
+    } catch (err) {
+      console.warn('❌ Failed to generate SSL cert. Falling back to HTTP.');
+      return null;
+    }
+  }
+
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    console.warn('🔐 SSL Certificates still not found after generation. Falling back to HTTP.');
+    return null;
+  }
+
+  try {
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+  } catch (err) {
+    console.error('❌ Failed to load SSL certificates:', err.message);
+    return null;
+  }
+}
+
+const sslOptions = process.env.USE_HTTPS === 'true' ? getSSLOptions() : null;
+
+/**
+ * Create the HTTP/HTTPS server
+ */
+const server = (sslOptions ? https : http).createServer(sslOptions || {}, async (req, res) => {
   const startTime = Date.now();
   
   // Apply CORS headers
@@ -234,8 +271,9 @@ async function start() {
         if (lanIp !== 'localhost') break;
       }
 
-      const baseUrl = `http://localhost:${env.PORT}`;
-      const lanUrl = `http://${lanIp}:${env.PORT}`;
+      const protocol = sslOptions ? 'https' : 'http';
+      const baseUrl = `${protocol}://localhost:${env.PORT}`;
+      const lanUrl = `${protocol}://${lanIp}:${env.PORT}`;
       
       console.log('');
       console.log('╔══════════════════════════════════════════════════════╗');

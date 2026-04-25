@@ -136,29 +136,34 @@ async function main() {
         console.log(`Upserted user: ${userInDb.name}`);
     }
 
-    // 2. Create Vendors (Vendor model not defined in schema, skipping)
-    // console.log('--- Seeding Vendors ---');
-    // const VENDORS = [
-    //     { name: 'Malawi Cement', category: 'Materials', status: 'approved' },
-    //     { name: 'CAT Rentals', category: 'Equipment', status: 'approved' },
-    //     { name: 'Shire Steel', category: 'Materials', status: 'pending' },
-    //     { name: 'Apex Security', category: 'Services', status: 'approved' }
-    // ];
+    // 2. Create Vendors
+    console.log('--- Seeding Vendors ---');
+    const VENDORS = [
+        { name: 'Malawi Cement', category: 'Materials', riskLevel: 'low', rating: 4.8 },
+        { name: 'CAT Rentals', category: 'Equipment', riskLevel: 'medium', rating: 4.2 },
+        { name: 'Shire Steel', category: 'Materials', riskLevel: 'low', rating: 4.5 },
+        { name: 'Apex Security', category: 'Services', riskLevel: 'high', rating: 3.5 }
+    ];
 
-    const vendorMap = []; // Empty array since Vendor model doesn't exist
-    // for (const v of VENDORS) {
-    //     const vendor = await prisma.vendor.create({
-    //         data: {
-    //             name: v.name,
-    //             category: v.category,
-    //             status: v.status,
-    //             taxClearanceValid: true,
-    //             taxClearanceExpiry: dateOffset(180)
-    //         }
-    //     });
-    //     vendorMap.push(vendor);
-    //     console.log(`Created vendor: ${vendor.name}`);
-    // }
+    const vendorMap = []; 
+    for (const v of VENDORS) {
+        const vendor = await prisma.vendor.upsert({
+            where: { name: v.name },
+            update: {
+                category: v.category,
+                riskLevel: v.riskLevel,
+                rating: v.rating
+            },
+            create: {
+                name: v.name,
+                category: v.category,
+                riskLevel: v.riskLevel,
+                rating: v.rating
+            }
+        });
+        vendorMap.push(vendor);
+        console.log(`Created vendor: ${vendor.name}`);
+    }
 
     // 3. Create Projects
     console.log('--- Seeding Projects ---');
@@ -233,27 +238,32 @@ async function main() {
         }
 
         // 4.2 Contracts
-        // NOTE: vendor_name column not in current migration, skipping
-        // const vendor = vendorMap[0]; // Malawi Cement (vendor not seeded)
-        // await prisma.contract.create({
-        //     data: {
-        //         refCode: `CTR-${p.code}-001`,
-        //         title: `${p.name} - Cement Supply`,
-        //         projectId: project.id,
-        //         vendorName: 'Malawi Cement',
-        //         value: 50000000,
-        //         startDate: p.startDate,
-        //         endDate: p.endDate,
-        //         status: 'active',
-        //         milestones: {
-        //             create: [
-        //                 { description: 'Initial Deposit', value: 10000000, status: 'paid', dueDate: dateOffset(-55) },
-        //                 { description: 'Foundation Completion', value: 20000000, status: 'scheduled', dueDate: dateOffset(-10) }
-        //             ]
-        //         }
-        //     }
-        // });
-        // console.log(` > Added contract for ${p.code}`);
+        const vendor = vendorMap[0]; // Malawi Cement 
+        await prisma.contract.create({
+            data: {
+                refCode: `CTR-${p.code}-001`,
+                title: `${p.name} - Cement Supply`,
+                projectId: project.id,
+                vendorId: vendor.id,
+                vendorName: vendor.name,
+                value: 50000000,
+                startDate: p.startDate,
+                endDate: p.endDate,
+                status: 'active',
+                items: {
+                    create: [
+                        { materialName: 'Portland Cement (50kg)', quantity: 5000, unit: 'Bags', unitPrice: 10000, totalCost: 50000000 }
+                    ]
+                },
+                milestones: {
+                    create: [
+                        { description: 'Initial Deposit', value: 10000000, status: 'paid', dueDate: dateOffset(-55) },
+                        { description: 'Foundation Completion', value: 20000000, status: 'scheduled', dueDate: dateOffset(-10) }
+                    ]
+                }
+            }
+        });
+        console.log(` > Added contract for ${p.code}`);
 
         // 4.3 Assets (Fleet)
         await prisma.asset.create({

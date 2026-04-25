@@ -41,10 +41,46 @@ async function getById(id) {
 }
 
 async function create(data, userId) {
+  let materials = [];
+  if (data.materialsList) {
+    try {
+      materials = JSON.parse(data.materialsList);
+    } catch (e) {
+      logger.error('Failed to parse materialsList', e);
+    }
+  }
+
+  // Find or Create Vendor
+  let vendorId = null;
+  if (data.vendorName) {
+    let vendor = await prisma.vendor.findUnique({ where: { name: data.vendorName } });
+    if (!vendor) {
+      vendor = await prisma.vendor.create({
+        data: { name: data.vendorName, category: 'General', riskLevel: 'low', isActive: true }
+      });
+    }
+    vendorId = vendor.id;
+  }
+
+  const contractData = {
+    ...data,
+    vendorId,
+    items: materials.length > 0 ? {
+      create: materials.map(m => ({
+        materialName: m.name,
+        quantity: m.quantity || 0,
+        unit: m.unit || 'units',
+        unitPrice: m.unitPrice || 0,
+        totalCost: (m.quantity || 0) * (m.unitPrice || 0)
+      }))
+    } : undefined
+  };
+  
   const contract = await prisma.contract.create({
-    data,
-    include: { project: { select: { id: true, name: true, manager: { select: { email: true } } } } },
+    data: contractData,
+    include: { project: { select: { id: true, name: true, manager: { select: { email: true } } } }, items: true },
   });
+  
   // Create Initial Version
   const nextVersionNum = 1;
   await prisma.contractVersion.create({

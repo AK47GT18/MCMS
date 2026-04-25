@@ -223,9 +223,85 @@ async function getByProject(projectId) {
   return inventory;
 }
 
+async function getIncomingShipments() {
+  const contracts = await prisma.contract.findMany({
+    where: { status: 'active' },
+    include: {
+      project: { select: { id: true, name: true, code: true } },
+      vendor: { select: { id: true, name: true } },
+      items: {
+        where: {
+          // Prisma doesn't support comparing two columns directly in where without raw query, so we'll filter in memory or get all items and filter out completed ones
+        }
+      }
+    }
+  });
+
+  const shipments = [];
+  contracts.forEach(contract => {
+    contract.items.forEach(item => {
+      const remaining = Number(item.quantity) - Number(item.receivedQty || 0);
+      if (remaining > 0) {
+        shipments.push({
+          id: item.id, // the ContractItem ID
+          contractId: contract.id,
+          contractRef: contract.refCode,
+          projectName: contract.project?.name,
+          projectId: contract.project?.id,
+          vendorName: contract.vendor?.name || contract.vendorName,
+          materialName: item.materialName,
+          totalQty: item.quantity,
+          receivedQty: item.receivedQty || 0,
+          pendingQty: remaining,
+          unit: item.unit
+        });
+      }
+    });
+  });
+
+  return shipments;
+}
+
+async function receiveShipment(contractItemId, receivedQty, userId) {
+  const item = await prisma.contractItem.findUnique({
+    where: { id: parseInt(contractItemId) },
+    include: { contract: { include: { project: { include: { sectors: true } } } } }
+  });
+
+  if (!item) throw new AppError('Shipment item not found', 404);
+  
+  const remaining = Number(item.quantity) - Number(item.receivedQty || 0);
+  if (receivedQty > remaining) {
+    throw new AppError(`Cannot receive more than pending quantity. Pending: ${remaining}`, 400);
+  }
+
+  // Update ContractItem receivedQty
+  const updatedItem = await prisma.contractItem.update({
+    where: { id: parseInt(contractItemId) },
+    data: { receivedQty: { increment: receivedQty } }
+  });
+
+  // Automatically add to the first sector of the project as Central Silo
+  const sector = item.contract.project.sectors[0];
+  if (sector) {
+    await distribute({
+      sectorId: sector.id,
+      materialName: item.materialName,
+      unit: item.unit,
+      quantity: receivedQty,
+      reference: `Receipt from Contract ${item.contract.refCode}`,
+      notes: 'Received by Equipment Coordinator'
+    }, { id: userId });
+  }
+
+  return updatedItem;
+}
+
 module.exports = {
   getBySector,
   getByProject,
   distribute,
-  consume
+  consume,
+  getIncomingShipments,
+  receiveShipment
 };

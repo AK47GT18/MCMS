@@ -108,4 +108,15 @@ const markPurchased = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, pmApprove, pmReject, financeApprove, financeReject, markPurchased };
+const getProjectStatus = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const projectId = validateId(id, res);
+  if (!projectId) return;
+  
+  const result = await procurementService.getProjectStatus(projectId);
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, pmApprove, pmReject, financeApprove, financeReject, markPurchased, getProjectStatus };

@@ -108,4 +108,71 @@ async function markPurchased(id) {
   return request;
 }
 
-module.exports = { getAll, getById, create, pmApprove, pmReject, financeApprove, financeReject, markPurchased };
+async function getProjectStatus(projectId) {
+  // Fetch Road Specification to get Required Materials
+  const roadSpec = await prisma.roadSpecification.findFirst({
+    where: { projectId: parseInt(projectId) },
+    include: {
+      layers: true,
+      accessories: true
+    }
+  });
+
+  if (!roadSpec) {
+    throw new AppError('No road specification found for this project. Cannot calculate procurement needs.', 404);
+  }
+
+  // Aggregate required items
+  const requiredMaterials = new Map();
+  
+  if (roadSpec.layers) {
+    roadSpec.layers.forEach(layer => {
+      const current = requiredMaterials.get(layer.materialType) || { quantity: 0, unit: layer.unit || 'm3' };
+      requiredMaterials.set(layer.materialType, { 
+        quantity: current.quantity + parseFloat(layer.totalQuantity || 0), 
+        unit: current.unit 
+      });
+    });
+  }
+
+  // Fetch all Contracts and their Items for this project
+  const contracts = await prisma.contract.findMany({
+    where: { 
+      projectId: parseInt(projectId),
+      status: { in: ['active', 'completed'] } // Only count active procurements
+    },
+    include: { items: true }
+  });
+
+  // Aggregate procured items
+  const procuredMaterials = new Map();
+  contracts.forEach(contract => {
+    contract.items.forEach(item => {
+      const current = procuredMaterials.get(item.materialName) || 0;
+      procuredMaterials.set(item.materialName, current + parseFloat(item.quantity));
+    });
+  });
+
+  // Build the final dashboard data
+  const statusList = [];
+  for (const [materialName, requiredData] of requiredMaterials.entries()) {
+    const procuredQty = procuredMaterials.get(materialName) || 0;
+    statusList.push({
+      materialName,
+      requiredQuantity: requiredData.quantity,
+      procuredQuantity: procuredQty,
+      remainingQuantity: Math.max(0, requiredData.quantity - procuredQty),
+      unit: requiredData.unit,
+      percentComplete: requiredData.quantity > 0 ? ((procuredQty / requiredData.quantity) * 100).toFixed(1) : 100
+    });
+  }
+
+  return {
+    projectId: parseInt(projectId),
+    specId: roadSpec.id,
+    materials: statusList,
+    totalContracts: contracts.length
+  };
+}
+
+module.exports = { getAll, getById, create, pmApprove, pmReject, financeApprove, financeReject, markPurchased, getProjectStatus };

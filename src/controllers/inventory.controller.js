@@ -136,9 +136,49 @@ const getByProject = asyncHandler(async (req, res, id) => {
   response.success(res, inventory);
 });
 
+const getIncomingShipments = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director'])) return;
+
+  const shipments = await inventoryService.getIncomingShipments();
+  response.success(res, shipments);
+});
+
+const receiveShipment = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Managing_Director'])) return;
+
+  const body = await parseBody(req);
+  const { contractItemId, receivedQty } = body;
+  if (!contractItemId || !receivedQty || receivedQty <= 0) {
+    return response.badRequest(res, 'Valid contractItemId and receivedQty are required');
+  }
+
+  const result = await inventoryService.receiveShipment(contractItemId, receivedQty, user.id);
+
+  // Broadcast
+  websocket.broadcastToChannel('logistics', 'INVENTORY_UPDATED', {
+    action: 'receive_shipment',
+    materialName: result.materialName,
+    quantity: receivedQty,
+    userId: user.id
+  });
+
+  await auditService.logFromRequest(req, 'RECEIVED_PROCUREMENT', 'Inventory', null, result.materialName, {
+    quantity: receivedQty,
+    contractItemId
+  });
+
+  response.success(res, result);
+});
+
 module.exports = {
   getBySector,
   getByProject,
   distribute,
-  consume
+  consume,
+  getIncomingShipments,
+  receiveShipment
 };
