@@ -142,9 +142,9 @@ const updateTaskSchema = createTaskSchema.partial();
 
 const createContractVersionSchema = z.object({
   refCode: z.string().max(30).optional(),
-  title: z.string().min(1).max(255),
+  title: z.string().max(255).optional(),
   value: z.number().positive().optional(),
-  status: z.string().max(20),
+  status: z.string().max(20).optional(),
   changeNotes: z.string().optional(),
 });
 

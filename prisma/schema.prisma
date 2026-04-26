@@ -130,6 +130,7 @@ model Contract {
   endDate       DateTime?          @map("end_date") @db.Date
   status        ContractStatusEnum @default(draft)
   documentUrl   String?            @map("document_url")
+  fileName      String?            @map("file_name") @db.VarChar(255)
   createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   vendorId      Int?               @map("vendor_id")
@@ -201,6 +202,8 @@ model ContractVersion {
   title         String   @db.VarChar(255)
   value         Decimal? @db.Decimal(18, 2)
   status        String   @map("status") @db.VarChar(20)
+  documentUrl   String?  @map("document_url")
+  fileName      String?  @map("file_name") @db.VarChar(255)
   changeNotes   String?  @map("change_notes")
   createdById   Int?     @map("created_by_id")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

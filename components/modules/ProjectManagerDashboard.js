@@ -487,7 +487,7 @@ export class ProjectManagerDashboard {
                          </div>
                          <div>
                             <div style="font-weight:700; font-size: 14px;">Execution Schedule</div>
-                            <div style="font-size:11px; color:var(--slate-500);">Interactive Gantt Chart • ${this.selectedProjectId}</div>
+                            <div style="font-size:11px; color:var(--slate-500);">Interactive Gantt Chart - ${this.selectedProjectId}</div>
                          </div>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
@@ -1221,22 +1221,34 @@ export class ProjectManagerDashboard {
         }
     }
 
-    // --- 8. REVIEWS (LOGS) ---
+    // --- 10. REVIEWS & APPROVALS ---
     getReviewsView() {
+        this.currentReviewTab = this.currentReviewTab || 'extensions';
         setTimeout(() => this.loadReviewsData(), 0);
+        
         return `
-            <div class="data-card">
-                <div class="data-card-header">
-                    <div class="card-title">Pending For Review</div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.loadReviewsData()"><i class="fas fa-sync"></i> Refresh</button>
+            <div class="view-content" style="padding: 24px;">
+                <div class="data-card" style="background: white; border-radius: 12px; border: 1px solid var(--slate-200); overflow: hidden;">
+                    <div class="data-card-header" style="padding: 0; background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                        <div class="tabs" style="margin-bottom: 0;">
+                            <div class="tab ${this.currentReviewTab === 'extensions' ? 'active' : ''}" data-tab="extensions" onclick="window.app.pmModule.switchReviewTab('extensions')">Timeline Extensions</div>
+                            <div class="tab ${this.currentReviewTab === 'logs' ? 'active' : ''}" data-tab="logs" onclick="window.app.pmModule.switchReviewTab('logs')">Daily Site Logs</div>
+                            <div class="tab ${this.currentReviewTab === 'requisitions' ? 'active' : ''}" data-tab="requisitions" onclick="window.app.pmModule.switchReviewTab('requisitions')">Material Requisitions</div>
+                            <div class="tab ${this.currentReviewTab === 'history' ? 'active' : ''}" data-tab="history" onclick="window.app.pmModule.switchReviewTab('history')">Review History</div>
+                        </div>
                     </div>
-                </div>
-                <div id="reviews-table-container">
-                    ${this.renderLoadingState()}
+                    
+                    <div id="reviews-table-container" style="min-height: 400px;">
+                        ${this.renderLoadingState()}
+                    </div>
                 </div>
             </div>
         `;
+    }
+
+    switchReviewTab(tab) {
+        this.currentReviewTab = tab;
+        this.renderView(); // Re-render the whole view to update tab styles
     }
 
     async loadReviewsData() {
@@ -1244,76 +1256,199 @@ export class ProjectManagerDashboard {
         if (!container) return;
 
         try {
-            const [logsResponse, reqsResponse] = await Promise.all([
-                dailyLogs.getAll({ status: 'pending' }),
-                requisitions.getPending()
+            const [extRes, logsRes, reqsRes, auditRes] = await Promise.all([
+                client.get('/timeline-extensions?status=pending'),
+                client.get('/daily-logs?status=submitted'),
+                requisitions.getPending(),
+                audit.getLogs({ action: 'APPROVE', limit: 20 }) // Simplified history from audit
             ]);
 
-            const logs = Array.isArray(logsResponse) ? logsResponse : (logsResponse.data || []);
-            const reqs = Array.isArray(reqsResponse) ? reqsResponse : (reqsResponse.data || []);
+            this.pendingExtensions = Array.isArray(extRes) ? extRes : (extRes.data || []);
+            this.pendingLogs = Array.isArray(logsRes) ? logsRes : (logsRes.data || []);
+            this.pendingRequisitions = Array.isArray(reqsRes) ? reqsRes : (reqsRes.data || []);
+            this.reviewHistory = Array.isArray(auditRes) ? auditRes : (auditRes.data || []);
 
-            if (logs.length === 0 && reqs.length === 0) {
-                container.innerHTML = this.renderEmptyState('No pending reviews found.');
-                return;
-            }
-
-            container.innerHTML = this.renderReviewsTable(logs, reqs);
+            this.renderActiveReviewTab();
         } catch (error) {
-            console.error('Failed to load reviews:', error);
-            container.innerHTML = this.renderEmptyState('Failed to load pending reviews.');
+            console.error('Failed to load review data:', error);
+            container.innerHTML = this.renderEmptyState('Failed to load pending reviews. Please try again.');
         }
     }
 
-    renderReviewsTable(logs, reqs) {
-        const logRows = logs.map(log => {
-            const project = this.allProjects?.find(p => p.id === (log.projectId || log.project_id)) || {};
-            return `
-                <tr onclick="window.app.pmModule.openSiteLogVerification(${JSON.stringify(project).replace(/"/g, '&quot;')}, ${JSON.stringify(log).replace(/"/g, '&quot;')})">
-                    <td><span class="project-id">LOG-${this.escapeHTML(log.id)}</span></td>
-                    <td>${this.escapeHTML(log.projectName || project.name || 'Central Site')}</td>
-                    <td>${this.escapeHTML(log.supervisorName || log.created_by || 'Field Supervisor')}</td>
-                    <td>${new Date(log.date || log.createdAt).toLocaleDateString()}</td>
-                    <td><span style="background:var(--blue-light); color:var(--blue-dark); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700;">Site Daily</span></td>
-                    <td><span class="status pending">Pending</span></td>
-                    <td><button class="btn btn-secondary" style="padding:4px 8px;">Review</button></td>
-                </tr>
-            `;
-        }).join('');
+    renderActiveReviewTab() {
+        const container = document.getElementById('reviews-table-container');
+        if (!container) return;
 
-        const reqRows = reqs.map(req => {
-            const project = this.allProjects?.find(p => p.id === (req.projectId || req.project_id)) || {};
-            return `
-                <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview(${JSON.stringify(project).replace(/"/g, '&quot;')}, ${JSON.stringify(req).replace(/"/g, '&quot;')}))">
-                    <td><span class="project-id">REQ-${this.escapeHTML(req.id)}</span></td>
-                    <td>${this.escapeHTML(req.projectName || project.name || 'Active Project')}</td>
-                    <td>${this.escapeHTML(req.requesterName || 'Admin')}</td>
-                    <td>${new Date(req.createdAt).toLocaleDateString()}</td>
-                    <td><span style="background:var(--orange-light); color:var(--orange-dark); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700;">Requisition</span></td>
-                    <td><span class="status pending">Pending</span></td>
-                    <td><button class="btn btn-action" style="padding:4px 8px;">Review</button></td>
-                </tr>
-            `;
-        }).join('');
+        let html = '';
+        switch (this.currentReviewTab) {
+            case 'extensions':
+                html = this.renderExtensionsTable();
+                break;
+            case 'logs':
+                html = this.renderPendingLogsTable();
+                break;
+            case 'requisitions':
+                html = this.renderPendingRequisitionsTable();
+                break;
+            case 'history':
+                html = this.renderReviewHistoryTable();
+                break;
+        }
+
+        container.innerHTML = html;
+    }
+
+    renderExtensionsTable() {
+        if (!this.pendingExtensions || this.pendingExtensions.length === 0) {
+            return this.renderEmptyState('No pending timeline extension requests.');
+        }
+
+        const rows = this.pendingExtensions.map(item => `
+            <tr>
+                <td style="font-weight: 700;">${item.projectCode || 'PRJ-' + item.projectId}</td>
+                <td>${this.escapeHTML(item.projectName || 'Active Project')}</td>
+                <td>${new Date(item.currentEndDate).toLocaleDateString()}</td>
+                <td style="font-weight: 700; color: var(--orange);">${new Date(item.requestedEndDate).toLocaleDateString()}</td>
+                <td>${item.requestedByName || 'Supervisor'}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Review Extension', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
+                </td>
+            </tr>
+        `).join('');
 
         return `
-            <table>
+            <table class="data-table">
                 <thead>
-                    <tr>
-                        <th>Item ID</th>
-                        <th>Project</th>
-                        <th>Submitted By</th>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
+                    <tr><th>Project Code</th><th>Name</th><th>Current End</th><th>Requested End</th><th>Requester</th><th>Actions</th></tr>
                 </thead>
-                <tbody>
-                    ${logRows}
-                    ${reqRows}
-                </tbody>
+                <tbody>${rows}</tbody>
             </table>
         `;
+    }
+
+    renderPendingLogsTable() {
+        if (!this.pendingLogs || this.pendingLogs.length === 0) {
+            return this.renderEmptyState('No daily site logs awaiting review.');
+        }
+
+        const rows = this.pendingLogs.map(item => `
+            <tr>
+                <td style="font-weight: 700;">${new Date(item.date || item.createdAt).toLocaleDateString()}</td>
+                <td>${this.escapeHTML(item.projectName || 'Site Project')}</td>
+                <td>${item.supervisorName || 'FS'}</td>
+                <td>${item.workPercentage}%</td>
+                <td><span class="status pending">SUBMITTED</span></td>
+                <td>
+                    <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.openDailyLogReviewDrawer('${item.id}', '${item.projectId}')">Review Progress</button>
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <table class="data-table">
+                <thead>
+                    <tr><th>Date</th><th>Project</th><th>Supervisor</th><th>Work %</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+
+    renderPendingRequisitionsTable() {
+        if (!this.pendingRequisitions || this.pendingRequisitions.length === 0) {
+            return this.renderEmptyState('No pending material requisitions.');
+        }
+
+        const rows = this.pendingRequisitions.map(item => `
+            <tr>
+                <td style="font-weight: 700;">REQ-${item.id}</td>
+                <td>${this.escapeHTML(item.projectName || 'Site Project')}</td>
+                <td>${item.requesterName || 'Admin'}</td>
+                <td>${item.items?.length || 0} items</td>
+                <td>MWK ${Number(item.totalEstimatedCost || 0).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
+                </td>
+            </tr>
+        `).join('');
+
+        return `
+            <table class="data-table">
+                <thead>
+                    <tr><th>ID</th><th>Project</th><th>Requester</th><th>Items</th><th>Est. Cost</th><th>Actions</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+
+    renderReviewHistoryTable() {
+        if (!this.reviewHistory || this.reviewHistory.length === 0) {
+            return this.renderEmptyState('No recent approval history found.');
+        }
+
+        const rows = this.reviewHistory.map(item => `
+            <tr>
+                <td>${new Date(item.timestamp).toLocaleString()}</td>
+                <td style="font-weight: 600;">${item.action}</td>
+                <td>${item.targetType || '-'}</td>
+                <td>${this.escapeHTML(item.details?.reason || 'No comments')}</td>
+                <td><span class="status active">COMPLETED</span></td>
+            </tr>
+        `).join('');
+
+        return `
+            <table class="data-table">
+                <thead>
+                    <tr><th>Timestamp</th><th>Action</th><th>Type</th><th>Notes/Comments</th><th>Status</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    }
+
+    async openDailyLogReviewDrawer(logId, projectId) {
+        window.toast.show('Loading site records...', 'info');
+        try {
+            // Fetch the specific log and recent historical logs for comparison
+            const [currentLog, historicalLogs] = await Promise.all([
+                client.get(`/daily-logs/${logId}`),
+                client.get(`/daily-logs?projectId=${projectId}&limit=10`)
+            ]);
+
+            const log = currentLog.data || currentLog;
+            const history = Array.isArray(historicalLogs) ? historicalLogs : (historicalLogs.data || []);
+            
+            // Sort history by date descending
+            history.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+            window.drawer.open('Review Progress Report', window.DrawerTemplates.dailyLogReview(log, history));
+        } catch (error) {
+            console.error('Failed to open log review:', error);
+            window.toast.show('Failed to load log details', 'error');
+        }
+    }
+
+    async switchReviewLog(logId) {
+        window.toast.show('Switching date...', 'info');
+        try {
+            const res = await client.get(`/daily-logs/${logId}`);
+            const log = res.data || res;
+            
+            // We need to keep the historical context, so we look at the currently open drawer data if possible
+            // Or just refetch (simpler for now)
+            const historyRes = await client.get(`/daily-logs?projectId=${log.projectId}&limit=10`);
+            const history = Array.isArray(historyRes) ? historyRes : (historyRes.data || []);
+            history.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+            // Update the drawer content without closing/reopening if possible, or just re-render
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                drawerContent.innerHTML = window.DrawerTemplates.dailyLogReview(log, history);
+            }
+        } catch (error) {
+            window.toast.show('Failed to switch log view', 'error');
+        }
     }
 
     initializeProjectMap(retryCount = 0, containerId = 'project-map', initialCoords = null) {
@@ -1563,21 +1698,21 @@ export class ProjectManagerDashboard {
                 circle.style.background = 'var(--emerald)';
                 circle.style.borderColor = 'white';
                 circle.style.color = 'white';
-                circle.innerHTML = '✓';
+                circle.innerHTML = '&#10003;';
             } else if (visualStep === stepNum) {
                 // Active
                 el.style.opacity = '1';
                 circle.style.background = 'var(--orange)';
                 circle.style.borderColor = 'var(--orange-light)';
                 circle.style.color = 'white';
-                circle.innerHTML = stepIndex === 5 ? '✓' : stepIndex;
+                circle.innerHTML = stepIndex === 5 ? '&#10003;' : stepIndex;
             } else {
                 // Future
                 el.style.opacity = '0.4';
                 circle.style.background = 'var(--slate-200)';
                 circle.style.borderColor = 'white';
                 circle.style.color = 'var(--slate-500)';
-                circle.innerHTML = stepIndex === 5 ? '✓' : stepIndex;
+                circle.innerHTML = stepIndex === 5 ? '&#10003;' : stepIndex;
             }
         });
 
@@ -1680,7 +1815,7 @@ export class ProjectManagerDashboard {
                         ${item.unit}
                     </td>
                     <td style="font-family:'JetBrains Mono'; font-size:11px; font-weight:700; text-align:right;">
-                        <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} –</span> 
+                        <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} -</span> 
                         <input type="number" step="any" value="${Math.round(item.totalCostHigh)}" 
                             style="width:120px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px; text-align:right; margin-left:4px; position:relative; z-index:5;"
                             onclick="event.stopPropagation()"
@@ -2129,6 +2264,7 @@ export class ProjectManagerDashboard {
             portfolioValue: projects.reduce((sum, p) => sum + (parseFloat(p.contractValue) || 0), 0),
             totalBudget: projects.reduce((sum, p) => sum + (parseFloat(p.budgetTotal) || 0), 0),
             totalSpent: projects.reduce((sum, p) => sum + (parseFloat(p.budgetSpent) || 0), 0),
+            pendingReviews: (this.pendingExtensions?.length || 0) + (this.pendingLogs?.length || 0) + (this.pendingRequisitions?.length || 0)
         };
         
         stats.budgetUtilization = stats.totalBudget > 0 ? (stats.totalSpent / stats.totalBudget) * 100 : 0;
@@ -2487,7 +2623,10 @@ export class ProjectManagerDashboard {
                 <tr>
                     <td style="text-align: center;">${sevIcon}</td>
                     <td style="font-family: 'JetBrains Mono'; font-size: 12px;">${new Date(log.timestamp).toLocaleString()}</td>
-                    <td style="font-weight: 600;">${log.userName || 'System'}</td>
+                    <td style="font-weight: 600;">
+                        ${log.userName || 'System'}
+                        ${log.details?.requestedByName ? `<div style="font-size: 10px; color: var(--orange); font-weight: 700; text-transform: uppercase; margin-top: 2px;">Requested by: ${log.details.requestedByName}</div>` : ''}
+                    </td>
                     <td>${log.action}</td>
                     <td>${log.targetType || '-'}${log.targetCode ? ` (${log.targetCode})` : ''}</td>
                     <td style="font-family: 'JetBrains Mono'; font-size: 12px;">${log.ipAddress || 'internal'}</td>

@@ -13,10 +13,14 @@ const logger = require('../utils/logger');
  * @returns {Object} created notification
  */
 async function create(data) {
-  const { userId, type = 'info', icon = 'fa-bell', title, message, link } = data;
+  const { userId, targetRole, type = 'info', icon = 'fa-bell', title, message, link } = data;
+
+  if (targetRole && !userId) {
+    return notifyRole(targetRole, { type, icon, title, message, link });
+  }
 
   if (!userId || !title || !message) {
-    throw new Error('userId, title, and message are required');
+    throw new Error('userId or targetRole, and title/message are required');
   }
 
   const notification = await prisma.notification.create({

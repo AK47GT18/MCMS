@@ -26,11 +26,12 @@ const create = asyncHandler(async (req, res, id) => {
   const contractId = validateId(id, res);
   if (!contractId) return;
   
-  const body = await parseBody(req);
+  // Use req.body if already populated by multer, otherwise parse it
+  const body = req.body && Object.keys(req.body).length > 0 ? req.body : await parseBody(req);
   const data = validateBody(body, createContractVersionSchema, res);
   if (!data) return;
   
-  const result = await contractVersionsService.create(contractId, data, user.id);
+  const result = await contractVersionsService.create(contractId, data, user.id, req.file);
   response.created(res, result);
 });
 

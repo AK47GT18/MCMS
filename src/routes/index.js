@@ -31,6 +31,28 @@ const assetSchedulerController = require('../controllers/assetScheduler.controll
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure upload directory exists for documents
+const uploadDir = path.join(__dirname, '../../public/uploads/documents');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer storage config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
 
 /**
  * Parse URL path and extract ID if present
@@ -167,7 +189,12 @@ async function router(req, res) {
   if (resource === 'contracts') {
     if (action === 'versions') {
       if (method === 'GET') return contractVersionsController.getByContract(req, res, id);
-      if (method === 'POST') return contractVersionsController.create(req, res, id);
+      if (method === 'POST') {
+        return upload.single('document')(req, res, (err) => {
+          if (err) return response.error(res, err ? err.message : 'Upload failed', 400);
+          return contractVersionsController.create(req, res, id);
+        });
+      }
       return methodNotAllowed(res, ['GET', 'POST']);
     }
     if (!id) {

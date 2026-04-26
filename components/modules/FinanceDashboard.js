@@ -682,20 +682,127 @@ export class FinanceDashboard {
                 <td>${c.vendorName || '-'}</td>
                 <td style="font-family:'JetBrains Mono';">${formatValue(c.value)}</td>
                 <td><span class="status active">${c.status || 'Active'}</span></td>
-                <td><button class="btn btn-secondary" style="padding:4px 8px;" onclick="window.app.fmModule?.viewContract(${c.id})">View</button></td>
+                <td>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn btn-secondary" style="padding:4px 8px;" onclick="window.app.fmModule?.viewContract(${c.id})">View</button>
+                        <button class="btn btn-action" style="padding:4px 8px; background: var(--slate-100); color: var(--slate-600);" onclick="window.app.fmModule?.notifyLogistics(${c.id}, '${c.refCode}')">
+                            <i class="fas fa-shipping-fast"></i>
+                        </button>
+                    </div>
+                </td>
             </tr>
         `).join('');
 
         return `<table><thead><tr><th>Ref</th><th>Title</th><th>Vendor</th><th>Value</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
-    viewContract(id) {
-        const contract = this._contractsMap?.find(c => c.id === id);
-        if (contract) {
+    async viewContract(id) {
+        window.toast.show('Fetching contract details...', 'info');
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch(`/api/v1/contracts/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch full contract details');
+            const result = await response.json();
+            const contract = result.data || result;
+            
             window.drawer.open('Contract Details', window.DrawerTemplates.contractView(contract));
-        } else {
-            window.toast.show('Contract data not found locally.', 'error');
+        } catch (error) {
+            console.error('View contract error:', error);
+            // Fallback to local data if API fails
+            const contract = this._contractsMap?.find(c => c.id === id);
+            if (contract) {
+                window.drawer.open('Contract Details', window.DrawerTemplates.contractView(contract));
+            } else {
+                window.toast.show('Could not load contract details.', 'error');
+            }
         }
+    }
+
+    openUploadNewVersion(contractId) {
+        window.drawer.open('New Contract Version', window.DrawerTemplates.contractUploadVersion(contractId));
+        
+        // Initialize file upload logic for the new drawer content
+        setTimeout(() => {
+            const dropZone = document.getElementById('v-drop-zone');
+            const fileInput = document.getElementById('v-file-input');
+            const status = document.getElementById('v-file-status');
+            
+            if (dropZone && fileInput) {
+                dropZone.onclick = () => fileInput.click();
+                fileInput.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        status.innerHTML = `<span style="color: var(--emerald);"><i class="fas fa-check-circle"></i> ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)</span>`;
+                        dropZone.style.borderColor = 'var(--emerald)';
+                        dropZone.style.background = '#F0FDF4';
+                    }
+                };
+            }
+        }, 100);
+    }
+
+    async submitNewVersion(contractId) {
+        const notes = document.getElementById('v-change-notes')?.value;
+        const fileInput = document.getElementById('v-file-input');
+        const file = fileInput?.files[0];
+
+        if (!notes || notes.length < 5) {
+            window.toast.show('Please provide descriptive change notes.', 'error');
+            return;
+        }
+
+        if (!file) {
+            window.toast.show('Please select a contract document (PDF).', 'error');
+            return;
+        }
+
+        window.toast.show('Uploading new version...', 'info');
+
+        try {
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('changeNotes', notes);
+
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch(`/api/v1/contracts/${contractId}/versions`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+            
+            window.toast.show('New version uploaded successfully!', 'success');
+            window.drawer.close();
+            // Refresh the view
+            this.viewContract(contractId);
+            this.loadContractsFromAPI();
+        } catch (error) {
+            window.toast.show('Failed to upload version: ' + error.message, 'error');
+        }
+    }
+
+    viewDocument(url) {
+        if (!url) {
+            window.toast.show('No document URL available for this version.', 'warning');
+            return;
+        }
+        window.open(url, '_blank');
+    }
+
+    downloadDocument(url, filename) {
+        if (!url) {
+            window.toast.show('No document available for download.', 'warning');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || 'document.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     async loadContractProjects() {
@@ -731,7 +838,12 @@ export class FinanceDashboard {
         const section = document.getElementById('contract-materials-section');
         if (!list || !projectId) return;
         section.style.display = 'block';
-        list.innerHTML = 'Loading materials...';
+        list.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <i class="fas fa-circle-notch fa-spin" style="margin-right: 8px; color: var(--orange);"></i>
+                <span style="font-size: 13px; color: var(--slate-500);">Fetching project requirements...</span>
+            </div>
+        `;
         try {
             const token = localStorage.getItem('mcms_auth_token');
             const res = await fetch(`/api/v1/projects/${projectId}/materials`, {
@@ -739,14 +851,47 @@ export class FinanceDashboard {
             });
             const result = await res.json();
             const materials = result.data?.materials || result.materials || [];
-            if (materials.length === 0) { list.innerHTML = 'No specifications found.'; return; }
-            list.innerHTML = materials.map((m, i) => `
-                <label style="display:flex; gap:10px; padding:10px; border-bottom:1px solid var(--slate-100); cursor:pointer;">
-                    <input type="checkbox" name="contract_material" value="${i}" data-name="${m.name}" data-qty="${m.quantity}" data-unit="${m.unit}" data-cost="${m.totalCostHigh}">
-                    <div style="font-size:12px;"><strong>${m.name}</strong><br><span style="color:var(--slate-500);">${m.quantity} ${m.unit}</span></div>
-                </label>
-            `).join('');
-        } catch (err) { list.innerHTML = 'Error loading materials.'; }
+            
+            if (materials.length === 0) { 
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">No specifications found for this project.</div>'; 
+                return; 
+            }
+
+            list.innerHTML = `
+                <div style="padding: 8px 12px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
+                    <div style="flex: 2;">Material Name</div>
+                    <div style="flex: 1; text-align: right;">Available</div>
+                    <div style="flex: 1.2; text-align: right;">Contract Qty</div>
+                </div>
+                ${materials.map((m, i) => {
+                    const isAvailable = m.remainingQuantity > 0;
+                    return `
+                        <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100); opacity: ${isAvailable ? 1 : 0.6}; background: ${isAvailable ? 'transparent' : 'var(--slate-50)'}">
+                            <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
+                                    ${isAvailable ? '' : 'disabled'}
+                                    data-name="${m.name}" data-unit="${m.unit}"
+                                    onchange="document.getElementById('m_qty_${i}').disabled = !this.checked">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.name}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">Req: ${m.quantity} ${m.unit}</div>
+                                </div>
+                            </div>
+                            <div style="flex: 1; text-align: right;">
+                                <div style="font-size: 12px; font-weight: 600; color: ${isAvailable ? 'var(--slate-700)' : 'var(--slate-400)'};">${m.remainingQuantity} ${m.unit}</div>
+                            </div>
+                            <div style="flex: 1.2; text-align: right;">
+                                <input type="number" id="m_qty_${i}" class="form-input" disabled value="${m.remainingQuantity}" 
+                                    min="1" max="${m.remainingQuantity}"
+                                    style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        } catch (err) { 
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 12px;">Error loading materials list.</div>'; 
+        }
     }
 
     async submitContract() {
@@ -759,12 +904,22 @@ export class FinanceDashboard {
             endDate: document.getElementById('contract_end')?.value
         };
         const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
-        const materials = Array.from(checkboxes).map(cb => ({ name: cb.dataset.name, quantity: cb.dataset.qty, unit: cb.dataset.unit }));
+        const materials = Array.from(checkboxes).map(cb => {
+            const index = cb.value;
+            const qtyInput = document.getElementById(`m_qty_${index}`);
+            return { 
+                name: cb.dataset.name, 
+                quantity: parseFloat(qtyInput?.value || 0), 
+                unit: cb.dataset.unit 
+            };
+        });
 
         if (!data.projectId || !data.vendorName || !data.title || materials.length === 0) {
             window.toast.show('Please fill required fields and select materials', 'warning');
             return;
         }
+
+        window.toast.show('Establishing contract...', 'info');
 
         try {
             const token = localStorage.getItem('mcms_auth_token');
@@ -778,6 +933,28 @@ export class FinanceDashboard {
             window.drawer.close();
             if (this.currentView === 'contracts') this.loadContractsFromAPI();
         } catch (err) { window.toast.show(err.message, 'error'); }
+    }
+
+    async notifyLogistics(contractId, refCode) {
+        window.toast.show(`Notifying Logistics about ${refCode}...`, 'info');
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/notifications', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    targetRole: 'Equipment_Coordinator',
+                    type: 'PROCUREMENT_READY',
+                    title: 'New Procurement Ready',
+                    message: `Contract ${refCode} has been finalized. Materials are now ready for intake and logistics planning.`,
+                    contractId: contractId
+                })
+            });
+            if (!res.ok) throw new Error('Failed to send notification');
+            window.toast.show('Logistics department notified', 'success');
+        } catch (err) {
+            window.toast.show('Error notifying logistics: ' + err.message, 'error');
+        }
     }
 
     requestPMUplift(projectId) {

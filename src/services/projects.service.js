@@ -512,50 +512,73 @@ async function getMaterials(projectId) {
   });
 
   if (!project) throw new AppError('Project not found', 404);
-  if (!project.roadSpecification) {
-    return { project: { id: project.id, code: project.code, name: project.name }, materials: [] };
-  }
-
-  const spec = project.roadSpecification;
   
-  // Combine layers and accessories into a unified materials list
+  // 1. Get all materials from the road spec
   const materials = [];
-
-  for (const layer of spec.layers) {
-    materials.push({
-      id: layer.id,
-      type: 'layer',
-      name: layer.materialType,
-      phase: layer.phaseNumber,
-      quantity: Number(layer.totalQuantity),
-      unit: layer.unit,
-      unitCostLow: Number(layer.unitCostLow),
-      unitCostHigh: Number(layer.unitCostHigh),
-      totalCostLow: Number(layer.totalCostLow),
-      totalCostHigh: Number(layer.totalCostHigh),
-      approved: layer.approved
-    });
+  if (project.roadSpecification) {
+    const spec = project.roadSpecification;
+    for (const layer of spec.layers) {
+      materials.push({
+        id: layer.id,
+        type: 'layer',
+        name: layer.materialType,
+        phase: layer.phaseNumber,
+        quantity: Number(layer.totalQuantity),
+        unit: layer.unit,
+        unitCostHigh: Number(layer.unitCostHigh),
+        totalCostHigh: Number(layer.totalCostHigh),
+      });
+    }
+    for (const acc of spec.accessories) {
+      materials.push({
+        id: acc.id,
+        type: 'accessory',
+        name: acc.itemName,
+        phase: null,
+        quantity: Number(acc.totalQuantity),
+        unit: acc.unit,
+        unitCostHigh: Number(acc.unitCostHigh),
+        totalCostHigh: Number(acc.totalCostHigh),
+      });
+    }
   }
 
-  for (const acc of spec.accessories) {
-    materials.push({
-      id: acc.id,
-      type: 'accessory',
-      name: acc.itemName,
-      phase: null,
-      quantity: Number(acc.totalQuantity),
-      unit: acc.unit,
-      unitCostLow: Number(acc.unitCostLow),
-      unitCostHigh: Number(acc.unitCostHigh),
-      totalCostLow: Number(acc.totalCostLow),
-      totalCostHigh: Number(acc.totalCostHigh),
-      approved: acc.approved
-    });
+  // 2. Fetch existing contracts for this project to calculate contracted quantities
+  const existingContracts = await prisma.contract.findMany({
+    where: { 
+      projectId,
+      status: { not: 'cancelled' }
+    },
+    select: { materialsList: true }
+  });
+
+  const contractedMap = {};
+  for (const contract of existingContracts) {
+    if (contract.materialsList) {
+      try {
+        const items = JSON.parse(contract.materialsList);
+        for (const item of items) {
+          contractedMap[item.name] = (contractedMap[item.name] || 0) + Number(item.quantity);
+        }
+      } catch (e) {
+        logger.error('Failed to parse materialsList from contract', e);
+      }
+    }
   }
+
+  // 3. Attach contracted and remaining info
+  const materialsWithBalance = materials.map(m => {
+    const contracted = contractedMap[m.name] || 0;
+    return {
+      ...m,
+      contractedQuantity: contracted,
+      remainingQuantity: Math.max(0, m.quantity - contracted)
+    };
+  });
 
   return {
     project: { id: project.id, code: project.code, name: project.name, budgetTotal: Number(project.budgetTotal) },
-    materials
+    materials: materialsWithBalance
   };
 }
 

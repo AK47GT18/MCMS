@@ -381,7 +381,11 @@ export const DrawerTemplates = {
          </div>
     `,
 
-    contractView: (contract) => `
+    contractView: (contract) => {
+        const versions = contract.versions || [];
+        const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+        
+        return `
         <div style="padding: 0;">
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: linear-gradient(to right, var(--slate-50), #fff);">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
@@ -389,7 +393,7 @@ export const DrawerTemplates = {
                         <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${contract.refCode || 'CTR-' + contract.id}</div>
                         <div style="color: var(--slate-500); font-size: 13px; font-weight: 500;">${contract.title}</div>
                     </div>
-                    <span class="status active" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em;">${contract.status || 'ACTIVE'}</span>
+                    <span class="status active" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; background: var(--emerald-light); color: var(--emerald);">${contract.status || 'ACTIVE'}</span>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
@@ -413,34 +417,96 @@ export const DrawerTemplates = {
             </div>
 
             <div style="padding: 24px;">
-                <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Contract Documents</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Contract Documents</h4>
+                    <button class="btn btn-secondary btn-sm" onclick="window.app.fmModule?.openUploadNewVersion(${contract.id})">
+                        <i class="fas fa-plus"></i> New Version
+                    </button>
+                </div>
                 
-                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-                    <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; border: 1px solid var(--slate-200);">
+                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                    <div style="width: 48px; height: 48px; background: #FEF2F2; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; border: 1px solid #FEE2E2;">
                         <i class="fas fa-file-pdf"></i>
                     </div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">Signed_Contract_Final.pdf</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">2.4 MB • Uploaded on ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : '---'}</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || 'Signed_Contract_Final.pdf'}</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Version ${versions.length || 1} • Uploaded ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Today'}</div>
                     </div>
-                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.toast.show('Opening document preview...', 'info')">
+                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.app.fmModule?.viewDocument('${contract.documentUrl}')">
                         <i class="fas fa-external-link-alt"></i>
                     </button>
                 </div>
 
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start;">
+                <div style="margin-bottom: 32px;">
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Version History</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${versions.length > 0 ? versions.map((v, idx) => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber}</div>
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${v.fileName || 'Contract_Revision.pdf'}</div>
+                                        <div style="font-size: 10px; color: var(--slate-400);">By ${v.createdBy?.name || 'System Admin'} • ${new Date(v.createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="btn btn-icon-sm" title="View" onclick="window.app.fmModule?.viewDocument('${v.documentUrl}')"><i class="fas fa-eye"></i></button>
+                                    <button class="btn btn-icon-sm" title="Download" onclick="window.app.fmModule?.downloadDocument('${v.documentUrl}', '${v.fileName}')"><i class="fas fa-download"></i></button>
+                                </div>
+                            </div>
+                        `).reverse().join('') : `
+                            <div style="text-align: center; padding: 20px; color: var(--slate-400); font-size: 12px; background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
+                                No prior versions tracked for this contract.
+                            </div>
+                        `}
+                    </div>
+                </div>
+
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 32px;">
                     <i class="fas fa-shield-check" style="color: #16a34a; font-size: 18px; margin-top: 2px;"></i>
                     <div style="font-size: 13px; color: #15803d; line-height: 1.5;">
                         <strong>Compliance Status:</strong> This contract is active and all associated insurance policies are valid. No payment blocks detected.
                     </div>
                 </div>
 
-                <div style="margin-top: 32px; display: flex; gap: 12px;">
+                <div style="display: flex; gap: 12px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
-                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--slate-900);" onclick="window.toast.show('Downloading contract bundle...', 'info')">
-                        <i class="fas fa-download" style="margin-right: 8px;"></i> Download PDF
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.downloadDocument('${contract.documentUrl}', '${contract.fileName}')">
+                        <i class="fas fa-download" style="margin-right: 8px;"></i> Download Latest PDF
                     </button>
                 </div>
+            </div>
+        </div>
+    `},
+
+    contractUploadVersion: (contractId) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--slate-50); padding: 16px; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-file-export" style="color: var(--orange); font-size: 20px;"></i>
+                <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">Upload New Contract Version</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Change Description</label>
+                <textarea id="v-change-notes" class="form-input" rows="3" placeholder="Explain what changed in this version (e.g. Price adjustment, Scope change)..." style="width: 100%;"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Upload Document (PDF)</label>
+                <div id="v-drop-zone" style="border: 2px dashed var(--slate-300); border-radius: 12px; padding: 40px; text-align: center; color: var(--slate-500); font-size: 13px; background: var(--slate-50); cursor: pointer; transition: all 0.2s ease;">
+                    <i class="fas fa-cloud-arrow-up" style="font-size: 32px; margin-bottom: 12px; color: var(--slate-400);"></i>
+                    <p style="margin: 0; font-weight: 600;">Drag new version here or <span style="color: var(--orange);">browse files</span></p>
+                    <p style="font-size: 11px; margin-top: 8px; color: var(--slate-400);">Maximum size 10MB</p>
+                </div>
+                <input type="file" id="v-file-input" style="display: none;" accept=".pdf">
+                <div id="v-file-status" style="margin-top: 12px; font-size: 12px; font-weight: 600; text-align: center;"></div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.submitNewVersion(${contractId})">
+                    <i class="fas fa-upload" style="margin-right: 8px;"></i> Upload & Increment Version
+                </button>
             </div>
         </div>
     `,
@@ -1985,7 +2051,7 @@ Contract Admin</textarea>
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label" for="new_user_password">Initial Password</label>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="new_user_password" name="password" class="form-input" placeholder="••••••••" style="width: 100%;" required data-validate="strong-password" data-strength-meter="true">
+                        <input type="text" id="new_user_password" name="password" class="form-input" placeholder="********" style="width: 100%;" required data-validate="strong-password" data-strength-meter="true">
                         <button type="button" id="btn-generate-pass" class="btn btn-secondary" style="white-space: nowrap;">Generate</button>
                     </div>
                     <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">User will be prompted to change this on first login.</p>
@@ -3794,7 +3860,7 @@ Contract Admin</textarea>
 
                 <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Current Project End Date</div>
-                    <div id="ext-req-current-end" style="font-size: 18px; font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">—</div>
+                    <div id="ext-req-current-end" style="font-size: 18px; font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">--</div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 18px;">
@@ -3807,7 +3873,7 @@ Contract Admin</textarea>
 
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Justification <span style="color: var(--red);">*</span></label>
-                    <textarea id="ext-req-justification" class="form-input" rows="5" style="width: 100%; resize: vertical; line-height: 1.6;" placeholder="Minimum 20 characters. Explain the reason for the extension clearly — e.g. weather delays, scope changes, design revisions..." oninput="window.app.layout?.updateCharCount(this.value)"></textarea>
+                    <textarea id="ext-req-justification" class="form-input" rows="5" style="width: 100%; resize: vertical; line-height: 1.6;" placeholder="Minimum 20 characters. Explain the reason for the extension clearly - e.g. weather delays, scope changes, design revisions..." oninput="window.app.layout?.updateCharCount(this.value)"></textarea>
                     <div id="ext-req-char-count" style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">0 / 20 min</div>
                 </div>
 
@@ -3825,4 +3891,333 @@ Contract Admin</textarea>
             </div>
         </div>
     `,
+
+    timelineExtensionReview: (req) => `
+        <div style="padding: 0;">
+            <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Review Timeline Extension</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.user?.name || 'Supervisor'}</div>
+                </div>
+                <div class="status-badge" style="background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">PENDING</div>
+            </div>
+
+            <div style="padding: 24px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
+                        <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Current End Date</div>
+                        <div style="font-size: 14px; font-weight: 700; color: var(--slate-700); margin-top: 4px;">${new Date(req.currentEndDate).toLocaleDateString()}</div>
+                    </div>
+                    <div style="background: var(--orange-light); padding: 12px; border-radius: 8px; border: 1px solid var(--orange-border);">
+                        <div style="font-size: 10px; color: var(--orange); font-weight: 700; text-transform: uppercase;">Requested New Date</div>
+                        <div style="font-size: 14px; font-weight: 800; color: var(--orange-dark); margin-top: 4px;">${new Date(req.requestedEndDate).toLocaleDateString()}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Justification / Reason</div>
+                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
+                        "${req.reason || 'No reason provided.'}"
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-size: 11px;">PM REVIEW COMMENTS (OPTIONAL)</label>
+                    <textarea id="extension-review-comment" class="form-input" rows="3" placeholder="Enter any notes or reasons for approval/rejection..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectExtension('${req.id}', document.getElementById('extension-review-comment').value)">Reject Request</button>
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveExtension('${req.id}', document.getElementById('extension-review-comment').value)">Approve Extension</button>
+                </div>
+            </div>
+        </div>
+    `,
+
+    dailyLogReview: (log, historicalLogs = []) => `
+        <div style="padding: 0;">
+            <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Site Progress Review</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Project: ${log.project?.name || 'Central'}</div>
+                </div>
+                <div>
+                    <select id="log-history-selector" class="form-input" style="font-size: 11px; padding: 4px 8px;" onchange="window.app.pmModule.switchReviewLog(this.value)">
+                        ${historicalLogs.map(h => `<option value="${h.id}" ${h.id === log.id ? 'selected' : ''}>${new Date(h.date || h.createdAt).toLocaleDateString()}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+
+            <div style="padding: 24px; max-height: calc(100vh - 150px); overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+                    <div style="background: var(--emerald-light); padding: 12px; border-radius: 8px; border: 1px solid var(--emerald-border); text-align: center;">
+                        <div style="font-size: 10px; color: var(--emerald-dark); font-weight: 700;">WORK PERCENT</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald-dark);">${log.workPercentage}%</div>
+                    </div>
+                    <div style="background: var(--blue-light); padding: 12px; border-radius: 8px; border: 1px solid var(--blue-border); text-align: center;">
+                        <div style="font-size: 10px; color: var(--blue-dark); font-weight: 700;">MANPOWER</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--blue-dark);">${log.manpowerCount}</div>
+                    </div>
+                    <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); text-align: center;">
+                        <div style="font-size: 10px; color: var(--slate-500); font-weight: 700;">WEATHER</div>
+                        <div style="font-size: 13px; font-weight: 800; color: var(--slate-700); margin-top: 4px;">${log.weatherCondition?.toUpperCase() || 'CLEAR'}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Completed Activities</div>
+                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
+                        ${log.activitiesCompleted || 'No activities logged.'}
+                    </div>
+                </div>
+
+                ${log.expenseItems && log.expenseItems.length > 0 ? `
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Site Expenses (MWK)</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            ${log.expenseItems.map(item => `
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid var(--slate-100);">${item.description}</td>
+                                    <td style="padding: 8px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(item.amount).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                            <tr>
+                                <td style="padding: 8px; font-weight: 700;">Total</td>
+                                <td style="padding: 8px; text-align: right; font-weight: 700; font-family: 'JetBrains Mono';">${log.expenseItems.reduce((s, i) => s + Number(i.amount), 0).toLocaleString()}</td>
+                            </tr>
+                        </table>
+                    </div>
+                ` : ''}
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-size: 11px;">REJECTION REASON (ONLY IF REJECTING)</label>
+                    <textarea id="log-review-comment" class="form-input" rows="3" placeholder="Explain why this log is being rejected..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                    ${log.status === 'submitted' || log.status === 'pending' ? `
+                        <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectLog('${log.id}', document.getElementById('log-review-comment').value)">Reject</button>
+                        <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveLog('${log.id}')">Approve & Update Schedule</button>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `,
+
+    requisitionReview: (req) => `
+        <div style="padding: 0;">
+            <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Material Requisition REQ-${req.id}</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.user?.name || 'Supervisor'}</div>
+                </div>
+            </div>
+
+            <div style="padding: 24px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px;">
+                    <thead style="background: var(--slate-50);">
+                        <tr>
+                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--slate-200);">Item</th>
+                            <th style="padding: 10px; text-align: right; border-bottom: 2px solid var(--slate-200);">Qty</th>
+                            <th style="padding: 10px; text-align: right; border-bottom: 2px solid var(--slate-200);">Est. Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${req.items.map(item => `
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); font-weight: 600;">${item.name}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right;">${item.quantity} ${item.unit}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(item.estimatedCost).toLocaleString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectRequisition('${req.id}')">Reject</button>
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveRequisition('${req.id}')">Approve & Procurement</button>
+                </div>
+            </div>
+        </div>
+    `,
+
+    userForm: `
+        <div style="padding: 24px;">
+            <input type="hidden" id="edit_user_id">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="edit_user_name" class="form-input" placeholder="Enter full name..." style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="edit_user_email" class="form-input" placeholder="user@mcms.com" style="width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Role / Access Level</label>
+                <select id="edit_user_role" class="form-input" style="width: 100%;">
+                    <option value="PROJECT_MANAGER">Project Manager</option>
+                    <option value="FIELD_SUPERVISOR">Field Supervisor</option>
+                    <option value="FINANCE_DIRECTOR">Finance Director</option>
+                    <option value="CONTRACT_ADMIN">Contract Admin</option>
+                    <option value="EQUIPMENT_COORDINATOR">Equipment Coordinator</option>
+                    <option value="SYSTEM_TECHNICIAN">System Technician</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Password (Leave blank to keep current)</label>
+                <input type="password" id="edit_user_pass" class="form-input" placeholder="••••••••" style="width: 100%;">
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUserFormSubmit()">Save User Changes</button>
+        </div>
+    `,
+
+    editProject: `
+        <div style="padding: 24px;">
+            <input type="hidden" id="edit_proj_id">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="edit_proj_name" class="form-input" style="width: 100%;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Client</label>
+                    <input type="text" id="edit_proj_client" class="form-input" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="edit_proj_status" class="form-input" style="width: 100%;">
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Budget (MWK)</label>
+                    <input type="number" id="edit_proj_budget" class="form-input" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Supervisor</label>
+                    <select id="edit_proj_supervisor" class="form-input" style="width: 100%;">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="edit_proj_start" class="form-input" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Date</label>
+                    <input type="date" id="edit_proj_end" class="form-input" style="width: 100%;">
+                </div>
+            </div>
+            
+            <div id="edit-project-map" style="height: 200px; background: #eee; border-radius: 8px; margin-bottom: 24px;"></div>
+            <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 24px; display: flex; justify-content: space-between;">
+                <span>Lat: <span id="edit_proj_lat">--</span></span>
+                <span>Lng: <span id="edit_proj_lng">--</span></span>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUpdateProject()">Update Project Master</button>
+        </div>
+    `,
+
+    suspendProject: `
+        <div style="padding: 24px;">
+            <input type="hidden" id="suspend_project_id">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="suspend_project_name" class="form-input" readonly style="width: 100%; background: var(--slate-50);">
+            </div>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Suspension Reason</label>
+                <textarea id="suspend_project_reason" class="form-input" rows="5" placeholder="Document the reason for suspension (e.g. funding delay, site dispute)..." style="width: 100%;"></textarea>
+            </div>
+            <div style="background: var(--red-light); padding: 12px; border-radius: 6px; color: var(--red-dark); font-size: 12px; margin-bottom: 24px;">
+                <i class="fas fa-exclamation-triangle"></i> This will halt all active workflows and site reporting for this project.
+            </div>
+            <button class="btn btn-danger" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleSuspendProject()">Suspend Project Now</button>
+        </div>
+    `,
+
+    extendProject: (project) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                <div style="font-weight: 700; color: var(--orange-dark);">${project.name}</div>
+                <div style="font-size: 12px; color: var(--orange);">Extending contract timeline</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Current End Date</label>
+                    <input type="date" id="extend_current_end" class="form-input" value="${project.endDate ? project.endDate.split('T')[0] : ''}" readonly style="width: 100%; background: var(--slate-50);">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New End Date</label>
+                    <input type="date" id="extend_new_end" class="form-input" style="width: 100%; border-color: var(--orange); font-weight: 700;">
+                </div>
+            </div>
+
+            <div id="extend_preview" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 12px; color: #0369a1;">
+                <i class="fas fa-info-circle"></i> <span id="extend_preview_text"></span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Modification Note</label>
+                <textarea id="extend_reason" class="form-input" rows="3" placeholder="Reference BCR or Addendum #..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; background: var(--orange); border-color: var(--orange);" onclick="window.app.pmModule.handleExtendProject('${project.id}')">Confirm Extension</button>
+        </div>
+    `,
+
+    projectDetails: (p) => `
+        <div style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
+                <div>
+                    <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${p.name}</div>
+                    <div style="font-size: 13px; color: var(--slate-500); margin-top: 4px;">${p.code} | ${p.client}</div>
+                </div>
+                <span class="status ${p.status === 'active' ? 'active' : 'pending'}">${p.status.toUpperCase()}</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                <div style="background: var(--slate-50); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; color: var(--slate-500); font-weight: 700;">TOTAL BUDGET</div>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--slate-900); margin-top: 4px;">MWK ${Number(p.budgetTotal || p.budget).toLocaleString()}</div>
+                </div>
+                <div style="background: var(--slate-50); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; color: var(--slate-500); font-weight: 700;">TIMELINE</div>
+                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-900); margin-top: 4px;">${new Date(p.startDate).toLocaleDateString()} - ${new Date(p.endDate).toLocaleDateString()}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Project Manager / Supervisor</div>
+                <div style="display: flex; align-items: center; gap: 12px; background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
+                    <div style="width: 32px; height: 32px; background: var(--blue-light); color: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${(p.managerName || 'S').charAt(0)}</div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700;">${p.managerName || 'Assigned Supervisor'}</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">Field Lead</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.openEditProjectDrawer('${p.id}')"><i class="fas fa-edit"></i> Edit Master</button>
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.openExtendProjectDrawer('${p.id}')"><i class="fas fa-calendar-plus"></i> Extend</button>
+            </div>
+        </div>
+    `,
+    newUser: '', // Placeholder that will be set to userForm below
+    editUser: '', // Placeholder that will be set to userForm below
 };
+
+DrawerTemplates.newUser = DrawerTemplates.userForm;
+DrawerTemplates.editUser = DrawerTemplates.userForm;

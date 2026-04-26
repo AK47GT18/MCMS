@@ -34,6 +34,10 @@ async function getById(id) {
     include: {
       project: { select: { id: true, code: true, name: true } },
       milestones: { orderBy: { dueDate: 'asc' } },
+      versions: { 
+        include: { createdBy: { select: { name: true } } },
+        orderBy: { versionNumber: 'asc' }
+      }
     },
   });
   if (!contract) throw new AppError('Contract not found', 404);

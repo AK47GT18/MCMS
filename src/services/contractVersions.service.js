@@ -12,7 +12,7 @@ async function getByContract(contractId) {
   });
 }
 
-async function create(contractId, data, userId) {
+async function create(contractId, data, userId, file) {
   const contract = await contractsService.getById(contractId);
   if (!contract) throw new AppError('Contract not found', 404);
 
@@ -23,23 +23,37 @@ async function create(contractId, data, userId) {
   });
   const versionNumber = lastVersion ? lastVersion.versionNumber + 1 : 1;
 
+  // If file is provided, use its info, otherwise stick to current contract info
+  const documentUrl = file ? `/uploads/documents/${file.filename}` : contract.documentUrl;
+  const fileName = file ? file.originalname : contract.fileName;
+
   const version = await prisma.contractVersion.create({
     data: {
       contractId,
       versionNumber,
       refCode: data.refCode || `${contract.refCode}-V${versionNumber}`,
-      title: data.title,
-      value: data.value,
-      status: data.status,
+      title: data.title || contract.title,
+      value: data.value || contract.value,
+      status: data.status || contract.status,
+      documentUrl,
+      fileName,
       changeNotes: data.changeNotes,
       createdById: userId
     }
   });
 
+  // Sync main contract with latest version document info
+  if (file) {
+    await prisma.contract.update({
+      where: { id: contractId },
+      data: { documentUrl, fileName }
+    });
+  }
+
   // Audit log
   await auditService.log(
     userId, 'CREATE_CONTRACT_VERSION', 'ContractVersion', version.id,
-    { contractId, versionNumber }
+    { contractId, versionNumber, fileName }
   );
 
   // Notify PM
@@ -47,7 +61,7 @@ async function create(contractId, data, userId) {
     await emailService.sendNotification(
       contract.project.manager.email,
       'New Contract Version Uploaded',
-      `A new version (V${versionNumber}) for contract ${contract.refCode} has been uploaded by user ID ${userId}. \nChange Notes: ${data.changeNotes || 'None'}`
+      `A new version (V${versionNumber}) for contract ${contract.refCode} has been uploaded by user ID ${userId}. \nFile: ${fileName}\nChange Notes: ${data.changeNotes || 'None'}`
     ).catch(e => console.error('Failed to notify PM', e));
   }
 

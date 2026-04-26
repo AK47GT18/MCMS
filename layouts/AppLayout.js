@@ -463,7 +463,7 @@ export class AppLayout {
     showProfileDrawer() {
         const currentUser = getCurrentUser();
         const contentHTML = `
-            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background) var(--slate-50); text-align: center;">
+            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); text-align: center;">
                 <div style="width: 64px; height: 64px; background: var(--white); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
                     <i class="fas fa-id-card-clip"></i>
                 </div>
