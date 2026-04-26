@@ -15,6 +15,7 @@ function generateToken(payload) {
   return jwt.sign(
     {
       id: payload.id,
+      name: payload.name,
       email: payload.email,
       role: payload.role,
       permissions: payload.permissions || [],

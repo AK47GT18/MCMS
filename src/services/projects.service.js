@@ -633,10 +633,26 @@ async function extendProject(projectId, newEndDate, reason, approver) {
   }
 
   // 4. Audit trail
-  await auditService.log(
-    approver.id, 'EXTEND_PROJECT', 'Project', projectId,
-    { oldEndDate, newEndDate: newEnd.toISOString(), shiftDays, reason, tasksShifted: cascadeResult.shifted, contractsUpdated }
-  );
+  await prisma.auditLog.create({
+    data: {
+      userId: approver.id,
+      userName: approver.name,
+      userRole: approver.role,
+      action: 'EXTEND_PROJECT',
+      targetType: 'Project',
+      targetId: projectId,
+      targetCode: project.code,
+      details: { 
+        oldEndDate, 
+        newEndDate: newEnd.toISOString(), 
+        shiftDays, 
+        reason, 
+        tasksShifted: cascadeResult.shifted, 
+        contractsUpdated,
+        requestedByName: approver.name 
+      },
+    }
+  });
 
   // 5. Notify all project stakeholders
   const emailService = require('../emails/email.service');

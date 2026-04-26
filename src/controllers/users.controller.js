@@ -65,10 +65,10 @@ const update = asyncHandler(async (req, res, id) => {
   const data = validateBody(body, updateUserSchema, res);
   if (!data) return;
   
-  const result = await usersService.update(userId, data);
+  const { user: result, changes } = await usersService.update(userId, data);
   
   // Audit log
-  await auditService.logFromRequest(req, 'UPDATE_USER', 'User', userId, result.email, { updatedFields: Object.keys(data) });
+  await auditService.logFromRequest(req, 'UPDATE_USER', 'User', userId, result.email, { changes });
   
   response.success(res, result);
 });
@@ -116,7 +116,7 @@ const lock = asyncHandler(async (req, res, id) => {
   await usersService.setLockStatus(userId, true, reason);
   
   // Audit log
-  await auditService.logFromRequest(req, 'LOCK_USER', 'User', userId, null, { reason });
+  await auditService.logFromRequest(req, 'LOCK_USER', 'User', userId, targetUser.email, { reason, targetName: targetUser.name });
   
   response.success(res, { message: 'User locked' });
 });
@@ -145,7 +145,7 @@ const unlock = asyncHandler(async (req, res, id) => {
   await usersService.setLockStatus(userId, false, reason);
   
   // Audit log
-  await auditService.logFromRequest(req, 'UNLOCK_USER', 'User', userId, null, { reason });
+  await auditService.logFromRequest(req, 'UNLOCK_USER', 'User', userId, targetUser.email, { reason, targetName: targetUser.name });
   
   response.success(res, { message: 'User unlocked' });
 });

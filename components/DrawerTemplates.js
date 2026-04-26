@@ -170,6 +170,16 @@ export const DrawerTemplates = {
                     </div>
                 </button>
 
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.app.fsModule.viewRejectedLogs()">
+                    <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-undo-alt"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Rejected Reviews</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">View and fix rejected site logs</div>
+                    </div>
+                </button>
+
                 <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident)">
                     <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-helmet-safety"></i>
@@ -1080,8 +1090,13 @@ export const DrawerTemplates = {
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <input type="hidden" id="daily-log-task-id" value="${taskId || ''}" />
-            <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
-                <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining
+            <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining
+                </div>
+                <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px; background:white; border: 1px solid var(--slate-300);" onclick="window.app.fsModule.viewLogHistory()">
+                    <i class="fas fa-history"></i> History
+                </button>
             </div>
 
             <!-- Workflow Wallet Card -->
@@ -1162,6 +1177,30 @@ export const DrawerTemplates = {
             </div>
 
             <button id="daily-log-submit-btn" class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="window.submitDailyProgressLog(this)"><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
+        </div>
+    `,
+
+    dailyProgressLogHistory: (logs = []) => `
+        <div class="drawer-section" style="padding-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800;">Log History</h3>
+                <input type="date" id="history-date-picker" class="form-input" style="padding: 4px 8px; font-size: 13px;" onchange="window.app.fsModule.loadHistoricalLog(this.value)">
+            </div>
+            
+            <div id="history-content-area">
+                ${logs.length === 0 ? `
+                    <div style="text-align: center; padding: 40px 20px; color: var(--slate-400);">
+                        <i class="fas fa-calendar-alt" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                        <div>Select a date to view historical progress reports</div>
+                    </div>
+                ` : `
+                    <div style="text-align: center; padding: 20px; color: var(--slate-500);">Loading historical data...</div>
+                `}
+            </div>
+            
+            <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                <i class="fas fa-arrow-left"></i> Back to Current Log
+            </button>
         </div>
     `,
 
@@ -1440,6 +1479,110 @@ export const DrawerTemplates = {
                     `).join('')}
                 </tbody>
             </table>
+        </div>
+    `,
+    
+    contractViewer: (contract) => `
+        <div style="height: 100%; display: flex; flex-direction: column; background: white;">
+            <!-- Header -->
+            <div style="padding: 28px 24px; background: linear-gradient(135deg, var(--orange-dark), var(--orange)); color: white; position: relative; overflow: hidden;">
+                <div style="position: absolute; right: -20px; top: -20px; font-size: 120px; opacity: 0.1; transform: rotate(-15deg);">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <div style="position: relative; z-index: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${this.escapeHTML(contract.type || 'Standard Agreement')}</span>
+                                <span style="font-size: 10px; opacity: 0.8; font-weight: 600;">v${contract.version || '1.0'}</span>
+                            </div>
+                            <div style="font-size: 22px; font-weight: 800; line-height: 1.2; max-width: 400px;">${this.escapeHTML(contract.title || 'Untitled Document')}</div>
+                            <div style="font-size: 13px; opacity: 0.9; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-fingerprint" style="font-size: 11px;"></i> 
+                                <span style="font-family: 'JetBrains Mono'; font-weight: 500;">${this.escapeHTML(contract.code || 'CNT-' + contract.id)}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="status active" style="background: var(--emerald); color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; gap: 6px;">
+                                <div style="width: 6px; height: 6px; background: white; border-radius: 50%; box-shadow: 0 0 8px white;"></div>
+                                ACTIVE
+                            </div>
+                            <div style="margin-top: 12px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase;">Expires</div>
+                            <div style="font-size: 13px; font-weight: 600;">${contract.expiryDate ? new Date(contract.expiryDate).toLocaleDateString() : 'Lifetime'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Metadata Bar -->
+            <div style="display: flex; padding: 12px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); gap: 24px;">
+                <div>
+                    <div style="font-size: 10px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Party A</div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">MCMS / Gov of Malawi</div>
+                </div>
+                <div style="width: 1px; background: var(--slate-200);"></div>
+                <div>
+                    <div style="font-size: 10px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Contractor / Party B</div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${this.escapeHTML(contract.contractor || 'General Supplier')}</div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div style="flex: 1; background: var(--slate-100); position: relative; min-height: 500px; display: flex; flex-direction: column;">
+                ${contract.fileUrl ? `
+                    <div style="background: var(--slate-800); padding: 10px; display: flex; justify-content: center; gap: 20px;">
+                        <div style="color: white; font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-shield-alt" style="color: var(--emerald);"></i> Digitally Verified
+                        </div>
+                        <div style="color: white; font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-lock" style="color: var(--orange);"></i> Encrypted Transmission
+                        </div>
+                    </div>
+                    <iframe src="${contract.fileUrl}" style="flex: 1; width: 100%; border: none;"></iframe>
+                ` : `
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--slate-500); padding: 60px; text-align: center;">
+                        <div style="position: relative; margin-bottom: 24px;">
+                            <div style="width: 100px; height: 100px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-orange 2s infinite;">
+                                <i class="fas fa-file-pdf" style="font-size: 42px; color: var(--orange);"></i>
+                            </div>
+                            <div style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); border: 1px solid var(--slate-200);">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 14px; color: var(--orange);"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--slate-800);">No Digital Copy Found</div>
+                        <div style="font-size: 13px; margin-top: 12px; max-width: 320px; line-height: 1.6;">This contract record is valid in the registry, but the physical document hasn't been uploaded yet.</div>
+                        
+                        <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px;">
+                            <button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange); justify-content: center; padding: 12px;" onclick="window.drawer.open('Upload Document', window.DrawerTemplates.newContract)">
+                                <i class="fas fa-upload"></i> Upload Signed PDF
+                            </button>
+                            <button class="btn btn-secondary" style="justify-content: center; padding: 12px;" onclick="window.toast.show('Requesting document from registry...', 'info')">
+                                <i class="fas fa-paper-plane"></i> Request from Archive
+                            </button>
+                        </div>
+                    </div>
+                `}
+            </div>
+
+            <!-- Footer Actions -->
+            <div style="padding: 20px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
+                <button class="btn btn-secondary" style="padding: 12px 20px;" onclick="window.toast.show('Preparing document for download...', 'info')" ${!contract.fileUrl ? 'disabled' : ''}>
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+                <div style="flex: 1;"></div>
+                <button class="btn btn-secondary" style="padding: 12px 20px;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-primary" style="background: var(--slate-900); border-color: var(--slate-900); padding: 12px 32px;" onclick="window.drawer.close()">
+                    Close Viewer
+                </button>
+            </div>
+
+            <style>
+                @keyframes pulse-orange {
+                    0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+                    70% { box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+                }
+            </style>
         </div>
     `,
 
@@ -2831,8 +2974,8 @@ Contract Admin</textarea>
                 <div class="form-group" style="margin-bottom:24px;">
                     <label class="form-label">Initial Password</label>
                     <div style="display:flex; gap:8px;">
-                        <input type="password" name="password" class="form-input" placeholder="Min 8 chars..." required style="flex:1;">
-                        <button type="button" class="btn btn-secondary btn-generate-pass" style="padding:0 12px;" title="Generate secure password"><i class="fas fa-key"></i></button>
+                        <input type="password" name="password" id="new-user-password" class="form-input" placeholder="Min 8 chars..." required style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-generate-pass" style="padding:0 12px;" title="Generate secure password" onclick="(window.techModule || window.app.pmModule)?.generateTempPassword('new-user-password')"><i class="fas fa-key"></i></button>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">Create User Account</button>
@@ -2868,7 +3011,12 @@ Contract Admin</textarea>
                 </div>
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label">Password Reset</label>
-                    <input type="password" name="password" id="edit-user-password" class="form-input" placeholder="Enter new password to reset" style="width:100%;">
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" name="password" id="edit-user-password" class="form-input" placeholder="Enter new password to reset" style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-generate-pass" style="padding:0 12px;" title="Generate secure password" onclick="(window.techModule || window.app.pmModule)?.generateTempPassword('edit-user-password')">
+                            <i class="fas fa-key"></i>
+                        </button>
+                    </div>
                     <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">Leave blank to keep the current password.</p>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; margin-bottom: 24px;">Update User Details</button>
@@ -4045,29 +4193,31 @@ Contract Admin</textarea>
 
     userForm: `
         <div style="padding: 24px;">
-            <input type="hidden" id="edit_user_id">
+            <input type="hidden" id="edit_user_id" name="id">
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Full Name</label>
-                <input type="text" id="edit_user_name" class="form-input" placeholder="Enter full name..." style="width: 100%;">
+                <input type="text" id="edit_user_name" name="name" class="form-input" placeholder="Enter full name..." style="width: 100%;">
             </div>
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Email Address</label>
-                <input type="email" id="edit_user_email" class="form-input" placeholder="user@mcms.com" style="width: 100%;">
+                <input type="email" id="edit_user_email" name="email" class="form-input" placeholder="user@mcms.com" style="width: 100%;">
             </div>
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Role / Access Level</label>
-                <select id="edit_user_role" class="form-input" style="width: 100%;">
-                    <option value="PROJECT_MANAGER">Project Manager</option>
-                    <option value="FIELD_SUPERVISOR">Field Supervisor</option>
-                    <option value="FINANCE_DIRECTOR">Finance Director</option>
-                    <option value="CONTRACT_ADMIN">Contract Admin</option>
-                    <option value="EQUIPMENT_COORDINATOR">Equipment Coordinator</option>
-                    <option value="SYSTEM_TECHNICIAN">System Technician</option>
+                <select id="edit_user_role" name="role" class="form-input" style="width: 100%;">
+                    <option value="Project_Manager">Project Manager</option>
+                    <option value="Field_Supervisor">Field Supervisor</option>
+                    <option value="Finance_Director">Finance Director</option>
+                    <option value="Contract_Administrator">Contract Administrator</option>
+                    <option value="Equipment_Coordinator">Equipment Coordinator</option>
+                    <option value="Operations_Manager">Operations Manager</option>
+                    <option value="Managing_Director">Managing Director</option>
+                    <option value="System_Technician">System Technician</option>
                 </select>
             </div>
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Password (Leave blank to keep current)</label>
-                <input type="password" id="edit_user_pass" class="form-input" placeholder="••••••••" style="width: 100%;">
+                <input type="password" id="edit_user_pass" name="password" class="form-input" placeholder="••••••••" style="width: 100%;">
             </div>
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUserFormSubmit()">Save User Changes</button>
         </div>
@@ -4215,9 +4365,5 @@ Contract Admin</textarea>
             </div>
         </div>
     `,
-    newUser: '', // Placeholder that will be set to userForm below
-    editUser: '', // Placeholder that will be set to userForm below
 };
 
-DrawerTemplates.newUser = DrawerTemplates.userForm;
-DrawerTemplates.editUser = DrawerTemplates.userForm;

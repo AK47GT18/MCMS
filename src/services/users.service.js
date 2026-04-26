@@ -188,7 +188,7 @@ async function update(id, data) {
   emailService.sendNotification(user, 'Account Updated', `${changeText}\n\nIf you did not authorize this, please contact support.`)
     .catch(err => logger.error('Failed to send update email', err));
   
-  return user;
+  return { user, changes };
 }
 
 /**

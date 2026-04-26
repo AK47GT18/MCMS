@@ -54,6 +54,7 @@ async function login(email, password) {
   // Generate token
   const token = generateToken({
     id: user.id,
+    name: user.name,
     email: user.email,
     role: user.role,
     permissions: user.permissions,
@@ -120,6 +121,7 @@ async function register(userData) {
   // Generate token
   const token = generateToken({
     id: user.id,
+    name: user.name,
     email: user.email,
     role: user.role,
     permissions: user.permissions,
