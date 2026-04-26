@@ -19,6 +19,11 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
       orderBy: { [sortBy]: sortOrder },
       include: {
         project: { select: { id: true, code: true, name: true } },
+        vendor: { select: { id: true, name: true } },
+        versions: {
+          include: { createdBy: { select: { name: true } } },
+          orderBy: { versionNumber: 'desc' }
+        },
         _count: { select: { milestones: true } },
       },
     }),

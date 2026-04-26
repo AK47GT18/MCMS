@@ -23,7 +23,7 @@ export const PM_ReviewHandlers = {
             console.error('Log approval failed:', error);
             window.toast.show(error.message || 'Failed to approve log', 'error');
         }
-    },
+    },
 
     async handleRejectLog(id, reason) {
         try {
@@ -40,7 +40,7 @@ export const PM_ReviewHandlers = {
             console.error('Log rejection failed:', error);
             window.toast.show(error.message || 'Failed to reject log', 'error');
         }
-    },
+    },
 
     async handleApproveRequisition(id) {
         try {
@@ -53,7 +53,7 @@ export const PM_ReviewHandlers = {
             console.error('Requisition approval failed:', error);
             window.toast.show(error.message || 'Failed to approve requisition', 'error');
         }
-    },
+    },
 
     async handleRejectRequisition(id, reason) {
         try {
@@ -69,6 +69,70 @@ export const PM_ReviewHandlers = {
         } catch (error) {
             console.error('Requisition rejection failed:', error);
             window.toast.show(error.message || 'Failed to reject requisition', 'error');
+        }
+    },
+
+    // =========================================
+    // TIMELINE EXTENSION APPROVE / REJECT
+    // =========================================
+
+    async handleApproveExtension(id, comment) {
+        try {
+            window.toast.show('Approving extension request...', 'info');
+            const timelineApi = (await import('../../../src/api/timelineExtensions.api.js')).default;
+            await timelineApi.approve(id, { pmComment: comment || '' });
+            window.toast.show('Timeline extension approved. Project end date updated and stakeholders notified.', 'success');
+            window.drawer.close();
+            // Refresh reviews tab data
+            if (typeof this.loadReviewsData === 'function') this.loadReviewsData();
+            // Refresh portfolio / gantt if loaded
+            if (typeof this.loadProjectsFromAPI === 'function') this.loadProjectsFromAPI();
+            if (typeof this.renderGanttChart === 'function') this.renderGanttChart();
+        } catch (error) {
+            console.error('Extension approval failed:', error);
+            window.toast.show(error.message || 'Failed to approve extension', 'error');
+        }
+    },
+
+    async handleRejectExtension(id, comment) {
+        try {
+            if (!comment || comment.trim().length < 5) {
+                window.toast.show('Please provide a reason for rejection (min 5 characters)', 'error');
+                document.getElementById('extension-review-comment')?.focus();
+                return;
+            }
+            window.toast.show('Rejecting extension request...', 'info');
+            const timelineApi = (await import('../../../src/api/timelineExtensions.api.js')).default;
+            await timelineApi.reject(id, { pmComment: comment.trim() });
+            window.toast.show('Extension request rejected. Requester has been notified.', 'warning');
+            window.drawer.close();
+            // Refresh reviews tab data
+            if (typeof this.loadReviewsData === 'function') this.loadReviewsData();
+        } catch (error) {
+            console.error('Extension rejection failed:', error);
+            window.toast.show(error.message || 'Failed to reject extension', 'error');
+        }
+    },
+
+    // =========================================
+    // DAILY LOG REVIEW DRAWER
+    // =========================================
+
+    async openDailyLogReviewDrawer(logId, projectId) {
+        try {
+            window.toast.show('Loading log details...', 'info');
+            const logRes = await client.get(`/daily-logs/${logId}`);
+            const log = logRes.data || logRes;
+
+            // Fetch recent history for sidebar context
+            const historyRes = await client.get(`/daily-logs?projectId=${projectId}&limit=10`);
+            const history = Array.isArray(historyRes) ? historyRes : (historyRes.data || []);
+            history.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+            window.drawer.open('Review Daily Log', window.DrawerTemplates.dailyLogReview(log, history));
+        } catch (error) {
+            console.error('Failed to open log review:', error);
+            window.toast.show('Failed to load log details', 'error');
         }
     }
 };

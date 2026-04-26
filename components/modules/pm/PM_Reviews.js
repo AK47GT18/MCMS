@@ -33,12 +33,12 @@ export const PM_Reviews = {
                 </div>
             </div>
         `;
-    },
+    },
 
     switchReviewTab(tab) {
         this.currentReviewTab = tab;
         if (window.app) window.app.loadPage('reviews');
-    },
+    },
 
     async loadReviewsData() {
         const container = document.getElementById('reviews-table-container');
@@ -49,7 +49,7 @@ export const PM_Reviews = {
                 client.get('/timeline-extensions?status=pending'),
                 client.get('/daily-logs?status=submitted'),
                 requisitions.getPending(),
-                audit.getLogs({ action: 'APPROVE', limit: 20 }) // Simplified history from audit
+                audit.getAll({ action: 'APPROVE', limit: 20 })
             ]);
 
             this.pendingExtensions = Array.isArray(extRes) ? extRes : (extRes.data || []);
@@ -62,7 +62,7 @@ export const PM_Reviews = {
             console.error('Failed to load review data:', error);
             container.innerHTML = this.renderEmptyState('Failed to load pending reviews. Please try again.');
         }
-    },
+    },
 
     renderActiveReviewTab() {
         const container = document.getElementById('reviews-table-container');
@@ -85,7 +85,7 @@ export const PM_Reviews = {
         }
 
         container.innerHTML = html;
-    },
+    },
 
     renderExtensionsTable() {
         if (!this.pendingExtensions || this.pendingExtensions.length === 0) {
@@ -94,11 +94,11 @@ export const PM_Reviews = {
 
         const rows = this.pendingExtensions.map(item => `
             <tr>
-                <td style="font-weight: 700;">${item.projectCode || 'PRJ-' + item.projectId}</td>
-                <td>${this.escapeHTML(item.projectName || 'Active Project')}</td>
+                <td style="font-weight: 700;">${item.project?.code || item.projectCode || 'PRJ-' + item.projectId}</td>
+                <td>${this.escapeHTML(item.project?.name || item.projectName || 'Active Project')}</td>
                 <td>${new Date(item.currentEndDate).toLocaleDateString()}</td>
                 <td style="font-weight: 700; color: var(--orange);">${new Date(item.requestedEndDate).toLocaleDateString()}</td>
-                <td>${item.requestedByName || 'Supervisor'}</td>
+                <td>${item.requestedBy?.name || item.requestedByName || 'Supervisor'}</td>
                 <td>
                     <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Review Extension', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
                 </td>
@@ -113,7 +113,7 @@ export const PM_Reviews = {
                 <tbody>${rows}</tbody>
             </table>
         `;
-    },
+    },
 
     renderPendingLogsTable() {
         if (!this.pendingLogs || this.pendingLogs.length === 0) {
@@ -141,7 +141,7 @@ export const PM_Reviews = {
                 <tbody>${rows}</tbody>
             </table>
         `;
-    },
+    },
 
     renderPendingRequisitionsTable() {
         if (!this.pendingRequisitions || this.pendingRequisitions.length === 0) {
@@ -169,7 +169,7 @@ export const PM_Reviews = {
                 <tbody>${rows}</tbody>
             </table>
         `;
-    },
+    },
 
     renderReviewHistoryTable() {
         if (!this.reviewHistory || this.reviewHistory.length === 0) {
@@ -194,7 +194,7 @@ export const PM_Reviews = {
                 <tbody>${rows}</tbody>
             </table>
         `;
-    },
+    },
 
     async switchReviewLog(logId) {
         window.toast.show('Switching date...', 'info');
@@ -202,13 +202,10 @@ export const PM_Reviews = {
             const res = await client.get(`/daily-logs/${logId}`);
             const log = res.data || res;
             
-            // We need to keep the historical context, so we look at the currently open drawer data if possible
-            // Or just refetch (simpler for now)
             const historyRes = await client.get(`/daily-logs?projectId=${log.projectId}&limit=10`);
             const history = Array.isArray(historyRes) ? historyRes : (historyRes.data || []);
             history.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
 
-            // Update the drawer content without closing/reopening if possible, or just re-render
             const drawerContent = document.querySelector('.drawer-content');
             if (drawerContent) {
                 drawerContent.innerHTML = window.DrawerTemplates.dailyLogReview(log, history);

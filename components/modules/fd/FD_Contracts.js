@@ -1,69 +1,164 @@
 import client from '../../../src/api/client.js';
 import { StatCard } from '../ui/StatCard.js';
+import contracts from '../../../src/api/contracts.api.js';
 
 export const FD_Contracts = {
     getContractsView() {
-        // Trigger async load
-        setTimeout(() => this.loadContractsFromAPI(), 0);
+        this.currentContractTab = this.currentContractTab || 'project';
+        this.projectFilter = '';
+        this.vendorFilter = '';
+        
+        setTimeout(() => this.loadContractsData(), 0);
         
         return `
-            <div class="data-card">
-              <div class="data-card-header">
-                <div class="card-title">Vendor Contracts</div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filters</button>
+            <div class="data-card" style="margin-bottom: 24px;">
+                <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-title">Contract Registry & Legal Repository</div>
                     <button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Contract</button>
                 </div>
-              </div>
-              <div id="contracts-table-container">
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
-                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
-                    <div>Loading contracts...</div>
+                
+                <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
+                    <div class="tab ${this.currentContractTab === 'project' ? 'active' : ''}" data-tab="project" onclick="window.app.fmModule.switchContractTab('project')">Project Contracts</div>
+                    <div class="tab ${this.currentContractTab === 'vendor' ? 'active' : ''}" data-tab="vendor" onclick="window.app.fmModule.switchContractTab('vendor')">Vendor Contracts</div>
                 </div>
-              </div>
+                
+                <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; gap: 16px;">
+                    <select id="contract-project-filter" class="form-input" style="max-width: 250px;" onchange="window.app.fmModule.handleContractFilterChange()">
+                        <option value="">All Projects</option>
+                        <!-- Projects loaded dynamically -->
+                    </select>
+                    ${this.currentContractTab === 'vendor' ? `
+                    <select id="contract-vendor-filter" class="form-input" style="max-width: 250px;" onchange="window.app.fmModule.handleContractFilterChange()">
+                        <option value="">All Vendors</option>
+                        <!-- Vendors loaded dynamically -->
+                    </select>
+                    ` : ''}
+                </div>
+
+                <div id="contracts-table-container">
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                        <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                        <div>Loading contracts...</div>
+                    </div>
+                </div>
             </div>
         `;
-    },
+    },
 
-    async loadContractsFromAPI() {
+    switchContractTab(tab) {
+        this.currentContractTab = tab;
+        this.projectFilter = '';
+        this.vendorFilter = '';
+        if (window.app) window.app.loadPage('contracts');
+    },
+    
+    handleContractFilterChange() {
+        this.projectFilter = document.getElementById('contract-project-filter')?.value || '';
+        if (this.currentContractTab === 'vendor') {
+            this.vendorFilter = document.getElementById('contract-vendor-filter')?.value || '';
+        }
+        this.renderContractsTable();
+    },
+
+    async loadContractsData() {
         const container = document.getElementById('contracts-table-container');
         if (!container) return;
 
         try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const response = await fetch('/api/v1/contracts', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to load contracts');
-            const result = await response.json();
-            const contracts = result.data || result.items || result || [];
+            // Load filters data
+            client.get('/projects?limit=50').then(res => {
+                const projectsData = Array.isArray(res) ? res : (res.data || []);
+                const select = document.getElementById('contract-project-filter');
+                if (select) {
+                    projectsData.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.name;
+                        if (this.projectFilter == p.id) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                }
+            }).catch(e => console.error('Error loading projects for filter', e));
 
-            if (contracts.length === 0) {
-                container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-file-contract" style="font-size: 32px; margin-bottom: 12px;"></i><div>No contracts found.</div></div>`;
-                return;
+            if (this.currentContractTab === 'vendor') {
+                client.get('/vendors?limit=50').then(res => {
+                    const vendorsData = Array.isArray(res) ? res : (res.data || []);
+                    const select = document.getElementById('contract-vendor-filter');
+                    if (select) {
+                        vendorsData.forEach(v => {
+                            const opt = document.createElement('option');
+                            opt.value = v.id;
+                            opt.textContent = v.name;
+                            if (this.vendorFilter == v.id) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+                    }
+                }).catch(e => console.error('Error loading vendors for filter', e));
             }
-            container.innerHTML = this.renderContractsTable(contracts);
-        } catch (error) {
-            container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">${error.message}</div>`;
-        }
-    },
 
-    renderContractsTable(contracts) {
-        // Store contracts for later lookup
-        this._contractsMap = contracts;
+            // Load contracts
+            const response = await contracts.getAll({ limit: 100 });
+            const data = response.data || response;
+            const allContracts = Array.isArray(data) ? data : data.contracts || [];
+            
+            // Store raw contracts
+            this.allContracts = allContracts;
+            this._contractsMap = allContracts; // For legacy methods
+            
+            this.renderContractsTable();
+
+        } catch (error) {
+            console.error('Failed to load contracts:', error);
+            container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">Failed to load contract registry.</div>`;
+        }
+    },
+
+    renderContractsTable() {
+        const container = document.getElementById('contracts-table-container');
+        if (!container) return;
+        
+        if (!this.allContracts || this.allContracts.length === 0) {
+            container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-file-contract" style="font-size: 32px; margin-bottom: 12px;"></i><div>No contracts found in the repository.</div></div>`;
+            return;
+        }
+
+        // Filter by tab type
+        let filtered = this.allContracts.filter(c => {
+            if (this.currentContractTab === 'vendor') {
+                return c.contractType === 'supply' || c.contractType === 'vendor' || c.vendorId != null;
+            } else {
+                return c.contractType === 'project' || c.contractType === 'client' || (c.vendorId == null && c.projectId != null);
+            }
+        });
+
+        // Filter by project
+        if (this.projectFilter) {
+            filtered = filtered.filter(c => c.projectId == this.projectFilter);
+        }
+        
+        // Filter by vendor
+        if (this.currentContractTab === 'vendor' && this.vendorFilter) {
+            filtered = filtered.filter(c => c.vendorId == this.vendorFilter);
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-filter" style="font-size: 32px; margin-bottom: 12px;"></i><div>No contracts match the selected filters.</div></div>`;
+            return;
+        }
 
         const formatValue = (v) => v ? (Number(v) / 1000000).toFixed(1) + 'M' : '-';
-        const rows = contracts.map(c => `
+        
+        const rows = filtered.map(item => `
             <tr>
-                <td><span class="project-id">${c.refCode || 'CON-'+c.id}</span></td>
-                <td style="font-weight:600;">${c.title}</td>
-                <td>${c.vendorName || '-'}</td>
-                <td style="font-family:'JetBrains Mono';">${formatValue(c.value)}</td>
-                <td><span class="status active">${c.status || 'Active'}</span></td>
+                <td><span class="project-id">${item.code || item.refCode || 'CNT-' + item.id}</span></td>
+                <td style="font-weight:600;">${item.title}</td>
+                ${this.currentContractTab === 'vendor' ? `<td>${item.vendorName || item.vendor?.name || '-'}</td>` : ''}
+                <td style="font-family:'JetBrains Mono';">${formatValue(item.value)}</td>
+                <td><span class="status active">${item.status || 'Active'}</span></td>
                 <td>
                     <div style="display:flex; gap:4px;">
-                        <button class="btn btn-secondary" style="padding:4px 8px;" onclick="window.app.fmModule?.viewContract(${c.id})">View</button>
-                        <button class="btn btn-action" style="padding:4px 8px; background: var(--slate-100); color: var(--slate-600);" onclick="window.app.fmModule?.notifyLogistics(${c.id}, '${c.refCode}')">
+                        <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractViewer(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i> View</button>
+                        <button class="btn btn-action" style="padding:4px 8px; background: var(--slate-100); color: var(--slate-600);" onclick="window.app.fmModule?.notifyLogistics(${item.id}, '${item.refCode || item.code}')" title="Notify Logistics">
                             <i class="fas fa-shipping-fast"></i>
                         </button>
                     </div>
@@ -71,8 +166,22 @@ export const FD_Contracts = {
             </tr>
         `).join('');
 
-        return `<table><thead><tr><th>Ref</th><th>Title</th><th>Vendor</th><th>Value</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
-    },
+        container.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ref</th>
+                        <th>Title</th>
+                        ${this.currentContractTab === 'vendor' ? '<th>Vendor</th>' : ''}
+                        <th>Value</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    },
 
     async viewContract(id) {
         window.toast.show('Fetching contract details...', 'info');
@@ -96,7 +205,7 @@ export const FD_Contracts = {
                 window.toast.show('Could not load contract details.', 'error');
             }
         }
-    },
+    },
 
     openUploadNewVersion(contractId) {
         window.drawer.open('New Contract Version', window.DrawerTemplates.contractUploadVersion(contractId));
@@ -119,7 +228,7 @@ export const FD_Contracts = {
                 };
             }
         }, 100);
-    },
+    },
 
     async submitNewVersion(contractId) {
         const notes = document.getElementById('v-change-notes')?.value;
@@ -156,11 +265,11 @@ export const FD_Contracts = {
             window.drawer.close();
             // Refresh the view
             this.viewContract(contractId);
-            this.loadContractsFromAPI();
+            this.loadContractsData();
         } catch (error) {
             window.toast.show('Failed to upload version: ' + error.message, 'error');
         }
-    },
+    },
 
     viewDocument(url) {
         if (!url) {
@@ -168,7 +277,7 @@ export const FD_Contracts = {
             return;
         }
         window.open(url, '_blank');
-    },
+    },
 
     downloadDocument(url, filename) {
         if (!url) {
@@ -181,7 +290,7 @@ export const FD_Contracts = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    },
+    },
 
     async loadContractProjects() {
         const select = document.getElementById('contract_project');
@@ -195,7 +304,7 @@ export const FD_Contracts = {
             const projects = result.data || result.items || [];
             select.innerHTML = '<option value="">Select a project...</option>' + projects.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join('');
         } catch (err) { console.error(err); }
-    },
+    },
 
     initContractUpload() {
         const dropZone = document.getElementById('contract-drop-zone');
@@ -209,7 +318,7 @@ export const FD_Contracts = {
                 dropZone.style.borderColor = 'var(--emerald)';
             }
         };
-    },
+    },
 
     async onContractProjectSelected(projectId) {
         const list = document.getElementById('contract-materials-list');
@@ -270,7 +379,7 @@ export const FD_Contracts = {
         } catch (err) { 
             list.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 12px;">Error loading materials list.</div>'; 
         }
-    },
+    },
 
     async submitContract() {
         const data = {
@@ -309,9 +418,9 @@ export const FD_Contracts = {
             if (!res.ok) throw new Error('System error creating contract');
             window.toast.show('Contract established successfully', 'success');
             window.drawer.close();
-            if (this.currentView === 'contracts') this.loadContractsFromAPI();
+            if (this.currentView === 'contracts') this.loadContractsData();
         } catch (err) { window.toast.show(err.message, 'error'); }
-    },
+    },
 
     async notifyLogistics(contractId, refCode) {
         window.toast.show(`Notifying Logistics about ${refCode}...`, 'info');
@@ -333,7 +442,7 @@ export const FD_Contracts = {
         } catch (err) {
             window.toast.show('Error notifying logistics: ' + err.message, 'error');
         }
-    },
+    },
 
     loadContractsView() {
         this.currentView = 'contracts';

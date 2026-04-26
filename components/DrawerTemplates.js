@@ -1,4 +1,13 @@
 export const DrawerTemplates = {
+    escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
     transactionEntry: `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
@@ -1482,7 +1491,11 @@ export const DrawerTemplates = {
         </div>
     `,
     
-    contractViewer: (contract) => `
+    contractViewer: (contract) => {
+        const versions = contract.versions || [];
+        const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
+        
+        return `
         <div style="height: 100%; display: flex; flex-direction: column; background: white;">
             <!-- Header -->
             <div style="padding: 28px 24px; background: linear-gradient(135deg, var(--orange-dark), var(--orange)); color: white; position: relative; overflow: hidden;">
@@ -1493,13 +1506,13 @@ export const DrawerTemplates = {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${this.escapeHTML(contract.type || 'Standard Agreement')}</span>
+                                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${DrawerTemplates.escapeHTML(contract.type || 'Standard Agreement')}</span>
                                 <span style="font-size: 10px; opacity: 0.8; font-weight: 600;">v${contract.version || '1.0'}</span>
                             </div>
-                            <div style="font-size: 22px; font-weight: 800; line-height: 1.2; max-width: 400px;">${this.escapeHTML(contract.title || 'Untitled Document')}</div>
+                            <div style="font-size: 22px; font-weight: 800; line-height: 1.2; max-width: 400px;">${DrawerTemplates.escapeHTML(contract.title || 'Untitled Document')}</div>
                             <div style="font-size: 13px; opacity: 0.9; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-fingerprint" style="font-size: 11px;"></i> 
-                                <span style="font-family: 'JetBrains Mono'; font-weight: 500;">${this.escapeHTML(contract.code || 'CNT-' + contract.id)}</span>
+                                <span style="font-family: 'JetBrains Mono'; font-weight: 500;">${DrawerTemplates.escapeHTML(contract.code || 'CNT-' + contract.id)}</span>
                             </div>
                         </div>
                         <div style="text-align: right;">
@@ -1523,12 +1536,38 @@ export const DrawerTemplates = {
                 <div style="width: 1px; background: var(--slate-200);"></div>
                 <div>
                     <div style="font-size: 10px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Contractor / Party B</div>
-                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${this.escapeHTML(contract.contractor || 'General Supplier')}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${DrawerTemplates.escapeHTML(contract.contractor || 'General Supplier')}</div>
                 </div>
             </div>
 
             <!-- Content Area -->
             <div style="flex: 1; background: var(--slate-100); position: relative; min-height: 500px; display: flex; flex-direction: column;">
+                <!-- Version History Panel -->
+                <div style="background: white; border-bottom: 1px solid var(--slate-200); padding: 16px 24px;">
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; margin-top: 0;">Version History</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                        ${versions.length > 0 ? versions.map((v, idx) => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber || (idx + 1)}</div>
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${DrawerTemplates.escapeHTML(v.fileName || 'Contract_Revision.pdf')}</div>
+                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || 'System')} • ${new Date(v.createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="btn btn-icon-sm" title="View" onclick="window.open('${v.fileUrl || v.documentUrl}', '_blank')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-eye"></i> View</button>
+                                    <button class="btn btn-icon-sm" title="Download" onclick="window.open('${v.fileUrl || v.documentUrl}', '_blank')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-download"></i></button>
+                                </div>
+                            </div>
+                        `).reverse().join('') : `
+                            <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
+                                No prior versions tracked for this contract.
+                            </div>
+                        `}
+                    </div>
+                </div>
+
                 ${contract.fileUrl ? `
                     <div style="background: var(--slate-800); padding: 10px; display: flex; justify-content: center; gap: 20px;">
                         <div style="color: white; font-size: 11px; display: flex; align-items: center; gap: 8px;">
@@ -1584,7 +1623,8 @@ export const DrawerTemplates = {
                 }
             </style>
         </div>
-    `,
+        </div>
+    `},
 
     uploadDocumentVersion: (document) => `
         <div class="drawer-section">
@@ -4045,7 +4085,7 @@ Contract Admin</textarea>
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Review Timeline Extension</div>
-                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.user?.name || 'Supervisor'}</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.requestedBy?.name || req.requestedByName || 'Supervisor'}</div>
                 </div>
                 <div class="status-badge" style="background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">PENDING</div>
             </div>
@@ -4065,7 +4105,7 @@ Contract Admin</textarea>
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Justification / Reason</div>
                     <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
-                        "${req.reason || 'No reason provided.'}"
+                        "${req.justification || req.reason || 'No reason provided.'}"
                     </div>
                 </div>
 

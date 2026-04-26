@@ -41,6 +41,13 @@ const contracts = {
   async remove(id) {
     return await client.delete(`/contracts/${id}`);
   },
+
+  /**
+   * Get all versions for a contract
+   */
+  async getVersions(contractId) {
+    return await client.get(`/contracts/${contractId}/versions`);
+  },
 };
 
 export default contracts;

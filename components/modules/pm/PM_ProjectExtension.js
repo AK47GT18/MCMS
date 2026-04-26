@@ -84,7 +84,7 @@ export const PM_ProjectExtension = {
                 btn.disabled = false;
             }
         }
-    }
+    },
 
     async handleSubmitExtensionRequest() {
         const projectIdStr = document.getElementById('ext-req-project-id')?.value;
@@ -137,7 +137,7 @@ export const PM_ProjectExtension = {
                 btn.disabled = false;
             }
         }
-    }
+    },
 
     async handleExtendProject() {
         const projectId = document.getElementById('extend_project_id')?.value;
