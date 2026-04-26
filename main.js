@@ -233,7 +233,7 @@ class App {
         const ROUTE_PERMISSIONS = {
             'dashboard': [], // All authenticated users
             'users': ['System_Technician', 'System Technician', 'Project_Manager', 'Project Manager'],
-            'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director', 'Project_Manager', 'Project Manager', 'Finance_Director', 'Finance Director'],
+            'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director', 'Project_Manager', 'Project Manager', 'Finance_Director', 'Finance Director', 'Equipment_Coordinator', 'Equipment Coordinator', 'Operations_Manager', 'Operations Manager'],
             'config': ['System_Technician', 'System Technician'],
             'finance': ['Finance_Director', 'Managing_Director', 'Finance Director', 'Managing Director'],
             'accounting': ['Finance_Director', 'Finance Director'],

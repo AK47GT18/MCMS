@@ -57,7 +57,7 @@ export const FS_Equipment = {
 
         try {
             await window.loader.show('Reporting breakdown to base...', async () => {
-                await window.assets.flagIssue(assetId, `Field Supervisor reported breakdown on site.`);
+                await assets.flagIssue(assetId, `Field Supervisor reported breakdown on site.`);
             });
             window.modal.showSuccess('Breakdown Reported', `${assetName} has been flagged for maintenance.`);
             await this._loadSiteAssets();

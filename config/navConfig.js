@@ -100,7 +100,6 @@ export const NAV_ITEMS = {
         {
             section: 'Reporting',
             items: [
-                { label: 'Daily Logs', icon: '<i class="fas fa-camera"></i>', id: 'reports', action: 'drawer', drawerId: 'dailyReport' }, 
                 { label: 'Safety Incident', icon: '<i class="fas fa-helmet-safety"></i>', id: 'safety_incident', action: 'drawer', drawerId: 'safetyIncident' },
                 { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
             ]
@@ -132,12 +131,16 @@ export const NAV_ITEMS = {
     ],
     [ROLES.EQUIPMENT_COORDINATOR]: [
         {
-            section: 'Resource Operations',
+            section: 'Strategic',
             items: [
-                { label: 'Dashboard', icon: '<i class="fas fa-chart-simple"></i>', id: 'dashboard', active: true },
-                { label: 'Requisition Hub', icon: '<i class="fas fa-clipboard-list"></i>', id: 'requests', badge: 5 },
-                { label: 'Material Inventory', icon: '<i class="fas fa-dolly"></i>', id: 'inventory' },
-                { label: 'Resource Assignment', icon: '<i class="fas fa-key"></i>', id: 'assignment', action: 'drawer', drawerId: 'assignResource' },
+                { label: 'Logistics Command', icon: ICONS.dashboard, id: 'dashboard', active: true },
+                { label: 'Logistics Hub', icon: '<i class="fas fa-truck-ramp-box"></i>', id: 'requests', badge: 5 }
+            ]
+        },
+        {
+            section: 'Resource Management',
+            items: [
+                { label: 'Material Inventory', icon: ICONS.store, id: 'inventory' },
                 { label: 'Asset Registry', icon: '<i class="fas fa-truck-pickup"></i>', id: 'registry' }
             ]
         },
@@ -148,13 +151,13 @@ export const NAV_ITEMS = {
                 { label: 'Service Schedule', icon: '<i class="fas fa-wrench"></i>', id: 'maintenance', badge: 2 }
             ]
         },
-        {
-             section: 'Reporting',
-             items: [
-                 { label: 'Utilization Reports', icon: '<i class="fas fa-file-contract"></i>', id: 'utilization' },
-                 { label: 'Operator Logs', icon: '<i class="fas fa-user-gear"></i>', id: 'operators' },
-                 { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
-             ]
+        { 
+            section: 'Records', 
+            items: [
+                { label: 'Chain of Custody', icon: '<i class="fas fa-link-slash"></i>', id: 'custody' },
+                { label: 'Audit Log', icon: ICONS.fingerprint, id: 'audit' },
+                { label: 'Reports', icon: ICONS.reports, id: 'reports' }
+            ]
         }
     ],
     [ROLES.OPERATIONS_MANAGER]: [

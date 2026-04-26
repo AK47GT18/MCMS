@@ -3684,119 +3684,6 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    assignResource: (projects = []) => `
-        <div class="drawer-section">
-            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Logistics Dispatch (Assets & Materials)</h3>
-            
-            <!-- Type Selection -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="text-transform: uppercase; font-size: 11px;">1. Resource Category</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button class="btn btn-secondary active-resource" id="btn_machinery" onclick="window.app.ecModule?.toggleResourceType('machinery', this)">Machinery</button>
-                    <button class="btn btn-secondary" id="btn_materials" onclick="window.app.ecModule?.toggleResourceType('materials', this)">Materials</button>
-                </div>
-            </div>
-
-            <!-- Destinations & Personnel -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label class="form-label">Project *</label>
-                    <select id="assign_project" class="form-input" style="width: 100%;">
-                        ${projects.length === 0 
-                            ? '<option value="1">CEN-01 Unilia</option><option value="2">MZ-05 Mzimba</option>'
-                            : projects.map(p => `<option value="${p.id}">${p.code} ${p.name}</option>`).join('')
-                        }
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Active Phase *</label>
-                    <select id="assign_phase" class="form-input" style="width: 100%;" onchange="window.app.ecModule?.updateMaterialSheet(this.value)">
-                        <option value="">Select Phase</option>
-                        <option value="1">Phase 1: Site Clearance</option>
-                        <option value="2">Phase 2: Earthworks</option>
-                        <option value="3">Phase 3: Sub-base</option>
-                        <option value="4">Phase 4: Base Course</option>
-                        <option value="5">Phase 5: Drainage</option>
-                        <option value="6">Phase 6: Surfacing</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Field Supervisor (Recipient) *</label>
-                <select id="assign_fs" class="form-input" style="width: 100%;">
-                    <option value="Kondwani Jere">Kondwani Jere (CEN-01)</option>
-                    <option value="Lazarous Phiri">Lazarous Phiri (MZ-05)</option>
-                    <option value="Steve Banda">Steve Banda (Floating)</option>
-                </select>
-            </div>
-
-            <!-- Predefined Material Sheet (Dynamic) -->
-            <div id="material_sheet_view" style="display: none; margin-bottom: 24px;">
-                <label class="form-label" style="text-transform: uppercase; font-size: 11px; color: var(--blue);">2. Predefined Material Sheet</label>
-                <div id="material_sheet_container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400); border: 1px dashed var(--slate-200); border-radius: 8px;">
-                        Please select a project phase to load requirements...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Machinery Selection -->
-            <div id="machinery_view" style="margin-bottom: 24px;">
-                <div class="form-group">
-                    <label class="form-label">Select Heavy Asset *</label>
-                    <select id="assign_asset" class="form-input" style="width: 100%;">
-                        <option value="eqp-045">CAT 320D Excavator</option>
-                        <option value="eqp-012">Tata Tipper 10T</option>
-                        <option value="eqp-009">JCB Backhoe</option>
-                    </select>
-                </div>
-            </div>
-
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
-                onclick="window.app.ecModule?.handleExecuteDispatch()">
-                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Execute Dispatch & Notify FS
-            </button>
-        </div>
-    `,
-    receiveProcurement: (item) => `
-        <div class="drawer-section">
-            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Acknowledge Material Receipt</h3>
-            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming physical arrival of goods from Finance-approved procurement (Stefan Mwale).</p>
-
-            <div style="background: var(--slate-50); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span style="font-size: 12px; color: var(--slate-500);">Item Purchased</span>
-                    <span style="font-size: 13px; font-weight: 700;">${item.name}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span style="font-size: 12px; color: var(--slate-500);">Ordered Qty</span>
-                    <span style="font-size: 13px; font-weight: 700; color: var(--blue);">${item.qty} ${item.unit}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="font-size: 12px; color: var(--slate-500);">Vendor</span>
-                    <span style="font-size: 13px; font-weight: 700; color: var(--slate-700);">${item.vendor}</span>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Quantity Received *</label>
-                <input type="number" id="receive_qty" class="form-input" style="width: 100%; font-weight: 700;" value="${item.qty}">
-                <div style="font-size: 11px; margin-top: 4px; color: var(--orange-dark);">Note any shortfalls in the description below</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Store Verification Note</label>
-                <textarea id="receive_note" class="form-input" rows="3" style="width: 100%;" placeholder="e.g. All drums sealed and accounted for..."></textarea>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
-                onclick="window.app.ecModule?.handleProcurementReceipt('${item.id}')">
-                Add to Stock Silo
-            </button>
-        </div>
-    `,
     forwardProcurement: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Forward to Finance (Stock-Out)</h3>
@@ -4408,5 +4295,171 @@ Contract Admin</textarea>
             </div>
         </div>
     `,
+
+    assignResource: (projects) => `
+        <div style="padding: 24px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Project / Site</label>
+                <select id="assign_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule.handleTimelineProjectChange(this.value)">
+                    <option value="">Select Project...</option>
+                    ${projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 24px; background: var(--slate-100); padding: 4px; border-radius: 8px;">
+                <button id="btn_materials" class="btn btn-primary active-resource active" style="flex: 1; justify-content: center; font-size: 12px;" onclick="window.app.ecModule.toggleResourceType('materials', this)">Construction Materials</button>
+                <button id="btn_machinery" class="btn btn-secondary active-resource" style="flex: 1; justify-content: center; font-size: 12px;" onclick="window.app.ecModule.toggleResourceType('machinery', this)">Machinery / Fleet</button>
+            </div>
+
+            <div id="material_sheet_view">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Project Phase</label>
+                    <select id="assign_phase" class="form-input" style="width: 100%;" onchange="window.app.ecModule.updateMaterialSheet(this.value)">
+                        <option value="">Select Phase...</option>
+                        <option value="1">Phase 1: Mobilization & Site Prep</option>
+                        <option value="2">Phase 2: Earthworks & Sub-base</option>
+                        <option value="3">Phase 3: Base Course Construction</option>
+                        <option value="4">Phase 4: Surfacing / Paving</option>
+                        <option value="5">Phase 5: Drainage & Ancillary</option>
+                        <option value="6">Phase 6: Final Completion</option>
+                    </select>
+                </div>
+                
+                <div id="material_sheet_container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">Select a phase to view required materials.</div>
+                </div>
+            </div>
+
+            <div id="machinery_view" style="display: none; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Search Asset Registry</label>
+                    <input type="text" class="form-input" placeholder="Search by name, plate, or type..." style="width: 100%;">
+                </div>
+                <div style="margin-top: 12px; max-height: 200px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px;">
+                    <div style="padding: 12px; text-align: center; color: var(--slate-400); font-size: 12px;">Start typing to search assets...</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Site Supervisor / Recipient</label>
+                <select id="assign_fs" class="form-input" style="width: 100%;">
+                    <option value="">Select Supervisor...</option>
+                    <option value="Mike Banda">Mike Banda (Sector 1)</option>
+                    <option value="Grace Chibwe">Grace Chibwe (Sector 2)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleExecuteDispatch()">Authorize & Execute Dispatch</button>
+        </div>
+    `,
+
+    receiveProcurement: (item) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--blue-light); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                <div style="font-weight: 700; color: var(--blue); font-size: 16px;">${item.name}</div>
+                <div style="font-size: 12px; color: var(--slate-500); margin-top: 4px;">Ref: ${item.contractRef} | From: ${item.vendor}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Quantity to Receive</label>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="number" id="receive_qty" class="form-input" value="${item.qty}" style="flex: 1; font-weight: 700; font-size: 18px;">
+                    <span style="font-weight: 600; color: var(--slate-500);">${item.unit}</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">Max pending: ${item.qty} ${item.unit}</div>
+            </div>
+
+            <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 6px; font-size: 12px; color: #92400E; margin-bottom: 24px;">
+                <i class="fas fa-triangle-exclamation"></i> <strong>Verification Note:</strong> By clicking receive, you confirm that the physical goods match the quantity entered and quality standards are met.
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleProcurementReceipt(${JSON.stringify(item).replace(/"/g, '&quot;')})">Confirm Physical Receipt</button>
+        </div>
+    `,
+
+    inventoryDetails: (data) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--slate-900); padding: 24px; border-radius: 16px; color: white; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                <div style="font-size: 11px; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Resource Allocation</div>
+                <h3 style="font-size: 20px; font-weight: 900; letter-spacing: -0.02em;">${data.materialName}</h3>
+                <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 12px;">
+                    <span style="font-size: 24px; font-weight: 900; color: white; font-family: 'JetBrains Mono';">${data.totalQty.toLocaleString()}</span>
+                    <span style="font-size: 13px; color: #94a3b8; font-weight: 700;">${data.unit} (System Total)</span>
+                </div>
+            </div>
+
+            <h4 style="font-size: 13px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.05em;">Project Ownership Breakdown</h4>
+            
+            <div style="display: grid; gap: 12px;">
+                ${data.allocations.map(a => `
+                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 800; color: var(--slate-900); font-size: 14px;">${a.projectName}</div>
+                            <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">Sector: ${a.sectorName || 'Main Yard'}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-family: 'JetBrains Mono'; font-weight: 900; font-size: 16px; color: var(--indigo-600);">${a.qty.toLocaleString()}</div>
+                            <div style="font-size: 11px; color: var(--slate-400); font-weight: 600;">Available Stock</div>
+                        </div>
+                    </div>
+                `).join('')}
+
+                ${data.allocations.length === 0 ? '<div style="padding: 32px; text-align: center; color: var(--slate-400); font-size: 13px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-200);">No specific project allocations found.</div>' : ''}
+            </div>
+
+            <div style="margin-top: 32px; padding: 16px; background: #fefce8; border: 1px solid #fef08a; border-radius: 12px; display: flex; gap: 12px;">
+                <i class="fas fa-shield-halved" style="color: #ca8a04; margin-top: 3px;"></i>
+                <div style="font-size: 12px; color: #854d0e; line-height: 1.5;">
+                    <strong>Inventory Lock:</strong> This material is legally bound to the specific projects listed above. Transferring stock between projects requires Finance Director authorization.
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 24px; padding: 14px;" onclick="window.drawer.close()">
+                Close Details
+            </button>
+        </div>
+    `,
+
+    assetHistory: (asset) => `
+        <div style="padding: 24px;">
+            <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 24px; border-radius: 16px; color: white; margin-bottom: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 8px;">Asset Chain of Custody</div>
+                <h3 style="font-size: 20px; font-weight: 900;">${asset.name}</h3>
+                <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Code: ${asset.assetCode || 'EQP-' + asset.id} | Status: ${asset.status}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 20px;">
+                <div style="position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--slate-200);"></div>
+                
+                ${asset.assetLogs.length === 0 
+                    ? '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No history logs found for this asset.</div>'
+                    : asset.assetLogs.map((log, i) => {
+                        const isIssue = log.action === 'flagged_issue';
+                        const isResolve = log.action === 'issue_resolved';
+                        const isCheckOut = log.action === 'check_out';
+                        const color = isIssue ? 'var(--red)' : isResolve ? 'var(--emerald)' : isCheckOut ? 'var(--blue)' : 'var(--slate-400)';
+                        
+                        return `
+                        <div style="position: relative; margin-bottom: 24px;">
+                            <div style="position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: ${color}; border: 3px solid white; box-shadow: 0 0 0 2px ${color}20;"></div>
+                            <div style="background: ${isIssue ? '#fef2f2' : 'white'}; border: 1px solid ${isIssue ? '#fecaca' : 'var(--slate-200)'}; border-radius: 12px; padding: 16px; margin-left: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <span style="font-weight: 800; font-size: 13px; color: ${color}; text-transform: uppercase;">${log.action.replace(/_/g, ' ')}</span>
+                                    <span style="font-size: 11px; color: var(--slate-400);">${new Date(log.timestamp).toLocaleString('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--slate-900);">${log.user?.name || 'System'}</div>
+                                ${log.projectId ? `<div style="font-size: 12px; color: var(--slate-600); margin-top: 4px;"><i class="fas fa-location-dot"></i> Assigned to Project Site</div>` : ''}
+                                ${isIssue ? `<div style="margin-top: 8px; padding: 8px; background: #fee2e2; border-radius: 6px; font-size: 12px; color: #b91c1c; font-weight: 600;"><i class="fas fa-triangle-exclamation"></i> Fault/Problem Reported</div>` : ''}
+                            </div>
+                        </div>
+                        `;
+                    }).join('')}
+            </div>
+
+            <div style="margin-top: 32px; border-top: 1px solid var(--slate-200); padding-top: 24px;">
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Log</button>
+            </div>
+        </div>
+    `
 };
 

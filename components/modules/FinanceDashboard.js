@@ -5,6 +5,7 @@ import { FD_Contracts } from './fd/FD_Contracts.js';
 import { FD_Records } from './fd/FD_Records.js';
 import { FD_Handlers } from './fd/FD_Handlers.js';
 import { FD_Ledger } from './fd/FD_Ledger.js';
+import { Shared_Audit } from './Shared_Audit.js';
 import { StatCard } from '../ui/StatCard.js';
 
 import client from '../../src/api/client.js';
@@ -57,6 +58,7 @@ export class FinanceDashboard {
             case 'bcr': return this.getBudgetControlView();
             case 'ledger': return this.getLedgerView();
             case 'reports': return this.getRecordsView();
+            case 'audit': return this.getAuditView();
             default: return this.getPlaceholderView(this.currentView);
         }
     }
@@ -75,7 +77,8 @@ export class FinanceDashboard {
             'bcr': { title: 'PM Uplift Requests', context: 'Budget Extensions' },
             'ledger': { title: 'Commitments Ledger', context: 'Organizational Obligations' },
 
-            'reports': { title: 'Records Center', context: 'Reporting & Compliance' }
+            'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
+            'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
         };
 
         const current = headers[this.currentView] || { title: this.currentView, context: '' };
@@ -108,4 +111,4 @@ export class FinanceDashboard {
 }
 
 // Apply modular mixins
-Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger);
+Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger, Shared_Audit);

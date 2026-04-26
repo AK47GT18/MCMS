@@ -22,7 +22,7 @@ export const FS_Tasks = {
 
         try {
             const projectId = this.assignedProject?.id || 1;
-            const result = await tasks.getByProject(projectId);
+            const result = await tasksApi.getByProject(projectId);
             const data = result.data || result;
             const taskList = Array.isArray(data) ? data : (data.tasks || []);
 
@@ -107,7 +107,7 @@ export const FS_Tasks = {
             if (!el) return;
 
             const projectId = this.assignedProject?.id || 1;
-            const response = await tasks.getByProject(projectId);
+            const response = await tasksApi.getByProject(projectId);
             const data = response.data || response;
             const tasksList = Array.isArray(data) ? data : (data.tasks || []);
 

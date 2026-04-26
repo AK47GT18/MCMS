@@ -2,6 +2,7 @@ import client from '../../../src/api/client.js';
 import tasksApi from '../../../src/api/tasks.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 import assets from '../../../src/api/assets.api.js';
+import inventoryApi from '../../../src/api/inventory.api.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
@@ -181,8 +182,8 @@ export const FS_Logistics = {
                 sectorId: material.sectorId || 1,
                 materialName: name,
                 quantity: qty,
-                reference: section,
-                notes: `Consumed at ${section} by Field Supervisor`
+                reference: 'Main Site',
+                notes: `Consumed at Main Site by Field Supervisor`
             });
 
             setTimeout(() => {

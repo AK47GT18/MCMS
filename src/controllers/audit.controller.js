@@ -20,8 +20,8 @@ const getAll = asyncHandler(async (req, res) => {
   // Normalize role to handle db format variants
   const userRole = user.role.replace(' ', '_');
   
-  // Only allow PM, FD, MD, and ST to view audit logs
-  const allowedRoles = ['Project_Manager', 'Finance_Director', 'Managing_Director', 'System_Technician'];
+  // Only allow PM, FD, MD, ST, and EC to view audit logs
+  const allowedRoles = ['Project_Manager', 'Finance_Director', 'Managing_Director', 'System_Technician', 'Equipment_Coordinator'];
   if (!allowedRoles.includes(userRole)) {
     return response.forbidden(res, 'Access denied');
   }

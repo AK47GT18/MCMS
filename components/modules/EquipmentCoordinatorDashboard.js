@@ -5,17 +5,30 @@ import { EC_Distribution } from './ec/EC_Distribution.js';
 import { EC_Registry } from './ec/EC_Registry.js';
 import { EC_Maintenance } from './ec/EC_Maintenance.js';
 import { EC_Handlers } from './ec/EC_Handlers.js';
+import { EC_Records } from './ec/EC_Records.js';
+import { EC_Guidance } from './ec/EC_Guidance.js';
+import { EC_Custody } from './ec/EC_Custody.js';
+import { EC_Audit } from './ec/EC_Audit.js';
 import { StatCard } from '../ui/StatCard.js';
 import { notificationService } from '../../src/services/notifications.service.js';
 import client from '../../src/api/client.js';
-import inventoryApi from '../../src/api/inventory.api.js';
-import assets from '../../src/api/assets.api.js';
-import requisitions from '../../src/api/requisitions.api.js';
-import procurement from '../../src/api/procurement.api.js';
-import schedulerApi from '../../src/api/scheduler.api.js';
 
 export class EquipmentCoordinatorDashboard {
     constructor() {
+        Object.assign(this, 
+            EC_Dashboard, 
+            EC_ResourceHub,
+            EC_Inventory, 
+            EC_Registry, 
+            EC_Distribution, 
+            EC_Maintenance, 
+            EC_Custody, 
+            EC_Records, 
+            EC_Audit, 
+            EC_Handlers,
+            EC_Guidance
+        );
+        
         this.currentView = 'dashboard';
         this.hubActiveTab = 'field';
         
@@ -26,64 +39,31 @@ export class EquipmentCoordinatorDashboard {
         this.requisitionQueue = [];
         this.assetRegistry = [];
         this.conflicts = [];
-        this.isLoading = false;
-
-        // Phase material mapping (static reference data)
-        this.phaseMaterials = {
-            '1': [{ name: 'Survey pegs & paint', unit: 'Set' }, { name: 'Chainsaw fuel', unit: 'Liters' }],
-            '2': [{ name: 'Borrow fill (laterite)', unit: 'm³' }, { name: 'Geotextile fabric', unit: 'm²' }],
-            '3': [{ name: 'Crushed stone G6', unit: 'm³' }, { name: 'Water for compaction', unit: 'm³' }],
-            '4': [{ name: 'Crushed stone G4/G5', unit: 'm³' }, { name: 'Cement OPC', unit: 'Bags' }],
-            '5': [{ name: 'Concrete U-drain 300mm', unit: 'm' }, { name: 'HDPE culvert 450mm', unit: 'm' }],
-            '6': [{ name: 'Bitumen G-Grade', unit: 'Drums' }, { name: 'Tack coat CSS-1', unit: 'Liters' }]
-        };
-
-        // Register module globally
-        window.app = window.app || {};
-        window.app.ecModule = this;
-
-        // --- REAL-TIME LISTENERS ---
+        this.auditLogs = [];
+        this.projects = [];
+        
+        // --- LOADING STATES ---
+        this.isLoadingAssets = false;
+        this.isLoadingInventory = false;
+        this.isLoadingLogs = false;
+        this.isLoadingConflicts = false;
+        this.isLoadingRequisitions = false;
+        this.isLoadingProc = false;
+        
+        // WebSocket Real-time listeners
         this._setupRealtimeListeners();
-
-        // --- INITIAL DATA LOAD (Non-recursive) ---
-        setTimeout(() => {
-            this._loadInventory();
-            this._loadProcurementReceipts();
-            this._loadAssets();
-            this._loadRequisitions();
-            this._loadConflicts();
-        }, 100);
     }
 
     _setupRealtimeListeners() {
         if (window.realtime) {
-            window.realtime.on('INVENTORY_UPDATED', (data) => {
-                console.log('[EC][WS] Inventory updated:', data);
-                if (this.currentView === 'dashboard' || this.currentView === 'inventory') {
-                    this._loadInventory();
-                }
-            });
-            window.realtime.on('INVENTORY_CONSUMED', (data) => {
-                console.log('[EC][WS] Inventory consumed:', data);
-                if (this.currentView === 'dashboard' || this.currentView === 'inventory' || this.currentView === 'distribution') {
-                    this._loadInventory();
-                }
-            });
-            window.realtime.on('REQUISITION_CREATED', (data) => {
-                console.log('[EC][WS] New requisition:', data);
+            window.realtime.on('inventory:updated', () => this._loadInventory());
+            window.realtime.on('requisition:approved', (data) => {
                 window.toast?.show('New field requisition received.', 'info');
-                if (this.currentView === 'requests') {
-                    this._loadRequisitions();
-                }
+                this._loadRequisitions();
             });
-            window.realtime.on('ASSET_DISPATCHED', () => {
-                if (this.currentView === 'registry') this._loadAssets();
-            });
-            window.realtime.on('ASSET_RETURNED', () => {
-                if (this.currentView === 'registry') this._loadAssets();
-            });
+            window.realtime.on('ASSET_DISPATCHED', () => this._loadAssets());
+            window.realtime.on('ASSET_RETURNED', () => this._loadAssets());
         } else {
-            // Retry after a delay if realtime is not yet initialized
             setTimeout(() => this._setupRealtimeListeners(), 2000);
         }
     }
@@ -111,8 +91,9 @@ export class EquipmentCoordinatorDashboard {
             case 'registry': return this.getRegistryView();
             case 'distribution': return this.getDistributionLogView();
             case 'maintenance': return this.getMaintenanceView();
-            case 'utilization': return this.getUtilizationView();
-            case 'operators': return this.getOperatorsView();
+            case 'custody': return this.getCustodyView();
+            case 'reports': return this.getRecordsView();
+            case 'audit': return this.getAuditView();
             default: return `<div class="p-4">View ${this.currentView} not found</div>`;
         }
     }
@@ -125,8 +106,9 @@ export class EquipmentCoordinatorDashboard {
             'registry': { title: 'Asset Registry', context: 'Master Equipment List' },
             'distribution': { title: 'Distribution Log', context: 'Project Resource Consumption (Burn)' },
             'maintenance': { title: 'Service Schedule', context: 'Preventative Maintenance' },
-            'utilization': { title: 'Utilization Reports', context: 'Efficiency Metrics' },
-            'operators': { title: 'Logistics Center', context: 'Daily Machine & Personnel Logs' }
+            'custody': { title: 'Chain of Custody', context: 'Asset Timeline & Fault History' },
+            'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
+            'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
         };
         const current = headers[this.currentView] || { title: 'Logistics Command', context: '' };
 
@@ -154,23 +136,6 @@ export class EquipmentCoordinatorDashboard {
         `;
     }
 
-    // =============================================
-    // DATA LOADERS (API-BACKED)
-    // =============================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     _refreshCurrentView() {
         const container = document.getElementById('ec-content-area');
         if (container) {
@@ -178,30 +143,9 @@ export class EquipmentCoordinatorDashboard {
         }
     }
 
-    // =============================================
-    // VIEWS
-    // =============================================
-
-
-
-
-
-
-
-
-
-
-
-
-    // =============================================
-    // LOGISTICS WORKFLOW HANDLERS
-    // =============================================
-
-
     switchView(view) {
         this.currentView = view;
         
-        // Load appropriate data for the specific view
         switch(view) {
             case 'dashboard':
                 this._loadInventory();
@@ -211,6 +155,7 @@ export class EquipmentCoordinatorDashboard {
             case 'inventory':
             case 'distribution':
                 this._loadInventory();
+                this._loadDistributionLogs();
                 break;
             case 'requests':
                 if (this.hubActiveTab === 'fm') {
@@ -220,23 +165,15 @@ export class EquipmentCoordinatorDashboard {
                 }
                 break;
             case 'registry':
-            case 'operators':
             case 'maintenance':
                 this._loadAssets();
                 break;
+            case 'custody':
+            case 'audit':
+                this._loadAuditLogs?.();
+                break;
         }
-
-        window.app.loadPage(this.currentView);
+        
+        this._refreshCurrentView();
     }
-
-
-
-
-
-
-
-
 }
-
-// Apply modular mixins
-Object.assign(EquipmentCoordinatorDashboard.prototype, EC_Dashboard, EC_ResourceHub, EC_Inventory, EC_Distribution, EC_Registry, EC_Maintenance, EC_Handlers);

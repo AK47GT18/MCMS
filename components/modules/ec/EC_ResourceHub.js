@@ -1,5 +1,7 @@
 import client from '../../../src/api/client.js';
-import { StatCard } from '../ui/StatCard.js';
+import { StatCard } from '../../ui/StatCard.js';
+import inventoryApi from '../../../src/api/inventory.api.js';
+import requisitions from '../../../src/api/requisitions.api.js';
 
 export const EC_ResourceHub = {
     getResourceHubView() {
