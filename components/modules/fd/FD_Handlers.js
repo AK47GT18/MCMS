@@ -1,5 +1,5 @@
 import client from '../../../src/api/client.js';
-import { StatCard } from '../ui/StatCard.js';
+import { StatCard } from '../../ui/StatCard.js';
 
 export const FD_Handlers = {
     async handleRequisitionAction(reqId, status) {
@@ -12,8 +12,13 @@ export const FD_Handlers = {
         try {
             window.toast.show(`Processing resource ${status}...`, 'info');
             
-            // Trigger simulated email notification
-            await notificationService.notifyRequisitionStatus(reqId, status, note);
+            if (status === 'approved') {
+                await client.post(`/requisitions/${reqId}/approve`);
+            } else if (status === 'rejected') {
+                await client.post(`/requisitions/${reqId}/reject`, { reason: note });
+            } else if (status === 'flagged') {
+                await client.post(`/requisitions/${reqId}/flag-fraud`);
+            }
             
             window.toast.show(`Requisition ${reqId} has been ${status} successfully.`, 'success');
             window.drawer.close();
@@ -21,6 +26,15 @@ export const FD_Handlers = {
         } catch (error) {
             console.error('Workflow error:', error);
             window.toast.show('Failed to process requisition action.', 'error');
+        }
+    },
+
+    openRequisitionReview(reqId) {
+        const req = this.data.requisitions.find(r => String(r.id) === String(reqId));
+        if (req) {
+            window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview(req));
+        } else {
+            window.toast.show('Requisition details not found.', 'error');
         }
     }
 };

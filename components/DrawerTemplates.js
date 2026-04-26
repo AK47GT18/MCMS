@@ -3505,7 +3505,7 @@ Contract Admin</textarea>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `,
-    initiateBCR: `
+    initiateBCR: (projects = [], selectedId = '') => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
@@ -3513,25 +3513,21 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project *</label>
                 <select id="bcr_project" class="form-input" style="width: 100%;">
-                    <option value="1">CEN-01 Unilia Library</option>
-                    <option value="2">MZ-05 Mzimba Clinic</option>
+                    ${projects.length ? projects.map(p => `
+                        <option value="${p.id}" ${p.code === selectedId || String(p.id) === selectedId ? 'selected' : ''}>${p.code}: ${p.name}</option>
+                    `).join('') : '<option value="">No projects available</option>'}
                 </select>
             </div>
             
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Current Balance (MWK)</label>
-                <input type="text" class="form-input" value="16,000,000" disabled style="background: var(--slate-50);">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Required Uplift Amount (MWK) *</label>
+                <label class="form-label">Requested Uplift Amount (MWK) *</label>
                 <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0">
                 <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Amount to add to current project budget</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Justification / Reason *</label>
-                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices or Scope creep in foundation work..."></textarea>
+                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices..."></textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">
@@ -3539,11 +3535,18 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    requisitionReview: (reqId) => `
+    requisitionReview: (req) => {
+        const items = req.items || [];
+        const itemsDesc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join('<br>') : 'N/A';
+        const project = req.project?.name || req.project?.code || 'Project';
+        const amount = Number(req.totalAmount || 0).toLocaleString();
+        const reqCode = req.reqCode || 'REQ-' + req.id;
+
+        return `
         <div class="drawer-section">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                 <div>
-                   <h3 style="font-size: 18px; font-weight: 700;">Review Requisition: ${reqId}</h3>
+                   <h3 style="font-size: 18px; font-weight: 700;">Review Requisition: ${reqCode}</h3>
                    <div style="font-size: 12px; color: var(--slate-500);">Forwarded by Equipment Coordinator (Low Stock)</div>
                 </div>
                 <span class="status locked" style="background: var(--orange-light); color: var(--orange);">EC OUT OF STOCK</span>
@@ -3552,44 +3555,44 @@ Contract Admin</textarea>
             <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--slate-200);">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                     <span style="font-size: 12px; color: var(--slate-500);">Project</span>
-                    <span style="font-size: 13px; font-weight: 700;">CEN-01 Unilia</span>
+                    <span style="font-size: 13px; font-weight: 700;">${project}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                     <span style="font-size: 12px; color: var(--slate-500);">Material Requested</span>
-                    <span style="font-size: 13px; font-weight: 700; text-align: right;">Bitumen (G-Grade)<br>20 Drums</span>
+                    <span style="font-size: 13px; font-weight: 700; text-align: right;">${itemsDesc}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--slate-300); padding-top: 12px;">
                     <span style="font-size: 12px; color: var(--slate-500);">Estimated Value</span>
-                    <span style="font-size: 15px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono';">8,500,000 MWK</span>
+                    <span style="font-size: 15px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono';">${amount} MWK</span>
                 </div>
             </div>
 
             <div style="padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--emerald-light); background: #f0fdf4;">
                 <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--emerald); margin-bottom: 4px;">Budget Impact Check</div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 13px; color: var(--slate-600);">Project Remaining Balance</span>
-                    <span style="font-size: 14px; font-weight: 800; color: var(--emerald);">350,000,000 MWK</span>
+                    <span style="font-size: 13px; color: var(--slate-600);">Project Status</span>
+                    <span style="font-size: 14px; font-weight: 800; color: var(--emerald);">${req.project?.status?.toUpperCase() || 'ACTIVE'}</span>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Approval/Rejection Note *</label>
                 <textarea id="requisition_note" class="form-input" rows="3" style="width: 100%; border-radius: 8px; border-color: var(--slate-300);" placeholder="Provide reasoning for this decision..."></textarea>
-                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">This description will be emailed to the Field Supervisor and EC.</div>
+                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">This description will be recorded in the audit trail.</div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <button class="btn btn-secondary" style="width: 100%; justify-content: center; height: 44px; font-weight: 600;" 
-                    onclick="window.app.fmModule?.handleRequisitionAction('${reqId}', 'rejected')">
+                    onclick="window.app.fmModule?.handleRequisitionAction('${req.id}', 'rejected')">
                     Decline
                 </button>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 44px; font-weight: 700; background: var(--emerald); border-color: var(--emerald);" 
-                    onclick="window.app.fmModule?.handleRequisitionAction('${reqId}', 'approved')">
+                    onclick="window.app.fmModule?.handleRequisitionAction('${req.id}', 'approved')">
                     Approve Procurement
                 </button>
             </div>
         </div>
-    `,
+    `},
     reportGenerator: `
         <div class="drawer-section">
             <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--slate-900);">Generate System Report</h3>

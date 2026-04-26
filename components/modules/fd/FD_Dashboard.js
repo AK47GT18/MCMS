@@ -1,5 +1,6 @@
 import client from '../../../src/api/client.js';
-import { StatCard } from '../ui/StatCard.js';
+import { StatCard } from '../../ui/StatCard.js';
+import requisitions from '../../../src/api/requisitions.api.js';
 
 export const FD_Dashboard = {
     getDashboardView() {
@@ -11,6 +12,14 @@ export const FD_Dashboard = {
                 ${StatCard({ title: 'Committed', value: this.formatCurrency(s.committed), subtext: 'In active vendor contracts', alertColor: 'blue' })}
                 ${StatCard({ title: 'EC Requests', value: s.ecRequests, subtext: 'Awaiting stock procurement', alertColor: 'orange' })}
                 ${StatCard({ title: 'PM Uplifts', value: s.pmUplifts, subtext: 'Pending additional funding', alertColor: 'red' })}
+                <div class="stat-card" style="border-left: 4px solid var(--orange);">
+                    <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">Est. Monthly Burn</div>
+                    <div style="font-size: 24px; font-weight: 800; color: var(--slate-900);">${this.formatCurrency(s.committed * 0.12)}</div>
+                    <div style="display:flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; color:var(--red);">
+                        <i class="fas fa-arrow-trend-up"></i> 
+                        <span>High Velocity (+8% vs last mo)</span>
+                    </div>
+                </div>
             </div>
 
             <div id="fm-projects-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
@@ -23,14 +32,14 @@ export const FD_Dashboard = {
             <div class="data-card" style="margin-top: 24px;">
                 <div class="data-card-header">
                     <div class="card-title">Pending Resource Requisitions (EC Forwarded)</div>
-                    <button class="btn btn-secondary" onclick="window.app.fmModule?.switchView('approvals')">Process All</button>
+                    <button class="btn btn-secondary" onclick="(window.fmModule || window.app?.fmModule)?.switchView('approvals')">Process All</button>
                 </div>
                 <div id="fm-pending-reqs-table">
                     <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div>
                 </div>
             </div>
         `;
-    },
+    },
 
     async loadDashboardData() {
         try {
@@ -47,6 +56,7 @@ export const FD_Dashboard = {
             const bcrList = Array.isArray(bcrRes.data) ? bcrRes.data : (bcrRes.data?.items || []);
 
             this.data.projects = Array.isArray(projectsList) ? projectsList : [];
+            this.data.requisitions = Array.isArray(reqs) ? reqs : [];
             this.data.stats = {
                 available: (budget.totalBudget || 0) - (budget.totalSpent || 0),
                 committed: budget.totalSpent || 0,
@@ -70,7 +80,7 @@ export const FD_Dashboard = {
         } catch (error) {
             console.error('Failed to load finance stats:', error);
         }
-    },
+    },
 
     _renderProjectCards() {
         const grid = document.getElementById('fm-projects-grid');
@@ -120,14 +130,14 @@ export const FD_Dashboard = {
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.app.fmModule?.loadContractsView()">Contracts</button>
-                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.requestPMUplift('${project.code}')">Request Uplift</button>
+                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="(window.fmModule || window.app?.fmModule)?.loadContractsView()">Contracts</button>
+                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="(window.fmModule || window.app?.fmModule)?.requestPMUplift('${project.code}')">Request Uplift</button>
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
-    },
+    },
 
     _renderDashboardReqs(reqs) {
         const container = document.getElementById('fm-pending-reqs-table');
@@ -149,7 +159,7 @@ export const FD_Dashboard = {
                         const items = req.items || [];
                         const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
                         return `
-                            <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('${req.reqCode || 'REQ-' + req.id}'))">
+                            <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}')">
                                 <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
                                 <td style="font-weight: 600;">${req.project?.name || req.project?.code || 'Project'}</td>
                                 <td>${desc}</td>
@@ -162,7 +172,7 @@ export const FD_Dashboard = {
                 </tbody>
             </table>
         `;
-    },
+    },
 
     handleGenerateReport() {
         const type = document.getElementById('report_type')?.value;
@@ -175,7 +185,7 @@ export const FD_Dashboard = {
             window.toast.show('Report generation complete. Downloading...', 'success');
             window.drawer.close();
         }, 1500);
-    },
+    },
 
     formatCurrency(val) {
         if (val === undefined || val === null || isNaN(val)) return '0';

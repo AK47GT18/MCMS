@@ -85,22 +85,6 @@ export const PM_Contracts = {
                 }
             }).catch(e => console.error('Error loading projects for filter', e));
 
-            if (this.currentContractTab === 'vendor') {
-                client.get('/vendors?limit=50').then(res => {
-                    const vendorsData = Array.isArray(res) ? res : (res.data || []);
-                    const select = document.getElementById('contract-vendor-filter');
-                    if (select) {
-                        vendorsData.forEach(v => {
-                            const opt = document.createElement('option');
-                            opt.value = v.id;
-                            opt.textContent = v.name;
-                            if (this.vendorFilter == v.id) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-                    }
-                }).catch(e => console.error('Error loading vendors for filter', e));
-            }
-
             // Load contracts
             const response = await contracts.getAll({ limit: 100 });
             const data = response.data || response;
@@ -108,6 +92,27 @@ export const PM_Contracts = {
             
             // Store raw contracts
             this.allContracts = allContracts;
+            
+            // Populate vendor filter dynamically from contracts
+            if (this.currentContractTab === 'vendor') {
+                const vendorSelect = document.getElementById('contract-vendor-filter');
+                if (vendorSelect) {
+                    const uniqueVendors = new Map();
+                    allContracts.forEach(c => {
+                        if (c.vendorId) {
+                            uniqueVendors.set(c.vendorId, c.vendor?.name || c.vendorName || `Vendor ${c.vendorId}`);
+                        }
+                    });
+                    vendorSelect.innerHTML = '<option value="">All Vendors</option>';
+                    uniqueVendors.forEach((name, id) => {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = name;
+                        if (this.vendorFilter == id) opt.selected = true;
+                        vendorSelect.appendChild(opt);
+                    });
+                }
+            }
             
             this.renderContractsTable();
 

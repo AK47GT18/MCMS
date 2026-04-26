@@ -1,5 +1,5 @@
 import client from '../../../src/api/client.js';
-import { StatCard } from '../ui/StatCard.js';
+import { StatCard } from '../../ui/StatCard.js';
 
 export const FD_Budget = {
     getBudgetControlView() {
@@ -8,14 +8,14 @@ export const FD_Budget = {
             <div class="data-card">
                <div class="data-card-header">
                   <div class="card-title">PM Budget Uplift Requests</div>
-                  <button class="btn btn-action" onclick="window.drawer.open('Initiate Budget Uplift', window.DrawerTemplates.initiateBCR)"><i class="fas fa-plus"></i> New Request</button>
+                  <button class="btn btn-action" onclick="window.drawer.open('Initiate Budget Uplift', window.DrawerTemplates.initiateBCR(window.app.fmModule.data.projects))"><i class="fas fa-plus"></i> New Request</button>
                </div>
                <div id="fm-bcr-table">
                    <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading uplift requests...</div>
                </div>
             </div>
         `;
-    },
+    },
 
     async loadBudgetChanges() {
         const container = document.getElementById('fm-bcr-table');
@@ -61,7 +61,7 @@ export const FD_Budget = {
             console.error('Failed to load budget changes:', error);
             container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">${error.message}</div>`;
         }
-    },
+    },
 
     async handleSubmitUplift() {
         const project = document.getElementById('bcr_project')?.value;
@@ -80,19 +80,24 @@ export const FD_Budget = {
         try {
             window.toast.show('Submitting uplift request to PM...', 'info');
             
-            // Trigger simulated email notification to PM
-            const projectCode = project === '1' ? 'CEN-01' : 'MZ-05';
-            await notificationService.notifyProjectManagerUplift(projectCode, parseFloat(amount), reason);
+            await client.post('/budget-changes', {
+                projectId: parseInt(project),
+                amount: parseFloat(amount),
+                reason: reason
+            });
             
             window.toast.show('Uplift request sent to Project Manager successfully.', 'success');
             window.drawer.close();
+            if (this.currentView === 'budget-control') {
+                this.loadBudgetChanges();
+            }
         } catch (error) {
             console.error('Uplift error:', error);
             window.toast.show('Failed to submit uplift request.', 'error');
         }
-    },
+    },
 
     requestPMUplift(projectId) {
-        window.drawer.open(`Request Budget Uplift: ${projectId}`, window.DrawerTemplates.initiateBCR);
+        window.drawer.open(`Request Budget Uplift: ${projectId}`, window.DrawerTemplates.initiateBCR(this.data.projects, projectId));
     }
 };

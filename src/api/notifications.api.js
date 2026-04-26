@@ -19,6 +19,10 @@ const notificationsApi = {
 
   markAllRead() {
     return client.put('/notifications/read-all');
+  },
+
+  create(data) {
+    return client.post('/notifications', data);
   }
 };
 

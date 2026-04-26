@@ -196,6 +196,12 @@ async function getAll({ projectId, status, managerId } = {}) {
 // ============================================================
 
 async function approve(id, pmUser, pmComment) {
+  // Ensure pmUser has a name (might be missing from token)
+  if (!pmUser.name) {
+    const dbUser = await prisma.user.findUnique({ where: { id: pmUser.id }, select: { name: true } });
+    if (dbUser) pmUser.name = dbUser.name;
+  }
+
   const req = await prisma.projectExtensionRequest.findUnique({
     where: { id: Number(id) },
     include: {

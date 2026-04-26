@@ -4,8 +4,9 @@ import { FD_Budget } from './fd/FD_Budget.js';
 import { FD_Contracts } from './fd/FD_Contracts.js';
 import { FD_Records } from './fd/FD_Records.js';
 import { FD_Handlers } from './fd/FD_Handlers.js';
+import { FD_Ledger } from './fd/FD_Ledger.js';
 import { StatCard } from '../ui/StatCard.js';
-import { notificationService } from '../../src/services/notifications.service.js';
+
 import client from '../../src/api/client.js';
 import projects from '../../src/api/projects.api.js';
 import requisitions from '../../src/api/requisitions.api.js';
@@ -26,6 +27,7 @@ export class FinanceDashboard {
         // Register this module globally
         window.app = window.app || {};
         window.app.fmModule = this;
+        window.fmModule = this; // Legacy/Direct access
     }
 
     render() {
@@ -53,18 +55,11 @@ export class FinanceDashboard {
             case 'contracts': return this.getContractsView();
             case 'vendors': return this.getVendorsView();
             case 'bcr': return this.getBudgetControlView();
+            case 'ledger': return this.getLedgerView();
             case 'reports': return this.getRecordsView();
             default: return this.getPlaceholderView(this.currentView);
         }
     }
-
-
-
-
-
-
-
-
 
     getPlaceholderView(title) {
         return `<div class="data-card"><div class="data-card-header"><div class="card-title">${title.charAt(0).toUpperCase() + title.slice(1)}</div></div><div style="padding: 24px;">Content for ${title} coming soon.</div></div>`;
@@ -72,12 +67,13 @@ export class FinanceDashboard {
 
     getHeaderHTML() {
         const headers = {
-            'dashboard': { title: 'Budget Dashboard', context: 'Strategic Health & Overruns' },
+            'dashboard': { title: 'Dashboard', context: 'Strategic Health & Overruns' },
             'procurement': { title: 'Procurement Dashboard', context: 'Material Pipeline Tracking' },
             'approvals': { title: 'Resource Hub', context: 'Procurement Gatekeeping' },
             'contracts': { title: 'Vendor Contracts', context: 'Milestones & Commitments' },
             'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
             'bcr': { title: 'PM Uplift Requests', context: 'Budget Extensions' },
+            'ledger': { title: 'Commitments Ledger', context: 'Organizational Obligations' },
 
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' }
         };
@@ -98,23 +94,6 @@ export class FinanceDashboard {
         `;
     }
 
-    // --- WORKFLOW HANDLERS ---
-
-
-
-    // =============================================
-    // DATA LOADERS (API-BACKED)
-    // =============================================
-
-
-
-
-
-
-
-
-
-
     switchView(view) {
         this.currentView = view;
         // Use the global app page loader for proper DOM re-injection
@@ -126,23 +105,7 @@ export class FinanceDashboard {
             if (content) content.innerHTML = this.getCurrentViewHTML();
         }
     }
-
-    // --- CONTRACT HANDLERS ---
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 // Apply modular mixins
-Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers);
+Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger);

@@ -63,7 +63,7 @@ const financeBudget = asyncHandler(async (req, res) => {
   const query = parseReportQuery(req.url);
   const data = await reports.financeBudget(query);
   await auditReport(user, 'finance_budget', query);
-  sendReport(req, res, data.rows, 'finance_budget_overview', {
+  sendReport(req, res, data, 'finance_budget_overview', {
     title: 'Budget Overview Report',
     summary: { 'Total Budget': data.totalBudget.toLocaleString(), 'Total Spent': data.totalSpent.toLocaleString(), 'Projects': data.projectCount },
     columns: ['code', 'name', 'budgetTotal', 'budgetSpent', 'utilization', 'burnRatePerDay', 'overBudgetRisk'],
@@ -75,7 +75,7 @@ const financeRequisitions = asyncHandler(async (req, res) => {
   const query = parseReportQuery(req.url);
   const data = await reports.financeRequisitions(query);
   await auditReport(user, 'finance_requisitions', query);
-  sendReport(req, res, data.rows, 'finance_requisition_analysis', {
+  sendReport(req, res, data, 'finance_requisition_analysis', {
     title: 'Requisition Analysis Report',
     summary: { 'Total': data.total, 'Total Value': data.totalValue.toLocaleString() },
     columns: ['reqCode', 'projectCode', 'submittedBy', 'totalAmount', 'status', 'fraudFlag', 'createdAt'],

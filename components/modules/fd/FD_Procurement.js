@@ -1,5 +1,6 @@
 import client from '../../../src/api/client.js';
-import { StatCard } from '../ui/StatCard.js';
+import { StatCard } from '../../ui/StatCard.js';
+import requisitions from '../../../src/api/requisitions.api.js';
 
 export const FD_Procurement = {
     getProcurementView() {
@@ -23,7 +24,7 @@ export const FD_Procurement = {
                 </div>
             </div>
         `;
-    },
+    },
 
     async loadProcurementData() {
         // Load projects if not loaded
@@ -57,7 +58,7 @@ export const FD_Procurement = {
                 <tr>
                     <td style="font-weight: 600;">${m.materialName}</td>
                     <td style="text-align: right;">${Number(m.requiredQuantity).toLocaleString()} ${m.unit}</td>
-                    <td style="text-align: right; color: var(--emerald);">${Number(m.procuredQuantity).toLocaleString()} ${m.unit}</td>
+                    <td style="text-align: right; color: var(--emerald);">${Number(m.procuredQuantity).toLocaleString()} ${m.unit}</td><td style="text-align: right; color: var(--blue); font-weight: 600;">${Number(m.procuredQuantity * 0.85).toLocaleString()} ${m.unit}</td>
                     <td style="text-align: right; color: ${m.remainingQuantity > 0 ? 'var(--red)' : 'var(--slate-500)'};">${Number(m.remainingQuantity).toLocaleString()} ${m.unit}</td>
                     <td style="width: 200px;">
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -94,7 +95,7 @@ export const FD_Procurement = {
             console.error('Failed to load procurement status:', error);
             container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">${error.response?.data?.message || error.message}</div>`;
         }
-    },
+    },
 
     getResourceApprovalsView() {
         setTimeout(() => this.loadPendingRequisitions(), 0);
@@ -112,7 +113,7 @@ export const FD_Procurement = {
                </div>
             </div>
         `;
-    },
+    },
 
     async loadPendingRequisitions() {
         const container = document.getElementById('fm-approvals-table');
@@ -121,6 +122,7 @@ export const FD_Procurement = {
         try {
             const result = await requisitions.getPending();
             const reqs = Array.isArray(result) ? result : (result.data || []);
+            this.data.requisitions = reqs;
 
             if (reqs.length === 0) {
                 container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i><div style="font-weight: 600;">No pending requisitions</div></div>`;
@@ -144,7 +146,7 @@ export const FD_Procurement = {
                             const isCritical = remaining < totalAmt * 0.5;
 
                             return `
-                                <tr onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview('${req.reqCode || 'REQ-' + req.id}'))">
+                                <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}')">
                                     <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
                                     <td>${req.project?.name || req.project?.code || 'Project'}</td>
                                     <td>${desc}</td>

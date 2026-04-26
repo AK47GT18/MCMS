@@ -1,5 +1,5 @@
 import client from '../../../src/api/client.js';
-import { StatCard } from '../ui/StatCard.js';
+import { StatCard } from '../../ui/StatCard.js';
 import contracts from '../../../src/api/contracts.api.js';
 
 export const FD_Contracts = {
@@ -80,22 +80,6 @@ export const FD_Contracts = {
                 }
             }).catch(e => console.error('Error loading projects for filter', e));
 
-            if (this.currentContractTab === 'vendor') {
-                client.get('/vendors?limit=50').then(res => {
-                    const vendorsData = Array.isArray(res) ? res : (res.data || []);
-                    const select = document.getElementById('contract-vendor-filter');
-                    if (select) {
-                        vendorsData.forEach(v => {
-                            const opt = document.createElement('option');
-                            opt.value = v.id;
-                            opt.textContent = v.name;
-                            if (this.vendorFilter == v.id) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-                    }
-                }).catch(e => console.error('Error loading vendors for filter', e));
-            }
-
             // Load contracts
             const response = await contracts.getAll({ limit: 100 });
             const data = response.data || response;
@@ -104,6 +88,27 @@ export const FD_Contracts = {
             // Store raw contracts
             this.allContracts = allContracts;
             this._contractsMap = allContracts; // For legacy methods
+            
+            // Populate vendor filter dynamically from contracts
+            if (this.currentContractTab === 'vendor') {
+                const vendorSelect = document.getElementById('contract-vendor-filter');
+                if (vendorSelect) {
+                    const uniqueVendors = new Map();
+                    allContracts.forEach(c => {
+                        if (c.vendorId) {
+                            uniqueVendors.set(c.vendorId, c.vendor?.name || c.vendorName || `Vendor ${c.vendorId}`);
+                        }
+                    });
+                    vendorSelect.innerHTML = '<option value="">All Vendors</option>';
+                    uniqueVendors.forEach((name, id) => {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = name;
+                        if (this.vendorFilter == id) opt.selected = true;
+                        vendorSelect.appendChild(opt);
+                    });
+                }
+            }
             
             this.renderContractsTable();
 
@@ -148,23 +153,37 @@ export const FD_Contracts = {
 
         const formatValue = (v) => v ? (Number(v) / 1000000).toFixed(1) + 'M' : '-';
         
-        const rows = filtered.map(item => `
-            <tr>
-                <td><span class="project-id">${item.code || item.refCode || 'CNT-' + item.id}</span></td>
-                <td style="font-weight:600;">${item.title}</td>
-                ${this.currentContractTab === 'vendor' ? `<td>${item.vendorName || item.vendor?.name || '-'}</td>` : ''}
-                <td style="font-family:'JetBrains Mono';">${formatValue(item.value)}</td>
-                <td><span class="status active">${item.status || 'Active'}</span></td>
-                <td>
-                    <div style="display:flex; gap:4px;">
-                        <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractViewer(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i> View</button>
-                        <button class="btn btn-action" style="padding:4px 8px; background: var(--slate-100); color: var(--slate-600);" onclick="window.app.fmModule?.notifyLogistics(${item.id}, '${item.refCode || item.code}')" title="Notify Logistics">
-                            <i class="fas fa-shipping-fast"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+                const rows = filtered.map(item => {
+            const endDate = item.endDate ? new Date(item.endDate) : null;
+            const today = new Date();
+            const daysLeft = endDate ? Math.ceil((endDate - today) / (1000 * 60 * 60 * 24)) : null;
+            const isExpired = daysLeft !== null && daysLeft <= 0;
+            const isExpiringSoon = daysLeft !== null && daysLeft > 0 && daysLeft <= 30;
+            
+            let statusClass = item.status === 'Active' ? 'active' : 'locked';
+            if (isExpired) statusClass = 'delayed';
+            if (isExpiringSoon) statusClass = 'locked';
+
+            return `
+                <tr onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractViewer(${item.id}))">
+                    <td><span class="project-id">${item.contractCode || 'CON-' + item.id}</span></td>
+                    <td>
+                        <div style="font-weight: 600;">${item.title}</div>
+                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">${item.vendor?.name || item.vendorName || 'General'}</div>
+                    </td>
+                    <td>${item.project?.name || 'Multi-Project'}</td>
+                    <td style="font-family:'JetBrains Mono'; font-weight: 700;">${formatValue(item.value)}</td>
+                    <td>
+                        <span class="status ${statusClass}">${isExpired ? 'EXPIRED' : (item.status || 'Draft').toUpperCase()}</span>
+                        ${isExpiringSoon ? `<div style="font-size: 10px; color: var(--orange); font-weight: 600; margin-top: 4px;">Expires in ${daysLeft} days</div>` : ''}
+                        ${isExpired ? `<div style="font-size: 10px; color: var(--red); font-weight: 600; margin-top: 4px;">Action Required</div>` : ''}
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">View</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
 
         container.innerHTML = `
             <table>
