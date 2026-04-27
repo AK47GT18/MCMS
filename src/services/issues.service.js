@@ -8,6 +8,8 @@ const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 const handlers = require('../realtime/handlers');
 const emailService = require('../emails/email.service');
+const notifService = require('./notification.service');
+const auditService = require('./audit.service');
 
 async function getAll({ page = 1, limit = 20, status, priority, projectId }) {
   const skip = (page - 1) * limit;
@@ -165,6 +167,24 @@ async function create(data, userId) {
       });
     }
   })();
+
+  // Audit Log
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  await auditService.log({
+    userId, userName: user?.name, userRole: user?.role,
+    action: 'REPORT_ISSUE', targetType: 'Issue', targetId: issue.id, targetCode: issue.issueCode,
+    details: { priority: issue.priority, category: issue.category }
+  });
+
+  // Real-time notification via unified service (auto-emails)
+  if (issue.project?.managerId) {
+    await notifService.create({
+      userId: issue.project.managerId,
+      type: 'error', icon: 'fa-exclamation-triangle',
+      title: 'New Issue Reported',
+      message: `Issue ${issue.issueCode} reported on ${issue.project.name} by ${user?.name}.`
+    });
+  }
   
   // Emit realtime alert
   handlers.emitIssueAlert(issue, 'created');
@@ -200,6 +220,25 @@ async function resolve(id, resolutionNotes) {
   });
   logger.info('Issue resolved', { issueId: id });
   handlers.emitIssueAlert(issue, 'resolved');
+
+  // Notify Reporter
+  if (issue.reportedBy) {
+    await notifService.create({
+      userId: issue.reportedBy,
+      type: 'success', icon: 'fa-check-circle',
+      title: 'Issue Resolved',
+      message: `Your reported issue ${issue.issueCode} has been resolved.`
+    });
+  }
+
+  // Audit Log
+  const dbUser = await prisma.user.findFirst({ where: { id: issue.project.managerId } }); // Rough guess for who resolved
+  await auditService.log({
+    userId: dbUser?.id, userName: dbUser?.name, userRole: dbUser?.role,
+    action: 'RESOLVE_ISSUE', targetType: 'Issue', targetId: id, targetCode: issue.issueCode,
+    details: { resolutionNotes }
+  });
+
   return issue;
 }
 
@@ -217,17 +256,21 @@ async function assign(id, assigneeId) {
   
   logger.info('Issue assigned', { issueId: id, assigneeId });
   
-  // Send notification to assignee
+  // Send notification to assignee (auto-emails)
   if (issue.assignee) {
-    emailService.sendNotification(
-      issue.assignee,
-      'Issue Assigned to You',
-      `Issue ${issue.issueCode} has been assigned to you. Priority: ${issue.priority}`,
-    ).catch(err => logger.error('Email notification failed', { error: err.message }));
-    
-    // Realtime notification
-    handlers.sendNotification(assigneeId, 'Issue Assigned', `Issue ${issue.issueCode} assigned to you`);
+    await notifService.create({
+      userId: assigneeId,
+      type: 'info', icon: 'fa-user-tag',
+      title: 'Issue Assigned to You',
+      message: `Issue ${issue.issueCode} has been assigned to you. Priority: ${issue.priority}`
+    });
   }
+
+  // Audit Log
+  await auditService.log({
+    action: 'ASSIGN_ISSUE', targetType: 'Issue', targetId: id, targetCode: issue.issueCode,
+    details: { assigneeId }
+  });
   
   return issue;
 }

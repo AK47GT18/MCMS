@@ -8,6 +8,8 @@ const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 const handlers = require('../realtime/handlers');
 const { checkGeofence } = require('../utils/geofence');
+const notifService = require('./notification.service');
+const auditService = require('./audit.service');
 
 async function getAll({ page = 1, limit = 20, projectId, startDate, endDate }) {
   const skip = (page - 1) * limit;
@@ -100,6 +102,24 @@ async function create(data, userId) {
   });
   
   logger.info('Daily log created', { logId: log.id, projectId: data.projectId });
+
+  // Notification to PM
+  if (project.managerId) {
+    await notifService.create({
+      userId: project.managerId,
+      type: 'info', icon: 'fa-clipboard-check',
+      title: 'New Daily Log Submitted',
+      message: `${log.submitter.name} submitted a log for ${log.project.code} on ${new Date(log.logDate).toLocaleDateString()}.`
+    });
+  }
+
+  // Audit Log
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  await auditService.log({
+    userId, userName: user?.name, userRole: user?.role,
+    action: 'CREATE_DAILY_LOG', targetType: 'DailyLog', targetId: log.id, targetCode: log.project.code,
+    details: { logDate: log.logDate, isSos: log.isSos }
+  });
   
   // ALGORITHMIC FIX: Sync Daily Log Work to Gantt Task
   if (task_id && progressIncrement) {
@@ -141,12 +161,22 @@ async function approve(id, approverId) {
     },
   });
   logger.info('Daily log approved', { logId: id, approverId });
+  
+  // Notification to Submitter
+  const user = await prisma.user.findUnique({ where: { id: approverId } });
+  await notifService.create({
+    userId: log.submittedBy,
+    type: 'success', icon: 'fa-check-double',
+    title: 'Daily Log Approved',
+    message: `Your log for ${log.logDate.toLocaleDateString()} has been approved by ${user?.name || 'PM'}.`
+  });
 
-  // Audit trail
-  if (approverId) {
-    const auditService = require('./audit.service');
-    await auditService.log(approverId, 'APPROVE_DAILY_LOG', 'DailyLog', id, { projectId: log.projectId }).catch(e => logger.error('Audit log failed', e));
-  }
+  // Audit Log
+  await auditService.log({
+    userId: approverId, userName: user?.name, userRole: user?.role,
+    action: 'APPROVE_DAILY_LOG', targetType: 'DailyLog', targetId: id,
+    details: { projectId: log.projectId }
+  });
 
   return log;
 }
@@ -161,11 +191,21 @@ async function reject(id, approverId, reason) {
   });
   logger.info('Daily log rejected', { logId: id, approverId, reason });
 
+  // Notification to Submitter
+  const user = await prisma.user.findUnique({ where: { id: approverId } });
+  await notifService.create({
+    userId: log.submittedBy,
+    type: 'error', icon: 'fa-times-circle',
+    title: 'Daily Log Rejected',
+    message: `Your log for ${log.logDate.toLocaleDateString()} was rejected by ${user?.name || 'PM'}. Reason: ${reason}`
+  });
+
   // Audit trail
-  if (approverId) {
-    const auditService = require('./audit.service');
-    await auditService.log(approverId, 'REJECT_DAILY_LOG', 'DailyLog', id, { reason }).catch(e => logger.error('Audit log failed', e));
-  }
+  await auditService.log({
+    userId: approverId, userName: user?.name, userRole: user?.role,
+    action: 'REJECT_DAILY_LOG', targetType: 'DailyLog', targetId: id,
+    details: { reason }
+  });
 
   return log;
 }

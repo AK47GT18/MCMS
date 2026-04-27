@@ -166,6 +166,13 @@ const flagFraud = asyncHandler(async (req, res, id) => {
     action: 'Frozen pending investigation'
   });
 
+  // Notify MD and OM about suspected fraud
+  await notifService.notifyRole('Managing_Director', {
+    type: 'error', icon: 'fa-shield-exclamation',
+    title: 'SUSPECTED FRAUD DETECTED',
+    message: `Requisition ${result.reqCode} has been flagged for fraud by ${user.name}. Investigation required.`
+  });
+
   response.success(res, result);
 });
 

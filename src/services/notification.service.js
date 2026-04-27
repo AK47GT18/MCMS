@@ -51,6 +51,15 @@ async function create(data) {
     }
   }).catch(err => logger.error('Error triggering push notification:', err));
 
+  // Trigger Email Notification
+  prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } })
+    .then(user => {
+      if (user && user.email) {
+        emailService.sendNotification(user, title, message, link)
+          .catch(err => logger.error('Error sending email notification:', err));
+      }
+    });
+
   logger.info(`Notification created for user ${userId}: ${title}`);
   return notification;
 }

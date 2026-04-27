@@ -1,18 +1,27 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const auditService = require('./audit.service');
+const notifService = require('./notification.service');
 
 async function create(data) {
-  const req = await prisma.budgetChangeRequest.create({ data });
-  await auditService.log(data.requesterId, 'CREATE_BUDGET_UPLIFT', 'BudgetChangeRequest', req.id, { projectId: data.projectId, amount: Number(data.amount) });
+  const req = await prisma.budgetChangeRequest.create({ 
+    data,
+    include: { requester: true }
+  });
+  
+  // Audit Log
+  await auditService.log({
+    userId: data.requesterId, userName: req.requester?.name, userRole: req.requester?.role,
+    action: 'CREATE_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: req.id,
+    details: { projectId: data.projectId, amount: Number(data.amount) }
+  });
   
   // Notice PM and System
-  const notificationService = require('./notification.service');
-  notificationService.notifyRole('Managing_Director', {
-    type: 'warning',
+  await notifService.notifyRole('Managing_Director', {
+    type: 'warning', icon: 'fa-money-bill-wave',
     title: 'Budget Uplift Requested',
     message: `A budget change request of MWK ${Number(data.amount).toLocaleString()} has been submitted for Project #${data.projectId}.`,
-  }).catch(e => console.error('Notification failed', e));
+  });
 
   return req;
 }
@@ -34,7 +43,10 @@ async function getAll(options = {}) {
 }
 
 async function approve(id, approverId) {
-  const req = await prisma.budgetChangeRequest.findUnique({ where: { id: Number(id) }});
+  const req = await prisma.budgetChangeRequest.findUnique({ 
+    where: { id: Number(id) },
+    include: { requester: true, project: true }
+  });
   if (!req) throw new AppError('Request not found', 404);
   if (req.status !== 'Pending') throw new AppError('Request is not pending', 400);
 
@@ -54,7 +66,22 @@ async function approve(id, approverId) {
     return updatedReq;
   });
 
-  await auditService.log(approverId, 'APPROVE_BUDGET_UPLIFT', 'BudgetChangeRequest', id, { amount: Number(req.amount) });
+  // Notify Requester
+  await notifService.create({
+    userId: req.requesterId,
+    type: 'success', icon: 'fa-check-circle',
+    title: 'Budget Uplift Approved',
+    message: `Your budget uplift request for ${req.project?.name || '#' + req.projectId} has been approved.`
+  });
+
+  // Audit Log
+  const user = await prisma.user.findUnique({ where: { id: approverId } });
+  await auditService.log({
+    userId: approverId, userName: user?.name, userRole: user?.role,
+    action: 'APPROVE_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: id,
+    details: { amount: Number(req.amount) }
+  });
+
   return result;
 }
 
@@ -62,9 +89,24 @@ async function reject(id, approverId) {
   const req = await prisma.budgetChangeRequest.update({
     where: { id: Number(id) },
     data: { status: 'Rejected', approvedById: approverId },
+    include: { requester: true, project: true }
   });
   
-  await auditService.log(approverId, 'REJECT_BUDGET_UPLIFT', 'BudgetChangeRequest', id);
+  // Notify Requester
+  await notifService.create({
+    userId: req.requesterId,
+    type: 'error', icon: 'fa-times-circle',
+    title: 'Budget Uplift Rejected',
+    message: `Your budget uplift request for ${req.project?.name || '#' + req.projectId} was rejected.`
+  });
+
+  // Audit Log
+  const user = await prisma.user.findUnique({ where: { id: approverId } });
+  await auditService.log({
+    userId: approverId, userName: user?.name, userRole: user?.role,
+    action: 'REJECT_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: id
+  });
+
   return req;
 }
 
