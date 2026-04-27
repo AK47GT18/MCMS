@@ -3743,8 +3743,8 @@ Contract Admin</textarea>
     `,
     requestResourceFS: `
         <div class="drawer-section">
-            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Field Resource Requisition</h3>
-            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Requesting assets or materials from the Equipment Coordinator.</p>
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Resource Request (FD Approval Required)</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Submit a request for materials or equipment. This will be reviewed by the Finance Director and coordinated by Logistics.</p>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Resource Category *</label>
@@ -3757,19 +3757,72 @@ Contract Admin</textarea>
             <div id="fs_machinery_req_view" style="margin-bottom: 20px;">
                 <label class="form-label">Required Machinery *</label>
                 <select id="fs_req_asset" class="form-input" style="width: 100%;">
-                    <option value="Roller">Roller (Compaction)</option>
-                    <option value="Grader">Grader (Leveling)</option>
-                    <option value="Water Bowser">Water Bowser (Suppression)</option>
-                    <option value="Tipper">Tipper Truck (Logistics)</option>
+                    <optgroup label="Earthmoving">
+                        <option value="Excavator">Excavator (Heavy Duty)</option>
+                        <option value="Bulldozer">Bulldozer (Earthmoving)</option>
+                        <option value="Backhoe">Backhoe Loader</option>
+                        <option value="Motor Grader">Motor Grader (Leveling)</option>
+                    </optgroup>
+                    <optgroup label="Compaction & Paving">
+                        <option value="Roller">Roller (Compaction)</option>
+                        <option value="Compactor">Plate Compactor</option>
+                        <option value="Paver">Asphalt Paver</option>
+                    </optgroup>
+                    <optgroup label="Lifting & Hoisting">
+                        <option value="Crane">Crane (Mobile/Tower)</option>
+                        <option value="Forklift">Forklift (Material Handling)</option>
+                        <option value="Boom Lift">Boom Lift (Aerial)</option>
+                    </optgroup>
+                    <optgroup label="Transport & Logistics">
+                        <option value="Tipper">Tipper Truck</option>
+                        <option value="Dump Truck">Dump Truck (Haulage)</option>
+                        <option value="Water Bowser">Water Bowser (Suppression)</option>
+                        <option value="Road Sweeper">Road Sweeper</option>
+                    </optgroup>
+                    <optgroup label="Concrete & Drilling">
+                        <option value="Concrete Mixer">Concrete Mixer</option>
+                        <option value="Concrete Pump">Concrete Pump</option>
+                        <option value="Pile Driver">Pile Driver</option>
+                    </optgroup>
+                    <optgroup label="Utilities & Support">
+                        <option value="Generator">Generator (Power Supply)</option>
+                        <option value="Welding Machine">Welding Machine</option>
+                        <option value="Scaffolding Set">Scaffolding Set</option>
+                    </optgroup>
                 </select>
             </div>
 
             <div id="fs_material_req_view" style="display: none; margin-bottom: 20px;">
                 <label class="form-label">Required Material *</label>
                 <select id="fs_req_material" class="form-input" style="width: 100%;">
-                    <option value="Cement OPC">Cement OPC (Bags)</option>
-                    <option value="Bitumen G-Grade">Bitumen G-Grade (Drums)</option>
-                    <option value="Diesel Fuel">Diesel Fuel (Liters)</option>
+                    <optgroup label="Cement & Concrete">
+                        <option value="Cement OPC">Cement OPC (Bags)</option>
+                        <option value="Concrete Blocks">Concrete Blocks</option>
+                    </optgroup>
+                    <optgroup label="Bituminous">
+                        <option value="Bitumen G-Grade">Bitumen G-Grade (Drums)</option>
+                        <option value="Emulsion Primer">Emulsion Primer</option>
+                    </optgroup>
+                    <optgroup label="Aggregates">
+                        <option value="Crushed Stone">Crushed Stone (Tonnes)</option>
+                        <option value="River Sand">River Sand (Tonnes)</option>
+                        <option value="Gravel">Gravel (Tonnes)</option>
+                        <option value="Aggregate Base">Aggregate Base (Tonnes)</option>
+                    </optgroup>
+                    <optgroup label="Fuel & Fluids">
+                        <option value="Diesel Fuel">Diesel Fuel (Litres)</option>
+                    </optgroup>
+                    <optgroup label="Steel & Hardware">
+                        <option value="Steel Rebar">Steel Rebar (Tonnes)</option>
+                        <option value="Binding Wire">Binding Wire (Rolls)</option>
+                        <option value="Nails (Box)">Nails (Box)</option>
+                    </optgroup>
+                    <optgroup label="Drainage & Roadworks">
+                        <option value="PVC Pipes">PVC Pipes</option>
+                        <option value="Kerb Stones">Kerb Stones</option>
+                        <option value="Geotextile Fabric">Geotextile Fabric (m²)</option>
+                        <option value="Waterproof Membrane">Waterproof Membrane</option>
+                    </optgroup>
                 </select>
                 <div style="margin-top: 12px;">
                     <label class="form-label">Quantity *</label>
@@ -3788,7 +3841,59 @@ Contract Admin</textarea>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
                 onclick="window.app.fsModule?.handleSubmitRequisition()">
-                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Request to EC
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Request to Logistics/EC
+            </button>
+        </div>
+    `,
+    dispatchResource: (req) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Dispatch Resources</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming stock availability and setting estimated delivery time.</p>
+            
+            <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                <div style="font-size: 12px; color: var(--slate-500); margin-bottom: 4px;">Items to Dispatch</div>
+                <div style="font-weight: 700;">${req.items.map(i => `${i.quantity} x ${i.itemName}`).join(', ')}</div>
+            </div>
+
+             <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Estimated Arrival Time *</label>
+                <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;" 
+                    min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">
+                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
+                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
+            </div>
+
+            <div id="dispatch_impact_summary" style="margin-bottom: 24px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px dashed var(--slate-300); display: block;">
+                <div style="font-size: 11px; color: var(--slate-400); text-align: center;">Calculating inventory impact...</div>
+            </div>
+
+            <button class="btn btn-primary" id="btn_authorize_dispatch" style="width: 100%; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
+                onclick="window.app.ecModule?.handleRequisitionDispatch('${req.id}')">
+                <i class="fas fa-truck" style="margin-right: 8px;"></i> Authorize & Dispatch
+            </button>
+        </div>
+    `,
+    replenishRequest: (req) => `
+        <div class="drawer-section">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Replenishment Request (FD)</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Stock is unavailable in yard. Requesting procurement approval from Finance Director.</p>
+            
+            <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Original Request</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">${req.reqCode || 'REQ-'+req.id}</div>
+                <div style="font-size: 13px; color: var(--slate-600);">${req.project?.name || 'Project'}</div>
+                <div style="font-size: 13px; margin-top: 8px; font-weight: 600;">${(req.items || []).map(i => i.quantity + ' x ' + i.itemName).join(', ')}</div>
+                <div style="font-size: 12px; color: var(--blue); font-weight: 800; margin-top: 8px;">Value: MWK ${Number(req.totalAmount || 0).toLocaleString()}</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Justification *</label>
+                <textarea id="replenish_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Current yard stock exhausted. Required for critical paving phase."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
+                onclick="window.app.ecModule?.handleSubmitReplenishment('${req.id}')">
+                <i class="fas fa-file-invoice-dollar" style="margin-right: 8px;"></i> Request FD Approval & Procurement
             </button>
         </div>
     `,
@@ -4349,7 +4454,19 @@ Contract Admin</textarea>
                 </select>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleExecuteDispatch()">Authorize & Execute Dispatch</button>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Estimated Arrival Time *</label>
+                <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;"
+                    min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">
+                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
+                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
+            </div>
+
+            <div id="dispatch_impact_summary" style="margin-bottom: 24px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px dashed var(--slate-300); display: block;">
+                <div style="font-size: 11px; color: var(--slate-400); text-align: center;">Calculating inventory impact...</div>
+            </div>
+
+            <button class="btn btn-primary" id="btn_execute_dispatch" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleExecuteDispatch()">Authorize & Execute Dispatch</button>
         </div>
     `,
 

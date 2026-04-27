@@ -6,11 +6,15 @@ import assets from '../../../src/api/assets.api.js';
 export const FS_Logistics = {
     getLogisticsView() {
         // Trigger refresh
-        setTimeout(() => this._loadSiteInventory(), 0);
+        setTimeout(() => {
+            this._loadSiteInventory();
+            this._loadInTransit();
+        }, 0);
 
-        const entries = Object.entries(this.siteInventory);
+        const entries = Object.entries(this.siteInventory || {});
 
         return `
+            ${this._renderInTransit()}
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header">
                     <div class="card-title">Site Material Inventory</div>
@@ -72,10 +76,8 @@ export const FS_Logistics = {
                     </table>`
                 )
             }
-            </div>
         `;
-    }
-,
+    },
 
     async _loadSiteInventory() {
         try {
@@ -99,8 +101,66 @@ export const FS_Logistics = {
             this.inventoryLoaded = true;
             console.error('[FS] Failed to load site inventory:', error);
         }
-    }
-,
+    },
+
+    async _loadInTransit() {
+        try {
+            const result = await client.get('/requisitions', { 
+                projectId: this.assignedProject?.id || 1,
+                status: 'approved'
+            });
+            const items = Array.isArray(result) ? result : (result.data || result.requisitions || []);
+            this.inTransitItems = items.filter(r => r.dispatchStatus === 'in_transit');
+            this._refreshCurrentView();
+        } catch (error) {
+            console.error('[FS] Failed to load in-transit items:', error);
+        }
+    },
+
+    _renderInTransit() {
+        if (!this.inTransitItems || this.inTransitItems.length === 0) return '';
+
+        return `
+            <div class="data-card animate-pulse" style="margin-bottom: 24px; border: 2px solid var(--blue-light); background: #f0f9ff;">
+                <div class="data-card-header">
+                    <div class="card-title" style="color: var(--blue);"><i class="fas fa-truck-moving"></i> Incoming Shipments</div>
+                    <span class="badge badge-primary">${this.inTransitItems.length} En-Route</span>
+                </div>
+                <div style="padding: 16px;">
+                    ${this.inTransitItems.map(item => {
+                        const eta = item.estimatedArrival ? new Date(item.estimatedArrival).toLocaleString() : 'TBD';
+                        const items = item.items.map(i => `${i.quantity} x ${i.itemName}`).join(', ');
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--blue-border);">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 14px;">${items}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">ETA: ${eta} | ID: ${item.reqCode || 'REQ-'+item.id}</div>
+                                </div>
+                                <button class="btn btn-primary" style="background: var(--blue); border-color: var(--blue);" onclick="window.app.fsModule.handleConfirmArrival('${item.id}')">
+                                    <i class="fas fa-check-circle"></i> Confirm Arrival
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    async handleConfirmArrival(reqId) {
+        if (!confirm('Confirm that these resources have arrived physically at the site?')) return;
+
+        try {
+            window.toast.show('Confirming arrival...', 'info');
+            await client.post(`/dispatch/${reqId}/confirm`);
+            window.toast.show('Arrival confirmed. Site inventory updated.', 'success');
+            await this._loadSiteInventory();
+            await this._loadInTransit();
+        } catch (error) {
+            console.error('Arrival confirmation failed:', error);
+            window.toast.show('Failed to confirm arrival.', 'error');
+        }
+    },
 
     toggleRequestType(type, btn) {
         const machView = document.getElementById('fs_machinery_req_view');
@@ -117,8 +177,7 @@ export const FS_Logistics = {
 
         document.querySelectorAll('.active-resource').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-    }
-,
+    },
 
     async handleSubmitRequisition() {
         const isMachinery = document.getElementById('fs_btn_machinery')?.classList.contains('active');
@@ -143,7 +202,7 @@ export const FS_Logistics = {
             });
 
             if (window.toast) {
-                window.toast.show(`Request for ${item} submitted successfully.`, 'success');
+                window.toast.show(`Request for ${item} sent to Finance Director for approval.`, 'success');
             }
 
             setTimeout(() => {
@@ -156,8 +215,7 @@ export const FS_Logistics = {
                 window.toast.show('Failed to submit request. Please try again.', 'error');
             }
         }
-    }
-,
+    },
 
     handleConfirmIntake(id) {
         // This is now handled via the inventory API
@@ -183,8 +241,7 @@ export const FS_Logistics = {
                 console.error('[FS] Intake failed:', err);
             });
         }
-    }
-,
+    },
 
     async handleExecuteBurn(name) {
         const qty = Number(document.getElementById('burn_qty')?.value);

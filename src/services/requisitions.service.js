@@ -9,6 +9,51 @@ const logger = require('../utils/logger');
 const handlers = require('../realtime/handlers');
 const emailService = require('../emails/email.service');
 
+// Material price catalog (MWK per unit) - used to auto-calculate requisition values
+const MATERIAL_PRICES = {
+  'Cement OPC': 18500,
+  'Bitumen G-Grade': 125000,
+  'Diesel Fuel': 2850,
+  'Crushed Stone': 45000,
+  'River Sand': 25000,
+  'Steel Rebar': 85000,
+  'Concrete Blocks': 1200,
+  'PVC Pipes': 15000,
+  'Timber Planks': 8500,
+  'Roofing Sheets': 32000,
+  'Paint (Exterior)': 28000,
+  'Gravel': 18000,
+  'Bricks': 850,
+  'Nails (Box)': 12000,
+  'Binding Wire': 9500,
+  'Waterproof Membrane': 45000,
+  'Aggregate Base': 35000,
+  'Emulsion Primer': 95000,
+  'Kerb Stones': 5500,
+  'Geotextile Fabric': 22000,
+  // Machinery daily hire rates
+  'Excavator': 450000,
+  'Bulldozer': 520000,
+  'Crane': 680000,
+  'Motor Grader': 480000,
+  'Roller': 320000,
+  'Water Bowser': 180000,
+  'Tipper': 150000,
+  'Backhoe': 380000,
+  'Paver': 550000,
+  'Concrete Mixer': 120000,
+  'Dump Truck': 200000,
+  'Forklift': 280000,
+  'Generator': 95000,
+  'Compactor': 250000,
+  'Concrete Pump': 420000,
+  'Scaffolding Set': 85000,
+  'Welding Machine': 45000,
+  'Pile Driver': 750000,
+  'Boom Lift': 350000,
+  'Road Sweeper': 280000,
+};
+
 async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, projectId }) {
   const skip = (page - 1) * limit;
   const where = {};
@@ -53,17 +98,49 @@ async function create(data, userId) {
     const count = await prisma.requisition.count();
     reqData.reqCode = `REQ-${Date.now().toString().slice(-6)}-${(count + 1).toString().padStart(3, '0')}`;
   }
+
+  // Auto-calculate unit prices and totalAmount from material catalog
+  let calculatedItems = items;
+  if (items && items.length > 0) {
+    calculatedItems = items.map(item => {
+      const catalogPrice = MATERIAL_PRICES[item.itemName] || 0;
+      const unitPrice = item.unitPrice > 0 ? item.unitPrice : catalogPrice;
+      return { ...item, unitPrice };
+    });
+
+    // Auto-calculate totalAmount if not set or is 0
+    if (!reqData.totalAmount || reqData.totalAmount === 0) {
+      reqData.totalAmount = calculatedItems.reduce((sum, item) => {
+        return sum + (item.unitPrice * (item.quantity || 1));
+      }, 0);
+    }
+  }
   
   const requisition = await prisma.requisition.create({
     data: {
       ...reqData,
       submittedBy: userId,
-      items: items ? { create: items } : undefined,
+      items: calculatedItems ? { create: calculatedItems } : undefined,
     },
-    include: { items: true },
+    include: { items: true, project: { select: { id: true, code: true, name: true } } },
   });
   
-  logger.info('Requisition created', { reqId: requisition.id, reqCode: requisition.reqCode });
+  logger.info('Requisition created', { reqId: requisition.id, reqCode: requisition.reqCode, totalAmount: reqData.totalAmount });
+
+  // Email notification to Equipment Coordinator
+  try {
+    const ecUsers = await prisma.user.findMany({ where: { role: 'Equipment_Coordinator' }, select: { name: true, email: true } });
+    for (const ec of ecUsers) {
+      emailService.sendNotification(
+        ec,
+        'New Resource Request',
+        `A new requisition ${requisition.reqCode} has been submitted for ${requisition.project?.name || 'a project'}. Items: ${calculatedItems?.map(i => `${i.quantity}x ${i.itemName}`).join(', ')}. Total Value: MWK ${Number(reqData.totalAmount).toLocaleString()}.`,
+      ).catch(err => logger.error('EC email notification failed', { error: err.message }));
+    }
+  } catch (emailErr) {
+    logger.error('Failed to notify EC', { error: emailErr.message });
+  }
+
   return requisition;
 }
 

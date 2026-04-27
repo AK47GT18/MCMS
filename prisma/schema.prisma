@@ -302,6 +302,9 @@ model Requisition {
   updatedAt       DateTime              @updatedAt @map("updated_at")
   rejectionReason String?               @map("rejection_reason")
   vendorName      String?               @map("vendor_name") @db.VarChar(255)
+  notes           String?               @db.Text
+  estimatedArrival DateTime?            @map("estimated_arrival")
+  dispatchStatus  String?               @default("pending") @map("dispatch_status")
   items           RequisitionItem[]
   project         Project               @relation(fields: [projectId], references: [id])
   reviewer        User?                 @relation("RequisitionsReviewed", fields: [reviewedBy], references: [id])

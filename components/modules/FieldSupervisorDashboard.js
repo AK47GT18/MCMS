@@ -60,14 +60,6 @@ export class FieldSupervisorDashboard {
         }
     }
 
-    // =============================================
-    // DATA LOADERS (API-BACKED)
-    // =============================================
-
-
-
-
-
     _refreshCurrentView() {
         const container = document.getElementById('fs-content-area');
         if (container) {
@@ -149,9 +141,9 @@ export class FieldSupervisorDashboard {
                     
                     <!-- Desktop-only Actions in Header -->
                     <div class="hidden-mobile" style="display:flex; gap:8px;">
-                        <button class="btn btn-secondary" onclick="window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS)">
+                        <button class="btn btn-secondary" onclick="window.drawer.open('Request from Finance/FD', window.DrawerTemplates.requestResourceFS)">
                             <i class="fas fa-plus-circle"></i>
-                            <span>Request Resource</span>
+                            <span>Request from Finance</span>
                         </button>
                     </div>
 
@@ -165,29 +157,10 @@ export class FieldSupervisorDashboard {
         `;
     }
 
-
-
-    // --- LOGISTICS HANDLERS ---
-
     switchView(view) {
         this.currentView = view;
         window.app.loadPage(this.currentView);
     }
-
-
-
-
-
-
-    // --- EXISTING VIEWS (Gantt, Tasks, Equipment) ---
-
-
-
-
-
-
-
-
 }
 
 // Apply modular mixins

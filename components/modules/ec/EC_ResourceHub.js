@@ -18,7 +18,7 @@ export const EC_ResourceHub = {
 
             ${activeTab === 'fm' ? this._renderFMReceiptsTable() : this._renderRequisitionsTable()}
         `;
-    },
+    },
 
     switchHubTab(tabId) {
         this.hubActiveTab = tabId;
@@ -28,7 +28,7 @@ export const EC_ResourceHub = {
             this._loadRequisitions();
         }
         window.app.loadPage(this.currentView);
-    },
+    },
 
     _renderFMReceiptsTable() {
         if (this.pendingReceipts.length === 0) {
@@ -60,33 +60,56 @@ export const EC_ResourceHub = {
                 </table>
             </div>
         `;
-    },
+    },
 
     _renderRequisitionsTable() {
         if (this.requisitionQueue.length === 0) {
-            return `<div class="data-card"><div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px;"></i><div style="font-weight: 600;">No approved requisitions ready for Intake</div><div style="font-size: 13px;">Waiting for Finance approval</div></div></div>`;
+            return `<div class="data-card"><div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px;"></i><div style="font-weight: 600;">No active requisitions</div><div style="font-size: 13px;">Waiting for field submissions</div></div></div>`;
         }
         return `
-            <div class="data-card">
+            <div class="data-card animate-slide-up">
                 <div class="data-card-header">
-                    <div class="card-title">Approved Requisitions (Pending Intake)</div>
+                    <div class="card-title">Field Requisition Pipeline</div>
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Req ID</th><th>Project</th><th>Resource</th><th>Total Cost</th><th style="text-align: right;">Action</th></tr>
+                        <tr><th>Req ID</th><th>Project</th><th>Resource</th><th style="text-align: right;">Value</th><th>Status</th><th style="text-align: right;">Action</th></tr>
                     </thead>
                     <tbody>
                         ${this.requisitionQueue.map(req => {
                             const items = req.items || [];
                             const desc = items.length ? items.map(i => `${i.quantity} ${i.itemName}`).join(', ') : 'Resources';
+                            const status = req.status || 'pending';
+                            const isApproved = status === 'approved';
+                            const isPending = status === 'pending';
+                            
+                            let statusBadge = `<span class="status pending" style="background: var(--orange-light); color: var(--orange);">Pending EC Action</span>`;
+                            if (status === 'approved') statusBadge = `<span class="status active" style="background: var(--emerald-light); color: var(--emerald);">Approved by FD</span>`;
+                            if (status === 'fulfilled') statusBadge = `<span class="status active">Fulfilled</span>`;
+                            if (status === 'rejected') statusBadge = `<span class="status locked">Rejected</span>`;
+
                             return `
-                            <tr>
+                            <tr style="${isPending ? 'opacity: 0.8;' : ''}">
                                 <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
                                 <td style="font-weight: 600;">${req.project?.name || req.project?.code || 'Project'}</td>
                                 <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${desc}</td>
-                                <td>K${Number(req.totalAmount || 0).toLocaleString()}</td>
-                                <td style="text-align: right;">
-                                    <button class="btn btn-primary" onclick="window.app.ecModule.handleIntake('${req.id}')"><i class="fas fa-box-open"></i> Intake (GRN)</button>
+                                <td style="text-align: right;">K${Number(req.totalAmount || 0).toLocaleString()}</td>
+                                <td>${statusBadge}</td>
+                                 <td style="text-align: right;">
+                                     ${(isPending || isApproved) && req.dispatchStatus === 'pending' ?
+                                        `<div style="display:flex; gap:8px; justify-content: flex-end;">
+                                            <button class="btn btn-secondary" onclick="window.app.ecModule.handleReplenishRequest('${req.id}')" style="color: var(--red); border-color: var(--red-light);">Replenish</button>
+                                            <button class="btn btn-primary" onclick="window.app.ecModule.handleDispatch('${req.id}')"><i class="fas fa-truck"></i> Dispatch</button>
+                                         </div>` : ''
+                                     }
+                                     ${req.dispatchStatus === 'in_transit' ? 
+                                         `<button class="btn btn-secondary" disabled><i class="fas fa-truck-loading fa-spin"></i> In Transit</button>` : ''
+                                     }
+                                     ${req.dispatchStatus === 'arrived' && isApproved ? 
+                                         `<button class="btn btn-primary" onclick="window.app.ecModule.handleIntake('${req.id}')"><i class="fas fa-box-open"></i> Intake (GRN)</button>` : ''
+                                     }
+                                     ${status === 'fulfilled' ? `<span style="font-size: 12px; color: var(--emerald); font-weight: 700;"><i class="fas fa-check-double"></i> Delivered</span>` : ''}
+                                     ${status === 'rejected' ? `<span style="font-size: 12px; color: var(--slate-400);">Finalized</span>` : ''}
                                 </td>
                             </tr>
                             `;
@@ -95,23 +118,27 @@ export const EC_ResourceHub = {
                 </table>
             </div>
         `;
-    },
+    },
 
     async _loadRequisitions() {
         if (this.isLoadingRequisitions) return;
         this.isLoadingRequisitions = true;
         try {
-            // Load approved requisitions ready for GRN/Intake
-            const result = await requisitions.getAll({ status: 'approved' });
+            // Load all relevant requisitions for the EC (both pending and approved)
+            const result = await requisitions.getAll();
             const data = result.data || result;
-            this.requisitionQueue = Array.isArray(data) ? data : (data.items || data.requisitions || []);
+            const items = Array.isArray(data) ? data : (data.items || data.requisitions || []);
+            
+            // Filter out fulfilled/rejected ones unless we want a history
+            this.requisitionQueue = items.filter(r => r.status === 'pending' || r.status === 'approved');
+            
             this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load requisitions:', error);
         } finally {
             this.isLoadingRequisitions = false;
         }
-    },
+    },
 
     async _loadProcurementReceipts() {
         if (this.isLoadingProc) return;

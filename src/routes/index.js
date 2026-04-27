@@ -29,6 +29,7 @@ const { documentRoutes } = require('../api/documents.api');
 const reportsController = require('../controllers/reports.controller');
 const assetSchedulerController = require('../controllers/assetScheduler.controller');
 const pushController = require('../controllers/push.controller');
+const dispatchController = require('../controllers/dispatch.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
@@ -668,8 +669,19 @@ async function router(req, res) {
       if (reportName === 'top-actions') return reportsController.sysTopActions(req, res);
       if (reportName === 'integrity') return reportsController.sysIntegrity(req, res);
     }
+  }
 
-    return response.notFound(res, 'Report endpoint');
+  // ============================================
+  // DISPATCH ROUTES
+  // ============================================
+  if (resource === 'dispatch') {
+    if (method === 'POST' && !id) {
+      return dispatchController.dispatch(req, res);
+    }
+    if (method === 'POST' && id && action === 'confirm') {
+      return dispatchController.confirmArrival(req, res, id);
+    }
+    return methodNotAllowed(res, ['POST']);
   }
 
   // Not found
