@@ -347,7 +347,7 @@ export const FD_Contracts = {
         list.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; padding: 20px;">
                 <i class="fas fa-circle-notch fa-spin" style="margin-right: 8px; color: var(--orange);"></i>
-                <span style="font-size: 13px; color: var(--slate-500);">Fetching project requirements...</span>
+                <span style="font-size: 13px; color: var(--slate-500);">Fetching project requirements & budget...</span>
             </div>
         `;
         try {
@@ -356,39 +356,80 @@ export const FD_Contracts = {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await res.json();
-            const materials = result.data?.materials || result.materials || [];
+            const data = result.data || result;
+            const materials = data.materials || [];
+            const budget = data.budgetSummary || {};
             
+            // Store budget for submission check
+            this.currentProjectBudget = budget;
+
+            // Update Budget Display
+            const budgetDisplay = document.getElementById('contract-budget-status');
+            if (budgetDisplay) {
+                const remaining = Number(budget.remaining || 0);
+                const percent = Number(budget.percentUsed || 0);
+                budgetDisplay.innerHTML = `
+                    <div style="background: ${remaining < 1000000 ? '#fef2f2' : 'var(--slate-50)'}; border: 1px solid ${remaining < 1000000 ? '#fee2e2' : 'var(--slate-200)'}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Project Funds</span>
+                            <span style="font-size: 14px; font-weight: 800; color: ${remaining < 1000000 ? 'var(--red)' : 'var(--slate-900)'};">MWK ${remaining.toLocaleString()}</span>
+                        </div>
+                        <div style="height: 6px; background: var(--slate-200); border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--red)' : 'var(--emerald) track'};"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                            <span style="font-size: 10px; color: var(--slate-400);">${percent}% Budget Utilized</span>
+                            ${remaining < 1000000 ? '<span style="font-size: 10px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> CRITICAL BALANCE</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
             if (materials.length === 0) { 
                 list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">No specifications found for this project.</div>'; 
                 return; 
             }
 
+            // Check if any materials already have contracted quantities
+            const hasExistingContracts = materials.some(m => m.contractedQuantity > 0);
+            if (hasExistingContracts) {
+                const titleInput = document.getElementById('contract_title');
+                if (titleInput && !titleInput.value.includes('Extension')) {
+                    titleInput.value = `[EXTENSION] ` + titleInput.value;
+                }
+                const submitBtn = document.querySelector('button[onclick*="submitContract"]');
+                if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Update/Extend Contract';
+            }
+
             list.innerHTML = `
                 <div style="padding: 8px 12px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
                     <div style="flex: 2;">Material Name</div>
-                    <div style="flex: 1; text-align: right;">Available</div>
-                    <div style="flex: 1.2; text-align: right;">Contract Qty</div>
+                    <div style="flex: 1; text-align: right;">Total Required</div>
+                    <div style="flex: 1; text-align: right;">Already Contracted</div>
+                    <div style="flex: 1.2; text-align: right;">New Qty</div>
                 </div>
                 ${materials.map((m, i) => {
-                    const isAvailable = m.remainingQuantity > 0;
+                    const remainingNeeded = Math.max(0, m.quantity - m.contractedQuantity);
                     return `
-                        <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100); opacity: ${isAvailable ? 1 : 0.6}; background: ${isAvailable ? 'transparent' : 'var(--slate-50)'}">
+                        <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
-                                    ${isAvailable ? '' : 'disabled'}
                                     data-name="${m.name}" data-unit="${m.unit}"
                                     onchange="document.getElementById('m_qty_${i}').disabled = !this.checked">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.name}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">Req: ${m.quantity} ${m.unit}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">${m.unit}</div>
                                 </div>
                             </div>
                             <div style="flex: 1; text-align: right;">
-                                <div style="font-size: 12px; font-weight: 600; color: ${isAvailable ? 'var(--slate-700)' : 'var(--slate-400)'};">${m.remainingQuantity} ${m.unit}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${m.quantity}</div>
+                            </div>
+                            <div style="flex: 1; text-align: right;">
+                                <div style="font-size: 12px; font-weight: 600; color: ${m.contractedQuantity > 0 ? 'var(--orange)' : 'var(--slate-400)'};">${m.contractedQuantity}</div>
                             </div>
                             <div style="flex: 1.2; text-align: right;">
-                                <input type="number" id="m_qty_${i}" class="form-input" disabled value="${m.remainingQuantity}" 
-                                    min="1" max="${m.remainingQuantity}"
+                                <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
+                                    min="1"
                                     style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
                             </div>
                         </div>
@@ -420,8 +461,24 @@ export const FD_Contracts = {
             };
         });
 
-        if (!data.projectId || !data.vendorName || !data.title || materials.length === 0) {
-            window.toast.show('Please fill required fields and select materials', 'warning');
+        // Budget Validation
+        const remainingBudget = this.currentProjectBudget?.remaining || 0;
+        if (data.value > remainingBudget) {
+            const deficit = data.value - remainingBudget;
+            window.toast.show(`Insufficient budget! Deficit: MWK ${deficit.toLocaleString()}`, 'error');
+            
+            // Auto-redirect to Uplift Drawer
+            setTimeout(() => {
+                window.drawer.open('Request Budget Uplift', window.DrawerTemplates.initiateBCR([
+                    { id: data.projectId, code: 'CURRENT', name: 'Selected Project' }
+                ], data.projectId));
+                
+                // Pre-fill deficit
+                const bcrAmount = document.getElementById('bcr_amount');
+                if (bcrAmount) bcrAmount.value = deficit;
+                const bcrReason = document.getElementById('bcr_reason');
+                if (bcrReason) bcrReason.value = `Automatic uplift request for contract "${data.title}" which exceeds current balance by MWK ${deficit.toLocaleString()}.`;
+            }, 1000);
             return;
         }
 
@@ -449,6 +506,39 @@ export const FD_Contracts = {
             window.drawer.close();
             if (this.currentView === 'contracts') this.loadContractsData();
         } catch (err) { window.toast.show(err.message, 'error'); }
+    },
+
+    async handleSubmitUplift() {
+        const data = {
+            projectId: parseInt(document.getElementById('bcr_project')?.value),
+            amount: parseFloat(document.getElementById('bcr_amount')?.value),
+            reason: document.getElementById('bcr_reason')?.value,
+            requesterId: window.app.currentUser?.id
+        };
+
+        if (!data.projectId || !data.amount || !data.reason) {
+            window.toast.show('Please provide project, amount and justification.', 'warning');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/budget-changes', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (!res.ok) throw new Error('Failed to submit uplift request');
+            
+            window.toast.show('Budget Uplift Request sent to PM for approval', 'success');
+            window.drawer.close();
+            
+            // Optionally refresh view or dashboard
+            if (this.currentView === 'procurement') this.loadProcurementData();
+        } catch (err) {
+            window.toast.show(err.message, 'error');
+        }
     },
 
     async notifyLogistics(contractId, refCode) {

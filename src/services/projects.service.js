@@ -576,10 +576,13 @@ async function getMaterials(projectId) {
     };
   });
 
-  return {
-    project: { id: project.id, code: project.code, name: project.name, budgetTotal: Number(project.budgetTotal) },
-    materials: materialsWithBalance
-  };
+    const budgetSummary = await getBudgetSummary(projectId);
+  
+    return {
+      project: { id: project.id, code: project.code, name: project.name },
+      budgetSummary,
+      materials: materialsWithBalance
+    };
 }
 
 /**

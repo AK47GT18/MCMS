@@ -3398,6 +3398,7 @@ Contract Admin</textarea>
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
                 <input type="text" id="contract_title" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
             </div>
+            <div id="contract-budget-status"></div>
 
             <!-- Contract Value -->
             <div class="form-group" style="margin-bottom: 20px;">
