@@ -3855,7 +3855,7 @@ Contract Admin</textarea>
                 <div style="font-weight: 700;">${req.items.map(i => `${i.quantity} x ${i.itemName}`).join(', ')}</div>
             </div>
 
-             <div class="form-group" style="margin-bottom: 24px;">
+             <div class="form-group" id="eta_container" style="margin-bottom: 24px;">
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;" 
                     min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">
@@ -4454,7 +4454,7 @@ Contract Admin</textarea>
                 </select>
             </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
+            <div class="form-group" id="eta_container" style="margin-bottom: 24px;">
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;"
                     min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">

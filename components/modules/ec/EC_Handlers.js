@@ -585,21 +585,26 @@ export const EC_Handlers = {
                 </div>
             `;
             
-            // Logic to hide main button if no stock at all
+            // Logic to hide main button and ETA if no stock at all
             if (mainBtn) {
+                const etaContainer = document.getElementById('eta_container');
                 if (!anyAvailable) {
                     mainBtn.style.display = 'none';
+                    if (etaContainer) etaContainer.style.display = 'none';
                 } else {
                     mainBtn.style.display = 'flex';
                     mainBtn.style.opacity = '0.4';
                     mainBtn.style.pointerEvents = 'none';
                     mainBtn.title = 'Complete restocking escalation first or use the partial dispatch button.';
+                    if (etaContainer) etaContainer.style.display = 'block';
                 }
             }
         } else if (mainBtn) {
             mainBtn.style.display = 'flex';
             mainBtn.style.opacity = '1';
             mainBtn.style.pointerEvents = 'auto';
+            const etaContainer = document.getElementById('eta_container');
+            if (etaContainer) etaContainer.style.display = 'block';
         }
 
         container.innerHTML = html;
