@@ -205,16 +205,16 @@ const assetResolveIssueSchema = z.object({
 // ============================================
 
 const createRequisitionSchema = z.object({
-  reqCode: z.string().min(1).max(20),
-  projectId: z.number().int().positive().optional(),
+  reqCode: z.string().max(20).optional(),
+  projectId: z.coerce.number().int().positive().optional(),
   vendorName: z.string().max(255).optional(),
   description: z.string().optional(),
-  totalAmount: z.number().positive(),
+  totalAmount: z.coerce.number().min(0),
   budgetLine: z.string().max(20).optional(),
   items: z.array(z.object({
     itemName: z.string().min(1).max(255),
-    quantity: z.number().int().positive(),
-    unitPrice: z.number().positive(),
+    quantity: z.coerce.number().int().positive(),
+    unitPrice: z.coerce.number().min(0),
   })).optional(),
 });
 

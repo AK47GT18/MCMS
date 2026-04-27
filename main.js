@@ -4,8 +4,12 @@ import { drawer } from './components/DrawerManager.js';
 import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
 import issues from './src/api/issues.api.js';
 import { realtime } from './src/realtime/RealtimeClient.js';
+import V from './components/ui/FormValidator.js';
 import './components/ui/ToastManager.js';
 import './components/ui/ModalManager.js';
+
+// Expose validation utility globally for drawer templates
+window.V = V;
 
 // Auth constants
 const TOKEN_KEY = 'mcms_auth_token';
@@ -98,10 +102,101 @@ window.triggerPwaInstall = async () => {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('[PWA] ServiceWorker registered:', reg.scope))
+            .then(reg => {
+                console.log('[PWA] ServiceWorker registered:', reg.scope);
+                // Initialize push notifications after registration
+                initPushNotifications(reg);
+            })
             .catch(err => console.warn('[PWA] ServiceWorker failed:', err));
     });
 }
+
+async function initPushNotifications(registration) {
+    if (!('PushManager' in window)) {
+        console.warn('[Push] Push notifications not supported by this browser');
+        return;
+    }
+
+    try {
+        // Check if we already have a subscription
+        const existingSub = await registration.pushManager.getSubscription();
+        if (existingSub) {
+            console.log('[Push] User already subscribed');
+            return;
+        }
+
+        // Auto-subscribe if permission already granted
+        if (Notification.permission === 'granted') {
+            subscribeUserToPush(registration);
+        }
+    } catch (err) {
+        console.error('[Push] Init error:', err);
+    }
+}
+
+async function subscribeUserToPush(registration) {
+    try {
+        // 1. Get public key from server
+        const keyResponse = await fetch('/api/v1/push/key');
+        const { data } = await keyResponse.json();
+        const publicKey = data.publicKey;
+
+        // 2. Subscribe with the key
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+
+        console.log('[Push] Subscription successful:', subscription);
+
+        // 3. Send subscription to server
+        const token = localStorage.getItem('mcms_auth_token');
+        await fetch('/api/v1/push/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(subscription)
+        });
+
+        window.toast?.show('Notifications enabled successfully', 'success');
+    } catch (err) {
+        console.error('[Push] Subscription failed:', err);
+        if (Notification.permission === 'denied') {
+            console.warn('[Push] Permission for notifications was denied');
+        }
+    }
+}
+
+// Utility to convert VAPID key
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// Expose trigger globally
+window.requestNotificationPermission = async () => {
+    if (!('serviceWorker' in navigator)) return;
+    
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        subscribeUserToPush(registration);
+    } else {
+        window.toast?.show('Notification permission denied', 'warning');
+    }
+};
 
 class App {
     constructor() {

@@ -14,7 +14,8 @@ export const FS_Tasks = {
               </div>
             </div>
         `;
-    },
+    }
+,
 
     async _loadTasks() {
         const container = document.getElementById('fs-tasks-container');
@@ -22,7 +23,7 @@ export const FS_Tasks = {
 
         try {
             const projectId = this.assignedProject?.id || 1;
-            const result = await tasksApi.getByProject(projectId);
+            const result = await tasks.getByProject(projectId);
             const data = result.data || result;
             const taskList = Array.isArray(data) ? data : (data.tasks || []);
 
@@ -55,7 +56,8 @@ export const FS_Tasks = {
         } catch (error) {
             container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">Failed to load tasks: ${error.message}</div>`;
         }
-    },
+    }
+,
 
     getGanttView() {
         setTimeout(() => this.renderGanttChart(), 100);
@@ -99,7 +101,8 @@ export const FS_Tasks = {
                 </div>
             </div>
         `;
-    },
+    }
+,
 
     async renderGanttChart() {
         try {
@@ -107,7 +110,7 @@ export const FS_Tasks = {
             if (!el) return;
 
             const projectId = this.assignedProject?.id || 1;
-            const response = await tasksApi.getByProject(projectId);
+            const response = await tasks.getByProject(projectId);
             const data = response.data || response;
             const tasksList = Array.isArray(data) ? data : (data.tasks || []);
 
@@ -150,16 +153,19 @@ export const FS_Tasks = {
             const el = document.getElementById('gantt');
             if (el) el.innerHTML = `<div style="padding:20px; color:var(--red);">Gantt Error: ${e.message}</div>`;
         }
-    },
+    }
+,
 
     changeGanttViewMode(mode) {
         this.currentGanttViewMode = mode;
         if (this.ganttInstance) this.ganttInstance.change_view_mode(mode);
-    },
+    }
+,
 
     scrollToToday() {
         if (this.ganttInstance?.scroll_today) this.ganttInstance.scroll_today();
-    },
+    }
+,
 
     async handleDailyLogSubmit(payloadOverride = null) {
         try {

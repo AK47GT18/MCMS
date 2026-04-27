@@ -24,7 +24,7 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Amount (MWK)</label>
-                <input type="number" id="trx-amount" class="form-input" value="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
+                <input type="number" id="trx-amount" class="form-input" data-vrules="required|min:1" value="" placeholder="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
@@ -50,8 +50,8 @@ export const DrawerTemplates = {
 
              <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Description / Contractor</label>
-                <input type="text" id="trx-contractor" class="form-input" placeholder="Enter contractor name..." style="width: 100%; margin-bottom: 8px;">
-                <textarea id="trx-description" class="form-input" rows="3" placeholder="Enter transaction details..." style="width: 100%;"></textarea>
+                <input type="text" id="trx-contractor" class="form-input" data-vrules="required|minLen:2|alpha" placeholder="Enter contractor name..." style="width: 100%; margin-bottom: 8px;">
+                <textarea id="trx-description" class="form-input" data-vrules="required|minLen:5" rows="3" placeholder="Enter transaction details..." style="width: 100%;"></textarea>
             </div>
 
              <div class="form-group" style="margin-bottom: 24px;">
@@ -62,7 +62,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleTransactionSubmit()">Process Transaction</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}(window.app.pmModule || window.app.fsModule || window.app.caModule).handleTransactionSubmit()">Process Transaction</button>
         </div>
     `,
 
@@ -104,7 +104,7 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Evidence / Narrative</label>
-                <textarea class="form-input" rows="5" placeholder="Please provide details, dates, and names if known..."></textarea>
+                <textarea class="form-input" data-vrules="required|minLen:20" rows="5" placeholder="Please provide details, dates, and names if known..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
@@ -115,7 +115,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
+            <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
         </div>
     `,
     safetyIncident: `
@@ -282,10 +282,10 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Details</label>
-                <textarea class="form-input" rows="5" placeholder="Describe the issue and expected impact on schedule..."></textarea>
+                <textarea class="form-input" data-vrules="required|minLen:10" rows="5" placeholder="Describe the issue and expected impact on schedule..."></textarea>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Issue reported to PM and Operations.', 'info'); window.drawer.close();">Submit Report</button>
+            <button class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('Issue reported to PM and Operations.', 'info'); window.drawer.close();">Submit Report</button>
         </div>
     `,
 
@@ -322,12 +322,12 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Person(s) Involved</label>
-                <input type="text" class="form-input" placeholder="Name or Staff ID...">
+                <input type="text" class="form-input" data-vrules="required|minLen:2" placeholder="Name or Staff ID...">
             </div>
 
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Incident Description</label>
-                <textarea class="form-input" rows="4" placeholder="Describe what happened and immediate actions taken..."></textarea>
+                <textarea class="form-input" data-vrules="required|minLen:10" rows="4" placeholder="Describe what happened and immediate actions taken..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
@@ -338,7 +338,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; background: var(--orange); border-color: var(--orange); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('HSE Report Filed. SMS Alert sent to Safety Officer.', 'info'); window.drawer.close();">Log Incident</button>
+            <button class="btn btn-primary" style="width: 100%; background: var(--orange); border-color: var(--orange); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('HSE Report Filed. SMS Alert sent to Safety Officer.', 'info'); window.drawer.close();">Log Incident</button>
         </div>
     `,
 
@@ -550,17 +550,17 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Vendor Name</label>
-                <input type="text" class="form-input" style="width: 100%; padding: 10px;" placeholder="e.g. Lilongwe Hardware">
+                <input type="text" class="form-input" data-vrules="required|minLen:2" style="width: 100%; padding: 10px;" placeholder="e.g. Lilongwe Hardware">
             </div>
 
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Description / Items</label>
-                <textarea class="form-input" rows="3" style="width: 100%; padding: 10px;" placeholder="List items needed..."></textarea>
+                <textarea class="form-input" data-vrules="required|minLen:5" rows="3" style="width: 100%; padding: 10px;" placeholder="List items needed..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Total Amount (MWK)</label>
-                <input type="number" class="form-input" style="width: 100%; padding: 10px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0.00">
+                <input type="number" class="form-input" data-vrules="required|min:1" style="width: 100%; padding: 10px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0.00">
             </div>
 
             <div style="margin-bottom: 24px;">
@@ -571,7 +571,7 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button class="btn btn-primary" id="btn-submit-funds" style="width: 100%; padding: 14px; font-weight: 700;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleRequestFunds()">Submit Request</button>
+            <button class="btn btn-primary" id="btn-submit-funds" style="width: 100%; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}(window.app.pmModule || window.app.fsModule || window.app.caModule).handleRequestFunds()">Submit Request</button>
         </div>
     `,
 
@@ -647,17 +647,17 @@ export const DrawerTemplates = {
 
                 <div style="margin-bottom: 16px;">
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                    <input type="text" id="proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
+                    <input type="text" id="proj_name" class="form-input" data-vrules="required|minLen:3" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                    <input type="text" id="proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
+                    <input type="text" id="proj_client" class="form-input" data-vrules="required|minLen:2" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
                 </div>
 
                 <div style="margin-bottom: 16px;">
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                    <input type="number" id="proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
+                    <input type="number" id="proj_budget" class="form-input" data-vrules="required|min:1" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
                     <span style="font-size:11px; color:var(--slate-500); margin-top:4px; display:inline-block;"><i class="fas fa-info-circle"></i> For road works, the estimate must fit within this envelope.</span>
                 </div>
                 
@@ -1120,7 +1120,7 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Narrative / Progress Log</label>
-                 <textarea id="daily-narrative" class="form-input" rows="2" placeholder="Describe work done today... (e.g. Finished north section)"></textarea>
+                 <textarea id="daily-narrative" class="form-input" data-vrules="required|minLen:5" rows="2" placeholder="Describe work done today... (e.g. Finished north section)"></textarea>
             </div>
 
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
@@ -1217,13 +1217,13 @@ export const DrawerTemplates = {
          <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Task Description</label>
-                <textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="What was the equipment used for?"></textarea>
+                <textarea class="form-input" data-vrules="required|minLen:5" rows="3" style="width:100%; padding:10px;" placeholder="What was the equipment used for?"></textarea>
              </div>
              <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                  <div class="form-group"><label class="form-label">Hours Operated</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
+                  <div class="form-group"><label class="form-label">Hours Operated</label><input type="number" class="form-input" data-vrules="required|min:0" style="width:100%; padding:10px;"></div>
                   <div class="form-group"><label class="form-label">Fuel (L)</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
              </div>
-             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Usage Logged', 'success')">Log Usage</button>
+             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.drawer.close(); window.toast.show('Usage Logged', 'success')">Log Usage</button>
          </div>
     `,
 
@@ -1268,13 +1268,13 @@ export const DrawerTemplates = {
                 <i class="fas fa-triangle-exclamation"></i> This will immediately alert the Project Manager and Safety Officer.
             </div>
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Type</label><select style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;"><option>Injury</option><option>Near Miss</option><option>Property Damage</option></select></div>
-            <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Description</label><textarea style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" rows="3"></textarea></div>
+            <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Description</label><textarea class="form-input" data-vrules="required|minLen:10" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" rows="3"></textarea></div>
             <div class="form-label">Evidence (Optional)</div>
             <label style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 24px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; transition: 0.2s; margin-bottom: 16px; display: block;">
                 <i class="fas fa-camera"></i> Capture Scene
                 <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.toast.show('Evidence attached!', 'success')">
             </label>
-            <button class="btn btn-primary" style="width:100%; background: var(--red); border-color: var(--red);" onclick="window.drawer.close(); window.toast.show('Alert sent to HQ', 'error')">Submit Alert</button>
+            <button class="btn btn-primary" style="width:100%; background: var(--red); border-color: var(--red);" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.drawer.close(); window.toast.show('Alert sent to HQ', 'error')">Submit Alert</button>
         </div>
     `,
 
@@ -1357,12 +1357,12 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Contract Value (MWK)</label>
-                 <input type="number" id="edit_contract_value" class="form-input" value="${contract.value || ''}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
+                 <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" value="${contract.value || ''}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Vendor Name</label>
-                 <input type="text" id="edit_contract_vendor" class="form-input" value="${contract.vendorName || ''}" style="width:100%; padding:10px;">
+                 <input type="text" id="edit_contract_vendor" class="form-input" data-vrules="required|minLen:2" value="${contract.vendorName || ''}" style="width:100%; padding:10px;">
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
@@ -1413,7 +1413,7 @@ export const DrawerTemplates = {
             
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Document Title</label>
-                <input type="text" id="doc_title" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Environmental Impact Assessment">
+                <input type="text" id="doc_title" class="form-input" data-vrules="required|minLen:3" style="width:100%; padding:10px;" placeholder="e.g. Environmental Impact Assessment">
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
@@ -3773,7 +3773,7 @@ Contract Admin</textarea>
                 </select>
                 <div style="margin-top: 12px;">
                     <label class="form-label">Quantity *</label>
-                    <input type="number" id="fs_req_qty" class="form-input" style="width: 100%;" placeholder="0.00">
+                    <input type="number" id="fs_req_qty" class="form-input" data-vrules="required|min:1" style="width: 100%;" placeholder="0.00">
                 </div>
             </div>
 
@@ -3805,12 +3805,12 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Quantity Consumed (${item.unit}) *</label>
-                <input type="number" id="burn_qty" class="form-input" style="width: 100%; border-color: var(--blue);" value="10">
+                <input type="number" id="burn_qty" class="form-input" data-vrules="required|min:1" style="width: 100%; border-color: var(--blue);" value="">
             </div>
 
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
-                onclick="window.app.fsModule?.handleExecuteBurn('${item.name}')">
+                onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.fsModule?.handleExecuteBurn('${item.name}')">
                 <i class="fas fa-fire" style="margin-right: 8px;"></i> Confirm Daily Burn
             </button>
         </div>
@@ -3848,7 +3848,7 @@ Contract Admin</textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--orange); margin-bottom: 6px; text-transform: uppercase;">New End Date</label>
-                    <input type="date" id="extend_new_end" class="form-input" style="width: 100%; padding: 10px; border-color: var(--orange);" min="${project?.endDate ? project.endDate.split('T')[0] : ''}">
+                    <input type="date" id="extend_new_end" class="form-input" data-vrules="required|futureDate" style="width: 100%; padding: 10px; border-color: var(--orange);" min="${project?.endDate ? project.endDate.split('T')[0] : ''}">
                 </div>
             </div>
 
@@ -3858,7 +3858,7 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Reason for Extension *</label>
-                <textarea id="extend_reason" class="form-input" rows="3" style="width: 100%; padding: 10px;" placeholder="e.g. Weather delays, scope change, material shortages..."></textarea>
+                <textarea id="extend_reason" class="form-input" data-vrules="required|minLen:10" rows="3" style="width: 100%; padding: 10px;" placeholder="e.g. Weather delays, scope change, material shortages..."></textarea>
             </div>
 
             <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 12px; color: var(--slate-600);">
@@ -3873,7 +3873,7 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" 
-                onclick="window.app.pmModule.handleExtendProject()">
+                onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handleExtendProject()">
                 <i class="fas fa-calendar-plus" style="margin-right: 8px;"></i> Approve & Extend Timeline
             </button>
         </div>

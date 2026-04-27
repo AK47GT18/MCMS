@@ -531,19 +531,118 @@ select.form-input {
     margin-bottom: 6px;
 }
 
-/* Form Validation Styles */
+/* ====== INLINE VALIDATION SYSTEM ====== */
+
+/* Error state */
+.form-input.v-error {
+    border-color: var(--red) !important;
+    background: #FFF5F5 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
+}
+.form-input.v-error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Success state */
+.form-input.v-ok {
+    border-color: var(--emerald) !important;
+    background: #F0FDF4 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.06) !important;
+}
+.form-input.v-ok:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
+}
+
+/* Inline error message */
+.v-msg {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 5px;
+    line-height: 1.3;
+    animation: v-slide 0.25s ease;
+}
+.v-msg.v-msg-err { color: var(--red); }
+.v-msg.v-msg-ok  { color: var(--emerald); }
+.v-msg i { font-size: 10px; flex-shrink: 0; }
+
+@keyframes v-slide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Shake on invalid submit */
+@keyframes v-shake {
+    0%, 100% { transform: translateX(0); }
+    20%      { transform: translateX(-6px); }
+    40%      { transform: translateX(6px); }
+    60%      { transform: translateX(-4px); }
+    80%      { transform: translateX(4px); }
+}
+.v-shake { animation: v-shake 0.4s ease; }
+
+/* Helper / char count text */
+.v-helper {
+    font-size: 11px;
+    color: var(--slate-400);
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Password strength bar */
+.v-pw-bar {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 6px;
+    background: var(--slate-100);
+    overflow: hidden;
+}
+.v-pw-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.35s ease, background 0.35s ease;
+}
+.v-pw-fill.pw-weak   { width: 25%;  background: var(--red); }
+.v-pw-fill.pw-fair   { width: 50%;  background: var(--amber); }
+.v-pw-fill.pw-good   { width: 75%;  background: var(--blue); }
+.v-pw-fill.pw-strong { width: 100%; background: var(--emerald); }
+
+.v-pw-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* Required asterisk */
+.v-req::after {
+    content: ' *';
+    color: var(--red);
+    font-weight: 700;
+}
+
+/* Disabled submit button */
+.btn[disabled], .btn.v-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* Legacy compat */
 .input-error {
     border-color: var(--red) !important;
     background-color: var(--red-light) !important;
 }
-
 .error-message {
     color: var(--red);
     font-size: 11px;
     margin-top: 4px;
     font-weight: 600;
 }
-
 .password-strength-meter {
     height: 4px;
     border-radius: 2px;
@@ -890,7 +989,7 @@ tbody td {
     position: fixed;
     top: 24px;
     right: 24px;
-    z-index: 1000;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
     gap: 12px;

@@ -42,14 +42,6 @@ export class EquipmentCoordinatorDashboard {
         this.auditLogs = [];
         this.projects = [];
         
-        // --- LOADING STATES ---
-        this.isLoadingAssets = false;
-        this.isLoadingInventory = false;
-        this.isLoadingLogs = false;
-        this.isLoadingConflicts = false;
-        this.isLoadingRequisitions = false;
-        this.isLoadingProc = false;
-        
         // WebSocket Real-time listeners
         this._setupRealtimeListeners();
     }

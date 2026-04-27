@@ -35,7 +35,8 @@ export const FS_Equipment = {
             }
             </div>
         `;
-    },
+    }
+,
 
     async _loadSiteAssets() {
         try {
@@ -48,7 +49,8 @@ export const FS_Equipment = {
             this.assetsLoaded = true;
             console.error('[FS] Failed to load site assets:', error);
         }
-    },
+    }
+,
 
     async handleReportBreakdown(assetId, assetName) {
         if (!confirm(`Are you sure you want to flag ${assetName} as BROKEN DOWN? This will immediately halt operations for this equipment and alert the Equipment Coordinator.`)) {
@@ -57,7 +59,7 @@ export const FS_Equipment = {
 
         try {
             await window.loader.show('Reporting breakdown to base...', async () => {
-                await assets.flagIssue(assetId, `Field Supervisor reported breakdown on site.`);
+                await window.assets.flagIssue(assetId, `Field Supervisor reported breakdown on site.`);
             });
             window.modal.showSuccess('Breakdown Reported', `${assetName} has been flagged for maintenance.`);
             await this._loadSiteAssets();

@@ -28,6 +28,7 @@ const timelineExtensionController = require('../controllers/timelineExtension.co
 const { documentRoutes } = require('../api/documents.api');
 const reportsController = require('../controllers/reports.controller');
 const assetSchedulerController = require('../controllers/assetScheduler.controller');
+const pushController = require('../controllers/push.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
@@ -590,6 +591,22 @@ async function router(req, res) {
       return notificationsController.create(req, res);
     }
     return methodNotAllowed(res, ['GET', 'POST', 'PUT']);
+  }
+
+  // ============================================
+  // PUSH NOTIFICATION ROUTES
+  // ============================================
+  if (resource === 'push') {
+    if (id === 'key' && method === 'GET') {
+      return pushController.getPublicKey(req, res);
+    }
+    if (id === 'subscribe' && method === 'POST') {
+      return pushController.subscribe(req, res);
+    }
+    if (id === 'unsubscribe' && method === 'POST') {
+      return pushController.unsubscribe(req, res);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
   }
 
   // ============================================

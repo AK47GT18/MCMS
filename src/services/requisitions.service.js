@@ -48,6 +48,12 @@ async function getById(id) {
 async function create(data, userId) {
   const { items, ...reqData } = data;
   
+  // Auto-generate reqCode if missing
+  if (!reqData.reqCode) {
+    const count = await prisma.requisition.count();
+    reqData.reqCode = `REQ-${Date.now().toString().slice(-6)}-${(count + 1).toString().padStart(3, '0')}`;
+  }
+  
   const requisition = await prisma.requisition.create({
     data: {
       ...reqData,

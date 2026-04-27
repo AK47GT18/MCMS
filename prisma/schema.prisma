@@ -51,6 +51,7 @@ model User {
   notifications            Notification[]
   extensionRequestsMade    ProjectExtensionRequest[] @relation("ExtensionRequester")
   extensionRequestsReviewed ProjectExtensionRequest[] @relation("ExtensionReviewer")
+  pushSubscriptions         PushSubscription[]
 
   @@map("users")
 }
@@ -859,4 +860,16 @@ model Notification {
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
 }

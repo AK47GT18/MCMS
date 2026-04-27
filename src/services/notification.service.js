@@ -5,6 +5,8 @@
 
 const { prisma } = require('../config/database');
 const websocket = require('../realtime/websocket');
+const pushService = require('./push.service');
+const emailService = require('../emails/email.service');
 const logger = require('../utils/logger');
 
 /**
@@ -38,6 +40,16 @@ async function create(data) {
     createdAt: notification.createdAt,
     isRead: false
   });
+
+  // Trigger Native Push Notification
+  pushService.sendNotification(userId, {
+    title: notification.title,
+    body: notification.message,
+    icon: '/icon-192.png',
+    data: {
+      url: notification.link || '/dashboard.html'
+    }
+  }).catch(err => logger.error('Error triggering push notification:', err));
 
   logger.info(`Notification created for user ${userId}: ${title}`);
   return notification;

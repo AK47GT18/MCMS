@@ -10,16 +10,9 @@ export const EC_Maintenance = {
                 <div class="data-card-header">
                     <div class="card-title">Fleet Health Monitor</div>
                 </div>
-                ${this.isLoadingAssets && this.assetRegistry.length === 0
+                ${this.assetRegistry.length === 0
                     ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading fleet data…</div></div>'
-                    : this.assetRegistry.length === 0
-                        ? `
-                        <div style="padding: 60px; text-align: center; color: var(--slate-400);">
-                            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.1;"><i class="fas fa-shield-heart"></i></div>
-                            <div style="font-weight: 700; color: var(--slate-600);">No Fleet to Monitor</div>
-                            <p style="font-size: 13px; margin-top: 8px;">Asset condition and health tracking will appear once equipment is registered.</p>
-                        </div>`
-                        : `<table>
+                    : `<table>
                         <thead>
                             <tr><th>Equipment</th><th>Last Service</th><th>Condition</th><th>Criticality</th></tr>
                         </thead>
@@ -41,7 +34,8 @@ export const EC_Maintenance = {
                 }
             </div>
         `;
-    },
+    }
+,
 
     getOperatorsView() {
         // Load assets with operator info
@@ -75,7 +69,8 @@ export const EC_Maintenance = {
                 }
             </div>
         `;
-    },
+    }
+,
 
     getUtilizationView() {
         const total = this.assetRegistry.length || 1;
@@ -101,7 +96,8 @@ export const EC_Maintenance = {
                 </div>
             </div>
         `;
-    },
+    }
+,
 
     async _loadConflicts() {
         if (this.isLoadingConflicts) return;

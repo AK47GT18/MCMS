@@ -13,16 +13,9 @@ export const EC_Registry = {
                         <i class="fas fa-plus-circle"></i> Request New Asset
                     </button>
                 </div>
-                ${this.isLoadingAssets && this.assetRegistry.length === 0
+                ${this.assetRegistry.length === 0
                     ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading asset registry…</div></div>'
-                    : this.assetRegistry.length === 0
-                        ? `
-                        <div style="padding: 60px; text-align: center; color: var(--slate-400);">
-                            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.1;"><i class="fas fa-truck-monster"></i></div>
-                            <div style="font-weight: 700; color: var(--slate-600);">No Assets Registered</div>
-                            <p style="font-size: 13px; margin-top: 8px;">The master fleet registry is currently empty.</p>
-                        </div>`
-                        : `<table>
+                    : `<table>
                         <thead>
                             <tr><th>Asset ID</th><th>Name</th><th>Category</th><th>Hours/Km</th><th>Condition</th><th>Status</th><th style="text-align: right;">Action</th></tr>
                         </thead>

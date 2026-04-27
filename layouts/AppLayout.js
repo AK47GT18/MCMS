@@ -345,6 +345,7 @@ export class AppLayout {
                                 </div>
                             </div>
                             <div class="notification-footer">
+                                <button class="view-all-btn" onclick="window.requestNotificationPermission()">Enable Push</button>
                                 <button class="view-all-btn" onclick="window.app.layout._loadNotifications()">Refresh</button>
                             </div>
                         </div>
@@ -472,6 +473,9 @@ export class AppLayout {
             </div>
 
             <div class="drawer-section">
+                <button class="btn btn-secondary" style="width: 100%; justify-content: center; gap: 8px; font-weight: 600; margin-bottom: 16px; background: #EEF2FF; color: #4F46E5; border-color: #C7D2FE;" onclick="window.requestNotificationPermission()">
+                    <i class="fas fa-bell"></i> Enable App Notifications
+                </button>
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <div class="form-group">
                         <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
@@ -503,17 +507,17 @@ export class AppLayout {
                     <div id="password-form" style="display: none; flex-direction: column; gap: 16px; margin-top: 12px; padding: 20px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
                         <div class="form-group">
                             <label class="form-label">Current Password</label>
-                            <input type="password" class="form-input" placeholder="••••••••" style="background: var(--white);">
+                            <input type="password" id="pw_current" class="form-input" data-vrules="required|minLen:4" placeholder="••••••••" style="background: var(--white);">
                         </div>
                         <div class="form-group">
                             <label class="form-label">New Password</label>
-                            <input type="password" class="form-input" placeholder="••••••••" style="background: var(--white);">
+                            <input type="password" id="pw_new" class="form-input" data-vrules="required|password" placeholder="••••••••" style="background: var(--white);" oninput="window.V?.checkPasswordStrength(this)">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-input" placeholder="••••••••" style="background: var(--white);">
+                            <input type="password" id="pw_confirm" class="form-input" data-vrules="required|match:pw_new" placeholder="••••••••" style="background: var(--white);">
                         </div>
-                        <button class="btn btn-primary" style="width: 100%; justify-content: center; font-weight: 700; margin-top: 8px;" onclick="window.app.layout.handlePasswordUpdate()">
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center; font-weight: 700; margin-top: 8px;" onclick="if(!window.V.validateForm(document.getElementById('password-form'))){return}window.app.layout.handlePasswordUpdate()">
                             Update Securely
                         </button>
                     </div>

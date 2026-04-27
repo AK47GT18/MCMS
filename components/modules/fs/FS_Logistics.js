@@ -2,7 +2,6 @@ import client from '../../../src/api/client.js';
 import tasksApi from '../../../src/api/tasks.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 import assets from '../../../src/api/assets.api.js';
-import inventoryApi from '../../../src/api/inventory.api.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
@@ -75,7 +74,8 @@ export const FS_Logistics = {
             }
             </div>
         `;
-    },
+    }
+,
 
     async _loadSiteInventory() {
         try {
@@ -99,7 +99,8 @@ export const FS_Logistics = {
             this.inventoryLoaded = true;
             console.error('[FS] Failed to load site inventory:', error);
         }
-    },
+    }
+,
 
     toggleRequestType(type, btn) {
         const machView = document.getElementById('fs_machinery_req_view');
@@ -116,31 +117,47 @@ export const FS_Logistics = {
 
         document.querySelectorAll('.active-resource').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-    },
+    }
+,
 
     async handleSubmitRequisition() {
         const isMachinery = document.getElementById('fs_btn_machinery')?.classList.contains('active');
         const item = isMachinery ? document.getElementById('fs_req_asset')?.value : document.getElementById('fs_req_material')?.value;
         const qty = isMachinery ? 1 : document.getElementById('fs_req_qty')?.value;
+        
+        // Frontend Validation
+        if (!item || ( !isMachinery && !qty)) {
+            if (window.toast) window.toast.show('Please select a material/asset and specify quantity.', 'warning');
+            return;
+        }
+
         console.log('[FS] Transmitting request to Equipment Coordinator…');
 
         try {
             // Submit via API
-            await client.post('/requisitions', {
+            const result = await client.post('/requisitions', {
                 projectId: this.assignedProject?.id || 1,
                 totalAmount: 0,
                 vendorName: 'Internal Request',
                 items: [{ itemName: item, quantity: Number(qty) || 1, unitPrice: 0 }]
             });
 
+            if (window.toast) {
+                window.toast.show(`Request for ${item} submitted successfully.`, 'success');
+            }
+
             setTimeout(() => {
                 window.drawer.close();
-                console.log(`[FS] Request for ${item} submitted.`);
+                console.log(`[FS] Request for ${item} submitted:`, result);
             }, 800);
         } catch (error) {
             console.error('[FS] Request failed:', error);
+            if (window.toast) {
+                window.toast.show('Failed to submit request. Please try again.', 'error');
+            }
         }
-    },
+    }
+,
 
     handleConfirmIntake(id) {
         // This is now handled via the inventory API
@@ -166,7 +183,8 @@ export const FS_Logistics = {
                 console.error('[FS] Intake failed:', err);
             });
         }
-    },
+    }
+,
 
     async handleExecuteBurn(name) {
         const qty = Number(document.getElementById('burn_qty')?.value);
@@ -182,8 +200,8 @@ export const FS_Logistics = {
                 sectorId: material.sectorId || 1,
                 materialName: name,
                 quantity: qty,
-                reference: 'Main Site',
-                notes: `Consumed at Main Site by Field Supervisor`
+                reference: section,
+                notes: `Consumed at ${section} by Field Supervisor`
             });
 
             setTimeout(() => {
