@@ -4046,6 +4046,19 @@ Contract Admin</textarea>
                     <div id="ext-req-current-end" style="font-size: 18px; font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">--</div>
                 </div>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Apply to Phase (Optional)</label>
+                        <select id="ext-req-phase-id" class="form-input" style="width: 100%;" onchange="window.app.layout?.handleTimelinePhaseChange(this.value)">
+                            <option value="">Full Project Timeline</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Extension Days <span style="color: var(--red);">*</span></label>
+                        <input type="number" id="ext-req-days-input" class="form-input" style="width: 100%;" min="1" placeholder="Days" oninput="window.app.layout?.calculateNewEndDate()">
+                    </div>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 18px;">
                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Requested New End Date <span style="color: var(--red);">*</span></label>
                     <input type="date" id="ext-req-new-date" class="form-input" style="width: 100%; font-weight: 700; font-size: 15px; font-family: 'JetBrains Mono';" onchange="window.app.layout?.updateExtensionBadge()">

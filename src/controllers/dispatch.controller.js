@@ -20,6 +20,9 @@ const dispatch = asyncHandler(async (req, res) => {
   const result = await dispatchService.dispatch({
     requisitionId,
     estimatedArrival,
+    partial: req.body.partial,
+    dispatchedItems: req.body.dispatchedItems,
+    shortfalls: req.body.shortfalls,
     userId: user.id,
     userName: user.name,
     userRole: user.role

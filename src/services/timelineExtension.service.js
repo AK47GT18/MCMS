@@ -66,7 +66,7 @@ function daysDiff(a, b) {
 // ============================================================
 
 async function create(data, requestingUser) {
-  const { projectId, requestedEndDate, justification } = data;
+  const { projectId, requestedEndDate, justification, phaseId, extensionDays } = data;
 
   // Fetch project with its PM
   const project = await prisma.project.findUnique({
@@ -80,8 +80,16 @@ async function create(data, requestingUser) {
 
   const newEnd = new Date(requestedEndDate);
   const currentEnd = new Date(project.endDate);
-  if (newEnd <= currentEnd) {
+  
+  // If not phase specific, we check the project end date
+  if (!phaseId && newEnd <= currentEnd) {
     throw new AppError('Requested end date must be after the current end date', 400);
+  }
+
+  // If phase specific, ensure phase exists
+  if (phaseId) {
+    const task = await prisma.task.findUnique({ where: { id: Number(phaseId) } });
+    if (!task) throw new AppError('Selected phase (task) not found', 404);
   }
 
   // Block duplicates: only one pending per project
@@ -99,6 +107,8 @@ async function create(data, requestingUser) {
       currentEndDate: currentEnd,
       requestedEndDate: newEnd,
       justification,
+      phaseId: phaseId ? Number(phaseId) : null,
+      extensionDays: extensionDays ? Number(extensionDays) : null,
       status: 'pending',
     },
     include: {
@@ -107,7 +117,7 @@ async function create(data, requestingUser) {
     },
   });
 
-  const extensionDays = daysDiff(currentEnd, newEnd);
+  const displayExtensionDays = extensionDays || daysDiff(currentEnd, newEnd);
 
   // Audit log
   await prisma.auditLog.create({
@@ -119,7 +129,7 @@ async function create(data, requestingUser) {
       targetType: 'Project',
       targetId: project.id,
       targetCode: project.code,
-      details: { requestedEndDate, justification, extensionDays },
+      details: { requestedEndDate, justification, extensionDays: displayExtensionDays, phaseId },
     },
   });
 
@@ -130,7 +140,7 @@ async function create(data, requestingUser) {
       type: 'warning',
       icon: 'fa-calendar-plus',
       title: 'Timeline Extension Requested',
-      message: `${requestingUser.name} (${requestingUser.role.replace(/_/g, ' ')}) requested a ${extensionDays}-day extension for ${project.code}.`,
+      message: `${requestingUser.name} (${requestingUser.role.replace(/_/g, ' ')}) requested a ${displayExtensionDays}-day extension for ${project.code}.`,
       link: '/timeline-extensions',
     });
   }
@@ -146,7 +156,7 @@ async function create(data, requestingUser) {
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tr><td style="padding:6px 0;color:#64748b;width:50%;">Current End Date</td><td style="font-weight:700;color:#0f1729;">${formatDate(currentEnd)}</td></tr>
           <tr><td style="padding:6px 0;color:#64748b;">Requested New End Date</td><td style="font-weight:700;color:#f97415;">${formatDate(newEnd)}</td></tr>
-          <tr><td style="padding:6px 0;color:#64748b;">Extension Duration</td><td style="font-weight:700;color:#0f1729;">+${extensionDays} days</td></tr>
+          <tr><td style="padding:6px 0;color:#64748b;">Extension Duration</td><td style="font-weight:700;color:#0f1729;">+${displayExtensionDays} days</td></tr>
           <tr><td style="padding:6px 0;color:#64748b;">Submitted By</td><td style="font-weight:700;">${requestingUser.name}</td></tr>
         </table>
       </div>
@@ -225,14 +235,43 @@ async function approve(id, pmUser, pmComment) {
     data: { status: 'approved', reviewedById: pmUser.id, pmComment: pmComment || null },
   });
 
-  // Execute the extension (reuse existing extendProject logic)
-  const projectsService = require('./projects.service');
-  const result = await projectsService.extendProject(
-    req.projectId,
-    req.requestedEndDate.toISOString(),
-    `Extension approved: ${req.justification}`,
-    pmUser
-  );
+  let result;
+  if (req.phaseId && req.extensionDays) {
+    // 1. Shift the specific phase
+    const tasksService = require('./tasks.service');
+    const shiftMs = req.extensionDays * 24 * 60 * 60 * 1000;
+    
+    // Update the phase itself
+    const task = await prisma.task.findUnique({ where: { id: req.phaseId } });
+    if (task) {
+        await prisma.task.update({
+            where: { id: req.phaseId },
+            data: { 
+                endDate: new Date(task.endDate.getTime() + shiftMs) 
+            }
+        });
+        
+        // 2. Cascade the shift to all dependents
+        await tasksService.cascadeShift(req.phaseId, shiftMs);
+    }
+
+    // 3. Update the overall project end date to match the new requested date
+    await prisma.project.update({
+        where: { id: req.projectId },
+        data: { endDate: req.requestedEndDate }
+    });
+
+    result = { success: true, phaseShifted: req.phaseId, shiftDays: req.extensionDays };
+  } else {
+    // Standard full project extension
+    const projectsService = require('./projects.service');
+    result = await projectsService.extendProject(
+        req.projectId,
+        req.requestedEndDate.toISOString(),
+        `Extension approved: ${req.justification}`,
+        pmUser
+    );
+  }
 
   // Notify the requester in-app
   await notificationService.create({
@@ -244,7 +283,7 @@ async function approve(id, pmUser, pmComment) {
   });
 
   // Email to all users except PM
-  const extensionDays = daysDiff(req.currentEndDate, req.requestedEndDate);
+  const extensionDays = req.extensionDays || daysDiff(req.currentEndDate, req.requestedEndDate);
   const html = emailWrapper(`
     <h2 style="color:#0f1729;margin-top:0;font-size:20px;">✅ Timeline Extension Approved</h2>
     <p>Hello,</p>

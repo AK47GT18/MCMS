@@ -57,13 +57,16 @@ const dispatchService = {
       userId,
       userName,
       userRole,
-      action: 'DISPATCH_RESOURCES',
+      action: data.partial ? 'PARTIAL_DISPATCH_ESCALATION' : 'DISPATCH_RESOURCES',
       targetType: 'REQUISITION',
       targetId: updatedReq.id,
       targetCode: updatedReq.reqCode,
       details: {
         estimatedArrival,
-        items: requisition.items.map(i => `${i.quantity} x ${i.itemName}`)
+        isPartial: !!data.partial,
+        dispatchedItems: data.dispatchedItems || requisition.items.map(i => `${i.quantity} x ${i.itemName}`),
+        shortfalls: data.partial ? (data.shortfalls || 'Material shortage reported and escalated to FM') : null,
+        escalation: data.partial ? 'Urgent Restock Request sent to Financial Manager (FM)' : null
       }
     });
 

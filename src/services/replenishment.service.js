@@ -55,6 +55,20 @@ async function createRequest(data, user) {
 
   logger.info(`Replenishment request ${reqCode} created by ${user.name}`);
 
+  // Audit Log
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      action: 'CREATE_REPLENISHMENT_REQUEST',
+      targetType: 'ReplenishmentRequest',
+      targetId: request.id,
+      targetCode: request.reqCode,
+      details: { materialName, quantityNeeded, projectId }
+    }
+  });
+
   // Notify Finance manually or in batch
   try {
     const fms = await prisma.user.findMany({ where: { role: 'Finance_Director', isActive: true } });
@@ -123,7 +137,33 @@ async function financeAction(requestId, data, user) {
         `Finance has escalated a replenishment request for ${updatedRequest.quantityNeeded} of ${updatedRequest.materialName} (Est Cost: ${updatedRequest.estimatedCost}). Please review and approve.`
       ).catch(e => logger.error('escalation email failed', e));
     }
+
+    // Explicitly notify Field Supervisor that it will take longer
+    if (updatedRequest.project.fieldSupervisorId) {
+      const fs = await prisma.user.findUnique({ where: { id: updatedRequest.project.fieldSupervisorId } });
+      if (fs) {
+        await emailService.sendNotification(
+          fs,
+          `Supply Restock Update: ${updatedRequest.reqCode}`,
+          `Hello ${fs.name},\n\nThe replenishment request for ${updatedRequest.materialName} has been escalated to the Project Manager for budget approval. Please note that restocking will take a bit longer than usual as we coordinate with the PM and Finance team. We will update you once approval is granted.`
+        ).catch(e => logger.error('FS delay notification failed', e));
+      }
+    }
   }
+
+  // Audit Log
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      action: action === 'escalate' ? 'ESCALATE_REPLENISHMENT_TO_PM' : 'FINANCE_ACTION_REPLENISHMENT',
+      targetType: 'ReplenishmentRequest',
+      targetId: updatedRequest.id,
+      targetCode: updatedRequest.reqCode,
+      details: { action, status: updatedRequest.status, estimatedCost }
+    }
+  });
 
   return updatedRequest;
 }
@@ -160,6 +200,20 @@ async function pmAction(requestId, data, user) {
       `PM Decision on ${updatedRequest.reqCode}: ${updatedRequest.status}`,
       `The PM has ${updatedRequest.status} the escalated request for ${updatedRequest.materialName}.`
     ).catch(e => logger.error('pm decision email failed', e));
+  });
+
+  // Audit Log
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      action: 'PM_ACTION_REPLENISHMENT',
+      targetType: 'ReplenishmentRequest',
+      targetId: updatedRequest.id,
+      targetCode: updatedRequest.reqCode,
+      details: { action, status: updatedRequest.status, pmComments }
+    }
   });
 
   return updatedRequest;

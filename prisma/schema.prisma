@@ -831,6 +831,8 @@ model ProjectExtensionRequest {
   currentEndDate DateTime  @map("current_end_date") @db.Date
   requestedEndDate DateTime @map("requested_end_date") @db.Date
   justification  String
+  phaseId        Int?      @map("phase_id")
+  extensionDays  Int?      @map("extension_days")
   status         String    @default("pending") @db.VarChar(20) // pending, approved, rejected
   pmComment      String?   @map("pm_comment")
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

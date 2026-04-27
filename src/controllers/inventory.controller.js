@@ -64,7 +64,9 @@ const distribute = asyncHandler(async (req, res) => {
   await auditService.logFromRequest(req, 'DISTRIBUTED (Stock IN)', 'Inventory', data.sectorId, data.materialName, {
     quantity: data.quantity,
     unit: result.inventory.unit,
-    sectorId: data.sectorId
+    sectorId: data.sectorId,
+    reference: data.reference,
+    notes: data.notes
   });
 
   response.created(res, result);

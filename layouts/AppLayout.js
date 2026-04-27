@@ -543,18 +543,38 @@ export class AppLayout {
         }
     }
 
-    handleTimelineProjectChange(projectId, projects) {
+    async handleTimelineProjectChange(projectId, projects) {
         const project = projects.find(p => p.id == projectId);
         const endContainer = document.getElementById('ext-req-current-end');
+        const phaseSelect = document.getElementById('ext-req-phase-id');
+        
         if (endContainer) {
             if (project && project.endDate) {
+                this._selectedProjectForExtension = project;
                 const date = new Date(project.endDate);
                 endContainer.textContent = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
                 // Set min date for new end date
                 const minDate = project.endDate.split('T')[0];
                 document.getElementById('ext-req-new-date').min = minDate;
+
+                // Populate Phases (Tasks for this project)
+                if (phaseSelect) {
+                    phaseSelect.innerHTML = '<option value="">Full Project Timeline</option>';
+                    try {
+                        const tasksApi = await import('../src/api/tasks.api.js');
+                        const result = await tasksApi.default.getByProject(projectId);
+                        const tasks = result.data || result || [];
+                        tasks.filter(t => !t.parentId).forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t.id;
+                            opt.textContent = t.name;
+                            phaseSelect.appendChild(opt);
+                        });
+                    } catch (e) { console.error('Phases load error:', e); }
+                }
             } else {
                 endContainer.textContent = '—';
+                if (phaseSelect) phaseSelect.innerHTML = '<option value="">Full Project Timeline</option>';
             }
         }
         this.updateExtensionBadge();
@@ -581,6 +601,30 @@ export class AppLayout {
         } else {
             badge.style.display = 'none';
         }
+    }
+
+    calculateNewEndDate() {
+        const daysInput = document.getElementById('ext-req-days-input');
+        const newDateInput = document.getElementById('ext-req-new-date');
+        const project = this._selectedProjectForExtension;
+
+        if (project && project.endDate && daysInput && daysInput.value > 0) {
+            const current = new Date(project.endDate);
+            const daysToAdd = parseInt(daysInput.value);
+            const newDate = new Date(current.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
+            
+            // Format for date input (YYYY-MM-DD)
+            const year = newDate.getFullYear();
+            const month = String(newDate.getMonth() + 1).padStart(2, '0');
+            const day = String(newDate.getDate()).padStart(2, '0');
+            newDateInput.value = `${year}-${month}-${day}`;
+            
+            this.updateExtensionBadge();
+        }
+    }
+
+    handleTimelinePhaseChange(phaseId) {
+        this.updateExtensionBadge();
     }
 
     updateCharCount(val) {
@@ -616,8 +660,13 @@ export class AppLayout {
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
 
         try {
+            const phaseId = document.getElementById('ext-req-phase-id')?.value;
+            const extensionDays = document.getElementById('ext-req-days-input')?.value;
+
             const result = await client.post('/timeline-extensions', { 
                 projectId: parseInt(projectId), 
+                phaseId: phaseId ? parseInt(phaseId) : null,
+                extensionDays: extensionDays ? parseInt(extensionDays) : null,
                 requestedEndDate: newDate, 
                 justification 
             });

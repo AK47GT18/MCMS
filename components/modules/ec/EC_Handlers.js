@@ -639,13 +639,14 @@ export const EC_Handlers = {
             const emailService = await import('../../../src/emails/email.service.js');
             const notificationService = await import('../../../src/services/notification.service.js');
             
+            const anyAvailable = ctx.shortfalls.some(s => s.available > 0);
             const shortageList = ctx.shortfalls.map(s => `- ${s.name}: Requested ${s.requested}, only ${s.available} in stock (Shortfall: ${s.deficit})`).join('\n');
             const target = ctx.project || 'Project Site';
 
             const escalationBody = `🛑 URGENT: Inventory Shortage & Restock Request - ${target}\n\n` +
                                   `Equipment Coordinator is reporting a critical material shortage for ${target}.\n\n` +
                                   `Shortfall Details:\n${shortageList}\n\n` +
-                                  `Action Taken: Dispatched available quantities to site supervisor (${ctx.supervisor || 'N/A'}).\n` +
+                                  `Action Taken: ${anyAvailable ? 'Dispatched available quantities' : 'Dispatch blocked'} and escalated to Finance.\n` +
                                   `Escalation: Restocking is required immediately by the Financial Manager (FM) or Finance Director.\n\n` +
                                   `Note: If budget limits are reached, PM approval for contingency funds may be required.`;
 
@@ -657,12 +658,16 @@ export const EC_Handlers = {
             });
 
             // Notify Site Supervisor (FS)
+            const fsMessage = anyAvailable 
+                ? `The Yard is currently low on stock. We have dispatched what is available (${ctx.shortfalls.map(s => `${s.available} ${s.name}`).join(', ')}) but since the full quantity isn't there, it may take a bit longer to complete your request as we have escalated a restocking order to the Financial Manager (FM).`
+                : `The Yard is currently out of stock for the requested materials. We have escalated an urgent restocking request to the Financial Manager (FM). Please note that this will take a bit longer than usual while we wait for procurement.`;
+
             await emailService.send({
                 to: ctx.supervisor || 'Field Supervisor',
-                subject: `🚚 Partial Dispatch Notice: ${target}`,
-                text: `Notice of partial resource dispatch for your request.\n\n` +
-                      `The Yard is currently low on stock. We have dispatched what is available (${ctx.shortfalls.map(s => `${s.available} ${s.name}`).join(', ')}) and escalated a restocking request to the Financial Manager (FM).\n\n` +
-                      `ETA: ${ctx.eta || 'N/A'}`
+                subject: `🚚 Dispatch Notice: ${target} (Restock Required)`,
+                text: `Notice regarding your resource request for ${target}.\n\n` +
+                      `${fsMessage}\n\n` +
+                      `ETA (Partial): ${ctx.eta || 'N/A'}`
             });
 
             // 2. Also create in-app notifications for visibility
@@ -673,6 +678,14 @@ export const EC_Handlers = {
                     title: 'Stock Shortage Escalation',
                     message: `Critical shortage of ${ctx.shortfalls[0]?.name} for ${target}. Partial dispatch authorized.`,
                     link: '/dashboard.html?view=procurement'
+                });
+
+                await notificationService.notifyRole('Project_Manager', {
+                    type: 'warning',
+                    icon: 'fa-box-open',
+                    title: 'Site Supply Warning',
+                    message: `Material shortage reported for project ${target}. Escalated to FM for restocking.`,
+                    link: '/dashboard.html?view=projects'
                 });
             } catch (notifErr) {
                 console.warn('[EC] In-app notification failed, but email sent.', notifErr);
