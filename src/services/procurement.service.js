@@ -139,7 +139,7 @@ async function getProjectStatus(projectId) {
   const contracts = await prisma.contract.findMany({
     where: { 
       projectId: parseInt(projectId),
-      status: { in: ['active', 'completed'] } // Only count active procurements
+      status: { in: ['active'] } // Only count active procurements
     },
     include: { items: true }
   });

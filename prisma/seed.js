@@ -107,6 +107,23 @@ const dateOffset = (days) => {
 async function main() {
     console.log('Start seeding ...');
     
+    // 0. Cleanup (Selective for idempotency)
+    console.log('--- Cleaning up existing operational data ---');
+    await prisma.inventoryLog.deleteMany();
+    await prisma.inventory.deleteMany();
+    await prisma.sector.deleteMany();
+    await prisma.roadLayer.deleteMany();
+    await prisma.roadSpecification.deleteMany();
+    await prisma.contractVersion.deleteMany();
+    await prisma.milestone.deleteMany();
+    await prisma.contractItem.deleteMany();
+    await prisma.contract.deleteMany();
+    await prisma.assetLog.deleteMany();
+    await prisma.asset.deleteMany();
+    await prisma.safetyIncident.deleteMany();
+    await prisma.issue.deleteMany();
+    await prisma.task.deleteMany();
+
     // 1. Create Users
     console.log('--- Seeding Users ---');
     const hashedPassword = await bcrypt.hash('Password@1', 10);
@@ -310,13 +327,98 @@ async function main() {
         // });
         console.log(` > Added finance records for ${p.code}`);
 
-        // 4.5 Incidents & Issues
+        // 4.6 Road Specifications & Phases
+        const lengthKm = p.code === 'CEN-01' ? 12.5 : (p.code === 'MZ-05' ? 5.2 : 3.8);
+        const spec = await prisma.roadSpecification.upsert({
+            where: { projectId: project.id },
+            update: {},
+            create: {
+                projectId: project.id,
+                roadType: 'Bitumen',
+                lengthKm: lengthKm,
+                widthM: 7.5,
+                lanes: 2,
+                terrain: 'Rolling',
+                geographicZone: 'Central Region',
+                estimatedTotalLow: Number(p.budgetTotal) * 0.9,
+                estimatedTotalHigh: Number(p.budgetTotal) * 1.1,
+                approvedTotal: p.budgetTotal,
+                reconciliationStatus: 'active'
+            }
+        });
+
+        const ROAD_PHASES = [
+            { number: 1, name: 'Phase 1: Bush Clearing & Earthworks', material: 'Gravel (Fill)', unit: 'm3', qtyPerKm: 2500, cost: 8500 },
+            { number: 2, name: 'Phase 2: Sub-base Construction', material: 'Natural Gravel', unit: 'm3', qtyPerKm: 1800, cost: 12000 },
+            { number: 3, name: 'Phase 3: Base Course (Stabilized)', material: 'Crushed Stone (G2)', unit: 'm3', qtyPerKm: 1500, cost: 25000 },
+            { number: 4, name: 'Phase 4: Bitumen/Asphalt Surface', material: 'Bitumen (80/100)', unit: 'Liters', qtyPerKm: 45000, cost: 1800 },
+            { number: 5, name: 'Phase 5: Drainage & Culverts', material: 'Concrete (Class 25)', unit: 'm3', qtyPerKm: 400, cost: 150000 },
+            { number: 6, name: 'Phase 6: Signage & Markings', material: 'Road Paint', unit: 'Liters', qtyPerKm: 200, cost: 5500 }
+        ];
+
+        for (const phase of ROAD_PHASES) {
+            const totalQty = Number(lengthKm) * phase.qtyPerKm;
+            await prisma.roadLayer.create({
+                data: {
+                    specId: spec.id,
+                    phaseNumber: phase.number,
+                    phaseName: phase.name,
+                    materialType: phase.material,
+                    unit: phase.unit,
+                    quantityPerKm: phase.qtyPerKm,
+                    totalQuantity: totalQty,
+                    unitCostLow: phase.cost * 0.95,
+                    unitCostHigh: phase.cost * 1.05,
+                    totalCostLow: totalQty * phase.cost * 0.95,
+                    totalCostHigh: totalQty * phase.cost * 1.05,
+                    approved: true
+                }
+            });
+        }
+        console.log(` > Seeded 6 construction phases for ${p.code}`);
+
+        // 4.7 Sectors & Initial Inventory
+        const sector1 = await prisma.sector.create({
+            data: {
+                projectId: project.id,
+                name: 'Sector 1: Km 0 - Km 5',
+                status: 'active',
+                startDate: p.startDate
+            }
+        });
+
+        await prisma.inventory.create({
+            data: {
+                sectorId: sector1.id,
+                materialName: 'Portland Cement (50kg)',
+                category: 'Materials',
+                unit: 'Bags',
+                quantityOnHand: 500,
+                lowThreshold: 100
+            }
+        });
+
+        await prisma.inventory.create({
+            data: {
+                sectorId: sector1.id,
+                materialName: 'Bitumen (80/100)',
+                category: 'Materials',
+                unit: 'Liters',
+                quantityOnHand: 10000,
+                lowThreshold: 2000
+            }
+        });
+
+        console.log(` > Established Sectors & Base Inventory for ${p.code}`);
+
+        // 4.8 Incidents & Issues
         await prisma.safetyIncident.create({
             data: {
                 projectId: project.id,
                 reportedBy: userMap['m.banda@mkaka.mw'].id,
-                incidentType: 'Near Miss',
-                siteArea: 'Main Gate',
+                type: 'Near Miss',
+                severity: 'medium',
+                location: 'Main Gate',
                 description: 'Truck reversed too close to scaffolding.',
                 status: 'resolved'
             }
