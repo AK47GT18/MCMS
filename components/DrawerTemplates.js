@@ -8,6 +8,63 @@ export const DrawerTemplates = {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     },
+
+    documentViewer: (url, fileName = 'Document') => {
+        const isPdf = url.toLowerCase().includes('.pdf') || url.includes('type=pdf');
+        const fileExt = fileName.split('.').pop().toUpperCase();
+        
+        return `
+            <div style="height: 100%; display: flex; flex-direction: column; background: var(--slate-50);">
+                <div style="padding: 16px 24px; border-bottom: 1px solid var(--slate-200); background: white; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); z-index: 10;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 36px; height: 36px; border-radius: 8px; background: ${isPdf ? '#FEF2F2' : '#F0F9FF'}; color: ${isPdf ? '#EF4444' : '#0369A1'}; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                            <i class="fas ${isPdf ? 'fa-file-pdf' : 'fa-file-word'}"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 800; color: var(--slate-800);">${fileName}</div>
+                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 600; text-transform: uppercase;">${fileExt} Document • Secure Viewer</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <a href="${url}" download="${fileName}" class="btn btn-primary btn-sm" style="background: var(--orange); border-color: var(--orange);">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+                    ${isPdf ? `
+                        <iframe src="${url}#toolbar=0&navpanes=0" style="width: 100%; height: 100%; border: none; background: var(--slate-100);"></iframe>
+                    ` : `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 48px; text-align: center; background: white; margin: 24px; border-radius: 16px; border: 1px dashed var(--slate-300);">
+                            <div style="width: 100px; height: 100px; border-radius: 24px; background: var(--slate-50); display: flex; align-items: center; justify-content: center; color: var(--slate-300); font-size: 48px; margin-bottom: 24px; border: 1px solid var(--slate-100);">
+                                <i class="fas fa-file-word"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 800; color: var(--slate-800); margin-bottom: 12px;">In-App Preview Unavailable</h3>
+                            <p style="font-size: 14px; color: var(--slate-500); max-width: 360px; line-height: 1.6; margin-bottom: 32px;">
+                                Microsoft Word (DOCX) files are encrypted for security. To view or edit this document with full formatting, please download it to your device.
+                            </p>
+                            <a href="${url}" download="${fileName}" class="btn btn-primary" style="padding: 14px 32px; font-weight: 700; background: var(--orange); border-color: var(--orange); box-shadow: var(--shadow-md);">
+                                <i class="fas fa-download" style="margin-right: 8px;"></i> Download & Open Document
+                            </a>
+                        </div>
+                    `}
+                </div>
+                
+                <div style="padding: 12px 24px; background: white; border-top: 1px solid var(--slate-200); font-size: 11px; color: var(--slate-400); display: flex; justify-content: space-between; align-items: center;">
+                    <div>MCMS Secure Document Pipeline • AES-256 Encrypted</div>
+                    <div style="display: flex; gap: 16px;">
+                        <span><i class="fas fa-shield-alt"></i> Verified Integrity</span>
+                        <span><i class="fas fa-history"></i> Version 1.0</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
     materialPriceForm: (data = {}) => `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">

@@ -3,30 +3,21 @@ import { StatCard } from '../../ui/StatCard.js';
 
 export const FD_Records = {
     getRecordsView() {
-        return `
-            <div class="data-card">
-                <div class="data-card-header">
-                    <div class="card-title">Generated Reports</div>
-                </div>
-                <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                    <a href="/api/v1/reports/finance/budget?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                        <i class="fas fa-file-pdf" style="color: var(--red);"></i> Budget Overview (PDF)
-                    </a>
-                    <a href="/api/v1/reports/finance/requisitions?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                        <i class="fas fa-file-pdf" style="color: var(--red);"></i> Requisition Analysis (PDF)
-                    </a>
-                    <a href="/api/v1/reports/finance/top-vendors?format=csv" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                        <i class="fas fa-file-excel" style="color: var(--emerald);"></i> Top Vendors (CSV)
-                    </a>
-                    <a href="/api/v1/reports/finance/spend-categories?format=pdf" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: left; justify-content: flex-start; gap: 12px; text-decoration: none;">
-                        <i class="fas fa-file-pdf" style="color: var(--red);"></i> Spend Categories (PDF)
-                    </a>
-                    <button class="btn btn-primary" style="margin-top: 12px; justify-content: center;" onclick="window.drawer.open('Report Generator', window.DrawerTemplates.reportGenerator)">
-                        Custom Report
-                    </button>
-                </div>
+        setTimeout(async () => {
+            const { PM_Reports } = await import('../pm/PM_Reports.js');
+            const container = document.getElementById('fd-reports-root');
+            if (container) {
+                container.innerHTML = PM_Reports.render();
+                PM_Reports.init();
+            }
+        }, 0);
+
+        return `<div id="fd-reports-root">
+            <div style="padding: 40px; text-align: center; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; margin-bottom: 12px;"></i>
+                <p>Initializing Records Center...</p>
             </div>
-        `;
+        </div>`;
     },
 
     getVendorsView() {

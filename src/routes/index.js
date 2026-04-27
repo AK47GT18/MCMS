@@ -31,8 +31,10 @@ const assetSchedulerController = require('../controllers/assetScheduler.controll
 const pushController = require('../controllers/push.controller');
 const dispatchController = require('../controllers/dispatch.controller');
 const pmController = require('../controllers/pm.controller');
+const uploadController = require('../controllers/upload.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
+const { parseBody } = require('../middlewares/validate.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
 const multer = require('multer');
 const path = require('path');
@@ -123,6 +125,19 @@ async function router(req, res) {
       return authController.resetPassword(req, res);
     }
     return response.notFound(res, 'Auth endpoint');
+  }
+
+  // ============================================
+  // UPLOAD ROUTES
+  // ============================================
+  if (resource === 'upload') {
+    if (method === 'POST') {
+      return upload.single('file')(req, res, (err) => {
+        if (err) return response.error(res, err.message, 400);
+        return uploadController.uploadFile(req, res);
+      });
+    }
+    return methodNotAllowed(res, ['POST']);
   }
   
   // ============================================
@@ -635,8 +650,14 @@ async function router(req, res) {
   // REPORTS ROUTES
   // ============================================
   if (resource === 'reports') {
-    if (method !== 'GET') return methodNotAllowed(res, ['GET']);
     const { id: role, action: reportName, subAction } = parseUrl(req.url);
+
+    // Dynamic Report (Universal)
+    if (role === 'dynamic' && (method === 'POST' || method === 'GET')) {
+        return reportsController.dynamicReport(req, res);
+    }
+
+    if (method !== 'GET') return methodNotAllowed(res, ['GET', 'POST']);
 
     // PM Reports
     if (role === 'pm') {

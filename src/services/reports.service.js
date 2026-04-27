@@ -845,6 +845,80 @@ async function systemIntegrity() {
   return { score: Math.round((passCount / checks.length) * 100), totalChecks: checks.length, passed: passCount, checks };
 }
 
+// ============================================
+// 9. DYNAMIC REPORT ENGINE (NEW)
+// ============================================
+
+async function dynamicReport(params) {
+  const { model, metric, field, groupBy, dateField, startDate, endDate, filters = {} } = params;
+  
+  const ALLOWED_MODELS = [
+    'user', 'project', 'task', 'contract', 'asset', 'requisition', 
+    'dailyLog', 'inventory', 'safetyIncident', 'materialUsage', 
+    'variationOrder', 'transaction', 'auditLog', 'vendor',
+    'roadLayer', 'roadSpecification', 'projectExtensionRequest',
+    'replenishmentRequest', 'issue', 'whistleblowerReport', 'budgetChange'
+  ];
+  
+  if (!ALLOWED_MODELS.includes(model)) {
+    throw new Error(`Report on model '${model}' is not permitted.`);
+  }
+
+  const where = { ...filters };
+  if (startDate && endDate && dateField) {
+    where[dateField] = {
+      gte: new Date(startDate),
+      lte: new Date(endDate)
+    };
+  }
+
+  // Dynamic grouping logic
+  if (groupBy) {
+    const aggregations = {};
+    if (metric === 'count') aggregations._count = true;
+    if (metric === 'sum') aggregations._sum = { [field]: true };
+    if (metric === 'avg') aggregations._avg = { [field]: true };
+    if (metric === 'min') aggregations._min = { [field]: true };
+    if (metric === 'max') aggregations._max = { [field]: true };
+
+    const result = await prisma[model].groupBy({
+      by: [groupBy],
+      where,
+      ...aggregations
+    });
+    
+    return result.map(item => {
+      const row = { [groupBy]: item[groupBy] };
+      if (item._count) row.count = typeof item._count === 'object' ? item._count[field] || item._count._all || item._count.id : item._count;
+      if (item._sum) row.sum = item._sum[field];
+      if (item._avg) row.avg = item._avg[field];
+      if (item._min) row.min = item._min[field];
+      if (item._max) row.max = item._max[field];
+      return row;
+    });
+  }
+
+  // Simple aggregations
+  if (metric === 'count') {
+    const count = await prisma[model].count({ where });
+    return { count };
+  }
+
+  if (['sum', 'avg', 'min', 'max'].includes(metric)) {
+    const result = await prisma[model].aggregate({
+      [`_${metric}`]: { [field]: true },
+      where
+    });
+    return { [metric]: result[`_${metric}`][field] };
+  }
+
+  return await prisma[model].findMany({
+    where,
+    take: 100,
+    orderBy: { [dateField || 'createdAt']: 'desc' }
+  });
+}
+
 module.exports = {
   // PM
   pmPortfolio, pmProjectHealth, pmTimeline,
@@ -862,4 +936,6 @@ module.exports = {
   execSummary, execRisks, execProjectRankings,
   // System
   systemHealth, systemAudit, systemTopActions, systemIntegrity,
+  // Dynamic
+  dynamicReport,
 };

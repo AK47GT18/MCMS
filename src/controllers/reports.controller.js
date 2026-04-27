@@ -6,6 +6,7 @@
 const reports = require('../services/reports.service');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { asyncHandler } = require('../middlewares/error.middleware');
+const { parseBody } = require('../middlewares/validate.middleware');
 const { parseReportQuery, sendReport } = require('../utils/exportUtils');
 const auditService = require('../services/audit.service');
 
@@ -19,308 +20,221 @@ async function auditReport(user, reportName, query) {
 // ============================================
 // PM REPORTS
 // ============================================
+
 const pmPortfolio = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.pmPortfolio(query);
-  await auditReport(user, 'pm_portfolio', query);
-  sendReport(req, res, data.rows, 'pm_portfolio_summary', {
-    title: 'Portfolio Summary Report',
-    summary: { 'Total Projects': data.totalProjects },
-    columns: ['code', 'name', 'status', 'avgProgress', 'budgetUtilization', 'openIssues', 'overdueTasks'],
-  });
+  const data = await reports.pmPortfolio();
+  await auditReport(user, 'pm_portfolio', {});
+  sendReport(req, res, data, 'pm_portfolio', { title: 'Project Portfolio Report' });
 });
 
 const pmProjectHealth = asyncHandler(async (req, res, projectId) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.pmProjectHealth(Number(projectId), query);
-  if (!data) { res.writeHead(404); res.end(JSON.stringify({ error: 'Project not found' })); return; }
-  await auditReport(user, 'pm_project_health', { projectId, ...query });
-  sendReport(req, res, data, 'pm_project_health', {
-    title: `Project Health: ${data.project.name}`,
-    summary: { 'Progress': `${data.schedule.avgProgress}%`, 'Budget Used': `${data.budget.utilization}%`, 'Open Issues': data.issues.open },
-  });
+  const data = await reports.pmProjectHealth(projectId);
+  await auditReport(user, `pm_project_health_${projectId}`, { projectId });
+  sendReport(req, res, data, `pm_project_health_${projectId}`, { title: 'Project Health Analysis' });
 });
 
 const pmTimeline = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.pmTimeline(query);
-  await auditReport(user, 'pm_timeline', query);
-  sendReport(req, res, data.rows, 'pm_timeline_compliance', {
-    title: 'Timeline Compliance Report',
-    summary: { 'Total Tasks': data.totalTasks, 'Overdue': data.overdueCount, 'On Time': data.onTimeCount },
-    columns: ['projectCode', 'taskName', 'progress', 'endDate', 'isOverdue', 'daysOverdue'],
-  });
+  const data = await reports.pmTimeline();
+  await auditReport(user, 'pm_timeline', {});
+  sendReport(req, res, data, 'pm_timeline', { title: 'Project Timeline Performance' });
 });
 
 // ============================================
 // FINANCE REPORTS
 // ============================================
+
 const financeBudget = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeBudget(query);
-  await auditReport(user, 'finance_budget', query);
-  sendReport(req, res, data, 'finance_budget_overview', {
-    title: 'Budget Overview Report',
-    summary: { 'Total Budget': data.totalBudget.toLocaleString(), 'Total Spent': data.totalSpent.toLocaleString(), 'Projects': data.projectCount },
-    columns: ['code', 'name', 'budgetTotal', 'budgetSpent', 'utilization', 'burnRatePerDay', 'overBudgetRisk'],
-  });
+  const data = await reports.financeBudget();
+  await auditReport(user, 'finance_budget', {});
+  sendReport(req, res, data, 'finance_budget_utilization', { title: 'Global Budget Utilization' });
 });
 
 const financeRequisitions = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeRequisitions(query);
-  await auditReport(user, 'finance_requisitions', query);
-  sendReport(req, res, data, 'finance_requisition_analysis', {
-    title: 'Requisition Analysis Report',
-    summary: { 'Total': data.total, 'Total Value': data.totalValue.toLocaleString() },
-    columns: ['reqCode', 'projectCode', 'submittedBy', 'totalAmount', 'status', 'fraudFlag', 'createdAt'],
-  });
+  const data = await reports.financeRequisitions();
+  await auditReport(user, 'finance_requisitions', {});
+  sendReport(req, res, data, 'finance_requisitions_summary', { title: 'Procurement Requisition Summary' });
 });
 
 const financeTopVendors = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeTopVendors(query);
-  await auditReport(user, 'finance_top_vendors', query);
-  sendReport(req, res, data.rows, 'finance_top_vendors', {
-    title: 'Top Vendors Report',
-    summary: { 'Total Vendors': data.totalVendors },
-    columns: ['vendorName', 'totalValue', 'contractCount', 'activeContracts'],
+  const data = await reports.financeTopVendors();
+  await auditReport(user, 'finance_top_vendors', {});
+  sendReport(req, res, data.rows, 'finance_top_vendors', { 
+    title: 'Top Vendors by Expenditure',
+    columns: ['name', 'count', 'totalSpend'] 
   });
 });
 
 const financeSpendCategories = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeSpendCategories(query);
-  await auditReport(user, 'finance_spend_categories', query);
-  sendReport(req, res, data.rows, 'finance_spend_by_category', {
-    title: 'Spend by Category Report',
-    summary: { 'Categories': data.totalCategories, 'Total Spend': data.totalSpend.toLocaleString() },
-    columns: ['name', 'totalSpend', 'itemCount', 'requisitionCount'],
-  });
+  const data = await reports.financeSpendCategories();
+  await auditReport(user, 'finance_spend_categories', {});
+  sendReport(req, res, data, 'finance_spend_by_category', { title: 'Expenditure by Category' });
 });
 
 // ============================================
-// FIELD SUPERVISOR REPORTS
+// FIELD REPORTS
 // ============================================
+
 const fieldDailyLogs = asyncHandler(async (req, res, projectId) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.fieldDailyLogs(projectId, query);
-  await auditReport(user, 'field_daily_logs', { projectId, ...query });
-  sendReport(req, res, data.rows, 'field_daily_log_summary', {
-    title: 'Daily Log Summary Report',
-    summary: { 'Total Logs': data.totalLogs, 'Avg Headcount': data.avgHeadcount },
-    columns: ['logDate', 'submittedBy', 'headcount', 'weather', 'status', 'isSos', 'expenseAmount'],
-  });
+  const data = await reports.fieldDailyLogs(projectId);
+  await auditReport(user, `field_daily_logs_${projectId}`, { projectId });
+  sendReport(req, res, data, `field_daily_logs_${projectId}`, { title: 'Field Activity Daily Logs' });
 });
 
 const fieldTopMaterials = asyncHandler(async (req, res, projectId) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.fieldTopMaterials(projectId, query);
-  await auditReport(user, 'field_top_materials', { projectId, ...query });
-  sendReport(req, res, data.rows, 'field_most_used_materials', {
-    title: 'Most Used Materials Report',
-    summary: { 'Materials Tracked': data.totalMaterials },
-    columns: ['materialName', 'unit', 'totalConsumed', 'consumptionCount', 'onHand'],
+  const data = await reports.fieldTopMaterials(projectId);
+  await auditReport(user, `field_top_materials_${projectId}`, { projectId });
+  sendReport(req, res, data.rows, `field_top_materials_${projectId}`, { 
+    title: 'Top Consumed Materials',
+    columns: ['name', 'count', 'totalQuantity']
   });
 });
 
 const fieldBurnRate = asyncHandler(async (req, res, projectId) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.fieldBurnRate(projectId, query);
-  await auditReport(user, 'field_burn_rate', { projectId, ...query });
-  sendReport(req, res, data.rows, 'field_material_burn_rate', {
-    title: 'Material Burn Rate & Depletion Forecast',
-    summary: { 'Materials': data.totalMaterials, 'Critical': data.criticalCount },
-    columns: ['materialName', 'onHand', 'dailyBurnRate', 'daysUntilDepletion', 'projectedNeed', 'critical'],
-  });
+  const data = await reports.fieldBurnRate(projectId);
+  await auditReport(user, `field_burn_rate_${projectId}`, { projectId });
+  sendReport(req, res, data, `field_burn_rate_${projectId}`, { title: 'Material Burn Rate Analysis' });
 });
 
 const fieldHeadcount = asyncHandler(async (req, res, projectId) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.fieldHeadcount(projectId, query);
-  await auditReport(user, 'field_headcount', { projectId, ...query });
-  sendReport(req, res, data.rows, 'field_headcount_trends', {
-    title: 'Headcount Trends Report',
-    columns: ['period', 'avgHeadcount', 'logCount', 'totalHeadcount'],
-  });
+  const data = await reports.fieldHeadcount(projectId);
+  await auditReport(user, `field_headcount_${projectId}`, { projectId });
+  sendReport(req, res, data, `field_headcount_${projectId}`, { title: 'Site Labor Headcount Report' });
 });
 
 // ============================================
-// CONTRACT ADMIN REPORTS
+// CONTRACT REPORTS
 // ============================================
+
 const contractsStatus = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.contractsStatus(query);
-  await auditReport(user, 'contracts_status', query);
-  sendReport(req, res, data.rows, 'contract_status_summary', {
-    title: 'Contract Status Summary',
-    summary: { 'Total Contracts': data.totalContracts, 'Total Value': data.totalValue.toLocaleString() },
-    columns: ['refCode', 'title', 'vendorName', 'value', 'status', 'endDate', 'milestoneCount'],
-  });
+  const data = await reports.contractsStatus();
+  await auditReport(user, 'contracts_status', {});
+  sendReport(req, res, data, 'contracts_status_summary', { title: 'Contractual Status Overview' });
 });
 
 const contractsMilestones = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.contractsMilestones(query);
-  await auditReport(user, 'contracts_milestones', query);
-  sendReport(req, res, data.rows, 'contract_milestone_tracker', {
-    title: 'Milestone Tracker Report',
-    summary: { 'Total': data.total, 'Overdue': data.overdueCount },
-    columns: ['contractRef', 'description', 'dueDate', 'value', 'status', 'isOverdue'],
-  });
+  const data = await reports.contractsMilestones();
+  await auditReport(user, 'contracts_milestones', {});
+  sendReport(req, res, data, 'contracts_milestones_health', { title: 'Contract Milestone Compliance' });
 });
 
 // ============================================
-// EQUIPMENT COORDINATOR REPORTS
+// EQUIPMENT REPORTS
 // ============================================
+
 const equipmentUtilization = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.equipmentUtilization(query);
-  await auditReport(user, 'equipment_utilization', query);
-  sendReport(req, res, data.rows, 'equipment_fleet_utilization', {
-    title: 'Fleet Utilization Report',
-    summary: { 'Total Assets': data.totalAssets, 'Total Value': data.totalValue.toLocaleString() },
-    columns: ['assetCode', 'name', 'category', 'status', 'condition', 'projectCode', 'lastMaintenance'],
-  });
+  const data = await reports.equipmentUtilization();
+  await auditReport(user, 'equipment_utilization', {});
+  sendReport(req, res, data, 'equipment_utilization_rate', { title: 'Asset Utilization Metrics' });
 });
 
 const equipmentTopDeployed = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.equipmentTopDeployed(query);
-  await auditReport(user, 'equipment_top_deployed', query);
-  sendReport(req, res, data.rows, 'equipment_most_deployed', {
-    title: 'Most Deployed Assets Report',
-    columns: ['assetCode', 'name', 'category', 'checkoutCount'],
+  const data = await reports.equipmentTopDeployed();
+  await auditReport(user, 'equipment_top_deployed', {});
+  sendReport(req, res, data.rows, 'equipment_top_deployed', { 
+    title: 'Most Deployed Equipment',
+    columns: ['name', 'count']
   });
 });
 
 const equipmentMaintenanceCosts = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.equipmentMaintenanceCosts(query);
-  await auditReport(user, 'equipment_maintenance_costs', query);
-  sendReport(req, res, data.rows, 'equipment_maintenance_costs', {
-    title: 'Maintenance Cost Analysis',
-    summary: { 'Total Cost': data.totalCost.toLocaleString() },
-    columns: ['name', 'totalCost', 'recordCount'],
-  });
+  const data = await reports.equipmentMaintenanceCosts();
+  await auditReport(user, 'equipment_maintenance', {});
+  sendReport(req, res, data, 'equipment_maintenance_costs', { title: 'Asset Maintenance Expenditure' });
 });
 
 // ============================================
-// OPERATIONS MANAGER REPORTS
+// OPS REPORTS
 // ============================================
+
 const opsDashboard = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.opsDashboard(query);
-  await auditReport(user, 'ops_dashboard', query);
-  sendReport(req, res, data, 'ops_dashboard', { title: 'Operations Dashboard Report' });
+  const data = await reports.opsDashboard();
+  await auditReport(user, 'ops_dashboard', {});
+  sendReport(req, res, data, 'operations_efficiency_kpis', { title: 'Operations Efficiency KPIs' });
 });
 
 const opsIssues = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.opsIssues(query);
-  await auditReport(user, 'ops_issues', query);
-  sendReport(req, res, data.rows, 'ops_issue_analytics', {
-    title: 'Issue Analytics Report',
-    summary: { 'Total Issues': data.total, 'Avg Age (days)': data.avgAgeDays },
-    columns: ['issueCode', 'category', 'priority', 'status', 'projectCode', 'ageDays', 'assignedTo'],
-  });
+  const data = await reports.opsIssues();
+  await auditReport(user, 'ops_issues', {});
+  sendReport(req, res, data, 'site_issues_summary', { title: 'Site Issues and Blockers' });
 });
 
 const opsTopIssues = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.opsTopIssues(query);
-  await auditReport(user, 'ops_top_issues', query);
-  sendReport(req, res, data.rows, 'ops_top_issue_categories', {
-    title: 'Top Issue Categories Report',
-    columns: ['name', 'count', 'openCount'],
+  const data = await reports.opsTopIssues();
+  await auditReport(user, 'ops_top_issues', {});
+  sendReport(req, res, data.rows, 'ops_top_recurring_issues', { 
+    title: 'Top Recurring Site Issues',
+    columns: ['name', 'count']
   });
 });
 
 const opsSafety = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.opsSafety(query);
-  await auditReport(user, 'ops_safety', query);
-  sendReport(req, res, data.rows, 'ops_safety_summary', {
-    title: 'Safety Summary Report',
-    summary: { 'Total Incidents': data.total, 'Open': data.openCount },
-    columns: ['incidentType', 'siteArea', 'status', 'projectCode', 'reportedBy', 'createdAt'],
-  });
+  const data = await reports.opsSafety();
+  await auditReport(user, 'ops_safety', {});
+  sendReport(req, res, data, 'safety_compliance_report', { title: 'Safety and Incident Compliance' });
 });
 
 // ============================================
-// MANAGING DIRECTOR REPORTS
+// EXECUTIVE REPORTS
 // ============================================
+
 const execSummary = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.execSummary(query);
-  await auditReport(user, 'exec_summary', query);
-  sendReport(req, res, data, 'executive_summary', { title: 'Executive Summary Report' });
+  const data = await reports.execSummary();
+  await auditReport(user, 'exec_summary', {});
+  sendReport(req, res, data, 'executive_portfolio_summary', { title: 'Executive Portfolio Summary' });
 });
 
 const execRisks = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.execRisks(query);
-  await auditReport(user, 'exec_risks', query);
-  sendReport(req, res, data.rows, 'executive_risk_dashboard', {
-    title: 'Risk Assessment Dashboard',
-    summary: { 'Projects Assessed': data.totalProjects, 'High Risk': data.highRisk },
-    columns: ['code', 'name', 'budgetRisk', 'scheduleRisk', 'overdueTasks', 'criticalIssues', 'overallRisk'],
-  });
+  const data = await reports.execRisks();
+  await auditReport(user, 'exec_risks', {});
+  sendReport(req, res, data, 'enterprise_risk_exposure', { title: 'Enterprise Risk Exposure' });
 });
 
 const execProjectRankings = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.execProjectRankings(query);
-  await auditReport(user, 'exec_rankings', query);
-  sendReport(req, res, data.rows, 'executive_project_rankings', {
-    title: 'Project Rankings Report',
-    columns: ['code', 'name', 'avgProgress', 'budgetUtilization', 'openIssues', 'overdueTasks'],
-  });
+  const data = await reports.execProjectRankings();
+  await auditReport(user, 'exec_project_rankings', {});
+  sendReport(req, res, data, 'project_performance_rankings', { title: 'Project Performance Rankings' });
 });
 
 // ============================================
-// SYSTEM TECHNICIAN REPORTS
+// SYSTEM REPORTS
 // ============================================
+
 const sysHealth = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
   const data = await reports.systemHealth();
-  await auditReport(user, 'system_health', {});
-  sendReport(req, res, data, 'system_health', { title: 'System Health Report' });
+  await auditReport(user, 'sys_health', {});
+  sendReport(req, res, data, 'system_health_performance', { title: 'System Health and Performance' });
 });
 
 const sysAudit = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
   const query = parseReportQuery(req.url);
   const data = await reports.systemAudit(query);
-  await auditReport(user, 'system_audit', query);
-  sendReport(req, res, data.rows, 'system_audit_analysis', {
-    title: 'Audit Trail Analysis',
-    summary: { 'Total Records': data.total },
-    columns: ['timestamp', 'userName', 'userRole', 'action', 'targetType', 'targetCode', 'ipAddress'],
-  });
+  await auditReport(user, 'sys_audit', query);
+  sendReport(req, res, data, 'system_audit_logs', { title: 'Detailed System Audit Trail' });
 });
 
 const sysTopActions = asyncHandler(async (req, res) => {
@@ -328,7 +242,7 @@ const sysTopActions = asyncHandler(async (req, res) => {
   const query = parseReportQuery(req.url);
   const data = await reports.systemTopActions(query);
   await auditReport(user, 'system_top_actions', query);
-  sendReport(req, res, data.rows, 'system_top_actions', {
+  sendReport(req, res, data.rows, 'system_top_actions', { 
     title: 'Top Actions Report',
     columns: ['name', 'count'],
   });
@@ -344,6 +258,33 @@ const sysIntegrity = asyncHandler(async (req, res) => {
   });
 });
 
+const dynamicReport = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res); if (!user) return;
+  
+  // Combine body and query params
+  const query = parseReportQuery(req.url);
+  const body = req.method === 'POST' ? await parseBody(req) : (req.body || {});
+  const params = { ...query, ...body };
+
+  if (!params.model) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ error: 'Parameter "model" is required for dynamic reports.' }));
+      return;
+  }
+
+  const data = await reports.dynamicReport(params);
+  await auditReport(user, `dynamic_${params.model}`, params);
+  
+  sendReport(req, res, data, `dynamic_${params.model}`, {
+    title: `Dynamic Analytics: ${params.model.toUpperCase()}`,
+    summary: { 
+      'Model': params.model, 
+      'Metric': params.metric || 'list',
+      'Field': params.field || 'N/A'
+    }
+  });
+});
+
 module.exports = {
   pmPortfolio, pmProjectHealth, pmTimeline,
   financeBudget, financeRequisitions, financeTopVendors, financeSpendCategories,
@@ -353,4 +294,5 @@ module.exports = {
   opsDashboard, opsIssues, opsTopIssues, opsSafety,
   execSummary, execRisks, execProjectRankings,
   sysHealth, sysAudit, sysTopActions, sysIntegrity,
+  dynamicReport,
 };

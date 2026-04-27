@@ -35,6 +35,7 @@ export class ManagingDirectorDashboard {
             case 'risk': return this.getRiskView();
             case 'portfolio': return this.getPortfolioView();
             case 'clients': return this.getClientsView();
+            case 'reports': return this.getReportsView();
             default: return `<div class="p-4">View ${this.currentView} not found</div>`;
         }
     }
@@ -46,7 +47,8 @@ export class ManagingDirectorDashboard {
             'pnl': { title: 'P&L Overview', context: 'Financial Health' },
             'risk': { title: 'Risk Management', context: 'Enterprise Risk Matrix' },
             'portfolio': { title: 'Dashboard', context: 'All Active Projects' },
-            'clients': { title: 'Key Accounts', context: 'Client Relationships' }
+            'clients': { title: 'Key Accounts', context: 'Client Relationships' },
+            'reports': { title: 'Reporting Center', context: 'Custom Analytics & Exports' }
         };
         const current = headers[this.currentView] || { title: 'Executive View', context: '' };
 
@@ -425,8 +427,28 @@ export class ManagingDirectorDashboard {
                     </tbody>
                  </table>
             </div>
-        `;
     }
+
+    getReportsView() {
+        // Reuse PM_Reports logic but tailored for MD if needed
+        // For now, load the PM_Reports component dynamically
+        setTimeout(async () => {
+            const { PM_Reports } = await import('./pm/PM_Reports.js');
+            const container = document.getElementById('md-reports-root');
+            if (container) {
+                container.innerHTML = PM_Reports.render();
+                PM_Reports.init();
+            }
+        }, 0);
+
+        return `<div id="md-reports-root">
+            <div style="padding: 40px; text-align: center; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; margin-bottom: 12px;"></i>
+                <p>Initializing Reporting Engine...</p>
+            </div>
+        </div>`;
+    }
+
     async loadDashboardData() {
         try {
             const [summaryRes, rankingsRes] = await Promise.all([

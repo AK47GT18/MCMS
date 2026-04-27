@@ -27,6 +27,7 @@ export class OperationsManagerDashboard {
             case 'inventory': contentHTML = this.getInventoryView(); break;
             case 'safety': contentHTML = this.getSafetyView(); break;
             case 'complaints': contentHTML = this.getComplaintsView(); break;
+            case 'reports': contentHTML = this.getReportsView(); break;
             default: contentHTML = this.getDashboardView();
         }
 
@@ -48,7 +49,8 @@ export class OperationsManagerDashboard {
             'supply': 'Supply Chain Logistics',
             'inventory': 'Global Inventory',
             'safety': 'Safety & Compliance Audits',
-            'complaints': 'Complaint Lodger & Action Center'
+            'complaints': 'Complaint Lodger & Action Center',
+            'reports': 'Operations Reporting Center'
         };
 
         return `
@@ -455,6 +457,24 @@ export class OperationsManagerDashboard {
                 </table>
             </div>
         `;
+    }
+
+    getReportsView() {
+        setTimeout(async () => {
+            const { PM_Reports } = await import('./pm/PM_Reports.js');
+            const container = document.getElementById('om-reports-root');
+            if (container) {
+                container.innerHTML = PM_Reports.render();
+                PM_Reports.init();
+            }
+        }, 0);
+
+        return `<div id="om-reports-root">
+            <div style="padding: 40px; text-align: center; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; margin-bottom: 12px;"></i>
+                <p>Initializing Operational Reports...</p>
+            </div>
+        </div>`;
     }
 
     async loadDashboardData() {

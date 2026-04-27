@@ -38,10 +38,14 @@ export class DrawerManager {
         this.overlayElement.addEventListener('click', () => this.close());
     }
 
-    open(title, contentHTML) {
+    open(title, contentHTML, size = 'md') {
         this.isOpen = true;
         this.headerTitle.textContent = title;
         this.contentContainer.innerHTML = contentHTML;
+
+        // Reset and set size
+        this.drawerElement.classList.remove('drawer-sm', 'drawer-md', 'drawer-lg', 'drawer-xl');
+        this.drawerElement.classList.add(`drawer-${size}`);
         
         // Show visibility first (via class) which triggers styles
         requestAnimationFrame(() => {

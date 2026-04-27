@@ -891,7 +891,7 @@ tbody td {
     top: 0;
     right: 0;
     width: 100%;
-    max-width: 480px;
+    max-width: 480px; /* Default */
     height: 100%;
     background: var(--white);
     box-shadow: -5px 0 30px rgba(0, 0, 0, 0.15);
@@ -902,6 +902,12 @@ tbody td {
     display: flex;
     flex-direction: column;
 }
+
+/* Drawer Size Variants */
+.drawer-panel.drawer-sm { max-width: 360px; }
+.drawer-panel.drawer-md { max-width: 480px; }
+.drawer-panel.drawer-lg { max-width: 800px; }
+.drawer-panel.drawer-xl { max-width: 95%; }
 
 .drawer-panel.show {
     transform: translateX(0);

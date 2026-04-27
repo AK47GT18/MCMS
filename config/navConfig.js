@@ -179,10 +179,17 @@ export const NAV_ITEMS = {
                 { label: 'Global Inventory', icon: '<i class="fas fa-warehouse"></i>', id: 'inventory' }
             ]
         },
+
         {
             section: 'Safety',
             items: [
                 { label: 'Safety Audits', icon: '<i class="fas fa-clipboard-list"></i>', id: 'safety', badge: 1 }
+            ]
+        },
+        {
+            section: 'Records',
+            items: [
+                { label: 'Reporting Center', icon: ICONS.reports, id: 'reports' }
             ]
         }
     ],
@@ -207,6 +214,7 @@ export const NAV_ITEMS = {
             items: [
                 { label: 'All Projects', icon: '<i class="fas fa-chart-simple"></i>', id: 'portfolio' },
                 { label: 'Top Clients', icon: '<i class="fas fa-handshake"></i>', id: 'clients' },
+                { label: 'Reports Center', icon: ICONS.reports, id: 'reports' },
                 { label: 'Report Issue', icon: '<i class="fas fa-exclamation-triangle"></i>', id: 'complaint', action: 'drawer', drawerId: 'submitComplaint' }
             ]
         }

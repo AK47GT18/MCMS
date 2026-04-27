@@ -372,12 +372,13 @@ export const FD_Contracts = {
         }
     },
 
-    viewDocument(url) {
+    viewDocument(url, fileName = 'Document.pdf') {
         if (!url) {
-            window.toast.show('No document URL available for this version.', 'warning');
+            window.toast.show('No document URL available.', 'warning');
             return;
         }
-        window.open(url, '_blank');
+        
+        window.drawer.open('Document Viewer', window.DrawerTemplates.documentViewer(url, fileName), 'lg');
     },
 
     downloadDocument(url, filename) {
@@ -680,6 +681,24 @@ export const FD_Contracts = {
 
         try {
             const token = localStorage.getItem('mcms_auth_token');
+
+            // File Upload Logic
+            const fileInput = document.getElementById('contract_document');
+            if (fileInput && fileInput.files[0]) {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                const uploadRes = await fetch('/api/v1/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (!uploadRes.ok) throw new Error('File upload failed');
+                const uploadResult = await uploadRes.json();
+                const uploadData = uploadResult.data || uploadResult;
+                data.documentUrl = uploadData.url;
+                data.fileName = uploadData.originalName;
+            }
             const res = await fetch('/api/v1/contracts', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
