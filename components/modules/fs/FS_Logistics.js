@@ -257,8 +257,10 @@ export const FS_Logistics = {
                 sectorId: material.sectorId || 1,
                 materialName: name,
                 quantity: qty,
-                reference: section,
-                notes: `Consumed at ${section} by Field Supervisor`
+                roadLayerId: document.getElementById('burn_layer')?.value,
+                progressPercent: document.getElementById('burn_progress')?.value,
+                reference: 'Site Activity Log',
+                notes: `Consumed at site by Field Supervisor`
             });
 
             setTimeout(() => {

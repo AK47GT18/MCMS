@@ -8,6 +8,71 @@ export const DrawerTemplates = {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     },
+    materialPriceForm: (data = {}) => `
+        <div style="padding: 24px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Material Name</label>
+                <input type="text" id="price-material-name" class="form-input" data-vrules="required" value="${data.materialName || ''}" placeholder="e.g. Cement (42.5R)" style="width: 100%;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Base Price (MWK)</label>
+                <input type="number" id="price-base-amount" class="form-input" data-vrules="required|min:1" value="${data.basePrice || ''}" placeholder="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Unit of Measure</label>
+                <select id="price-unit" class="form-input" style="width: 100%;">
+                    <option value="Bag" ${data.unit === 'Bag' ? 'selected' : ''}>Bag</option>
+                    <option value="m3" ${data.unit === 'm3' ? 'selected' : ''}>Cubic Meter (m3)</option>
+                    <option value="ton" ${data.unit === 'ton' ? 'selected' : ''}>Tonne (ton)</option>
+                    <option value="liter" ${data.unit === 'liter' ? 'selected' : ''}>Liter</option>
+                    <option value="meter" ${data.unit === 'meter' ? 'selected' : ''}>Meter</option>
+                    <option value="unit" ${data.unit === 'unit' ? 'selected' : ''}>Individual Unit</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handlePriceConfigSubmit(${data.id || 'null'})">
+                ${data.id ? 'Update Configuration' : 'Save Configuration'}
+            </button>
+        </div>
+    `,
+    variationOrderForm: (contractId) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--orange-light); padding: 12px; border-radius: 8px; border: 1px solid var(--orange-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-file-signature" style="color: var(--orange); font-size: 20px;"></i>
+                <div>
+                    <div style="font-weight: 700; color: var(--orange); font-size: 14px;">Raise Variation Order (VO)</div>
+                    <div style="font-size: 11px; color: var(--orange-hover);">Formal change request for contract scope or budget</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">VO Reason / Description</label>
+                <textarea id="vo-reason" class="form-input" data-vrules="required|minLen:10" rows="4" placeholder="Explain the reason for this variation (e.g. Additional site clearance required, change in material spec)..." style="width: 100%;"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Financial Adjustment (MWK)</label>
+                <input type="number" id="vo-amount" class="form-input" data-vrules="required" placeholder="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
+                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Enter a positive number for budget uplift, negative for reduction.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Variation Type</label>
+                <select id="vo-type" class="form-input" style="width: 100%;">
+                    <option value="SCOPE_CHANGE">Scope Change</option>
+                    <option value="PRICE_ADJUSTMENT">Price Adjustment</option>
+                    <option value="EMERGENCY_WORKS">Emergency Works</option>
+                    <option value="EXTENSION_OF_TIME">Extension of Time (No Financial Impact)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handleVOSubmit(${contractId})">
+                Submit Variation Order
+            </button>
+        </div>
+    `,
     transactionEntry: `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
@@ -376,10 +441,44 @@ export const DrawerTemplates = {
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Expiry Date</div>
                         <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</div>
                     </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Retention (${contract.retentionPercentage || 0}%)</div>
+                        <div style="font-weight: 700; color: var(--orange); font-size: 14px;">MWK ${(Number(contract.retentionAmount || 0)).toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Tax Liabilities (VAT/WHT)</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${(Number((contract.vatAmount || 0) + (contract.whtAmount || 0))).toLocaleString()}</div>
+                    </div>
                 </div>
             </div>
 
             <div style="padding: 24px;">
+                <!-- Variation Orders Section -->
+                <div style="margin-bottom: 32px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Variation Orders (VO)</h4>
+                        <button class="btn btn-secondary btn-sm" style="color: var(--orange); font-weight: 700;" onclick="window.app.pmModule?.openVariationOrderDrawer(${contract.id})">
+                            <i class="fas fa-plus"></i> Raise VO
+                        </button>
+                    </div>
+                    <div id="variation-orders-list">
+                        ${contract.variationOrders && contract.variationOrders.length > 0 ? contract.variationOrders.map(vo => `
+                            <div style="padding: 10px; background: white; border: 1px solid var(--slate-200); border-radius: 8px; margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span style="font-weight: 700; font-size: 12px; color: var(--slate-800);">${vo.voCode}</span>
+                                    <span style="font-family: 'JetBrains Mono'; font-weight: 700; color: ${vo.amount >= 0 ? 'var(--emerald)' : 'var(--red)'}; font-size: 11px;">
+                                        ${vo.amount >= 0 ? '+' : ''}${vo.amount.toLocaleString()} MWK
+                                    </span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--slate-500); line-height: 1.4;">${vo.reason}</div>
+                            </div>
+                        `).join('') : `
+                            <div style="font-size: 11px; color: var(--slate-400); text-align: center; padding: 12px; border: 1px dashed var(--slate-200); border-radius: 8px; background: white;">
+                                No Variation Orders recorded for this contract.
+                            </div>
+                        `}
+                    </div>
+                </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Contract Documents</h4>
                     <button class="btn btn-secondary btn-sm" onclick="window.app.fmModule?.openUploadNewVersion(${contract.id})">
@@ -3193,6 +3292,30 @@ Contract Admin</textarea>
                 <input type="text" id="contract_title" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
             </div>
 
+            <!-- Retention and Taxation -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Retention (%)</label>
+                    <input type="number" id="contract_retention" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" value="5" min="0" max="100">
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 20px;">
+                    <input type="checkbox" id="contract_tax_inclusive" checked style="width: 18px; height: 18px; accent-color: var(--orange);">
+                    <label for="contract_tax_inclusive" style="font-size: 12px; font-weight: 600; color: var(--slate-600);">Tax Inclusive (VAT/WHT)</label>
+                </div>
+            </div>
+
+            <!-- Advance Payment and Guarantees -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Advance Payment (MWK)</label>
+                    <input type="number" id="contract_advance" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="0.00">
+                </div>
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Guarantee Expiry</label>
+                    <input type="date" id="contract_guarantee_expiry" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
+                </div>
+            </div>
+
             <!-- Contract Value -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
@@ -3862,6 +3985,23 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Quantity Consumed (${item.unit}) *</label>
                 <input type="number" id="burn_qty" class="form-input" data-vrules="required|min:1" style="width: 100%; border-color: var(--blue);" value="">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Road Layer / Activity</label>
+                <select id="burn_layer" class="form-input" style="width: 100%;">
+                    <option value="">Select layer...</option>
+                    <option value="1">Sub-Base</option>
+                    <option value="2">Base Course</option>
+                    <option value="3">Wearing Course (Prime/Seal)</option>
+                    <option value="4">Earthworks / Fill</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Estimated Progress Addition (%)</label>
+                <input type="number" id="burn_progress" class="form-input" placeholder="e.g. 5" style="width: 100%;">
+                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">How much does this consumption add to the overall layer completion?</div>
             </div>
 
 

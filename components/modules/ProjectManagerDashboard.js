@@ -15,6 +15,7 @@ import { PM_ProjectHandlers } from './pm/PM_ProjectHandlers.js';
 import { PM_ReviewHandlers } from './pm/PM_ReviewHandlers.js';
 import { PM_FeatureHandlers } from './pm/PM_FeatureHandlers.js';
 import { PM_UserHandlers } from './pm/PM_UserHandlers.js';
+import { PM_Config } from './pm/PM_Config.js';
 import { PM_SystemHelpers } from './pm/PM_SystemHelpers.js';
 import { StatCard } from '../ui/StatCard.js';
 import { ROLES } from '../../config/roles.js';
@@ -94,6 +95,7 @@ export class ProjectManagerDashboard {
             case 'fleet': contentHTML = this.getFleetView(); break;
             case 'users': contentHTML = this.getUsersView(); break;
             case 'audit': contentHTML = this.getAuditView(); break;
+            case 'config': contentHTML = this.getConfigView(); break;
             default: contentHTML = this.getPortfolioView();
         }
 
@@ -122,7 +124,8 @@ export class ProjectManagerDashboard {
             'issues': 'Issues Resolution Center',
             'fleet': 'Asset Registry',
             'users': 'User Management',
-            'audit': 'System Audit Logs'
+            'audit': 'System Audit Logs',
+            'config': 'Material Price Configuration'
         };
 
         return `
@@ -255,6 +258,7 @@ export class ProjectManagerDashboard {
 
 
 
+
     // --- 2.2 BUDGET CONTROL (EXECUTION) ---
 
 
@@ -345,18 +349,6 @@ export class ProjectManagerDashboard {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     // --- 9. ISSUES CENTER ---
 
 
@@ -403,8 +395,8 @@ export class ProjectManagerDashboard {
 
 
 
-    // --- FEATURE SPECIFIC HANDLERS ---
 
+    // --- FEATURE SPECIFIC HANDLERS ---
 
 
 
@@ -423,4 +415,4 @@ export class ProjectManagerDashboard {
 }
 
 // Apply modular mixins
-Object.assign(ProjectManagerDashboard.prototype, PM_MissingHandlers, PM_Portfolio, PM_Gantt, PM_Budget, PM_Teams, PM_Contracts, PM_Fleet, PM_Reports, PM_Reviews, PM_Issues, PM_Users, PM_Audit, PM_ProjectHandlers, PM_ReviewHandlers, PM_FeatureHandlers, PM_UserHandlers, PM_SystemHelpers);
+Object.assign(ProjectManagerDashboard.prototype, PM_MissingHandlers, PM_Portfolio, PM_Gantt, PM_Budget, PM_Teams, PM_Contracts, PM_Fleet, PM_Reports, PM_Reviews, PM_Issues, PM_Users, PM_Audit, PM_Config, PM_ProjectHandlers, PM_ReviewHandlers, PM_FeatureHandlers, PM_UserHandlers, PM_SystemHelpers);

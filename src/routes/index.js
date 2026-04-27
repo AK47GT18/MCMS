@@ -30,6 +30,7 @@ const reportsController = require('../controllers/reports.controller');
 const assetSchedulerController = require('../controllers/assetScheduler.controller');
 const pushController = require('../controllers/push.controller');
 const dispatchController = require('../controllers/dispatch.controller');
+const pmController = require('../controllers/pm.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
@@ -153,6 +154,23 @@ async function router(req, res) {
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
   
+  // ============================================
+  // PM & CONFIGURATION ROUTES
+  // ============================================
+  if (resource === 'pm') {
+    if (id === 'material-prices') {
+      if (method === 'GET') return pmController.getMaterialPrices(req, res);
+      if (method === 'POST') return pmController.upsertMaterialPrice(req, res);
+      if (method === 'DELETE' && action) return pmController.deleteMaterialPrice(req, res, action);
+      return methodNotAllowed(res, ['GET', 'POST', 'DELETE']);
+    }
+    if (id === 'variation-orders') {
+      if (method === 'POST') return pmController.createVariationOrder(req, res);
+      if (method === 'GET') return pmController.getVariationOrders(req, res);
+      return methodNotAllowed(res, ['GET', 'POST']);
+    }
+  }
+
   // ============================================
   // PROJECTS ROUTES
   // ============================================

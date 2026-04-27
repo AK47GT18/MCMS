@@ -419,6 +419,11 @@ export const FD_Contracts = {
                 dropZone.style.borderColor = 'var(--emerald)';
             }
         };
+
+        const valueInput = document.getElementById('contract_value');
+        if (valueInput) {
+            valueInput.oninput = () => this.calculateContractValue(true);
+        }
     },
 
     async onContractProjectSelected(projectId) {
@@ -496,11 +501,11 @@ export const FD_Contracts = {
                         <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
-                                    data-name="${m.name}" data-unit="${m.unit}"
-                                    onchange="document.getElementById('m_qty_${i}').disabled = !this.checked">
+                                    data-name="${m.name}" data-unit="${m.unit}" data-price="${m.unitCostHigh || 0}"
+                                    onchange="window.app.fmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.name}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">${m.unit}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">${m.unit} • Est. MWK ${Number(m.unitCostHigh || 0).toLocaleString()}/unit</div>
                                 </div>
                             </div>
                             <div style="flex: 1; text-align: right;">
@@ -511,15 +516,97 @@ export const FD_Contracts = {
                             </div>
                             <div style="flex: 1.2; text-align: right;">
                                 <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
-                                    min="1"
+                                    min="1" oninput="window.app.fmModule?.calculateContractValue()"
                                     style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
                             </div>
                         </div>
                     `;
                 }).join('')}
             `;
+            this.calculateContractValue();
         } catch (err) { 
             list.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 12px;">Error loading materials list.</div>'; 
+        }
+    },
+
+    calculateContractValue(fromManualInput = false) {
+        const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+        let total = 0;
+        
+        if (fromManualInput) {
+            total = parseFloat(document.getElementById('contract_value')?.value || 0);
+        } else {
+            checkboxes.forEach(cb => {
+                const index = cb.value;
+                const price = parseFloat(cb.dataset.price || 0);
+                const qtyInput = document.getElementById(`m_qty_${index}`);
+                const qty = parseFloat(qtyInput?.value || 0);
+                total += (price * qty);
+            });
+        }
+        
+        const valueInput = document.getElementById('contract_value');
+        if (valueInput) {
+            if (!fromManualInput) {
+                valueInput.value = total;
+                // Visual feedback that it auto-calculated
+                valueInput.style.backgroundColor = '#fff7ed';
+                setTimeout(() => { valueInput.style.backgroundColor = ''; }, 500);
+            }
+
+            // Real-time Budget Validation
+            const remainingBudget = this.currentProjectBudget?.remaining || 0;
+            const submitBtn = document.querySelector('button[onclick*="submitContract"]');
+            
+            if (total > remainingBudget) {
+                const deficit = total - remainingBudget;
+                valueInput.style.color = 'var(--red)';
+                valueInput.style.borderColor = 'var(--red)';
+                
+                // Show warning in budget status area
+                const budgetDisplay = document.getElementById('contract-budget-status');
+                if (budgetDisplay) {
+                    // Update the label to reflect uplift state
+                    const budgetLabel = budgetDisplay.querySelector('span[style*="text-transform: uppercase"]');
+                    if (budgetLabel) {
+                        budgetLabel.innerHTML = 'Budget Uplift Required';
+                        budgetLabel.style.color = 'var(--red)';
+                    }
+
+                    if (!document.getElementById('budget-deficit-warning')) {
+                        const warning = document.createElement('div');
+                        warning.id = 'budget-deficit-warning';
+                        warning.style.cssText = 'background: #fef2f2; border: 1px solid #fee2e2; padding: 10px; border-radius: 8px; margin-top: 10px; color: #991b1b; font-size: 11px; font-weight: 600;';
+                        warning.innerHTML = `<i class="fas fa-exclamation-circle"></i> BUDGET EXCEEDED: You are over by MWK ${deficit.toLocaleString()}. An uplift request will be required.`;
+                        budgetDisplay.appendChild(warning);
+                    }
+                }
+                
+                if (submitBtn) {
+                    submitBtn.style.opacity = '0.7';
+                    submitBtn.innerHTML = `<i class="fas fa-lock"></i> Budget Exceeded (Deficit: ${deficit.toLocaleString()})`;
+                }
+            } else {
+                valueInput.style.color = 'var(--slate-900)';
+                valueInput.style.borderColor = 'var(--slate-300)';
+                const warning = document.getElementById('budget-deficit-warning');
+                if (warning) warning.remove();
+
+                // Restore the label
+                const budgetDisplay = document.getElementById('contract-budget-status');
+                if (budgetDisplay) {
+                    const budgetLabel = budgetDisplay.querySelector('span[style*="text-transform: uppercase"]');
+                    if (budgetLabel) {
+                        budgetLabel.innerHTML = 'Available Project Funds';
+                        budgetLabel.style.color = 'var(--slate-500)';
+                    }
+                }
+                
+                if (submitBtn) {
+                    submitBtn.style.opacity = '1';
+                    submitBtn.innerHTML = '<i class="fas fa-file-contract"></i> Create Contract';
+                }
+            }
         }
     },
 
@@ -530,8 +617,23 @@ export const FD_Contracts = {
             title: document.getElementById('contract_title')?.value,
             value: parseFloat(document.getElementById('contract_value')?.value),
             startDate: document.getElementById('contract_start')?.value,
-            endDate: document.getElementById('contract_end')?.value
+            endDate: document.getElementById('contract_end')?.value,
+            retentionPercentage: parseFloat(document.getElementById('contract_retention')?.value || 0),
+            isTaxInclusive: document.getElementById('contract_tax_inclusive')?.checked || false,
+            advancePaymentAmount: parseFloat(document.getElementById('contract_advance')?.value || 0),
+            guaranteeExpiry: document.getElementById('contract_guarantee_expiry')?.value || null
         };
+
+        // Calculate financial breakdown
+        data.retentionAmount = (data.value * (data.retentionPercentage / 100));
+        if (data.isTaxInclusive) {
+            data.vatAmount = data.value * (16.5 / 116.5);
+            const netBeforeTax = data.value - data.vatAmount;
+            data.whtAmount = netBeforeTax * 0.03;
+        } else {
+            data.vatAmount = data.value * 0.165;
+            data.whtAmount = data.value * 0.03;
+        }
         const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
         const materials = Array.from(checkboxes).map(cb => {
             const index = cb.value;
@@ -539,7 +641,8 @@ export const FD_Contracts = {
             return { 
                 name: cb.dataset.name, 
                 quantity: parseFloat(qtyInput?.value || 0), 
-                unit: cb.dataset.unit 
+                unit: cb.dataset.unit,
+                unitPrice: parseFloat(cb.dataset.price || 0)
             };
         });
 
@@ -551,15 +654,24 @@ export const FD_Contracts = {
             
             // Auto-redirect to Uplift Drawer
             setTimeout(() => {
+                const projectSelect = document.getElementById('contract_project');
+                const projectText = projectSelect?.options[projectSelect.selectedIndex]?.text || 'Selected Project';
+                const [pCode, pName] = projectText.split(' – ');
+                
                 window.drawer.open('Request Budget Uplift', window.DrawerTemplates.initiateBCR([
-                    { id: data.projectId, code: 'CURRENT', name: 'Selected Project' }
+                    { id: data.projectId, code: pCode || 'PRJ', name: pName || 'Project' }
                 ], data.projectId));
                 
                 // Pre-fill deficit
                 const bcrAmount = document.getElementById('bcr_amount');
                 if (bcrAmount) bcrAmount.value = deficit;
                 const bcrReason = document.getElementById('bcr_reason');
-                if (bcrReason) bcrReason.value = `Automatic uplift request for contract "${data.title}" which exceeds current balance by MWK ${deficit.toLocaleString()}.`;
+                const contractTitle = data.title || 'New Vendor Procurement';
+                const materialSummary = materials.map(m => `${m.name} (${m.quantity} ${m.unit})`).join(', ');
+                
+                if (bcrReason) {
+                    bcrReason.value = `Budget uplift required for contract "${contractTitle}". \n\nMaterials to be procured: ${materialSummary}. \n\nThe contract value exceeds current balance by MWK ${deficit.toLocaleString()}.`;
+                }
             }, 1000);
             return;
         }

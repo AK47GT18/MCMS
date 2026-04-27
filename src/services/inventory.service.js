@@ -153,6 +153,21 @@ async function consume(data, user) {
     }
   });
 
+  // Record Material Usage for Progress Tracking
+  await prisma.materialUsage.create({
+    data: {
+      projectId: inventory.sector.projectId,
+      sectorId: sectorId,
+      roadLayerId: data.roadLayerId ? parseInt(data.roadLayerId) : undefined,
+      materialName: materialName,
+      quantityConsumed: quantity,
+      unit: inventory.unit,
+      recordedById: user?.id,
+      progressPercent: data.progressPercent ? parseFloat(data.progressPercent) : undefined,
+      notes: notes
+    }
+  });
+
   logger.info(`Stock consumed: ${quantity} ${inventory.unit} of ${materialName} from sector ${sectorId}`);
 
   // Threshold Depletion Check

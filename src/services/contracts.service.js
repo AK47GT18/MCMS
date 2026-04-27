@@ -89,6 +89,24 @@ async function create(data, userId) {
     data: contractData,
     include: { project: { select: { id: true, name: true, manager: { select: { email: true } } } }, items: true },
   });
+
+  // Create Audit Log
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      action: 'CONTRACT_CREATED',
+      targetType: 'Contract',
+      targetId: contract.id,
+      targetCode: contract.refCode,
+      details: {
+        title: contract.title,
+        value: Number(contract.value),
+        vendor: contract.vendorName,
+        projectId: contract.projectId,
+        itemCount: materials.length
+      }
+    }
+  });
   
   // Create Initial Version
   const nextVersionNum = 1;

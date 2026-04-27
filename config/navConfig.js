@@ -82,7 +82,8 @@ export const NAV_ITEMS = {
             section: 'System Management',
             items: [
                 { label: 'User Management', icon: '<i class="fas fa-users-cog"></i>', id: 'users' },
-                { label: 'Audit Logs', icon: '<i class="fas fa-shield-alt"></i>', id: 'audit' }
+                { label: 'Audit Logs', icon: '<i class="fas fa-shield-alt"></i>', id: 'audit' },
+                { label: 'Price Configuration', icon: '<i class="fas fa-tags"></i>', id: 'config' }
             ]
         }
     ],
