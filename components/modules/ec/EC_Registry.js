@@ -13,9 +13,11 @@ export const EC_Registry = {
                         <i class="fas fa-plus-circle"></i> Request New Asset
                     </button>
                 </div>
-                ${this.assetRegistry.length === 0
+                ${this.isLoadingAssets && this.assetRegistry.length === 0
                     ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading asset registry…</div></div>'
-                    : `<table>
+                    : this.assetRegistry.length === 0
+                        ? '<div style="padding: 60px; text-align: center; color: var(--slate-400); background: #f8fafc; border-radius: 12px; border: 1px dashed var(--slate-200); margin: 20px;"><i class="fas fa-box-open" style="font-size:32px; margin-bottom:12px; opacity:0.5;"></i><div style="font-weight: 700; color: var(--slate-600);">No Assets Found</div><div style="font-size:12px;">The asset registry is currently empty. Click "Request New Asset" to begin.</div></div>'
+                        : `<table>
                         <thead>
                             <tr><th>Asset ID</th><th>Name</th><th>Category</th><th>Hours/Km</th><th>Condition</th><th>Status</th><th style="text-align: right;">Action</th></tr>
                         </thead>
@@ -30,7 +32,7 @@ export const EC_Registry = {
                                     <td><span class="status ${asset.status === 'available' ? 'active' : asset.status === 'checked_out' ? 'pending' : 'locked'}" style="${asset.status === 'maintenance' ? 'background: var(--red-light); color: var(--red);' : ''}">${(asset.status || 'unknown').replace(/_/g, ' ')}</span></td>
                                     <td style="text-align: right;">
                                         <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-                                            <button class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="window.app.ecModule.openAssetHistory('${asset.id}')">
+                                            <button class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="window.app.ecModule.handleAssetHistory('${asset.id}')">
                                                 <i class="fas fa-history"></i> History
                                             </button>
                                             ${asset.status === 'maintenance' ? 

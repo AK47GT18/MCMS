@@ -61,6 +61,7 @@ export class EquipmentCoordinatorDashboard {
     }
 
     render() {
+        this.switchView(this.currentView);
         return this.getTemplate();
     }
 
@@ -140,6 +141,7 @@ export class EquipmentCoordinatorDashboard {
         
         switch(view) {
             case 'dashboard':
+                this._loadAssets();
                 this._loadInventory();
                 this._loadProcurementReceipts();
                 this._loadDistributionLogs();

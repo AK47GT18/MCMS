@@ -10,9 +10,11 @@ export const EC_Maintenance = {
                 <div class="data-card-header">
                     <div class="card-title">Fleet Health Monitor</div>
                 </div>
-                ${this.assetRegistry.length === 0
+                ${this.isLoadingAssets && this.assetRegistry.length === 0
                     ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading fleet data…</div></div>'
-                    : `<table>
+                    : this.assetRegistry.length === 0
+                        ? '<div style="padding: 40px; text-align: center; color: var(--slate-400); border: 1px dashed var(--slate-200); border-radius: 12px; margin: 20px;"><i class="fas fa-tools" style="font-size:32px; margin-bottom:12px; opacity:0.3;"></i><div>No Service Records Found</div><div style="font-size:12px;">Maintenance history will appear here once assets are added and serviced.</div></div>'
+                        : `<table>
                         <thead>
                             <tr><th>Equipment</th><th>Last Service</th><th>Condition</th><th>Criticality</th></tr>
                         </thead>
