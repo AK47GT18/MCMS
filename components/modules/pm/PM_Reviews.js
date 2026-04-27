@@ -152,7 +152,7 @@ export const PM_Reviews = {
             <tr>
                 <td style="font-weight: 700;">REQ-${item.id}</td>
                 <td>${this.escapeHTML(item.projectName || 'Site Project')}</td>
-                <td>${item.requesterName || 'Admin'}</td>
+                <td>${item.submitter?.name || 'Admin'}</td>
                 <td>${item.items?.length || 0} items</td>
                 <td>MWK ${Number(item.totalEstimatedCost || 0).toLocaleString()}</td>
                 <td>

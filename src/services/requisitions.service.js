@@ -261,8 +261,9 @@ async function getPending() {
   return prisma.requisition.findMany({
     where: { status: 'pending' },
     include: {
-      project: { select: { id: true, code: true } },
+      project: { select: { id: true, code: true, name: true } },
       submitter: { select: { id: true, name: true } },
+      items: true,
     },
     orderBy: { createdAt: 'asc' },
   });

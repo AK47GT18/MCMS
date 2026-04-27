@@ -120,11 +120,27 @@ export const FD_Procurement = {
         if (!container) return;
 
         try {
-            const result = await requisitions.getPending();
-            const reqs = Array.isArray(result) ? result : (result.data || []);
-            this.data.requisitions = reqs;
+            const [reqsRes, repsRes] = await Promise.all([
+                requisitions.getPending(),
+                client.get('/replenishment/pending')
+            ]);
 
-            if (reqs.length === 0) {
+            const reqs = Array.isArray(reqsRes) ? reqsRes : (reqsRes.data || []);
+            const reps = Array.isArray(repsRes) ? repsRes : (repsRes.data || []);
+            
+            // Map replenishments to a similar structure for unified display
+            const mappedReps = reps.map(r => ({
+                ...r,
+                isReplenishment: true,
+                totalAmount: r.estimatedCost || 0,
+                submitter: r.requester,
+                items: [{ itemName: r.materialName, quantity: r.quantityNeeded }]
+            }));
+
+            const allPending = [...reqs, ...mappedReps].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            this.data.requisitions = allPending;
+
+            if (allPending.length === 0) {
                 container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i><div style="font-weight: 600;">No pending requisitions</div></div>`;
                 return;
             }
@@ -135,22 +151,25 @@ export const FD_Procurement = {
                         <tr><th>Req ID</th><th>Project</th><th>Material Items</th><th>Requested By</th><th style="text-align:right">Value (MWK)</th><th>Budget Check</th><th>Action</th></tr>
                     </thead>
                     <tbody>
-                        ${reqs.map(req => {
+                        ${allPending.map(req => {
                             const items = req.items || [];
                             const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
                             const totalAmt = Number(req.totalAmount || 0);
                             const projBudget = Number(req.project?.budgetTotal || 0);
                             const projSpent = Number(req.project?.budgetSpent || 0);
                             const remaining = projBudget - projSpent;
-                            const isOverBudget = totalAmt > remaining && remaining > 0;
-                            const isCritical = remaining < totalAmt * 0.5;
-
+                            const isOverBudget = totalAmt > remaining && projBudget > 0;
+                            const isCritical = isOverBudget || (remaining < (projBudget * 0.1));
+                            
                             return `
-                                <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}')">
-                                    <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
+                                <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}', ${req.isReplenishment ? 'true' : 'false'})">
+                                    <td>
+                                        <span class="project-id">${req.reqCode || 'REQ-' + req.id}</span>
+                                        ${req.isReplenishment ? '<span class="badge badge-primary" style="font-size: 9px; margin-left: 4px; background: var(--blue-light); color: var(--blue);">Stock</span>' : ''}
+                                    </td>
                                     <td>${req.project?.name || req.project?.code || 'Project'}</td>
                                     <td>${desc}</td>
-                                    <td>${req.submittedBy?.name || 'Field'} via EC</td>
+                                    <td>${req.submitter?.name || 'Field'}</td>
                                     <td style="text-align:right; font-family: 'JetBrains Mono'; font-weight: 700;">${totalAmt.toLocaleString()}</td>
                                     <td><span class="status ${isCritical ? 'delayed' : 'active'}" style="background: ${isCritical ? '#FEF2F2' : '#F0FDF4'}; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'};">${isCritical ? 'Critical' : 'Healthy'} (${this.formatCurrency(remaining)} Rem)</span></td>
                                     <td>${isOverBudget

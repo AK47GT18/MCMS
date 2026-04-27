@@ -25,6 +25,20 @@ async function getByProject(projectId) {
 }
 
 /**
+ * Get all pending requests for Finance
+ */
+async function getAllPending() {
+  return prisma.replenishmentRequest.findMany({
+    where: { status: 'pending_finance' },
+    orderBy: { createdAt: 'asc' },
+    include: {
+      requester: { select: { id: true, name: true, role: true } },
+      project: { select: { id: true, name: true, code: true } }
+    }
+  });
+}
+
+/**
  * Create a new replenishment request (Initiated by Field Supervisor or Equipment Coordinator)
  */
 async function createRequest(data, user) {
@@ -261,6 +275,7 @@ async function completeRequest(requestId, user) {
 
 module.exports = {
   getByProject,
+  getAllPending,
   createRequest,
   financeAction,
   pmAction,

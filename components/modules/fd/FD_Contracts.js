@@ -435,7 +435,17 @@ export const FD_Contracts = {
                 body: JSON.stringify({ ...data, materialsList: JSON.stringify(materials), refCode: 'CON-' + Date.now().toString(36).toUpperCase() })
             });
             if (!res.ok) throw new Error('System error creating contract');
+            
+            const result = await res.json();
+            const contract = result.data || result;
+            
             window.toast.show('Contract established successfully', 'success');
+            
+            // Automatically notify Logistics
+            if (contract && contract.id) {
+                this.notifyLogistics(contract.id, contract.refCode || ('CON-' + contract.id));
+            }
+            
             window.drawer.close();
             if (this.currentView === 'contracts') this.loadContractsData();
         } catch (err) { window.toast.show(err.message, 'error'); }

@@ -43,24 +43,37 @@ export const FD_Dashboard = {
 
     async loadDashboardData() {
         try {
-            const [budgetRes, pendingReqs, projectsRes, bcrRes] = await Promise.all([
+            const [budgetRes, pendingReqs, pendingReps, projectsRes, bcrRes] = await Promise.all([
                 client.get('/reports/finance/budget'),
                 requisitions.getPending(),
+                client.get('/replenishment/pending'),
                 client.get('/projects?limit=50'),
                 client.get('/budget-changes').catch(() => ({ data: [] }))
             ]);
 
             const budget = budgetRes.data || {};
-            const reqs = pendingReqs.data || pendingReqs;
+            const reqs = Array.isArray(pendingReqs) ? pendingReqs : (pendingReqs.data || []);
+            const reps = Array.isArray(pendingReps) ? pendingReps : (pendingReps.data || []);
+            
+            // Unified list
+            const mappedReps = reps.map(r => ({
+                ...r,
+                isReplenishment: true,
+                totalAmount: r.estimatedCost || 0,
+                submitter: r.requester,
+                items: [{ itemName: r.materialName, quantity: r.quantityNeeded }]
+            }));
+            const allReqs = [...reqs, ...mappedReps].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
             const projectsList = projectsRes.data?.projects || projectsRes.data || [];
             const bcrList = Array.isArray(bcrRes.data) ? bcrRes.data : (bcrRes.data?.items || []);
 
             this.data.projects = Array.isArray(projectsList) ? projectsList : [];
-            this.data.requisitions = Array.isArray(reqs) ? reqs : [];
+            this.data.requisitions = allReqs;
             this.data.stats = {
                 available: (budget.totalBudget || 0) - (budget.totalSpent || 0),
                 committed: budget.totalSpent || 0,
-                ecRequests: Array.isArray(reqs) ? reqs.length : 0,
+                ecRequests: allReqs.length,
                 pmUplifts: bcrList.filter(b => b.status === 'Pending').length
             };
 
@@ -76,7 +89,7 @@ export const FD_Dashboard = {
             // Render dynamic project cards
             this._renderProjectCards();
             // Render pending requisitions on dashboard
-            this._renderDashboardReqs(reqs);
+            this._renderDashboardReqs(allReqs);
         } catch (error) {
             console.error('Failed to load finance stats:', error);
         }
@@ -159,11 +172,14 @@ export const FD_Dashboard = {
                         const items = req.items || [];
                         const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
                         return `
-                            <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}')">
-                                <td><span class="project-id">${req.reqCode || 'REQ-' + req.id}</span></td>
+                            <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}', ${req.isReplenishment ? 'true' : 'false'})">
+                                <td>
+                                    <span class="project-id">${req.reqCode || 'REQ-' + req.id}</span>
+                                    ${req.isReplenishment ? '<span class="badge badge-primary" style="font-size: 9px; margin-left: 4px; background: var(--blue-light); color: var(--blue);">Stock</span>' : ''}
+                                </td>
                                 <td style="font-weight: 600;">${req.project?.name || req.project?.code || 'Project'}</td>
                                 <td>${desc}</td>
-                                <td>${req.submittedBy?.name || 'Field'} via EC</td>
+                                <td>${req.submitter?.name || 'Field'}</td>
                                 <td style="font-family: 'JetBrains Mono'; font-weight: 700;">${Number(req.totalAmount || 0).toLocaleString()}</td>
                                 <td><span class="status locked" style="background: var(--orange-light); color: var(--orange);">${(req.status || 'PENDING').toUpperCase()}</span></td>
                             </tr>

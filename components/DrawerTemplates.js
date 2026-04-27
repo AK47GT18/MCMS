@@ -342,63 +342,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    requisitionReview: (project, req) => `
-         <div style="padding: 0;">
-            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-                    <div>
-                        <div style="font-size: 18px; font-weight: 700; color: var(--slate-900);">REQ-${req?.id || '---'}</div>
-                        <div style="color: var(--slate-500); font-size: 13px;">Submitted by ${req?.requesterName || 'Site Manager'} • ${req ? new Date(req.createdAt).toLocaleDateString() : 'Just now'}</div>
-                    </div>
-                    <span class="status pending" style="background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">Pending Approval</span>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                    <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Project</div>
-                        <div style="font-weight: 600; color: var(--slate-800);">${project?.name || '---'}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor / Payee</div>
-                        <div style="font-weight: 600; color: var(--slate-800);">${req?.vendorName || req?.vendor || 'Not Specified'}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Total Amount</div>
-                        <div style="font-weight: 700; color: var(--slate-900); font-family: 'JetBrains Mono';">MWK ${req?.amount?.toLocaleString() || '0'}</div>
-                    </div>
-                </div>
-            </div>
 
-            <div style="padding: 24px;">
-                <h4 style="font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px; text-transform: uppercase;">Request Details</h4>
-                <div style="font-size: 14px; color: var(--slate-600); margin-bottom: 24px; line-height: 1.6;">
-                    ${req?.purpose || req?.description || 'No detailed purpose provided for this requisition.'}
-                </div>
-
-                <div style="background: var(--orange-light); border: 1px solid var(--orange); padding: 12px; border-radius: 6px; display: flex; gap: 10px; margin-bottom: 24px;">
-                    <i class="fas fa-info-circle" style="color: var(--orange); margin-top: 2px;"></i>
-                    <div style="font-size: 13px; color: var(--orange-dark);">
-                        <strong>System Check:</strong> This request is pending PM review. Final approval will be processed by the Commissioner.
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Action Remarks (Required for Rejection)</label>
-                    <textarea id="req-remarks" class="form-input" rows="2" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="Enter reason for rejection or approval notes..."></textarea>
-                </div>
-
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); window.toast.show('Forwarded to PM for clarification', 'info')">Contact Requester</button>
-                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="
-                        const reason = document.getElementById('req-remarks').value;
-                        if(!reason) { window.toast.show('Mandatory: Please provide a reason for rejection', 'error'); return; }
-                        (window.app.pmModule || window.app.fsModule || window.app.caModule).handleRejectRequisition('${req?.id}', reason);
-                    ">Reject</button>
-                    <button class="btn btn-primary" style="flex: 1; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleApproveRequisition('${req?.id}')">Approve</button>
-                </div>
-            </div>
-         </div>
-    `,
 
     contractView: (contract) => {
         const versions = contract.versions || [];
@@ -3535,64 +3479,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    requisitionReview: (req) => {
-        const items = req.items || [];
-        const itemsDesc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join('<br>') : 'N/A';
-        const project = req.project?.name || req.project?.code || 'Project';
-        const amount = Number(req.totalAmount || 0).toLocaleString();
-        const reqCode = req.reqCode || 'REQ-' + req.id;
 
-        return `
-        <div class="drawer-section">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                <div>
-                   <h3 style="font-size: 18px; font-weight: 700;">Review Requisition: ${reqCode}</h3>
-                   <div style="font-size: 12px; color: var(--slate-500);">Forwarded by Equipment Coordinator (Low Stock)</div>
-                </div>
-                <span class="status locked" style="background: var(--orange-light); color: var(--orange);">EC OUT OF STOCK</span>
-            </div>
-
-            <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--slate-200);">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span style="font-size: 12px; color: var(--slate-500);">Project</span>
-                    <span style="font-size: 13px; font-weight: 700;">${project}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span style="font-size: 12px; color: var(--slate-500);">Material Requested</span>
-                    <span style="font-size: 13px; font-weight: 700; text-align: right;">${itemsDesc}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--slate-300); padding-top: 12px;">
-                    <span style="font-size: 12px; color: var(--slate-500);">Estimated Value</span>
-                    <span style="font-size: 15px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono';">${amount} MWK</span>
-                </div>
-            </div>
-
-            <div style="padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--emerald-light); background: #f0fdf4;">
-                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--emerald); margin-bottom: 4px;">Budget Impact Check</div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 13px; color: var(--slate-600);">Project Status</span>
-                    <span style="font-size: 14px; font-weight: 800; color: var(--emerald);">${req.project?.status?.toUpperCase() || 'ACTIVE'}</span>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Approval/Rejection Note *</label>
-                <textarea id="requisition_note" class="form-input" rows="3" style="width: 100%; border-radius: 8px; border-color: var(--slate-300);" placeholder="Provide reasoning for this decision..."></textarea>
-                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">This description will be recorded in the audit trail.</div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <button class="btn btn-secondary" style="width: 100%; justify-content: center; height: 44px; font-weight: 600;" 
-                    onclick="window.app.fmModule?.handleRequisitionAction('${req.id}', 'rejected')">
-                    Decline
-                </button>
-                <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 44px; font-weight: 700; background: var(--emerald); border-color: var(--emerald);" 
-                    onclick="window.app.fmModule?.handleRequisitionAction('${req.id}', 'approved')">
-                    Approve Procurement
-                </button>
-            </div>
-        </div>
-    `},
     reportGenerator: `
         <div class="drawer-section">
             <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--slate-900);">Generate System Report</h3>
@@ -4201,13 +4088,20 @@ Contract Admin</textarea>
         </div>
     `,
 
-    requisitionReview: (req) => `
+    requisitionReview: (req) => {
+        const isReplenishment = req.isReplenishment;
+        const items = req.items || [];
+        const reqCode = req.reqCode || 'REQ-' + req.id;
+        const submitterName = req.submitter?.name || req.user?.name || req.requester?.name || 'Supervisor';
+
+        return `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Material Requisition REQ-${req.id}</div>
-                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.user?.name || 'Supervisor'}</div>
+                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">${isReplenishment ? 'Stock Replenishment' : 'Material Requisition'} ${reqCode}</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${submitterName}</div>
                 </div>
+                ${isReplenishment ? '<span class="badge badge-primary" style="background: var(--blue-light); color: var(--blue); font-size: 10px;">STOCK</span>' : ''}
             </div>
 
             <div style="padding: 24px;">
@@ -4220,24 +4114,38 @@ Contract Admin</textarea>
                         </tr>
                     </thead>
                     <tbody>
-                        ${req.items.map(item => `
-                            <tr>
-                                <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); font-weight: 600;">${item.name}</td>
-                                <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right;">${item.quantity} ${item.unit}</td>
-                                <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(item.estimatedCost).toLocaleString()}</td>
-                            </tr>
-                        `).join('')}
+                        ${items.map(item => {
+                            const name = item.itemName || item.materialName || 'Unknown Item';
+                            const qty = item.quantity || item.quantityNeeded || 0;
+                            const unit = item.unit || '';
+                            const cost = item.unitPrice || item.estimatedCost || 0;
+                            return `
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); font-weight: 600;">${name}</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right;">${qty} ${unit}</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(cost * qty).toLocaleString()}</td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
 
-                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Approval/Rejection Justification *</label>
+                    <textarea id="requisition_note" class="form-input" rows="3" style="width: 100%; border-radius: 8px; border-color: var(--slate-300);" placeholder="Provide reasoning for this decision..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectRequisition('${req.id}')">Reject</button>
-                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveRequisition('${req.id}')">Approve & Procurement</button>
+                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.fmModule?.handleRequisitionAction('${req.id}', 'rejected')">Reject</button>
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
+                        onclick="window.app.fmModule?.handleRequisitionAction('${req.id}', 'approved')">
+                        Approve & Create Contract
+                    </button>
                 </div>
             </div>
         </div>
-    `,
+    `},
 
     userForm: `
         <div style="padding: 24px;">

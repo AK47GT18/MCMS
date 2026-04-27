@@ -19,6 +19,16 @@ const getByProject = asyncHandler(async (req, res, id) => {
   response.success(res, requests);
 });
 
+const getPending = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  if (!hasRole(req, res, ['Finance_Director', 'System_Technician', 'Managing_Director'])) return;
+
+  const requests = await replenishmentService.getAllPending();
+  response.success(res, requests);
+});
+
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
@@ -60,6 +70,7 @@ const complete = asyncHandler(async (req, res, id) => {
 
 module.exports = {
   getByProject,
+  getPending,
   create,
   financeAction,
   pmAction,

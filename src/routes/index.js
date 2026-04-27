@@ -466,6 +466,9 @@ async function router(req, res) {
     if (id === 'project' && action && method === 'GET') {
       return replenishmentController.getByProject(req, res, action);
     }
+    if (id === 'pending' && method === 'GET') {
+      return replenishmentController.getPending(req, res);
+    }
     if (id === 'request' && method === 'POST') {
       return replenishmentController.create(req, res);
     }

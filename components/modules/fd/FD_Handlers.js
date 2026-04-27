@@ -9,20 +9,62 @@ export const FD_Handlers = {
             return;
         }
 
+        const req = this.data.requisitions.find(r => String(r.id) === String(reqId));
+        const isReplenishment = req?.isReplenishment;
+
         try {
-            window.toast.show(`Processing resource ${status}...`, 'info');
+            window.toast.show(`Processing ${isReplenishment ? 'replenishment' : 'requisition'} ${status}...`, 'info');
             
-            if (status === 'approved') {
-                await client.post(`/requisitions/${reqId}/approve`);
-            } else if (status === 'rejected') {
-                await client.post(`/requisitions/${reqId}/reject`, { reason: note });
-            } else if (status === 'flagged') {
-                await client.post(`/requisitions/${reqId}/flag-fraud`);
+            if (isReplenishment) {
+                // Replenishment Actions
+                let action;
+                if (status === 'approved') action = 'approve';
+                else if (status === 'rejected') action = 'reject';
+                else if (status === 'flagged' || status === 'escalated') action = 'escalate';
+
+                await client.post(`/replenishment/${reqId}/finance-action`, { 
+                    action, 
+                    financeComments: note,
+                    estimatedCost: req.totalAmount 
+                });
+            } else {
+                // Standard Requisition Actions
+                if (status === 'approved') {
+                    await client.post(`/requisitions/${reqId}/approve`);
+                } else if (status === 'rejected') {
+                    await client.post(`/requisitions/${reqId}/reject`, { reason: note });
+                } else if (status === 'flagged') {
+                    await client.post(`/requisitions/${reqId}/flag-fraud`);
+                }
             }
             
-            window.toast.show(`Requisition ${reqId} has been ${status} successfully.`, 'success');
-            window.drawer.close();
-            this.switchView(this.currentView);
+            window.toast.show(`${isReplenishment ? 'Stock replenishment' : 'Requisition'} ${reqId} has been ${status} successfully.`, 'success');
+            
+            if (status === 'approved') {
+                window.toast.show('Opening contract registry for procurement...', 'info');
+                // Redirect to New Contract flow
+                window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract);
+                setTimeout(async () => {
+                    await this.loadContractProjects?.();
+                    this.initContractUpload?.();
+                    
+                    // Pre-fill data if available
+                    const projectSelect = document.getElementById('contract_project');
+                    if (projectSelect && req.projectId) {
+                        projectSelect.value = req.projectId;
+                        await this.onContractProjectSelected?.(req.projectId);
+                    }
+                    
+                    const titleInput = document.getElementById('contract_title');
+                    if (titleInput) titleInput.value = `Procurement for ${req.reqCode || 'REQ-' + req.id}`;
+                    
+                    const valueInput = document.getElementById('contract_value');
+                    if (valueInput) valueInput.value = req.totalAmount || 0;
+                }, 200);
+            } else {
+                window.drawer.close();
+                this.switchView(this.currentView);
+            }
         } catch (error) {
             console.error('Workflow error:', error);
             window.toast.show('Failed to process requisition action.', 'error');
@@ -32,9 +74,9 @@ export const FD_Handlers = {
     openRequisitionReview(reqId) {
         const req = this.data.requisitions.find(r => String(r.id) === String(reqId));
         if (req) {
-            window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview(req));
+            window.drawer.open(req.isReplenishment ? 'Stock Replenishment Review' : 'Requisition Review', window.DrawerTemplates.requisitionReview(req));
         } else {
-            window.toast.show('Requisition details not found.', 'error');
+            window.toast.show('Request details not found.', 'error');
         }
     }
 };
