@@ -393,7 +393,11 @@ export const DrawerTemplates = {
                     </div>
                     <div style="flex: 1;">
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || 'Signed_Contract_Final.pdf'}</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Version ${versions.length || 1} • Uploaded ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Today'}</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">
+                            <span style="font-weight: 700; color: var(--orange);">Version ${versions.length || 1}</span> • 
+                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${contract.createdBy?.name || 'Authorized Official'}</span> • 
+                            ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Today'}
+                        </div>
                     </div>
                     <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.app.fmModule?.viewDocument('${contract.documentUrl}')">
                         <i class="fas fa-external-link-alt"></i>
@@ -409,7 +413,10 @@ export const DrawerTemplates = {
                                     <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber}</div>
                                     <div>
                                         <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${v.fileName || 'Contract_Revision.pdf'}</div>
-                                        <div style="font-size: 10px; color: var(--slate-400);">By ${v.createdBy?.name || 'System Admin'} • ${new Date(v.createdAt).toLocaleDateString()}</div>
+                                        <div style="font-size: 10px; color: var(--slate-400); display: flex; align-items: center; gap: 4px;">
+                                            <i class="fas fa-user-edit" style="font-size: 9px;"></i>
+                                            By ${v.createdBy?.name || 'System Admin'} • ${new Date(v.createdAt).toLocaleDateString()}
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
@@ -3436,6 +3443,62 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
+    newProjectContract: `
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-file-contract" style="color: var(--orange); font-size: 24px;"></i>
+                <div>
+                    <div style="font-weight: 800; color: #9a3412; font-size: 15px;">Project Master Agreement</div>
+                    <div style="font-size: 11px; color: var(--orange);">Register the primary contract with the Client/Government</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Linked Project *</label>
+                <select id="contract_project" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
+                    onchange="window.app.fmModule?.onProjectContractSelected(this.value)">
+                    <option value="">Select Target Project...</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Master Contract Code *</label>
+                <input type="text" id="contract_ref" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono';" placeholder="e.g. MOW-PRJ-2024-001">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
+                <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Commencement Date</label>
+                    <input type="date" id="contract_start" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                </div>
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Completion Deadline</label>
+                    <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Signed Master Document *</label>
+                <div id="v-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
+                    <i class="fas fa-file-signature" style="font-size: 32px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div id="v-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Click to upload signed legal PDF</div>
+                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB • Version 1.0</div>
+                    <input type="file" id="v-file-input" accept=".pdf" style="display: none;">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px; background: var(--orange); border-color: var(--orange);"
+                onclick="window.app.fmModule?.submitProjectContract()">
+                <i class="fas fa-save" style="margin-right: 8px;"></i> Archive Master Agreement
+            </button>
+        </div>
+    `,
+
     completeMaintenance: (assetId) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>

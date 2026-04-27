@@ -14,7 +14,10 @@ export const FD_Contracts = {
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Contract Registry & Legal Repository</div>
-                    <button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Contract</button>
+                    ${this.currentContractTab === 'project' 
+                        ? `<button class="btn btn-primary" onclick="window.app.fmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
+                        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
+                    }
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
@@ -165,7 +168,7 @@ export const FD_Contracts = {
             if (isExpiringSoon) statusClass = 'locked';
 
             return `
-                <tr onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractViewer(${item.id}))">
+                <tr onclick="window.app.fmModule.viewContract(${item.id})">
                     <td><span class="project-id">${item.contractCode || 'CON-' + item.id}</span></td>
                     <td>
                         <div style="font-weight: 600;">${item.title}</div>
@@ -248,6 +251,85 @@ export const FD_Contracts = {
             }
         }, 100);
     },
+
+    async onProjectContractSelected(projectId) {
+        if (!projectId) return;
+        
+        try {
+            window.toast.show('Fetching project baselines...', 'info');
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch(`/api/v1/projects/${projectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+            const project = result.data || result;
+
+            // Pre-fill values
+            const valInput = document.getElementById('contract_value');
+            if (valInput) valInput.value = project.budgetTotal || 0;
+
+            const startInput = document.getElementById('contract_start');
+            if (startInput && project.startDate) startInput.value = project.startDate.split('T')[0];
+
+            const endInput = document.getElementById('contract_end');
+            if (endInput && project.endDate) endInput.value = project.endDate.split('T')[0];
+
+            // Random Code Generation
+            const refInput = document.getElementById('contract_ref');
+            if (refInput) {
+                const random = Math.floor(1000 + Math.random() * 9000);
+                refInput.value = `MOW-${project.code || 'PRJ'}-${random}`;
+            }
+
+            window.toast.show('Project timelines & values synced.', 'success');
+        } catch (err) {
+            console.error('Error fetching project for contract', err);
+        }
+    },
+
+    openNewProjectContract() {
+        window.drawer.open('Archive Project Master Contract', window.DrawerTemplates.newProjectContract);
+        setTimeout(() => {
+            this.loadContractProjects();
+            this.initContractUpload(); // Reuse existing upload init
+        }, 100);
+    },
+
+    async submitProjectContract() {
+        const data = {
+            projectId: document.getElementById('contract_project')?.value,
+            refCode: document.getElementById('contract_ref')?.value,
+            title: 'Project Master Agreement',
+            value: parseFloat(document.getElementById('contract_value')?.value),
+            startDate: document.getElementById('contract_start')?.value,
+            endDate: document.getElementById('contract_end')?.value,
+            contractType: 'project'
+        };
+
+        if (!data.projectId || !data.refCode || !data.value) {
+            window.toast.show('Please fill all required project contract fields', 'warning');
+            return;
+        }
+
+        window.toast.show('Archiving master agreement...', 'info');
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/contracts', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error('Failed to archive project contract');
+            
+            window.toast.show('Project Master Contract Archived successfully', 'success');
+            window.drawer.close();
+            this.loadContractsData();
+        } catch (err) {
+            window.toast.show(err.message, 'error');
+        }
+    },
+
 
     async submitNewVersion(contractId) {
         const notes = document.getElementById('v-change-notes')?.value;
