@@ -372,28 +372,8 @@ export const FD_Contracts = {
         }
     },
 
-    viewDocument(url, fileName = 'Document.pdf') {
-        if (!url) {
-            window.toast.show('No document URL available.', 'warning');
-            return;
-        }
-        
-        window.drawer.open('Document Viewer', window.DrawerTemplates.documentViewer(url, fileName), 'lg');
-    },
-
-    downloadDocument(url, filename) {
-        if (!url) {
-            window.toast.show('No document available for download.', 'warning');
-            return;
-        }
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || 'document.pdf';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    },
-
+    // Using global window.viewDocument and window.downloadDocument instead
+    
     async loadContractProjects() {
         const select = document.getElementById('contract_project');
         if (!select) return;

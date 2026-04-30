@@ -164,7 +164,7 @@ export const PM_Contracts = {
                 <td>v${this.escapeHTML(item.version || '1.0')}</td>
                 <td>${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}</td>
                 <td>
-                    <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractViewer(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i></button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractView(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i></button>
                 </td>
             </tr>
         `).join('');

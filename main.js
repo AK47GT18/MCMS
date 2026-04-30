@@ -11,6 +11,28 @@ import './components/ui/ModalManager.js';
 // Expose validation utility globally for drawer templates
 window.V = V;
 
+// Global Document Handlers
+window.viewDocument = (url, fileName = 'Document') => {
+    if (!url) {
+        window.toast.show('No document URL available.', 'warning');
+        return;
+    }
+    window.drawer.open('Document Viewer', window.DrawerTemplates.documentViewer(url, fileName), 'lg');
+};
+
+window.downloadDocument = (url, filename = 'document.pdf') => {
+    if (!url) {
+        window.toast.show('No document available for download.', 'warning');
+        return;
+    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 // Auth constants
 const TOKEN_KEY = 'mcms_auth_token';
 const API_BASE = '/api/v1';
@@ -329,7 +351,7 @@ class App {
             'dashboard': [], // All authenticated users
             'users': ['System_Technician', 'System Technician', 'Project_Manager', 'Project Manager'],
             'audit': ['System_Technician', 'Managing_Director', 'System Technician', 'Managing Director', 'Project_Manager', 'Project Manager', 'Finance_Director', 'Finance Director', 'Equipment_Coordinator', 'Equipment Coordinator', 'Operations_Manager', 'Operations Manager'],
-            'config': ['System_Technician', 'System Technician'],
+            'config': ['System_Technician', 'System Technician', 'Project_Manager', 'Project Manager'],
             'finance': ['Finance_Director', 'Managing_Director', 'Finance Director', 'Managing Director'],
             'accounting': ['Finance_Director', 'Finance Director'],
             'requisitions': ['Finance_Director', 'Project_Manager', 'Finance Director', 'Project Manager'],

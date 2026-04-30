@@ -60,14 +60,16 @@ export const PM_Gantt = {
                 </div>
             </div>
         `;
-    },
+    }
+,
 
     changeProjectSchedule(projectId) {
         this.selectedProjectId = projectId;
         const content = this.render();
         window.app.layout.injectContent(content);
         window.toast.show(`Loading schedule for ${projectId}`, 'info');
-    },
+    }
+,
 
     async renderGanttChart() {
         let tasksList = [];
@@ -143,13 +145,16 @@ export const PM_Gantt = {
                     #gantt-chart-container { display: block !important; width: 100% !important; overflow-x: auto !important; overflow-y: visible !important; }
                     .gantt-container { display: block !important; width: 100% !important; min-height: 500px !important; height: auto !important; }
                     .gantt { display: block !important; width: 100% !important; }
-                    .gantt .bar { fill: #a3a3a3; }
-                    .gantt .bar-progress { fill: var(--orange-500) !important; }
-                    .gantt-item-emerald .bar-progress { fill: #10b981 !important; }
-                    .gantt .grid-header { font-family: 'Inter', sans-serif !important; }
+                    .gantt .grid-header { font-family: 'Inter', sans-serif !important; font-size: 11px !important; fill: #64748b !important; }
                     .gantt .grid-row { fill: #ffffff !important; }
                     .gantt .row-line { stroke: #f1f5f9 !important; }
                     .gantt .holiday-highlight { fill: #f8fafc !important; }
+                    .gantt .lower-text { fill: #334155 !important; font-weight: 600 !important; font-size: 12px !important; }
+                    .gantt .upper-text { fill: #94a3b8 !important; text-transform: uppercase !important; font-weight: 700 !important; letter-spacing: 0.5px !important; font-size: 10px !important; }
+                    .gantt .bar-label { fill: #1e293b !important; font-weight: 600 !important; font-size: 12px !important; }
+                    .gantt .handle-group { display: none !important; }
+                    .gantt .bar-progress { fill: var(--orange-500) !important; stroke-width: 0 !important; }
+                    .gantt .bar { fill: #e2e8f0 !important; stroke: #cbd5e1 !important; stroke-width: 1 !important; }
                 `;
                 document.head.appendChild(style);
             }
@@ -163,11 +168,11 @@ export const PM_Gantt = {
 
             console.log("[Gantt] Creating instance with FrappeGantt");
             this.ganttInstance = new GanttCls("#gantt", mappedTasks, {
-                header_height: 50,
-                column_width: 32,
+                header_height: 55,
+                column_width: this.currentGanttViewMode === 'Year' ? 60 : (this.currentGanttViewMode === 'Month' ? 45 : 32),
                 step: 24,
                 view_modes: ['Day', 'Week', 'Month', 'Year'],
-                bar_height: 28,
+                bar_height: 32,
                 bar_corner_radius: 6,
                 arrow_curve: 5,
                 padding: 20,
@@ -199,7 +204,8 @@ export const PM_Gantt = {
                 el.innerHTML = `<div style="padding:20px; color:red; font-weight:bold;">Gantt Error: ${e.message}</div>`;
             }
         }
-    },
+    }
+,
 
     async openPhaseEditor() {
         if (!this.selectedProjectId) {
@@ -210,8 +216,8 @@ export const PM_Gantt = {
         window.drawer.open('Edit Construction Phases', window.DrawerTemplates.ganttPhaseEditor);
         
         try {
-            const tasksApi = await import('../../src/api/tasks.api.js');
-            const response = await tasksApi.default.getByProject(this.selectedProjectId);
+            
+            const response = await tasks.getByProject(this.selectedProjectId);
             const data = response.data || response;
             const tasksList = Array.isArray(data) ? data : data.tasks || [];
             
@@ -252,14 +258,16 @@ export const PM_Gantt = {
             console.error('Failed to load tasks for editor', error);
             window.toast?.show('Failed to load tasks', 'error');
         }
-    },
+    }
+,
 
     changeGanttViewMode(mode) {
         this.currentGanttViewMode = mode;
         if (this.ganttInstance) {
             this.ganttInstance.change_view_mode(mode);
         }
-    },
+    }
+,
 
     scrollToToday() {
         if (this.ganttInstance) {

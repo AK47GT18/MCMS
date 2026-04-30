@@ -13,7 +13,14 @@ const auditService = require('../services/audit.service');
 // Helper: log report access to audit trail
 async function auditReport(user, reportName, query) {
   if (user?.id) {
-    await auditService.log(user.id, 'VIEW_REPORT', 'Report', null, { report: reportName, filters: query }).catch(() => {});
+    await auditService.log({
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      action: 'VIEW_REPORT',
+      targetType: 'Report',
+      details: { report: reportName, filters: query }
+    }).catch(() => {});
   }
 }
 

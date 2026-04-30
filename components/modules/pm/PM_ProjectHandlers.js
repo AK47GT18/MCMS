@@ -12,15 +12,164 @@ import contracts from '../../../src/api/contracts.api.js';
 
 export const PM_ProjectHandlers = {
     openNewProjectDrawer() {
+        const cached = sessionStorage.getItem('mcms_new_project_cache');
+        if (cached) {
+            try {
+                this.wizardState = JSON.parse(cached);
+                console.log('[DEBUG] Restored wizard state from cache');
+            } catch (e) {
+                console.error('Failed to parse wizard cache', e);
+                this.initDefaultWizardState();
+            }
+        } else {
+            this.initDefaultWizardState();
+        }
+
+        window.drawer.open('Initialize New Project', window.DrawerTemplates.newProject);
+        
+        // Restore DOM values after a short delay for rendering
+        setTimeout(() => {
+            this.restoreWizardDOM();
+            this.initializeProjectMap();
+            this.fetchSupervisors().then(() => {
+                if (this.wizardState.formData?.managerId) {
+                    const el = document.getElementById('proj_supervisor');
+                    if (el) el.value = this.wizardState.formData.managerId;
+                }
+            });
+            // Jump to the cached step
+            if (this.wizardState.currentStep > 1) {
+                this.switchWizardStep(this.wizardState.currentStep);
+            }
+            this.attachWizardAutoSave();
+        }, 100);
+    },
+
+    initDefaultWizardState() {
         this.wizardState = {
             currentStep: 1,
             isRoad: true,
-            roadEstimatePreview: null
+            roadEstimatePreview: null,
+            formData: {}
         };
-        window.drawer.open('Initialize New Project', window.DrawerTemplates.newProject);
-        this.initializeProjectMap();
-        this.fetchSupervisors();
-    },
+    },
+
+    saveWizardCache() {
+        // Collect current form data
+        const getVal = (id) => document.getElementById(id)?.value || '';
+        
+        this.wizardState.formData = {
+            name: getVal('proj_name'),
+            client: getVal('proj_client'),
+            budget: getVal('proj_budget'),
+            start: getVal('proj_start'),
+            end: getVal('proj_end'),
+            managerId: getVal('proj_supervisor'),
+            roadType: getVal('road_type'),
+            length: getVal('road_length'),
+            width: getVal('road_width'),
+            lanes: getVal('road_lanes'),
+            terrain: getVal('road_terrain'),
+            zone: getVal('road_zone'),
+            townDist: getVal('road_town_dist'),
+            lighting: getVal('acc_lighting'),
+            lat: document.getElementById('proj_lat')?.textContent,
+            lng: document.getElementById('proj_lng')?.textContent,
+            radius: document.getElementById('proj_radius_input')?.value
+        };
+
+        // Collect accessories
+        const accBoxes = document.querySelectorAll('input[name="road_acc"]:checked');
+        this.wizardState.formData.accessories = Array.from(accBoxes).map(cb => cb.value);
+
+        sessionStorage.setItem('mcms_new_project_cache', JSON.stringify(this.wizardState));
+    },
+
+    restoreWizardDOM() {
+        if (!this.wizardState.formData) return;
+        const data = this.wizardState.formData;
+        
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val !== undefined) el.value = val;
+        };
+
+        setVal('proj_name', data.name);
+        setVal('proj_client', data.client);
+        setVal('proj_budget', data.budget);
+        setVal('proj_start', data.start);
+        setVal('proj_end', data.end);
+        setVal('road_type', data.roadType);
+        setVal('road_length', data.length);
+        setVal('road_width', data.width);
+        setVal('road_lanes', data.lanes);
+        setVal('road_terrain', data.terrain);
+        setVal('road_zone', data.zone);
+        setVal('road_town_dist', data.townDist);
+        setVal('acc_lighting', data.lighting);
+
+        if (data.lat) document.getElementById('proj_lat').textContent = data.lat;
+        if (data.lng) document.getElementById('proj_lng').textContent = data.lng;
+        if (data.radius) {
+            const radInput = document.getElementById('proj_radius_input');
+            if (radInput) radInput.value = data.radius;
+        }
+
+        if (data.accessories) {
+            data.accessories.forEach(val => {
+                const cb = document.querySelector(`input[name="road_acc"][value="${val}"]`);
+                if (cb) cb.checked = true;
+            });
+        }
+    },
+
+    attachWizardAutoSave() {
+        const inputs = [
+            'proj_name', 'proj_client', 'proj_budget', 'proj_start', 'proj_end',
+            'proj_supervisor', 'road_type', 'road_length', 'road_width',
+            'road_lanes', 'road_terrain', 'road_zone', 'road_town_dist', 'acc_lighting'
+        ];
+        
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            
+            el.addEventListener('change', () => {
+                this.saveWizardCache();
+                if (id === 'proj_budget') this.checkBudgetReconciliation();
+            });
+        });
+
+        // Live formatter for budget
+        const budgetInput = document.getElementById('proj_budget');
+        if (budgetInput) {
+            budgetInput.addEventListener('input', () => {
+                const val = parseFloat(budgetInput.value);
+                const info = budgetInput.nextElementSibling;
+                if (info && !isNaN(val)) {
+                    info.innerHTML = `<i class="fas fa-info-circle"></i> ${this.formatMWK(val)} allocated budget.`;
+                    info.style.color = 'var(--emerald-dark)';
+                }
+                this.checkBudgetReconciliation();
+                this.saveWizardCache();
+            });
+        }
+
+        document.querySelectorAll('input[name="road_acc"]').forEach(cb => {
+            cb.addEventListener('change', () => this.saveWizardCache());
+        });
+
+        // Also save when radius changes
+        document.getElementById('proj_radius_input')?.addEventListener('input', (e) => {
+            this.updateMapRadius(e.target.value);
+            this.saveWizardCache();
+        });
+    },
+
+    clearWizardCache() {
+        sessionStorage.removeItem('mcms_new_project_cache');
+        this.initDefaultWizardState();
+    },
 
     openEditProjectDrawer(id) {
         if(!id) return;
@@ -64,7 +213,7 @@ export const PM_ProjectHandlers = {
                  if (radValEl) radValEl.innerText = radiusVal + 'm';
              }
          });
-    },
+    },
 
     async handleUpdateProject() {
         const id = document.getElementById('edit_proj_id').value;
@@ -97,7 +246,7 @@ export const PM_ProjectHandlers = {
         } catch (error) {
             window.toast.show(error.message, 'error');
         }
-    },
+    },
 
     openSuspendProjectDrawer(id) {
          window.drawer.open('Suspend Project', window.DrawerTemplates.suspendProject);
@@ -106,7 +255,7 @@ export const PM_ProjectHandlers = {
               document.getElementById('suspend_project_id').value = p.id;
               document.getElementById('suspend_project_name').value = p.name;
          });
-    },
+    },
 
     async handleSuspendProject() {
          const id = document.getElementById('suspend_project_id').value;
@@ -125,7 +274,7 @@ export const PM_ProjectHandlers = {
          } catch (error) {
              window.toast.show(error.message, 'error');
          }
-    },
+    },
 
     async handleDeleteProject(id) {
          const reason = prompt("Enter reason for deletion (This will be logged):");
@@ -138,7 +287,7 @@ export const PM_ProjectHandlers = {
          } catch (error) {
              window.toast.show(error.message, 'error');
          }
-    },
+    },
 
     openExtendProjectDrawer(id) {
         if (!id) return;
@@ -168,7 +317,7 @@ export const PM_ProjectHandlers = {
                 }
             }, 200);
         });
-    },
+    },
 
     async handlePhaseEditorSave() {
         if (!this.ganttPhaseEditorTasks) return;
@@ -212,7 +361,7 @@ export const PM_ProjectHandlers = {
                 btn.disabled = false;
             }
         }
-    },
+    },
 
     async handleSubmitExtensionRequest() {
         const projectIdStr = document.getElementById('ext-req-project-id')?.value;
@@ -265,7 +414,7 @@ export const PM_ProjectHandlers = {
                 btn.disabled = false;
             }
         }
-    },
+    },
 
     async handleExtendProject() {
         const projectId = document.getElementById('extend_project_id')?.value;

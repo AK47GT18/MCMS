@@ -179,19 +179,30 @@ async function create(data) {
   logger.info('Project created', { projectId: project.id, code: project.code });
 
   // ============================================
-  // AUTO-GENERATE GANTT TASKS (Road Works)
+  // AUTO-GENERATE GANTT TASKS (Road-type-aware)
   // ============================================
   if (data.startDate && data.endDate) {
     try {
       const tasksService = require('./tasks.service');
+      // Determine road type: use projectType mapping or default to RT-4
+      const roadTypeMap = {
+        'road_works': 'RT-4',
+        'civil_works': 'RT-2',
+        'bridge_construction': 'RT-4',
+        'building_works': 'RT-4',
+      };
+      const roadType = roadTypeMap[data.projectType] || 'RT-4';
+      
       const generatedTasks = await tasksService.generateDefaultTasks(
         project.id,
         data.startDate,
-        data.endDate
+        data.endDate,
+        roadType
       );
       logger.info('Auto-generated Gantt tasks for new project', {
         projectId: project.id,
         code: project.code,
+        roadType,
         tasksCreated: generatedTasks.length,
       });
     } catch (taskError) {

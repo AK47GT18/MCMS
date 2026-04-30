@@ -4,6 +4,45 @@ import users from '../../../src/api/users.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 
 export const PM_MissingHandlers = {
+    escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    },
+
+    updateCoords(lat, lng, containerId = 'project-map') {
+        const prefix = containerId === 'edit-project-map' ? 'edit_proj_' : 'proj_';
+        const latEl = document.getElementById(prefix + 'lat');
+        const lngEl = document.getElementById(prefix + 'lng');
+        if (latEl) latEl.textContent = lat.toFixed(6);
+        if (lngEl) lngEl.textContent = lng.toFixed(6);
+        if (prefix === 'proj_') {
+            this.saveWizardCache();
+        }
+    },
+
+    updateMapRadius(radius, containerId = 'project-map') {
+        const prefix = containerId === 'edit-project-map' ? 'edit_proj_' : 'proj_';
+        const valEl = document.getElementById(prefix + 'radius_val');
+        if (valEl) valEl.innerText = radius + 'm';
+        
+        if (this.geofenceCircle) {
+            this.geofenceCircle.setRadius(radius);
+        }
+        if (prefix === 'proj_') {
+            this.saveWizardCache();
+        }
+    },
+
+    getAnalyticsView() {
+        return `
+            <div class="data-card" style="padding: 40px; text-align: center;">
+                <i class="fas fa-chart-pie" style="font-size: 48px; color: var(--slate-300); margin-bottom: 16px;"></i>
+                <h3 style="font-size: 18px; font-weight: 700; color: var(--slate-700);">Analytics Module</h3>
+                <p style="color: var(--slate-500); margin-top: 8px;">Detailed analytics are currently being configured.</p>
+            </div>
+        `;
+    },
+
     updateBudgetSummary(transactions) {
         const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
         const el = document.getElementById('budget-total-spend');
@@ -282,18 +321,19 @@ export const PM_MissingHandlers = {
                 mapContainer.appendChild(geocoderStyle);
 
                 // Handle map click
+                // Handle map click
                 map.on('click', (e) => {
                     const { lat, lng } = e.latlng;
                     marker.setLatLng(e.latlng);
                     circle.setLatLng(e.latlng);
-                    this.updateCoords(lat, lng);
+                    this.updateCoords(lat, lng, containerId);
                 });
 
                 // Handle marker drag
                 marker.on('dragend', (e) => {
                     const { lat, lng } = marker.getLatLng();
                     circle.setLatLng(marker.getLatLng());
-                    this.updateCoords(lat, lng);
+                    this.updateCoords(lat, lng, containerId);
                 });
 
                 // Force layout recalculation after various delays to ensure visibility
@@ -389,6 +429,7 @@ export const PM_MissingHandlers = {
 
         if (newStep >= 1 && newStep <= 5) {
             this.switchWizardStep(newStep);
+            this.saveWizardCache(); // Persist step change
         }
     },
 
@@ -494,12 +535,34 @@ export const PM_MissingHandlers = {
             };
 
             this.renderBudgetReceipt();
+            this.saveWizardCache(); // Save preview data to cache
         } catch (error) {
             console.error('Estimation generation failed:', error);
             window.toast.show('Failed to run parametric estimation', 'error');
         } finally {
             document.getElementById('estimation-loader').style.display = 'none';
         }
+    },
+    
+    formatMWK(value) {
+        if (value === undefined || value === null || isNaN(value)) return 'MWK 0';
+        
+        const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        
+        if (value >= 1_000_000_000) {
+            return `MWK ${(value / 1_000_000_000).toFixed(2)}B`;
+        } else if (value >= 1_000_000) {
+            return `MWK ${(value / 1_000_000).toFixed(2)}M`;
+        } else if (value >= 1_000) {
+            return `MWK ${(value / 1_000).toFixed(1)}Th`;
+        } else {
+            return `MWK ${formatter.format(value)}`;
+        }
+    },
+
+    formatMWKFull(value) {
+        if (value === undefined || value === null || isNaN(value)) return 'MWK 0';
+        return 'MWK ' + new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
     },
 
     renderBudgetReceipt() {
@@ -576,11 +639,11 @@ export const PM_MissingHandlers = {
             <div style="background: var(--slate-900); padding: 16px; border-radius: 8px; color: white; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Approved Total (High End)</div>
-                    <div style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono';">MWK ${new Intl.NumberFormat().format(currentlyApprovedHigh)}</div>
+                    <div style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono';">${this.formatMWKFull(currentlyApprovedHigh)}</div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Cost per meter</div>
-                    <div style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">MWK ${new Intl.NumberFormat().format(est.costPerMeterHigh)}</div>
+                    <div style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">${this.formatMWKFull(est.costPerMeterHigh)}</div>
                 </div>
             </div>
         `;
@@ -602,30 +665,58 @@ export const PM_MissingHandlers = {
         const currentEst = this.wizardState.currentlyApprovedHigh || 0;
         const gap = currentEst - allocatedBudget;
         
+        const banner = document.getElementById('budget_recon_banner');
+        const icon = document.getElementById('budget_recon_icon');
+        const title = document.getElementById('budget_recon_title');
+        const hint = document.getElementById('budget_recon_hint');
         const indicator = document.getElementById('budget_gap_indicator');
         const nextBtn = document.getElementById('wizard-next');
-        const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-        if (indicator) {
-            if (gap > 0) {
-                indicator.textContent = `MWK ${formatter.format(gap)} OVER BUDGET`;
-                indicator.style.color = 'var(--red-dark)';
-                indicator.style.background = 'white';
-                indicator.style.padding = '2px 8px';
-                indicator.style.borderRadius = '4px';
-                indicator.style.fontWeight = '700';
-                indicator.style.fontSize = '12px';
-                if(nextBtn) nextBtn.disabled = true;
-            } else {
-                indicator.textContent = `WITHIN BUDGET (MWK ${formatter.format(Math.abs(gap))} buffer)`;
-                indicator.style.color = 'var(--emerald)';
-                indicator.style.background = 'white';
-                indicator.style.padding = '2px 8px';
-                indicator.style.borderRadius = '4px';
-                indicator.style.fontWeight = '700';
-                indicator.style.fontSize = '12px';
-                if(nextBtn) nextBtn.disabled = false;
+        if (gap > 0) {
+            // OVER BUDGET - Red styling
+            if (banner) {
+                banner.style.background = 'var(--red-light)';
+                banner.style.borderColor = 'var(--red-hover)';
             }
+            if (icon) icon.style.color = 'var(--red)';
+            if (title) title.style.color = 'var(--red-dark)';
+            if (hint) {
+                hint.textContent = 'Toggle items off if the estimate exceeds your allocated budget.';
+                hint.style.color = 'var(--red)';
+            }
+            if (indicator) {
+                indicator.textContent = `${this.formatMWK(gap)} OVER BUDGET`;
+                indicator.style.color = 'white';
+                indicator.style.background = 'var(--red)';
+                indicator.style.padding = '2px 8px';
+                indicator.style.borderRadius = '4px';
+                indicator.style.fontWeight = '700';
+            }
+            if (nextBtn) nextBtn.disabled = true;
+        } else {
+            // WITHIN BUDGET - Green styling
+            if (banner) {
+                banner.style.background = 'var(--emerald-light)';
+                banner.style.borderColor = 'var(--emerald-hover)';
+            }
+            if (icon) {
+                icon.className = 'fas fa-check-circle';
+                icon.style.color = 'var(--emerald)';
+            }
+            if (title) title.style.color = 'var(--emerald-dark)';
+            if (hint) {
+                hint.textContent = 'The current estimate is optimized within your allocated project budget.';
+                hint.style.color = 'var(--emerald-dark)';
+            }
+            if (indicator) {
+                indicator.textContent = `WITHIN BUDGET (${this.formatMWK(Math.abs(gap))} buffer)`;
+                indicator.style.color = 'white';
+                indicator.style.background = 'var(--emerald)';
+                indicator.style.padding = '2px 8px';
+                indicator.style.borderRadius = '4px';
+                indicator.style.fontWeight = '700';
+            }
+            if (nextBtn) nextBtn.disabled = false;
         }
     },
 
@@ -718,6 +809,7 @@ export const PM_MissingHandlers = {
             }
 
             window.toast.show('Project initialized successfully', 'success');
+            this.clearWizardCache(); // Clear cache on success
             window.drawer.close();
             this.loadProjectsFromAPI(); // Refresh the list
             

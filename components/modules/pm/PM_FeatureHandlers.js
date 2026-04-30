@@ -38,7 +38,7 @@ export const PM_FeatureHandlers = {
             console.error('Issue submission error:', error);
             window.toast.show('Failed to submit issue: ' + error.message, 'error');
         }
-    },
+    },
 
     async handleAddTask() {
         try {
@@ -69,7 +69,7 @@ export const PM_FeatureHandlers = {
             console.error('Task creation error:', error);
             window.toast.show('Failed to create task: ' + error.message, 'error');
         }
-    },
+    },
 
     async handleResolveIssue(id) {
         try {
@@ -95,7 +95,7 @@ export const PM_FeatureHandlers = {
             console.error('Issue resolution error:', error);
             window.toast.show('Failed to update issue: ' + error.message, 'error');
         }
-    },
+    },
 
     initIssueResolutionForm(issue) {
         setTimeout(() => {
@@ -104,7 +104,7 @@ export const PM_FeatureHandlers = {
             const statusEl = document.getElementById('resolution-status');
             if (statusEl && issue.status) statusEl.value = issue.status === 'open' ? 'in_progress' : issue.status;
         }, 100);
-    },
+    },
 
     async handleAddVehicle() {
         try {
@@ -126,7 +126,7 @@ export const PM_FeatureHandlers = {
             console.error('Asset registration error:', error);
             window.toast.show('Failed to register asset: ' + error.message, 'error');
         }
-    },
+    },
 
     async handleReviewVehicle(id, action) {
         try {
@@ -139,7 +139,7 @@ export const PM_FeatureHandlers = {
             console.error('Vehicle review error:', error);
             window.toast.show('Failed to process vehicle request', 'error');
         }
-    },
+    },
 
     async handleCompleteMaintenance(assetId) {
         try {
@@ -166,7 +166,7 @@ export const PM_FeatureHandlers = {
             console.error('Maintenance log error:', error);
             window.toast.show('Failed to log maintenance', 'error');
         }
-    },
+    },
 
     async handleTransactionSubmit() {
         try {
@@ -196,7 +196,7 @@ export const PM_FeatureHandlers = {
             console.error('Transaction error:', error);
             window.toast.show('Failed to process transaction: ' + error.message, 'error');
         }
-    },
+    },
 
     async handleRequestFunds() {
         try {
@@ -223,7 +223,7 @@ export const PM_FeatureHandlers = {
             console.error('Fund request error:', error);
             window.toast.show('Failed to request funds', 'error');
         }
-    },
+    },
 
     async handleContractUpload() {
         try {
@@ -245,7 +245,7 @@ export const PM_FeatureHandlers = {
             console.error('Contract upload error:', error);
             window.toast.show('Failed to upload contract', 'error');
         }
-    },
+    },
 
     async handleDailyLogSubmit(payloadOverride = null) {
         try {
@@ -303,7 +303,7 @@ export const PM_FeatureHandlers = {
             errorMsg = errorMsg.replace('ValidationError: ', '').replace('AppError: ', '');
             window.toast.show(errorMsg, 'error');
         }
-    },
+    },
 
     validateProjectForm() {
         const name = document.getElementById('proj_name')?.value;
@@ -317,13 +317,24 @@ export const PM_FeatureHandlers = {
             return false;
         }
 
+        const today = new Date().toISOString().split('T')[0];
+        if (start < today) {
+            window.toast.show('Project start date cannot be in the past', 'warning');
+            return false;
+        }
+
+        if (end < start) {
+            window.toast.show('End date cannot be before start date', 'warning');
+            return false;
+        }
+
         if (parseFloat(budget) <= 0) {
             window.toast.show('Allocated budget must be greater than zero', 'warning');
             return false;
         }
 
         return true;
-    },
+    },
 
     updateItemQuantity(type, index, value) {
         const est = this.wizardState.roadEstimatePreview;
@@ -346,7 +357,7 @@ export const PM_FeatureHandlers = {
         
         // Re-render the receipt to show new totals
         this.renderEstimatedReceipt();
-    },
+    },
 
     updateItemCost(type, index, value) {
         const est = this.wizardState.roadEstimatePreview;
@@ -357,7 +368,7 @@ export const PM_FeatureHandlers = {
         
         // Re-render to update the grand total and gap
         this.renderEstimatedReceipt();
-    },
+    },
 
     renderEstimatedReceipt() {
         this.generateEstimatedReceipt(); 

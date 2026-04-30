@@ -18,7 +18,7 @@ const calculate = asyncHandler(async (req, res) => {
   const data = validateBody(body, roadEstimationInputSchema, res);
   if (!data) return;
   
-  const result = estimationService.calculateEstimate(data);
+  const result = await estimationService.calculateEstimate(data);
   response.success(res, result);
 });
 
@@ -51,7 +51,7 @@ const save = asyncHandler(async (req, res) => {
   }
 
   // Recalculate cleanly from server-side constants, but allow manual overrides if provided
-  let estimateData = estimationService.calculateEstimate(data);
+  let estimateData = await estimationService.calculateEstimate(data);
   
   if (body.layers && Array.isArray(body.layers)) {
     estimateData.layers = body.layers;

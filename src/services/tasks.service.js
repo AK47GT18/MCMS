@@ -205,38 +205,76 @@ async function calculateProjectProgress(projectId) {
 }
 
 /**
- * Auto-generate default construction phase tasks for a new road works project.
+ * Phase definitions for each road type (RT-1 → RT-5)
+ * Maps phase keys to human-readable names with timeline percentage weights
+ */
+const ROAD_PHASE_TEMPLATES = {
+  'RT-1': [ // Earth Road — 2 phases
+    { phaseKey: 1, name: 'Clearing & Grubbing', pct: 0.40 },
+    { phaseKey: 2, name: 'Earthworks / Subgrade', pct: 0.60 },
+  ],
+  'RT-2': [ // Gravel Road — 4 phases
+    { phaseKey: 1, name: 'Clearing & Grubbing', pct: 0.15 },
+    { phaseKey: 2, name: 'Earthworks / Subgrade', pct: 0.25 },
+    { phaseKey: 3, name: 'Sub-base (Gravel Layer)', pct: 0.35 },
+    { phaseKey: 6, name: 'Drainage', pct: 0.25 },
+  ],
+  'RT-3': [ // Surface Dressed — 7 phases
+    { phaseKey: 1, name: 'Clearing & Grubbing', pct: 0.08 },
+    { phaseKey: 2, name: 'Earthworks / Subgrade', pct: 0.15 },
+    { phaseKey: 3, name: 'Sub-base Construction', pct: 0.12 },
+    { phaseKey: 4, name: 'Base Course Construction', pct: 0.15 },
+    { phaseKey: 5, name: 'Surface Dressing (Chip Seal)', pct: 0.18 },
+    { phaseKey: 6, name: 'Drainage', pct: 0.15 },
+    { phaseKey: 7, name: 'Road Furniture & Accessories', pct: 0.17 },
+  ],
+  'RT-4': [ // Asphalt — 7 phases
+    { phaseKey: 1, name: 'Clearing & Grubbing', pct: 0.06 },
+    { phaseKey: 2, name: 'Earthworks / Subgrade', pct: 0.14 },
+    { phaseKey: 3, name: 'Sub-base Construction', pct: 0.12 },
+    { phaseKey: 4, name: 'Base Course Construction', pct: 0.14 },
+    { phaseKey: 5, name: 'Asphalt Surfacing', pct: 0.20 },
+    { phaseKey: 6, name: 'Drainage', pct: 0.14 },
+    { phaseKey: 7, name: 'Road Furniture & Accessories', pct: 0.20 },
+  ],
+  'RT-5': [ // Concrete — 7 phases
+    { phaseKey: 1, name: 'Clearing & Grubbing', pct: 0.06 },
+    { phaseKey: 2, name: 'Earthworks / Subgrade', pct: 0.12 },
+    { phaseKey: 3, name: 'Sub-base Construction', pct: 0.12 },
+    { phaseKey: 4, name: 'Base Course Construction', pct: 0.12 },
+    { phaseKey: 5, name: 'Concrete Surfacing', pct: 0.24 },
+    { phaseKey: 6, name: 'Drainage', pct: 0.14 },
+    { phaseKey: 7, name: 'Road Furniture & Accessories', pct: 0.20 },
+  ],
+};
+
+// Default fallback if no road type specified (same as RT-4)
+const DEFAULT_PHASES = ROAD_PHASE_TEMPLATES['RT-4'];
+
+/**
+ * Auto-generate construction phase tasks for a new project.
  * Tasks are proportionally spaced across the project timeline with dependency chains.
+ * Now road-type-aware: different road types get different phases.
  * 
  * @param {number} projectId - The newly created project ID
  * @param {Date|string} projectStart - Project start date
  * @param {Date|string} projectEnd - Project end date
+ * @param {string} roadType - Road type (RT-1 to RT-5), defaults to RT-4
  * @returns {Promise<Array>} Created tasks
  */
-async function generateDefaultTasks(projectId, projectStart, projectEnd) {
+async function generateDefaultTasks(projectId, projectStart, projectEnd, roadType) {
   const start = new Date(projectStart);
   const end = new Date(projectEnd);
   const totalDays = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
 
-  // Road Works construction phases with percentage of total timeline
-  // Phases are ordered sequentially; each depends on the previous one
-  const ROAD_PHASES = [
-    { name: 'Site Clearance & Survey',          pct: 0.08, status: 'planned' },
-    { name: 'Earthworks & Grading',             pct: 0.15, status: 'planned' },
-    { name: 'Sub-base Layer Construction',       pct: 0.12, status: 'planned' },
-    { name: 'Base Course Construction',          pct: 0.12, status: 'planned' },
-    { name: 'Drainage & Culvert Installation',   pct: 0.10, status: 'planned' },
-    { name: 'Surface / Binder Course',           pct: 0.15, status: 'planned' },
-    { name: 'Wearing Course & Surfacing',        pct: 0.12, status: 'planned' },
-    { name: 'Road Furniture & Markings',         pct: 0.08, status: 'planned' },
-    { name: 'Defects Liability & Handover',      pct: 0.08, status: 'planned' },
-  ];
+  // Select phase template based on road type
+  const phases = ROAD_PHASE_TEMPLATES[roadType] || DEFAULT_PHASES;
 
   const createdTasks = [];
   let cursor = new Date(start);
 
-  for (let i = 0; i < ROAD_PHASES.length; i++) {
-    const phase = ROAD_PHASES[i];
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
     const durationDays = Math.max(1, Math.round(totalDays * phase.pct));
 
     const taskStart = new Date(cursor);
@@ -252,7 +290,8 @@ async function generateDefaultTasks(projectId, projectStart, projectEnd) {
       startDate: taskStart,
       endDate: taskEnd,
       progress: 0,
-      statusClass: phase.status,
+      statusClass: 'planned',
+      phaseNumber: phase.phaseKey,
       // Link to previous task as dependency (sequential chain)
       dependencyId: createdTasks.length > 0 ? createdTasks[createdTasks.length - 1].id : null,
     };
@@ -264,15 +303,43 @@ async function generateDefaultTasks(projectId, projectStart, projectEnd) {
     cursor = new Date(taskEnd);
   }
 
-  logger.info('Default road tasks generated', {
+  logger.info('Road tasks generated', {
     projectId,
+    roadType: roadType || 'RT-4 (default)',
     taskCount: createdTasks.length,
     totalDays,
-    firstTask: createdTasks[0]?.name,
-    lastTask: createdTasks[createdTasks.length - 1]?.name,
+    phases: phases.map(p => p.name),
   });
 
   return createdTasks;
 }
 
-module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress, cascadeShift, cascadeExtension, calculateProjectProgress, generateDefaultTasks };
+/**
+ * Regenerate Gantt tasks from a saved Road Specification.
+ * Deletes existing auto-generated tasks and creates new ones matching the spec's active phases.
+ * Called after saveEstimate() to keep Gantt in sync with Road Spec.
+ * 
+ * @param {number} projectId
+ * @param {Date} projectStart
+ * @param {Date} projectEnd
+ * @param {number[]} activePhaseKeys - Active phase keys from the Road Spec (e.g., [1, 2, 3, 4, 5.2, 6, 7])
+ */
+async function regenerateFromRoadSpec(projectId, projectStart, projectEnd, activePhaseKeys) {
+  // Delete existing tasks for this project (they'll be regenerated)
+  await prisma.task.deleteMany({ where: { projectId } });
+
+  // Determine road type from active phases
+  let roadType = 'RT-4'; // default
+  for (const [rt, def] of Object.entries(ROAD_PHASE_TEMPLATES)) {
+    const templateKeys = def.map(p => p.phaseKey);
+    // Check if the active phase count matches a known template
+    if (templateKeys.length === activePhaseKeys.map(k => Math.floor(k)).filter((v, i, a) => a.indexOf(v) === i).length) {
+      roadType = rt;
+      break;
+    }
+  }
+
+  return generateDefaultTasks(projectId, projectStart, projectEnd, roadType);
+}
+
+module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress, cascadeShift, cascadeExtension, calculateProjectProgress, generateDefaultTasks, regenerateFromRoadSpec };

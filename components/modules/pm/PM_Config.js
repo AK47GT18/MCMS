@@ -30,7 +30,8 @@ export const PM_Config = {
         if (!container) return;
 
         try {
-            const configs = await client.get('/pm/material-prices');
+            const response = await client.get('/pm/material-prices');
+            const configs = Array.isArray(response) ? response : (response.data || []);
             
             if (!configs || configs.length === 0) {
                 container.innerHTML = `
@@ -87,7 +88,8 @@ export const PM_Config = {
 
     async openEditPriceDrawer(id) {
         try {
-            const configs = await client.get('/pm/material-prices');
+            const response = await client.get('/pm/material-prices');
+            const configs = Array.isArray(response) ? response : (response.data || []);
             const config = configs.find(c => c.id == id);
             if (config) {
                 window.drawer.open('Edit Material Price', window.DrawerTemplates.materialPriceForm(config));

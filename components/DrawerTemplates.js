@@ -555,7 +555,7 @@ export const DrawerTemplates = {
                             ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Today'}
                         </div>
                     </div>
-                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.app.fmModule?.viewDocument('${contract.documentUrl}')">
+                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.viewDocument('${contract.documentUrl}', '${contract.fileName || 'Contract.pdf'}')">
                         <i class="fas fa-external-link-alt"></i>
                     </button>
                 </div>
@@ -576,8 +576,8 @@ export const DrawerTemplates = {
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
-                                    <button class="btn btn-icon-sm" title="View" onclick="window.app.fmModule?.viewDocument('${v.documentUrl}')"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-icon-sm" title="Download" onclick="window.app.fmModule?.downloadDocument('${v.documentUrl}', '${v.fileName}')"><i class="fas fa-download"></i></button>
+                                    <button class="btn btn-icon-sm" title="View" onclick="window.viewDocument('${v.documentUrl}', '${v.fileName || 'Contract_V' + v.versionNumber + '.pdf'}')"><i class="fas fa-eye"></i></button>
+                                    <button class="btn btn-icon-sm" title="Download" onclick="window.downloadDocument('${v.documentUrl}', '${v.fileName || 'Contract_V' + v.versionNumber + '.pdf'}')"><i class="fas fa-download"></i></button>
                                 </div>
                             </div>
                         `).reverse().join('') : `
@@ -597,7 +597,7 @@ export const DrawerTemplates = {
 
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
-                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.downloadDocument('${contract.documentUrl}', '${contract.fileName}')">
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.downloadDocument('${contract.documentUrl}', '${contract.fileName || 'Contract_Latest.pdf'}')">
                         <i class="fas fa-download" style="margin-right: 8px;"></i> Download Latest PDF
                     </button>
                 </div>
@@ -934,14 +934,14 @@ export const DrawerTemplates = {
 
             <!-- STEP 4: Budget Lock Receipt -->
             <div id="wizard-pane-4" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
-                <div style="background: var(--red-light); padding: 12px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
-                    <i class="fas fa-lock" style="color: var(--red); font-size: 20px;"></i>
+                <div id="budget_recon_banner" style="background: var(--red-light); padding: 12px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                    <i id="budget_recon_icon" class="fas fa-lock" style="color: var(--red); font-size: 20px;"></i>
                     <div style="flex:1;">
-                        <div style="font-weight: 700; color: var(--red-dark); font-size: 14px; display:flex; justify-content:space-between;">
+                        <div id="budget_recon_title" style="font-weight: 700; color: var(--red-dark); font-size: 14px; display:flex; justify-content:space-between;">
                             <span>Budget Reconciliation</span>
                             <span id="budget_gap_indicator">MWK 0.00 Gap</span>
                         </div>
-                        <div style="font-size: 11px; color: var(--red);">Toggle items off if the estimate exceeds your allocated budget.</div>
+                        <div id="budget_recon_hint" style="font-size: 11px; color: var(--red);">Toggle items off if the estimate exceeds your allocated budget.</div>
                     </div>
                 </div>
 
@@ -1587,8 +1587,8 @@ export const DrawerTemplates = {
                             <td style="padding: 12px 8px; color: var(--slate-600); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.changeNotes || '-'}</td>
                             <td style="padding: 12px 8px;">
                                 <div style="display:flex; gap:4px;">
-                                    <a href="${v.fileUrl}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" title="View in Browser"><i class="fas fa-eye"></i> View</a>
-                                    <a href="${v.fileUrl}" download target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" title="Download File"><i class="fas fa-download"></i></a>
+                                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.viewDocument('${v.fileUrl}', '${document.title}_V${v.versionNumber}')" title="View in Professional Viewer"><i class="fas fa-eye"></i> View</button>
+                                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.downloadDocument('${v.fileUrl}', '${document.title}_V${v.versionNumber}')" title="Download File"><i class="fas fa-download"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -1663,8 +1663,8 @@ export const DrawerTemplates = {
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
-                                    <button class="btn btn-icon-sm" title="View" onclick="window.open('${v.fileUrl || v.documentUrl}', '_blank')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-eye"></i> View</button>
-                                    <button class="btn btn-icon-sm" title="Download" onclick="window.open('${v.fileUrl || v.documentUrl}', '_blank')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-download"></i></button>
+                                    <button class="btn btn-icon-sm" title="View" onclick="window.viewDocument('${v.fileUrl || v.documentUrl}', '${DrawerTemplates.escapeHTML(v.fileName || 'Contract_Revision.pdf')}')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-eye"></i> View</button>
+                                    <button class="btn btn-icon-sm" title="Download" onclick="window.downloadDocument('${v.fileUrl || v.documentUrl}', '${DrawerTemplates.escapeHTML(v.fileName || 'Contract_Revision.pdf')}')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-download"></i></button>
                                 </div>
                             </div>
                         `).reverse().join('') : `
@@ -1712,7 +1712,7 @@ export const DrawerTemplates = {
 
             <!-- Footer Actions -->
             <div style="padding: 20px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
-                <button class="btn btn-secondary" style="padding: 12px 20px;" onclick="window.toast.show('Preparing document for download...', 'info')" ${!contract.fileUrl ? 'disabled' : ''}>
+                <button class="btn btn-secondary" style="padding: 12px 20px;" onclick="window.downloadDocument('${contract.fileUrl}', '${DrawerTemplates.escapeHTML(contract.fileName || 'Contract_Latest.pdf')}')" ${!contract.fileUrl ? 'disabled' : ''}>
                     <i class="fas fa-download"></i> Download PDF
                 </button>
                 <div style="flex: 1;"></div>

@@ -41,8 +41,8 @@ export const CA_Documents = {
                                         <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openVersionDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})">Update</button>
                                         <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openEditDocumentDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})">Edit</button>
                                         <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.app.caModule.openVersionHistoryDrawer(${JSON.stringify(doc).replace(/"/g, '&quot;')})" title="View Version History"><i class="fas fa-history"></i></button>
-                                        <a href="${doc.currentVersionUrl}" target="_blank" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" title="View Latest in Browser"><i class="fas fa-eye"></i></a>
-                                        <a href="${doc.currentVersionUrl}" download target="_blank" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" title="Download Latest"><i class="fas fa-download"></i></a>
+                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.viewDocument('${doc.currentVersionUrl}', '${doc.title}')" title="View Latest in Professional Viewer"><i class="fas fa-eye"></i></button>
+                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.downloadDocument('${doc.currentVersionUrl}', '${doc.title}')" title="Download Latest"><i class="fas fa-download"></i></button>
                                     </div>
                                 </td>
                             </tr>

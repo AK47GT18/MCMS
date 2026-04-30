@@ -172,11 +172,12 @@ export const PM_Reviews = {
     },
 
     renderReviewHistoryTable() {
-        if (!this.reviewHistory || this.reviewHistory.length === 0) {
+        const history = Array.isArray(this.reviewHistory) ? this.reviewHistory : [];
+        if (history.length === 0) {
             return this.renderEmptyState('No recent approval history found.');
         }
 
-        const rows = this.reviewHistory.map(item => `
+        const rows = history.map(item => `
             <tr>
                 <td>${new Date(item.timestamp).toLocaleString()}</td>
                 <td style="font-weight: 600;">${item.action}</td>

@@ -1,6 +1,9 @@
 /**
  * MCMS Service - Road Estimation Engine
  * Based on Malawi 2025 RCMS Master Reference
+ * 
+ * UNIFIED: Pulls prices from MaterialPriceConfig DB table.
+ * Phases and materials are correct per RT-1 through RT-5.
  */
 
 const { prisma } = require('../config/database');
@@ -13,11 +16,24 @@ const emailService = require('../emails/email.service');
 // ==========================================
 
 const ROAD_TYPES = {
-  'RT-1': { name: 'Earth', defaultWidth: 4.0, designLife: '2-5 yrs', activePhases: [1, 2, 5, 8] },
-  'RT-2': { name: 'Gravel', defaultWidth: 5.5, designLife: '5-10 yrs', activePhases: [1, 2, 3, 4, 5, 8] },
-  'RT-3': { name: 'Surface Dressed', defaultWidth: 6.5, designLife: '10-15 yrs', activePhases: [1, 2, 3, 4, 5, 6, 7.1, 8, 9] },
-  'RT-4': { name: 'Asphalt', defaultWidth: 7.0, designLife: '15-20 yrs', activePhases: [1, 2, 3, 4, 5, 6, 7.2, 8, 9] },
-  'RT-5': { name: 'Concrete', defaultWidth: 7.0, designLife: '30-50 yrs', activePhases: [1, 2, 3, 4, 5, 7.3, 8, 9] }
+  'RT-1': { name: 'Earth', defaultWidth: 4.0, designLife: '2-5 yrs', activePhases: [1, 2], costMultiplier: 1 },
+  'RT-2': { name: 'Gravel', defaultWidth: 5.5, designLife: '5-10 yrs', activePhases: [1, 2, 3, 5], costMultiplier: 2 },
+  'RT-3': { name: 'Surface Dressed', defaultWidth: 6.5, designLife: '10-15 yrs', activePhases: [1, 2, 3, 4, 5.1, 6, 7], costMultiplier: 4 },
+  'RT-4': { name: 'Asphalt', defaultWidth: 7.0, designLife: '15-20 yrs', activePhases: [1, 2, 3, 4, 5.2, 6, 7], costMultiplier: 8 },
+  'RT-5': { name: 'Concrete', defaultWidth: 7.0, designLife: '30-50 yrs', activePhases: [1, 2, 3, 4, 5.3, 6, 7], costMultiplier: 14 }
+};
+
+const PHASE_NAMES = {
+  1: 'Clearing & Grubbing',
+  2: 'Earthworks / Subgrade',
+  3: 'Sub-base Construction',
+  4: 'Base Course Construction',
+  5: 'Surfacing',
+  5.1: 'Surface Dressing (Chip Seal)',
+  5.2: 'Asphalt Surfacing',
+  5.3: 'Concrete Surfacing',
+  6: 'Drainage',
+  7: 'Road Furniture & Accessories'
 };
 
 const MULTIPLIERS = {
@@ -40,101 +56,163 @@ const MULTIPLIERS = {
   }
 };
 
-// Pricing lists (per KM based on standard 7m width)
+// ==========================================
+// PHASE → MATERIAL MAPPING (Malawi 2025 Correct)
+// Each material has: name, unit, qtyPerKm (for 7m width baseline), fallbackCostLow, fallbackCostHigh
+// If a matching MaterialPriceConfig entry exists in DB, its basePrice overrides fallbackCostHigh
+// ==========================================
+
 const LAYER_PRICING = {
-  1: [ // Phase 1: Site Clearance
-    { name: 'Survey pegs & paint', unit: 'Set', qtyPerKm: 2, costLow: 5000, costHigh: 15000 },
-    { name: 'Chainsaw fuel', unit: 'Litres', qtyPerKm: 60, costLow: 4500, costHigh: 6000 },
-    { name: 'GPS/total station hire', unit: 'Days', qtyPerKm: 4, costLow: 150000, costHigh: 400000 },
+  1: [ // Phase 1: Clearing & Grubbing
+    { name: 'Survey Pegs & Paint', unit: 'Set', qtyPerKm: 2, costLow: 5000, costHigh: 15000 },
+    { name: 'Chainsaw Fuel', unit: 'Litres', qtyPerKm: 60, costLow: 4500, costHigh: 6687 },
+    { name: 'GPS/Total Station Hire', unit: 'Days', qtyPerKm: 4, costLow: 150000, costHigh: 400000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 800, costLow: 5000, costHigh: 6687 },
   ],
-  2: [ // Phase 2: Earthworks
-    { name: 'Borrow fill (laterite)', unit: 'm³', qtyPerKm: 2100, costLow: 3000, costHigh: 8000 },
-    { name: 'Geotextile fabric 200g/m²', unit: 'm²', qtyPerKm: 7000, costLow: 800, costHigh: 1800 },
+  2: [ // Phase 2: Earthworks / Subgrade
+    { name: 'Borrow Fill (laterite)', unit: 'm³', qtyPerKm: 2100, costLow: 3000, costHigh: 8000 },
+    { name: 'Geotextile Fabric', unit: 'Roll (50m²)', qtyPerKm: 30, costLow: 12000, costHigh: 22000 },
+    { name: 'Lime (stabiliser)', unit: 'Tonne', qtyPerKm: 15, costLow: 60000, costHigh: 95000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 2500, costLow: 5000, costHigh: 6687 },
   ],
   3: [ // Phase 3: Sub-base
-    { name: 'Crushed stone G6 (300mm)', unit: 'm³', qtyPerKm: 2100, costLow: 100000, costHigh: 180000 },
-    { name: 'Water for compaction', unit: 'm³', qtyPerKm: 175, costLow: 5000, costHigh: 15000 },
+    { name: 'Gravel/Crushed Stone', unit: 'Tonne', qtyPerKm: 1800, costLow: 10000, costHigh: 18000 },
+    { name: 'Water for Compaction', unit: 'm³', qtyPerKm: 175, costLow: 5000, costHigh: 15000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 600, costLow: 5000, costHigh: 6687 },
   ],
   4: [ // Phase 4: Base Course
-    { name: 'Crushed stone G4/G5 (200mm)', unit: 'm³', qtyPerKm: 1400, costLow: 150000, costHigh: 300000 },
-    { name: 'OPC cement (stabilised)', unit: '50kg bag', qtyPerKm: 500, costLow: 50000, costHigh: 75000 },
+    { name: 'Aggregate Base', unit: 'Tonne', qtyPerKm: 2100, costLow: 20000, costHigh: 35000 },
+    { name: 'Crushed Stone', unit: 'Tonne', qtyPerKm: 500, costLow: 25000, costHigh: 45000 },
+    { name: 'OPC Cement (stabilised base)', unit: '50kg bag', qtyPerKm: 500, costLow: 50000, costHigh: 75000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 700, costLow: 5000, costHigh: 6687 },
   ],
-  5: [ // Phase 5: Drainage
-    { name: 'Concrete lined U-drain 300mm', unit: 'm', qtyPerKm: 2000, costLow: 25000, costHigh: 60000 },
-    { name: 'HDPE culvert 450mm', unit: 'm', qtyPerKm: 30, costLow: 60000, costHigh: 120000 },
-    { name: 'Precast RC culvert 600mm', unit: 'm', qtyPerKm: 15, costLow: 90000, costHigh: 180000 },
-    { name: 'Headwall & wingwall concrete', unit: 'Each', qtyPerKm: 6, costLow: 400000, costHigh: 900000 },
+  5.1: [ // Phase 5A: Surface Dressing (Chip Seal) — RT-3
+    { name: 'Bitumen 60/70', unit: 'Tonne', qtyPerKm: 14, costLow: 550000, costHigh: 820000 },
+    { name: 'Aggregate Chippings 10/14mm', unit: 'm³', qtyPerKm: 88, costLow: 140000, costHigh: 250000 },
+    { name: 'Aggregate Chippings 6/10mm', unit: 'm³', qtyPerKm: 56, costLow: 150000, costHigh: 260000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 800, costLow: 5000, costHigh: 6687 },
   ],
-  6: [ // Phase 6: Prime/Tack
-    { name: 'Bitumen emulsion SS-1 (prime)', unit: 'Litres', qtyPerKm: 8400, costLow: 2800, costHigh: 5000 },
-    { name: 'Tack coat CSS-1', unit: 'Litres', qtyPerKm: 2800, costLow: 2800, costHigh: 5000 },
+  5.2: [ // Phase 5B: Asphalt Surfacing — RT-4
+    { name: 'Bitumen 60/70', unit: 'Tonne', qtyPerKm: 55, costLow: 550000, costHigh: 820000 },
+    { name: 'Emulsion Primer', unit: 'Drum (200L)', qtyPerKm: 18, costLow: 60000, costHigh: 95000 },
+    { name: 'Tack Coat (SS-1)', unit: 'Drum (200L)', qtyPerKm: 10, costLow: 55000, costHigh: 85000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 1200, costLow: 5000, costHigh: 6687 },
   ],
-  7.1: [ // Phase 7A: Chip Seal
-    { name: 'Bitumen 60/70', unit: 'Litres', qtyPerKm: 9800, costLow: 3200, costHigh: 5500 },
-    { name: 'Aggregate chippings 10/14mm', unit: 'm³', qtyPerKm: 88, costLow: 140000, costHigh: 250000 },
-    { name: 'Aggregate chippings 6/10mm', unit: 'm³', qtyPerKm: 56, costLow: 150000, costHigh: 260000 },
+  5.3: [ // Phase 5C: Concrete Surfacing — RT-5
+    { name: 'Ready-mix Concrete C30', unit: 'm³', qtyPerKm: 1575, costLow: 500000, costHigh: 850000 },
+    { name: 'Steel Mesh Fabric A252', unit: 'm²', qtyPerKm: 7000, costLow: 8000, costHigh: 16000 },
+    { name: 'Steel Reinforcement Y16', unit: 'kg', qtyPerKm: 35000, costLow: 1800, costHigh: 3000 },
+    { name: 'Joint Sealant Polyurethane', unit: 'm', qtyPerKm: 1750, costLow: 12000, costHigh: 25000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 900, costLow: 5000, costHigh: 6687 },
   ],
-  7.2: [ // Phase 7B: Asphalt
-    { name: 'Hotmix asphalt wearing AC14 (50mm)', unit: 'Tonnes', qtyPerKm: 808, costLow: 450000, costHigh: 850000 },
-    { name: 'Hotmix asphalt binder AC20 (70mm)', unit: 'Tonnes', qtyPerKm: 1131, costLow: 380000, costHigh: 700000 },
-    { name: 'Bitumen 60/70 (binder)', unit: 'Tonnes', qtyPerKm: 97, costLow: 7000000, costHigh: 14000000 },
+  6: [ // Phase 6: Drainage
+    { name: 'Cement OPC', unit: 'Bag (50kg)', qtyPerKm: 120, costLow: 12000, costHigh: 18500 },
+    { name: 'River Sand', unit: 'Tonne', qtyPerKm: 20, costLow: 15000, costHigh: 25000 },
+    { name: 'Reinforcement Steel (12mm)', unit: 'Length (12m)', qtyPerKm: 60, costLow: 14000, costHigh: 22000 },
+    { name: 'PVC Culvert Pipes', unit: 'Length (6m)', qtyPerKm: 24, costLow: 20000, costHigh: 35000 },
+    { name: 'Concrete Pipes', unit: 'Piece', qtyPerKm: 12, costLow: 28000, costHigh: 45000 },
+    { name: 'Headwall & Wingwall Concrete', unit: 'Each', qtyPerKm: 6, costLow: 400000, costHigh: 900000 },
+    { name: 'Diesel Fuel', unit: 'Litre', qtyPerKm: 300, costLow: 5000, costHigh: 6687 },
   ],
-  7.3: [ // Phase 7C: Concrete
-    { name: 'Ready-mix concrete C30', unit: 'm³', qtyPerKm: 1575, costLow: 500000, costHigh: 850000 },
-    { name: 'Steel mesh fabric A252', unit: 'm²', qtyPerKm: 7000, costLow: 8000, costHigh: 16000 },
-    { name: 'Steel reinforcement Y16', unit: 'kg', qtyPerKm: 35000, costLow: 1800, costHigh: 3000 },
-    { name: 'Joint sealant polyurethane', unit: 'm', qtyPerKm: 1750, costLow: 12000, costHigh: 25000 },
+  7: [ // Phase 7: Road Furniture & Accessories (base items always included)
+    { name: 'Road Marking Paint', unit: 'Bucket (20L)', qtyPerKm: 8, costLow: 35000, costHigh: 55000 },
+    { name: 'Kerb Stones', unit: 'Piece', qtyPerKm: 400, costLow: 3500, costHigh: 5500 },
+    { name: 'Road Signs', unit: 'Unit', qtyPerKm: 8, costLow: 60000, costHigh: 95000 },
+    { name: 'Delineator Posts', unit: 'Unit', qtyPerKm: 50, costLow: 7000, costHigh: 12000 },
+    { name: 'Cat Eyes/Studs', unit: 'Unit', qtyPerKm: 120, costLow: 5000, costHigh: 8500 },
   ]
 };
 
 const ACCESSORY_PRICING = {
   'markings': [
-    { name: 'Thermoplastic centreline', unit: 'm²', qtyPerKm: 140, costLow: 12000, costHigh: 25000 },
-    { name: 'Thermoplastic edge lines', unit: 'm²', qtyPerKm: 300, costLow: 12000, costHigh: 25000 },
+    { name: 'Road Marking Paint', unit: 'Bucket (20L)', qtyPerKm: 8, costLow: 35000, costHigh: 55000 },
   ],
   'signage': [
-    { name: 'Road signs (regulatory+warning)', unit: 'Each', qtyPerKm: 6, costLow: 120000, costHigh: 350000 },
-    { name: 'Km markers', unit: 'Each', qtyPerKm: 2, costLow: 30000, costHigh: 80000 },
+    { name: 'Road Signs', unit: 'Unit', qtyPerKm: 8, costLow: 60000, costHigh: 95000 },
+    { name: 'Delineator Posts', unit: 'Unit', qtyPerKm: 50, costLow: 7000, costHigh: 12000 },
   ],
   'lighting_solar': [
-    { name: 'Solar street light', unit: 'Each', qtyPerKm: 20, costLow: 800000, costHigh: 2200000 },
+    { name: 'Solar Street Light Set', unit: 'Unit', qtyPerKm: 25, costLow: 280000, costHigh: 450000 },
   ],
   'lighting_poles': [
-    { name: 'Roadside single-arm pole', unit: 'Each', qtyPerKm: 57, costLow: 600000, costHigh: 1800000 },
+    { name: 'Roadside Single-arm Pole', unit: 'Unit', qtyPerKm: 57, costLow: 600000, costHigh: 1800000 },
   ],
   'lighting_mast': [
-    { name: 'High-mast tower', unit: 'Each', qtyPerKm: 1.5, costLow: 8000000, costHigh: 20000000 },
+    { name: 'High-mast Tower', unit: 'Unit', qtyPerKm: 1.5, costLow: 8000000, costHigh: 20000000 },
   ],
   'guardrails': [
-    { name: 'W-beam guard rail', unit: 'm', qtyPerKm: 300, costLow: 80000, costHigh: 160000 },
+    { name: 'W-Beam Guardrail', unit: 'Panel (4m)', qtyPerKm: 30, costLow: 100000, costHigh: 185000 },
   ],
   'pedestrian': [
-    { name: 'Paved footpath 1.5m', unit: 'm', qtyPerKm: 1000, costLow: 15000, costHigh: 35000 },
-    { name: 'Raised pedestrian crossing', unit: 'Each', qtyPerKm: 1.5, costLow: 800000, costHigh: 2500000 },
+    { name: 'Concrete (for walkways)', unit: 'm³', qtyPerKm: 50, costLow: 75000, costHigh: 120000 },
+    { name: 'Kerb Stones', unit: 'Piece', qtyPerKm: 600, costLow: 3500, costHigh: 5500 },
   ],
   'transit': [
-    { name: 'Bus bay (lay-by)', unit: 'Each', qtyPerKm: 0.15, costLow: 2000000, costHigh: 5000000 },
-    { name: 'Bus shelter', unit: 'Each', qtyPerKm: 0.15, costLow: 3000000, costHigh: 8000000 },
+    { name: 'Bus Shelter', unit: 'Unit', qtyPerKm: 2, costLow: 700000, costHigh: 1200000 },
+    { name: 'Concrete Slab (bus bay)', unit: 'm²', qtyPerKm: 80, costLow: 28000, costHigh: 45000 },
   ]
 };
+
+// ==========================================
+// PRICE OVERRIDE: Load from MaterialPriceConfig DB
+// ==========================================
+
+/**
+ * Load price overrides from MaterialPriceConfig.
+ * Returns a map of materialName → basePrice.
+ * These override the hardcoded costHigh values.
+ */
+async function loadPriceOverrides() {
+  try {
+    const dbPrices = await prisma.materialPriceConfig.findMany();
+    const overrides = {};
+    for (const p of dbPrices) {
+      overrides[p.materialName] = Number(p.basePrice);
+    }
+    return overrides;
+  } catch (err) {
+    logger.error('Failed to load MaterialPriceConfig, using hardcoded fallbacks', { error: err.message });
+    return {};
+  }
+}
+
+/**
+ * Apply price overrides to a material item.
+ * If the material name has a DB-configured price, use it as costHigh
+ * and derive costLow as 70% of the DB price.
+ */
+function applyPriceOverride(item, overrides) {
+  const dbPrice = overrides[item.name];
+  if (dbPrice && dbPrice > 0) {
+    return {
+      ...item,
+      costHigh: dbPrice,
+      costLow: Math.round(dbPrice * 0.7), // Low estimate = 70% of configured price
+    };
+  }
+  return item;
+}
 
 // ==========================================
 // ESTIMATION ENGINE
 // ==========================================
 
 /**
- * Calculates a full road estimate statelessly
- * @param {Object} input - roadType, lengthKm, widthM, lanes, terrain, accessibilityKm, accessories[]
+ * Calculates a full road estimate
+ * Now async: pulls prices from MaterialPriceConfig DB
+ * @param {Object} input - roadType, lengthKm, widthM, lanes, terrain, nearestTownKm, accessories[]
  */
-function calculateEstimate(input) {
+async function calculateEstimate(input) {
   const { roadType, lengthKm, widthM, terrain, nearestTownKm = 10, accessories = [] } = input;
   
   if (!ROAD_TYPES[roadType]) throw new AppError('Invalid road type', 400);
 
+  // Load price overrides from DB
+  const priceOverrides = await loadPriceOverrides();
+
   const tMult = MULTIPLIERS.terrain[terrain] || 1.0;
   const aMult = MULTIPLIERS.accessibility(nearestTownKm);
   const wMult = widthM ? MULTIPLIERS.width(widthM) : 1.0;
-  const combinedMult = tMult * aMult * wMult;
 
   const typeDef = ROAD_TYPES[roadType];
   const activePhases = typeDef.activePhases;
@@ -143,23 +221,25 @@ function calculateEstimate(input) {
   let layersTotalLow = 0;
   let layersTotalHigh = 0;
 
-  // 1. Generate Layers
+  // 1. Generate Layers (per active phase)
   activePhases.forEach(phaseKey => {
     if (!LAYER_PRICING[phaseKey]) return;
     
-    LAYER_PRICING[phaseKey].forEach(item => {
+    LAYER_PRICING[phaseKey].forEach(rawItem => {
+      // Apply MaterialPriceConfig overrides
+      const item = applyPriceOverride(rawItem, priceOverrides);
+
       // Calculate adjusted quantities based on width and length
       const adjustedQtyPerKm = item.qtyPerKm * wMult;
       const totalQty = adjustedQtyPerKm * lengthKm;
       
       // Calculate costs reflecting terrain and accessibility
-      // Unit cost is fixed as per RCMS, but the *effective* budget required goes up due to multipliers
       const tCostLow = totalQty * item.costLow * tMult * aMult;
       const tCostHigh = totalQty * item.costHigh * tMult * aMult;
 
       generatedLayers.push({
         phaseNumber: Math.floor(phaseKey),
-        phaseName: `Phase ${Math.floor(phaseKey)}`,
+        phaseName: PHASE_NAMES[phaseKey] || `Phase ${Math.floor(phaseKey)}`,
         materialType: item.name,
         unit: item.unit,
         quantityPerKm: adjustedQtyPerKm,
@@ -187,7 +267,10 @@ function calculateEstimate(input) {
   accessories.forEach(accKey => {
     if (!ACCESSORY_PRICING[accKey]) return;
 
-    ACCESSORY_PRICING[accKey].forEach(item => {
+    ACCESSORY_PRICING[accKey].forEach(rawItem => {
+      // Apply MaterialPriceConfig overrides
+      const item = applyPriceOverride(rawItem, priceOverrides);
+
       const totalQty = item.qtyPerKm * lengthKm;
       const tCostLow = totalQty * item.costLow * accMult * aMult;
       const tCostHigh = totalQty * item.costHigh * accMult * aMult;
@@ -230,7 +313,8 @@ function calculateEstimate(input) {
 }
 
 /**
- * Saves a calculated estimate to the database, binding it to a project
+ * Saves a calculated estimate to the database, binding it to a project.
+ * Also regenerates Gantt tasks to match the Road Spec phases.
  */
 async function saveEstimate(projectId, estimateData, approvedTotal) {
   // Check if project exists
@@ -282,6 +366,25 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
   });
 
   logger.info(`Road estimate saved for Project ${projectId}`);
+
+  // ============================================
+  // UNIFIED: Regenerate Gantt tasks from Road Spec
+  // ============================================
+  try {
+    const tasksService = require('./tasks.service');
+    const roadTypeDef = ROAD_TYPES[estimateData.roadType];
+    if (roadTypeDef && project.startDate && project.endDate) {
+      await tasksService.regenerateFromRoadSpec(
+        projectId,
+        project.startDate,
+        project.endDate,
+        roadTypeDef.activePhases
+      );
+      logger.info('Gantt tasks regenerated from Road Spec', { projectId, roadType: estimateData.roadType });
+    }
+  } catch (err) {
+    logger.error('Failed to regenerate Gantt from Road Spec', { projectId, error: err.message });
+  }
 
   // Fetch recipients for the email trigger asynchronously (don't block the response)
   const fullProject = await prisma.project.findUnique({
@@ -383,6 +486,7 @@ module.exports = {
   getEstimateByProject,
   toggleItem,
   ROAD_TYPES,
+  PHASE_NAMES,
   LAYER_PRICING,
   ACCESSORY_PRICING
 };

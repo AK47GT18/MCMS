@@ -9,28 +9,31 @@ const logger = require('../utils/logger');
 const handlers = require('../realtime/handlers');
 const emailService = require('../emails/email.service');
 
-// Material price catalog (MWK per unit) - used to auto-calculate requisition values
-const MATERIAL_PRICES = {
+// Fallback material price catalog (MWK per unit) - Malawi 2025 road construction
+// DB prices from MaterialPriceConfig take priority over these fallbacks
+const FALLBACK_MATERIAL_PRICES = {
+  // Core road materials
+  'Diesel Fuel': 6687,
   'Cement OPC': 18500,
-  'Bitumen G-Grade': 125000,
-  'Diesel Fuel': 2850,
-  'Crushed Stone': 45000,
   'River Sand': 25000,
-  'Steel Rebar': 85000,
-  'Concrete Blocks': 1200,
-  'PVC Pipes': 15000,
-  'Timber Planks': 8500,
-  'Roofing Sheets': 32000,
-  'Paint (Exterior)': 28000,
-  'Gravel': 18000,
-  'Bricks': 850,
-  'Nails (Box)': 12000,
-  'Binding Wire': 9500,
-  'Waterproof Membrane': 45000,
+  'Crushed Stone': 45000,
+  'Gravel/Crushed Stone': 18000,
   'Aggregate Base': 35000,
+  'Bitumen 60/70': 820000,
   'Emulsion Primer': 95000,
-  'Kerb Stones': 5500,
+  'Tack Coat (SS-1)': 85000,
   'Geotextile Fabric': 22000,
+  'Lime (stabiliser)': 95000,
+  'Reinforcement Steel (12mm)': 22000,
+  'PVC Culvert Pipes': 35000,
+  'Concrete Pipes': 45000,
+  'Road Marking Paint': 55000,
+  'Kerb Stones': 5500,
+  'W-Beam Guardrail': 185000,
+  'Road Signs': 95000,
+  'Delineator Posts': 12000,
+  'Cat Eyes/Studs': 8500,
+  'Solar Street Light Set': 450000,
   // Machinery daily hire rates
   'Excavator': 450000,
   'Bulldozer': 520000,
@@ -43,16 +46,27 @@ const MATERIAL_PRICES = {
   'Paver': 550000,
   'Concrete Mixer': 120000,
   'Dump Truck': 200000,
-  'Forklift': 280000,
-  'Generator': 95000,
   'Compactor': 250000,
-  'Concrete Pump': 420000,
-  'Scaffolding Set': 85000,
-  'Welding Machine': 45000,
-  'Pile Driver': 750000,
-  'Boom Lift': 350000,
-  'Road Sweeper': 280000,
+  'Generator': 95000,
 };
+
+/**
+ * Load material prices from MaterialPriceConfig DB table,
+ * merged with fallback hardcoded prices. DB prices take priority.
+ */
+async function loadMaterialPrices() {
+  try {
+    const dbPrices = await prisma.materialPriceConfig.findMany();
+    const priceMap = { ...FALLBACK_MATERIAL_PRICES };
+    for (const p of dbPrices) {
+      priceMap[p.materialName] = Number(p.basePrice);
+    }
+    return priceMap;
+  } catch (err) {
+    logger.error('Failed to load MaterialPriceConfig from DB, using fallback prices', { error: err.message });
+    return { ...FALLBACK_MATERIAL_PRICES };
+  }
+}
 
 async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, projectId }) {
   const skip = (page - 1) * limit;
@@ -98,6 +112,9 @@ async function create(data, userId) {
     const count = await prisma.requisition.count();
     reqData.reqCode = `REQ-${Date.now().toString().slice(-6)}-${(count + 1).toString().padStart(3, '0')}`;
   }
+
+  // Load prices from DB (MaterialPriceConfig) with fallback to hardcoded catalog
+  const MATERIAL_PRICES = await loadMaterialPrices();
 
   // Auto-calculate unit prices and totalAmount from material catalog
   let calculatedItems = items;

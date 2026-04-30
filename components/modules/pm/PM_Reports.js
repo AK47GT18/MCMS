@@ -64,9 +64,7 @@ export const PM_Reports = {
         }
     },
 
-    render() {
-        return this.getReportsView();
-    },
+
 
     getReportsView() {
         this.init();

@@ -115,6 +115,7 @@ model Task {
   progress     Int        @default(0) @db.SmallInt
   dependencyId Int?       @map("dependency_id")
   statusClass  String?    @map("status_class") @db.VarChar(50)
+  phaseNumber  Int?       @map("phase_number")
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   daily_logs   DailyLog[]

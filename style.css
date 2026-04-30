@@ -725,6 +725,33 @@ tbody td {
     border: 1px solid var(--slate-300);
 }
 
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 16px;
+    border-bottom: 1px solid var(--slate-200);
+    margin-bottom: 24px;
+}
+
+.tab {
+    padding: 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slate-500);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.tab:hover {
+    color: var(--slate-700);
+}
+
+.tab.active {
+    color: var(--orange);
+    border-bottom-color: var(--orange);
+}
+
 /* Fraud & Specific Modules */
 .fraud-alert-card {
     background: var(--red-light);
