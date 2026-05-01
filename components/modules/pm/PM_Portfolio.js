@@ -36,60 +36,44 @@ export const PM_Portfolio = {
                     </select>
                 </div>
               </div>
-            			  <div id="projects-table-container">
+              <div id="projects-table-container">
 				${this.renderLoadingState()}
 			  </div>
 			</div>`;
-	},
+	},
 
     async loadProjectsFromAPI() {
-        if (this.isLoadingProjects) return; // Prevent multiple calls
+        if (this.isLoadingProjects) return;
         this.isLoadingProjects = true;
 
-        console.log('[DEBUG] loadProjectsFromAPI triggered');
         const container = document.getElementById('projects-table-container');
         if (!container) {
             this.isLoadingProjects = false;
             return;
         }
 
-        container.innerHTML = this.renderLoadingState(); // Show loading state immediately
-
         try {
-            // Using authenticated client instead of raw fetch
             const result = await client.get('/projects');
-            console.log('[DEBUG] Projects fetch successfully:', result);
-            
             this.allProjects = Array.isArray(result) ? result : result.data || result.items || [];
 
             if (this.allProjects.length === 0) {
                 container.innerHTML = this.renderEmptyState('No projects found. Create a new project to get started.');
-                this.isLoadingProjects = false;
                 return;
             }
 
-            // Respect the currently active tab or dropdown filter
             const activeTab = document.querySelector('.tabs .tab.active');
             const activeStatus = activeTab ? activeTab.getAttribute('data-status') : 'active';
             
-            const filtered = activeStatus === 'active' 
-                ? this.allProjects.filter(p => p.status === 'active' || p.status === 'in_progress')
-                : (activeStatus === 'all' ? this.allProjects : this.allProjects.filter(p => p.status === activeStatus));
+            this.applyCurrentFilter(activeStatus);
 
-            container.innerHTML = this.renderProjectsTable(filtered);
-
-            // Set default project for Gantt and context if none selected
             if (!this.selectedProjectId && this.allProjects.length > 0) {
                 this.selectedProjectId = this.allProjects[0].id || this.allProjects[0].code;
             }
 
             this.updateHeaderStats();
         } catch (error) {
-            console.error('[CRITICAL] Failed to load projects from API:', error);
-            
-            // Show detailed error if available from backend
+            console.error('[CRITICAL] Failed to load projects:', error);
             const errorMsg = error.data?.error?.message || error.message || 'Unknown error';
-            
             container.innerHTML = `
                 <div style="padding: 24px; text-align: center; color: var(--red); background: rgba(239, 68, 68, 0.05); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
                     <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 12px; opacity: 0.8;"></i>
@@ -100,53 +84,41 @@ export const PM_Portfolio = {
                     </button>
                 </div>
             `;
-            
-            if (window.toast) {
-                window.toast.show(`Project fetch failed: ${errorMsg}`, 'error');
-            }
         } finally {
             this.isLoadingProjects = false;
         }
-    },
+    },
 
     filterProjectsByStatus(status) {
-        if (this.isLoadingProjects) {
-            window.toast.show('Please wait, projects are still loading.', 'info');
-            return;
+        if (this.isLoadingProjects) return;
+        this.applyCurrentFilter(status);
+    },
+
+    applyCurrentFilter(status) {
+        const container = document.getElementById('projects-table-container');
+        if (!container || !this.allProjects) return;
+
+        const filtered = status === 'all' 
+            ? this.allProjects 
+            : (status === 'active' 
+                ? this.allProjects.filter(p => p.status === 'active' || p.status === 'in_progress')
+                : this.allProjects.filter(p => p.status === status));
+        
+        if (filtered.length > 0) {
+            container.innerHTML = this.renderProjectsTable(filtered);
+        } else {
+            container.innerHTML = this.renderEmptyState(`No ${status.replace(/_/g, ' ')} projects found.`);
         }
 
-        const container = document.getElementById('projects-table-container');
-        if (!container) return;
-
-        container.innerHTML = this.renderLoadingState(); // Show loading state while filtering
-
-        // Simulate a slight delay for better UX
-        setTimeout(() => {
-            const filtered = status === 'all' 
-                ? this.allProjects 
-                : (status === 'active' 
-                    ? this.allProjects.filter(p => p.status === 'active' || p.status === 'in_progress')
-                    : this.allProjects.filter(p => p.status === status));
-            
-            if (filtered.length > 0) {
-                container.innerHTML = this.renderProjectsTable(filtered);
-            } else {
-                container.innerHTML = this.renderEmptyState(`No ${status.replace(/_/g, ' ')} projects found.`);
+        // Sync with tabs UI
+        const tabs = document.querySelectorAll('.tabs .tab');
+        tabs.forEach(t => {
+            if (t.getAttribute('data-status') === status) {
+                t.parentElement.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                t.classList.add('active');
             }
-
-            // Sync with tabs UI if status exists in tabs
-            const tabs = document.querySelectorAll('.tabs .tab');
-            tabs.forEach(t => {
-                if (t.getAttribute('data-status') === status) {
-                    t.parentElement.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                    t.classList.add('active');
-                } else if (status === 'all') {
-                    // If 'all', we might want to deactivate all tabs or handle it differently
-                    t.parentElement.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                }
-            });
-        }, 100);
-    },
+        });
+    },
 
     renderProjectsTable(projects) {
         const getStatusClass = (status) => {
@@ -158,7 +130,6 @@ export const PM_Portfolio = {
             return map[status] || 'fa-circle';
         };
         const formatStatus = (s) => s?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
-        const calculateProgress = (p) => p.progress || 0; // Default to 0 instead of random
 
         const rows = projects.map(project => `
             <tr>
@@ -214,7 +185,7 @@ export const PM_Portfolio = {
 					${rows}
 				</tbody>
 			</table>`;
-	},
+	},
 
     openProjectDetailsDrawer(id) {
         if(!id) return;
@@ -225,7 +196,7 @@ export const PM_Portfolio = {
         }).catch(err => {
             window.toast.show('Failed to load project details', 'error');
         });
-    },
+    },
 
     getStatsGridHTML() {
         return `

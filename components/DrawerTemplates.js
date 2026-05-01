@@ -3314,101 +3314,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    newContract: `
-        <div style="padding: 24px;">
-            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
-                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Create Vendor Contract</div>
-                <div style="font-size: 11px; color: var(--slate-500);">Select a project, choose materials, and assign a vendor</div>
-            </div>
 
-            <!-- Step 1: Select Project -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
-                <select id="contract_project" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;"
-                    onchange="window.app.fmModule?.onContractProjectSelected(this.value)">
-                    <option value="">Loading projects...</option>
-                </select>
-            </div>
-
-            <!-- Step 2: Materials (dynamically populated) -->
-            <div id="contract-materials-section" style="display: none; margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Select Materials for This Contract *</label>
-                <div id="contract-materials-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px; padding: 8px;"></div>
-                <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">Check the materials this vendor will supply</div>
-            </div>
-
-            <!-- Vendor -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name *</label>
-                <input type="text" id="contract_vendor" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Malawi Cement Ltd">
-            </div>
-
-            <!-- Contract Title -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
-                <input type="text" id="contract_title" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
-            </div>
-
-            <!-- Retention and Taxation -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Retention (%)</label>
-                    <input type="number" id="contract_retention" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" value="5" min="0" max="100">
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-top: 20px;">
-                    <input type="checkbox" id="contract_tax_inclusive" checked style="width: 18px; height: 18px; accent-color: var(--orange);">
-                    <label for="contract_tax_inclusive" style="font-size: 12px; font-weight: 600; color: var(--slate-600);">Tax Inclusive (VAT/WHT)</label>
-                </div>
-            </div>
-
-            <!-- Advance Payment and Guarantees -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Advance Payment (MWK)</label>
-                    <input type="number" id="contract_advance" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="0.00">
-                </div>
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Guarantee Expiry</label>
-                    <input type="date" id="contract_guarantee_expiry" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
-                </div>
-            </div>
-
-            <!-- Contract Value -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
-                <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
-            </div>
-
-            <!-- Dates -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
-                    <input type="date" id="contract_start" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
-                </div>
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
-                    <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
-                </div>
-            </div>
-            
-            <!-- Contract Document -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Document (PDF/DOC) *</label>
-                <div id="contract-drop-zone" style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 24px; text-align: center; color: var(--slate-400); background: var(--slate-50); cursor: pointer; transition: all 0.2s ease;">
-                    <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 8px; color: var(--slate-400);"></i>
-                    <div id="contract-file-status" style="font-size: 12px; font-weight: 600;">Drag and drop file here or <span style="color: var(--orange);">browse</span></div>
-                    <div style="font-size: 10px; margin-top: 4px;">PDF or Word documents (Max 10MB)</div>
-                    <input type="file" id="contract_document" accept=".pdf,.doc,.docx" style="display: none;">
-                </div>
-            </div>
-
-            <!-- Submit -->
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px; font-weight: 700; background-color: var(--orange); border-color: var(--orange);"
-                onclick="window.app.fmModule?.submitContract()">
-                <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Create Contract
-            </button>
-        </div>
-    `,
     completeMaintenance: (assetId) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
@@ -3562,7 +3468,7 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
                 <select id="contract_project" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;"
-                    onchange="window.app.fmModule?.onContractProjectSelected(this.value)">
+                    onchange="(window.app.fmModule || window.app.pmModule)?.onContractProjectSelected(this.value)">
                     <option value="">Loading projects...</option>
                 </select>
             </div>
@@ -3587,9 +3493,9 @@ Contract Admin</textarea>
             </div>
             <div id="contract-budget-status"></div>
 
-            <!-- Contract Value -->
+            <!-- Agreed Contract Sum -->
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
                 <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
             </div>
 
@@ -3603,6 +3509,12 @@ Contract Admin</textarea>
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
                     <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
                 </div>
+            </div>
+
+            <!-- Justification -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
+                <textarea id="contract_justification" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" rows="2" placeholder="Explain why this contract is being established or modified..."></textarea>
             </div>
             
             <!-- Contract Document -->
@@ -3618,7 +3530,7 @@ Contract Admin</textarea>
 
             <!-- Submit -->
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px; font-weight: 700; background-color: var(--orange); border-color: var(--orange);"
-                onclick="window.app.fmModule?.submitContract()">
+                onclick="(window.app.fmModule || window.app.pmModule)?.submitContract()">
                 <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Create Contract
             </button>
         </div>
@@ -3636,7 +3548,7 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Linked Project *</label>
                 <select id="contract_project" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="window.app.fmModule?.onProjectContractSelected(this.value)">
+                    onchange="(window.app.fmModule || window.app.pmModule)?.onProjectContractSelected(this.value)">
                     <option value="">Select Target Project...</option>
                 </select>
             </div>
@@ -3651,6 +3563,7 @@ Contract Admin</textarea>
                 <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
             </div>
 
+            <!-- Dates -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
                 <div>
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Commencement Date</label>
@@ -3660,6 +3573,12 @@ Contract Admin</textarea>
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Completion Deadline</label>
                     <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
+            </div>
+
+            <!-- Justification -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
+                <textarea id="contract_justification" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Context for the master agreement (e.g., initial award, scope extension)..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 32px;">
@@ -3673,7 +3592,7 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px; background: var(--orange); border-color: var(--orange);"
-                onclick="window.app.fmModule?.submitProjectContract()">
+                onclick="(window.app.fmModule || window.app.pmModule)?.submitProjectContract()">
                 <i class="fas fa-save" style="margin-right: 8px;"></i> Archive Master Agreement
             </button>
         </div>

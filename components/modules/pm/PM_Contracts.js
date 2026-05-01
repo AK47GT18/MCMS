@@ -22,7 +22,10 @@ export const PM_Contracts = {
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Contract Registry & Legal Repository</div>
-                    <button class="btn btn-primary" onclick="window.drawer.open('New Contract', window.DrawerTemplates.newContract)"><i class="fas fa-upload"></i> Upload Contract</button>
+                    ${this.currentContractTab === 'project' 
+                        ? `<button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
+                        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.pmModule?.loadContractProjects(); window.app.pmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
+                    }
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
@@ -185,5 +188,416 @@ export const PM_Contracts = {
                 <tbody>${rows}</tbody>
             </table>
         `;
+    },
+
+    async loadContractProjects() {
+        const select = document.getElementById('contract_project');
+        if (!select) return;
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/projects?status=active', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+            const projects = result.data || result.items || [];
+            select.innerHTML = '<option value="">Select a project...</option>' + projects.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join('');
+        } catch (err) { console.error(err); }
+    },
+
+    initContractUpload() {
+        const dropZone = document.getElementById('contract-drop-zone');
+        const fileInput = document.getElementById('contract_document');
+        const status = document.getElementById('contract-file-status');
+        if (!dropZone || !fileInput) return;
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files[0]) {
+                status.innerHTML = `<span style="color: var(--emerald); font-size: 12px;"><i class="fas fa-check-circle"></i> ${e.target.files[0].name}</span>`;
+                dropZone.style.borderColor = 'var(--emerald)';
+            }
+        };
+
+        const valueInput = document.getElementById('contract_value');
+        if (valueInput) {
+            valueInput.oninput = () => this.calculateContractValue(true);
+        }
+    },
+
+    async onContractProjectSelected(projectId) {
+        const list = document.getElementById('contract-materials-list');
+        const section = document.getElementById('contract-materials-section');
+        if (!list || !projectId) return;
+        section.style.display = 'block';
+        list.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <i class="fas fa-circle-notch fa-spin" style="margin-right: 8px; color: var(--orange);"></i>
+                <span style="font-size: 13px; color: var(--slate-500);">Fetching project requirements & budget...</span>
+            </div>
+        `;
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            
+            // 1. Fetch Project Details for Auto-fill
+            const projRes = await fetch(`/api/v1/projects/${projectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const projResult = await projRes.json();
+            const project = projResult.data || projResult;
+            
+            // Auto-fill dates
+            const startEl = document.getElementById('contract_start');
+            const endEl = document.getElementById('contract_end');
+            if (startEl && project.startDate) startEl.value = project.startDate.split('T')[0];
+            if (endEl && project.endDate) endEl.value = project.endDate.split('T')[0];
+
+            // 2. Fetch Materials and Budget
+            const res = await fetch(`/api/v1/projects/${projectId}/materials`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+            const data = result.data || result;
+            const materials = data.materials || [];
+            const budget = data.budgetSummary || {};
+            
+            // Store budget for submission check
+            this.currentProjectBudget = budget;
+            
+            // Pre-fill Agreed Contract Sum with remaining budget as a hint (if 0)
+            const valInput = document.getElementById('contract_value');
+            if (valInput && (!valInput.value || valInput.value == '0')) {
+                valInput.value = budget.remaining || 0;
+            }
+
+            // Update Budget Display
+            const budgetDisplay = document.getElementById('contract-budget-status');
+            if (budgetDisplay) {
+                const remaining = Number(budget.remaining || 0);
+                const percent = Number(budget.percentUsed || 0);
+                budgetDisplay.innerHTML = `
+                    <div style="background: ${remaining < 1000000 ? '#fef2f2' : 'var(--slate-50)'}; border: 1px solid ${remaining < 1000000 ? '#fee2e2' : 'var(--slate-200)'}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Project Funds</span>
+                            <span style="font-size: 14px; font-weight: 800; color: ${remaining < 1000000 ? 'var(--red)' : 'var(--slate-900)'};">MWK ${remaining.toLocaleString()}</span>
+                        </div>
+                        <div style="height: 6px; background: var(--slate-200); border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--red)' : 'var(--emerald)'};"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                            <span style="font-size: 10px; color: var(--slate-400);">${percent}% Budget Utilized</span>
+                            ${remaining < 1000000 ? '<span style="font-size: 10px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> CRITICAL BALANCE</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (materials.length === 0) { 
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">No specifications found for this project.</div>'; 
+                return; 
+            }
+
+            list.innerHTML = `
+                <div style="padding: 8px 12px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
+                    <div style="flex: 2;">Material Name</div>
+                    <div style="flex: 1; text-align: right;">Total Required</div>
+                    <div style="flex: 1; text-align: right;">Already Contracted</div>
+                    <div style="flex: 1.2; text-align: right;">New Qty</div>
+                </div>
+                ${materials.map((m, i) => {
+                    const remainingNeeded = Math.max(0, m.quantity - m.contractedQuantity);
+                    return `
+                        <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
+                            <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
+                                    data-name="${m.name}" data-unit="${m.unit}" data-price="${m.unitCostHigh || 0}"
+                                    onchange="window.app.pmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.name}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">${m.unit} • Est. MWK ${Number(m.unitCostHigh || 0).toLocaleString()}/unit</div>
+                                </div>
+                            </div>
+                            <div style="flex: 1; text-align: right;">
+                                <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${m.quantity}</div>
+                            </div>
+                            <div style="flex: 1; text-align: right;">
+                                <div style="font-size: 12px; font-weight: 600; color: ${m.contractedQuantity > 0 ? 'var(--orange)' : 'var(--slate-400)'};">${m.contractedQuantity}</div>
+                            </div>
+                            <div style="flex: 1.2; text-align: right;">
+                                <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
+                                    min="1" oninput="window.app.pmModule?.calculateContractValue()"
+                                    style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+            this.calculateContractValue();
+        } catch (err) { 
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 12px;">Error loading materials list.</div>'; 
+        }
+    },
+
+    calculateContractValue(fromManualInput = false) {
+        const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+        let total = 0;
+        
+        if (fromManualInput) {
+            total = parseFloat(document.getElementById('contract_value')?.value || 0);
+        } else {
+            checkboxes.forEach(cb => {
+                const index = cb.value;
+                const price = parseFloat(cb.dataset.price || 0);
+                const qtyInput = document.getElementById(`m_qty_${index}`);
+                const qty = parseFloat(qtyInput?.value || 0);
+                total += (price * qty);
+            });
+        }
+        
+        const valueInput = document.getElementById('contract_value');
+        if (valueInput) {
+            if (!fromManualInput) {
+                valueInput.value = total;
+            }
+
+            // Real-time Budget Validation
+            const remainingBudget = this.currentProjectBudget?.remaining || 0;
+            const submitBtn = document.querySelector('button[onclick*="submitContract"]');
+            
+            if (total > remainingBudget) {
+                valueInput.style.color = 'var(--red)';
+                if (submitBtn) {
+                    submitBtn.style.opacity = '0.7';
+                    submitBtn.disabled = true;
+                }
+            } else {
+                valueInput.style.color = 'var(--slate-900)';
+                if (submitBtn) {
+                    submitBtn.style.opacity = '1';
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+    },
+
+    async submitContract() {
+        const data = {
+            projectId: document.getElementById('contract_project')?.value,
+            vendorName: document.getElementById('contract_vendor')?.value,
+            title: document.getElementById('contract_title')?.value,
+            value: parseFloat(document.getElementById('contract_value')?.value),
+            startDate: document.getElementById('contract_start')?.value,
+            endDate: document.getElementById('contract_end')?.value,
+            retentionPercentage: parseFloat(document.getElementById('contract_retention')?.value || 0),
+            isTaxInclusive: document.getElementById('contract_tax_inclusive')?.checked || false,
+            advancePaymentAmount: parseFloat(document.getElementById('contract_advance')?.value || 0),
+            guaranteeExpiry: document.getElementById('contract_guarantee_expiry')?.value || null
+        };
+
+        if (!data.projectId || !data.vendorName || !data.title || !data.value) {
+            window.toast.show('Please fill all required fields.', 'warning');
+            return;
+        }
+
+        window.toast.show('Establishing contract...', 'info');
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/contracts', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, contractType: 'vendor', refCode: 'CON-' + Date.now().toString(36).toUpperCase() })
+            });
+            if (!res.ok) throw new Error('System error creating contract');
+            
+            window.toast.show('Contract established successfully', 'success');
+            window.drawer.close();
+            this.loadContractsData();
+        } catch (err) { window.toast.show(err.message, 'error'); }
+    },
+
+    openNewProjectContract() {
+        window.drawer.open('Project Master Agreement', window.DrawerTemplates.newProjectContract);
+        setTimeout(() => {
+            this.loadContractProjects();
+            this.initMasterContractUpload();
+        }, 100);
+    },
+
+    initMasterContractUpload() {
+        const dropZone = document.getElementById('v-drop-zone');
+        const fileInput = document.getElementById('v-file-input');
+        const status = document.getElementById('v-file-status');
+        if (!dropZone || !fileInput) return;
+
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files[0]) {
+                status.innerHTML = `<span style="color: var(--emerald); font-size: 13px;"><i class="fas fa-check-circle"></i> ${e.target.files[0].name}</span>`;
+                dropZone.style.borderColor = 'var(--emerald)';
+                dropZone.style.background = '#f0fdf4';
+            }
+        };
+    },
+
+    async onProjectContractSelected(projectId) {
+        if (!projectId) return;
+        
+        // Show loading in fields
+        const sumEl = document.getElementById('contract_value');
+        const startEl = document.getElementById('contract_start');
+        const endEl = document.getElementById('contract_end');
+        const codeEl = document.getElementById('contract_ref');
+        
+        if (sumEl) sumEl.disabled = true;
+        
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch(`/api/v1/projects/${projectId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+            const project = result.data || result;
+            
+            if (sumEl) {
+                sumEl.value = project.contractSum || project.budget || 0;
+                sumEl.disabled = false;
+            }
+            if (startEl && project.startDate) {
+                startEl.value = project.startDate.split('T')[0];
+            }
+            if (endEl && project.endDate) {
+                endEl.value = project.endDate.split('T')[0];
+            }
+            if (codeEl) {
+                codeEl.value = project.code || '';
+            }
+            
+            window.toast.show(`Auto-filled details for ${project.name}`, 'info');
+        } catch (err) {
+            console.error('Auto-fill failed:', err);
+            if (sumEl) sumEl.disabled = false;
+        }
+    },
+
+    async submitProjectContract() {
+        const data = {
+            projectId: document.getElementById('contract_project')?.value,
+            refCode: document.getElementById('contract_ref')?.value,
+            value: parseFloat(document.getElementById('contract_value')?.value),
+            startDate: document.getElementById('contract_start')?.value,
+            endDate: document.getElementById('contract_end')?.value,
+            justification: document.getElementById('contract_justification')?.value,
+            title: 'Project Master Agreement',
+            contractType: 'project'
+        };
+
+        if (!data.projectId || !data.refCode || !data.value || !data.justification) {
+            window.toast.show('Please fill all required fields, including justification.', 'warning');
+            return;
+        }
+
+        window.toast.show('Archiving master agreement...', 'info');
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/contracts', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error('Failed to archive contract');
+            
+            const result = await res.json();
+            const contractId = result.data?.id || result.id;
+
+            // Send Notifications
+            this.sendContractNotification('Master Agreement Created', `Project Master for ${data.refCode} has been archived by ${window.currentUser?.name}. Justification: ${data.justification}`);
+
+            window.toast.show('Master agreement archived', 'success');
+            window.drawer.close();
+            this.loadContractsData();
+        } catch (err) { window.toast.show(err.message, 'error'); }
+    },
+
+    async submitContract() {
+        const data = {
+            projectId: document.getElementById('contract_project')?.value,
+            vendorName: document.getElementById('contract_vendor')?.value,
+            title: document.getElementById('contract_title')?.value,
+            value: parseFloat(document.getElementById('contract_value')?.value),
+            startDate: document.getElementById('contract_start')?.value,
+            endDate: document.getElementById('contract_end')?.value,
+            justification: document.getElementById('contract_justification')?.value,
+            retentionPercentage: parseFloat(document.getElementById('contract_retention')?.value || 0),
+            isTaxInclusive: document.getElementById('contract_tax_inclusive')?.checked || false,
+            advancePaymentAmount: parseFloat(document.getElementById('contract_advance')?.value || 0),
+            guaranteeExpiry: document.getElementById('contract_guarantee_expiry')?.value || null
+        };
+
+        if (!data.projectId || !data.vendorName || !data.title || !data.value || !data.justification) {
+            window.toast.show('Please fill all required fields, including justification.', 'warning');
+            return;
+        }
+
+        window.toast.show('Establishing contract...', 'info');
+
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/contracts', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, contractType: 'vendor', refCode: 'CON-' + Date.now().toString(36).toUpperCase() })
+            });
+            if (!res.ok) throw new Error('System error creating contract');
+
+            // Send Notifications
+            this.sendContractNotification('Vendor Contract Established', `New Vendor Contract for ${data.vendorName} established by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}. Justification: ${data.justification}`);
+            
+            window.toast.show('Contract established successfully', 'success');
+            window.drawer.close();
+            this.loadContractsData();
+        } catch (err) { window.toast.show(err.message, 'error'); }
+    },
+
+    async sendContractNotification(title, message) {
+        try {
+            const token = localStorage.getItem('mcms_auth_token');
+            await fetch('/api/v1/notifications/broadcast', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    message: message,
+                    roles: ['Project Manager', 'Finance Director'],
+                    priority: 'high',
+                    type: 'contract'
+                })
+            });
+        } catch (err) {
+            console.warn('Broadcast notification failed:', err);
+        }
+    },
+
+    renderLoadingState() {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                <div>Loading contracts...</div>
+            </div>
+        `;
+    },
+
+    renderEmptyState(message) {
+        return `
+            <div style="padding: 40px; text-align: center; color: var(--slate-400);">
+                <i class="fas fa-file-contract" style="font-size: 32px; margin-bottom: 12px;"></i>
+                <div>${message}</div>
+            </div>
+        `;
+    },
+
+    escapeHTML(str) {
+        return str?.toString().replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m])) || '';
     }
 };
