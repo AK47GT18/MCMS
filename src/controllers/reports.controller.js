@@ -30,8 +30,9 @@ async function auditReport(user, reportName, query) {
 
 const pmPortfolio = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.pmPortfolio();
-  await auditReport(user, 'pm_portfolio', {});
+  const query = parseReportQuery(req.url);
+  const data = await reports.pmPortfolio(query);
+  await auditReport(user, 'pm_portfolio', query);
   sendReport(req, res, data, 'pm_portfolio', { title: 'Project Portfolio Report' });
 });
 
@@ -44,8 +45,9 @@ const pmProjectHealth = asyncHandler(async (req, res, projectId) => {
 
 const pmTimeline = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.pmTimeline();
-  await auditReport(user, 'pm_timeline', {});
+  const query = parseReportQuery(req.url);
+  const data = await reports.pmTimeline(query);
+  await auditReport(user, 'pm_timeline', query);
   sendReport(req, res, data, 'pm_timeline', { title: 'Project Timeline Performance' });
 });
 
@@ -55,22 +57,25 @@ const pmTimeline = asyncHandler(async (req, res) => {
 
 const financeBudget = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.financeBudget();
-  await auditReport(user, 'finance_budget', {});
+  const query = parseReportQuery(req.url);
+  const data = await reports.financeBudget(query);
+  await auditReport(user, 'finance_budget', query);
   sendReport(req, res, data, 'finance_budget_utilization', { title: 'Global Budget Utilization' });
 });
 
 const financeRequisitions = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.financeRequisitions();
-  await auditReport(user, 'finance_requisitions', {});
+  const query = parseReportQuery(req.url);
+  const data = await reports.financeRequisitions(query);
+  await auditReport(user, 'finance_requisitions', query);
   sendReport(req, res, data, 'finance_requisitions_summary', { title: 'Procurement Requisition Summary' });
 });
 
 const financeTopVendors = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.financeTopVendors();
-  await auditReport(user, 'finance_top_vendors', {});
+  const query = parseReportQuery(req.url);
+  const data = await reports.financeTopVendors(query);
+  await auditReport(user, 'finance_top_vendors', query);
   sendReport(req, res, data.rows, 'finance_top_vendors', { 
     title: 'Top Vendors by Expenditure',
     columns: ['name', 'count', 'totalSpend'] 
@@ -79,8 +84,9 @@ const financeTopVendors = asyncHandler(async (req, res) => {
 
 const financeSpendCategories = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.financeSpendCategories();
-  await auditReport(user, 'finance_spend_categories', {});
+  const query = parseReportQuery(req.url);
+  const data = await reports.financeSpendCategories(query);
+  await auditReport(user, 'finance_spend_categories', query);
   sendReport(req, res, data, 'finance_spend_by_category', { title: 'Expenditure by Category' });
 });
 

@@ -238,9 +238,47 @@ async function getByProject(projectId) {
   return inventory;
 }
 
+/**
+ * Get aggregate inventory totals across all sectors
+ * Used by EC for the system-wide overview
+ */
+async function getAll() {
+  const items = await prisma.inventory.findMany({
+    include: {
+      sector: {
+        include: { project: true }
+      }
+    }
+  });
+
+  // Group by material name to get system totals
+  const totals = {};
+  items.forEach(item => {
+    if (!totals[item.materialName]) {
+      totals[item.materialName] = {
+        materialName: item.materialName,
+        totalQuantity: 0,
+        unit: item.unit,
+        allocations: []
+      };
+    }
+    const qty = parseFloat(item.quantityOnHand || 0);
+    totals[item.materialName].totalQuantity += qty;
+    totals[item.materialName].allocations.push({
+      sectorId: item.sectorId,
+      sectorName: item.sector.name,
+      projectId: item.sector.projectId,
+      projectName: item.sector.project?.name,
+      quantity: qty
+    });
+  });
+
+  return Object.values(totals);
+}
+
 async function getIncomingShipments() {
   const contracts = await prisma.contract.findMany({
-    where: { status: 'active' },
+    where: { status: { in: ['active', 'draft'] } },
     include: {
       project: { select: { id: true, name: true, code: true } },
       vendor: { select: { id: true, name: true } },
@@ -297,7 +335,20 @@ async function receiveShipment(contractItemId, receivedQty, userId) {
   });
 
   // Automatically add to the first sector of the project as Central Silo
-  const sector = item.contract.project.sectors[0];
+  let sector = item.contract.project.sectors[0];
+  
+  if (!sector) {
+    // Fallback: Create a default sector if none exists
+    logger.info('Project has no sectors. Creating default Main Site Silo.', { projectId: item.contract.projectId });
+    sector = await prisma.sector.create({
+      data: {
+        projectId: item.contract.projectId,
+        name: 'Main Site Silo',
+        description: 'Auto-generated during procurement receipt'
+      }
+    });
+  }
+
   if (sector) {
     await distribute({
       sectorId: sector.id,
@@ -315,6 +366,7 @@ async function receiveShipment(contractItemId, receivedQty, userId) {
 module.exports = {
   getBySector,
   getByProject,
+  getAll,
   distribute,
   consume,
   getIncomingShipments,

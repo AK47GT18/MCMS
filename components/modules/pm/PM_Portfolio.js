@@ -20,13 +20,12 @@ export const PM_Portfolio = {
             <div class="data-card">
               <div class="data-card-header">
                 <div class="tabs" style="margin-bottom: 0;">
-                  <div class="tab active" data-status="active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('active')">Active Projects</div>
-                  <div class="tab" data-status="planning" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('planning')">Planning</div>
-                  <div class="tab" data-status="hold" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('on_hold')">On Hold</div>
-                  <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); window.app?.pmModule?.filterProjectsByStatus('completed')">Completed</div>
+                  <div class="tab active" data-status="active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('active')">Active Projects</div>
+                  <div class="tab" data-status="hold" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('on_hold')">On Hold</div>
+                  <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('completed')">Completed</div>
                 </div>
                 <div class="filter-group">
-                    <select class="form-select" onchange="window.app.pmModule.filterProjectsByStatus(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-size: 14px; cursor: pointer;">
+                    <select class="form-select" onchange="(window.app.pmModule || window.app.fmModule).filterProjectsByStatus(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-size: 14px; cursor: pointer;">
                         <option value="all">All Statuses</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
@@ -133,35 +132,31 @@ export const PM_Portfolio = {
 
         const rows = projects.map(project => `
             <tr>
-                <td onclick="window.app.pmModule.openProjectDetailsDrawer('${project.id}')">
+                <td onclick="(window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}')">
                     <span class="mono-val" style="font-weight: 700;">${this.escapeHTML(project.code || 'PRJ-' + project.id)}</span>
                 </td>
-                <td onclick="window.app.pmModule.openProjectDetailsDrawer('${project.id}')">
+                <td onclick="(window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}')">
                     <div style="font-weight:700; color:var(--slate-800);">${this.escapeHTML(project.name)}</div>
                     <div style="font-size:11px; color:var(--slate-500); margin-top:2px;">${this.escapeHTML(project.client || 'Government of Malawi')}</div>
                 </td>
-                <td onclick="window.app.pmModule.openProjectDetailsDrawer('${project.id}')">${this.escapeHTML(project.manager?.name || project.managerName || 'Unassigned')}</td>
-                <td onclick="window.app.pmModule.openProjectDetailsDrawer('${project.id}')">
+                <td onclick="(window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}')">${this.escapeHTML(project.manager?.name || project.managerName || 'Unassigned')}</td>
+                <td onclick="(window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}')">
                     <div style="width:100%; height:6px; background:var(--slate-100); border-radius:3px; margin-bottom:4px;">
                         <div style="width:${project.progress || 0}%; height:100%; background:var(--orange); border-radius:3px;"></div>
                     </div>
                     <div style="font-size:10px; color:var(--slate-500); font-weight:600;">${project.progress || 0}% Complete</div>
                 </td>
-                <td onclick="window.app.pmModule.openProjectDetailsDrawer('${project.id}')">
+                <td onclick="(window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}')">
                     <span class="status ${project.budgetUtilization > 100 ? 'delayed' : 'active'}" style="background:${project.budgetUtilization > 100 ? 'var(--red-light)' : 'var(--emerald-light)'}; color:${project.budgetUtilization > 100 ? 'var(--red-dark)' : 'var(--emerald-dark)'};">
                         ${project.budgetUtilization > 100 ? 'Overrun' : 'Good'} (${project.budgetUtilization ?? 0}%)
                     </span>
                 </td>
-                <td onclick="window.app.pmModule.openProjectDetailsDrawer('${project.id}')"><span class="status ${getStatusClass(project.status)}"><i class="fas ${getStatusIcon(project.status)}"></i> ${formatStatus(project.status)}</span></td>
+                <td onclick="(window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}')"><span class="status ${getStatusClass(project.status)}"><i class="fas ${getStatusIcon(project.status)}"></i> ${formatStatus(project.status)}</span></td>
                 <td style="position: relative;">
                     <div class="dropdown" style="position: relative; display: inline-block;">
-                        <button class="btn-icon dropdown-trigger" onclick="event.stopPropagation(); window.app.pmModule.toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
+                        <button class="btn-icon dropdown-trigger" onclick="event.stopPropagation(); (window.app.pmModule || window.app.fmModule).toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-content" style="display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: var(--shadow-md); z-index: 100; border-radius: 4px; border: 1px solid var(--slate-200);">
-                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.openEditProjectDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-edit" style="width: 20px;"></i> Edit Details</a>
-                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.openExtendProjectDrawer('${project.id}');" style="color: var(--orange); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-calendar-plus" style="width: 20px;"></i> Extend Timeline</a>
-                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.openSuspendProjectDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-pause-circle" style="width: 20px;"></i> Suspend Project</a>
-                            <div style="border-top: 1px solid var(--slate-100); margin: 4px 0;"></div>
-                            <a href="#" onclick="event.preventDefault(); window.app.pmModule.handleDeleteProject('${project.id}');" style="color: var(--red); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-trash-alt" style="width: 20px;"></i> Delete</a>
+                            <a href="#" onclick="event.preventDefault(); (window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-eye" style="width: 20px;"></i> View Details</a>
                         </div>
                     </div>
                 </td>

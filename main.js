@@ -129,7 +129,13 @@ if ('serviceWorker' in navigator) {
                 // Initialize push notifications after registration
                 initPushNotifications(reg);
             })
-            .catch(err => console.warn('[PWA] ServiceWorker failed:', err));
+            .catch(err => {
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.log('[PWA] ServiceWorker skipped on localhost (Secure Context required)');
+                } else {
+                    console.warn('[PWA] ServiceWorker failed:', err);
+                }
+            });
     });
 }
 

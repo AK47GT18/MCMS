@@ -139,17 +139,22 @@ async function getProjectStatus(projectId) {
   const contracts = await prisma.contract.findMany({
     where: { 
       projectId: parseInt(projectId),
-      status: { in: ['active'] } // Only count active procurements
+      status: { in: ['active', 'draft'] } // Count both active and draft procurements
     },
     include: { items: true }
   });
 
-  // Aggregate procured items
+  // Aggregate procured and received items
   const procuredMaterials = new Map();
+  const receivedMaterials = new Map();
+  
   contracts.forEach(contract => {
     contract.items.forEach(item => {
-      const current = procuredMaterials.get(item.materialName) || 0;
-      procuredMaterials.set(item.materialName, current + parseFloat(item.quantity));
+      const currentProcured = procuredMaterials.get(item.materialName) || 0;
+      procuredMaterials.set(item.materialName, currentProcured + parseFloat(item.quantity));
+      
+      const currentReceived = receivedMaterials.get(item.materialName) || 0;
+      receivedMaterials.set(item.materialName, currentReceived + parseFloat(item.receivedQty || 0));
     });
   });
 
@@ -157,10 +162,13 @@ async function getProjectStatus(projectId) {
   const statusList = [];
   for (const [materialName, requiredData] of requiredMaterials.entries()) {
     const procuredQty = procuredMaterials.get(materialName) || 0;
+    const receivedQty = receivedMaterials.get(materialName) || 0;
+    
     statusList.push({
       materialName,
       requiredQuantity: requiredData.quantity,
       procuredQuantity: procuredQty,
+      receivedQuantity: receivedQty,
       remainingQuantity: Math.max(0, requiredData.quantity - procuredQty),
       unit: requiredData.unit,
       percentComplete: requiredData.quantity > 0 ? ((procuredQty / requiredData.quantity) * 100).toFixed(1) : 100

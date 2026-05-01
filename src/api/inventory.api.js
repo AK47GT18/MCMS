@@ -3,6 +3,7 @@ import client from './client.js';
 export default {
     getBySector: (sectorId) => client.get(`/inventory/sector/${sectorId}`),
     getByProject: (projectId) => client.get(`/inventory/project/${projectId}`),
+    getAll: () => client.get('/inventory'),
     distribute: (data) => client.post('/inventory/distribute', data),
     consume: (data) => client.post('/inventory/consume', data),
     getIncomingShipments: () => client.get('/inventory/incoming-shipments'),

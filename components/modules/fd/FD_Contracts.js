@@ -296,17 +296,34 @@ export const FD_Contracts = {
     },
 
     async submitProjectContract() {
+        // Document upload validation
+        const fileInput = document.getElementById('contract_document');
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            window.toast.show('Please upload the signed master agreement document.', 'error');
+            const dropZone = document.getElementById('contract-drop-zone');
+            if (dropZone) {
+                dropZone.style.borderColor = 'var(--red)';
+                dropZone.style.background = '#fef2f2';
+                dropZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => { dropZone.style.borderColor = ''; dropZone.style.background = ''; }, 3000);
+            }
+            return;
+        }
+
+        const startDateRaw = document.getElementById('contract_start')?.value;
+        const endDateRaw = document.getElementById('contract_end')?.value;
+
         const data = {
-            projectId: document.getElementById('contract_project')?.value,
+            projectId: parseInt(document.getElementById('contract_project')?.value, 10),
             refCode: document.getElementById('contract_ref')?.value,
             title: 'Project Master Agreement',
             value: parseFloat(document.getElementById('contract_value')?.value),
-            startDate: document.getElementById('contract_start')?.value,
-            endDate: document.getElementById('contract_end')?.value,
+            startDate: startDateRaw ? new Date(startDateRaw).toISOString() : undefined,
+            endDate: endDateRaw ? new Date(endDateRaw).toISOString() : undefined,
             contractType: 'project'
         };
 
-        if (!data.projectId || !data.refCode || !data.value) {
+        if (!data.projectId || isNaN(data.projectId) || !data.refCode || !data.value) {
             window.toast.show('Please fill all required project contract fields', 'warning');
             return;
         }
@@ -315,12 +332,31 @@ export const FD_Contracts = {
 
         try {
             const token = localStorage.getItem('mcms_auth_token');
+
+            // Upload document first
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            const uploadRes = await fetch('/api/v1/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (!uploadRes.ok) throw new Error('File upload failed');
+            const uploadResult = await uploadRes.json();
+            const uploadData = uploadResult.data || uploadResult;
+            data.documentUrl = uploadData.url;
+            data.fileName = uploadData.originalName;
+
             const res = await fetch('/api/v1/contracts', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            if (!res.ok) throw new Error('Failed to archive project contract');
+            const result = await res.json();
+            if (!res.ok) {
+                const errMsg = result?.error?.details?.map(d => `${d.field}: ${d.message}`).join(', ') || result?.error?.message || 'Failed to archive project contract';
+                throw new Error(errMsg);
+            }
             
             window.toast.show('Project Master Contract Archived successfully', 'success');
             window.drawer.close();
@@ -592,18 +628,49 @@ export const FD_Contracts = {
     },
 
     async submitContract() {
+        // Document upload validation - require a file before submission
+        const fileInput = document.getElementById('contract_document');
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            window.toast.show('Please upload a signed contract document before submitting.', 'error');
+            const dropZone = document.getElementById('contract-upload-zone');
+            if (dropZone) {
+                dropZone.style.borderColor = 'var(--red)';
+                dropZone.style.background = '#fef2f2';
+                dropZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => { dropZone.style.borderColor = ''; dropZone.style.background = ''; }, 3000);
+            }
+            return;
+        }
+
+        const startDateRaw = document.getElementById('contract_start')?.value;
+        const endDateRaw = document.getElementById('contract_end')?.value;
+
         const data = {
-            projectId: document.getElementById('contract_project')?.value,
+            projectId: parseInt(document.getElementById('contract_project')?.value, 10),
             vendorName: document.getElementById('contract_vendor')?.value,
             title: document.getElementById('contract_title')?.value,
             value: parseFloat(document.getElementById('contract_value')?.value),
-            startDate: document.getElementById('contract_start')?.value,
-            endDate: document.getElementById('contract_end')?.value,
+            startDate: startDateRaw ? new Date(startDateRaw).toISOString() : undefined,
+            endDate: endDateRaw ? new Date(endDateRaw).toISOString() : undefined,
             retentionPercentage: parseFloat(document.getElementById('contract_retention')?.value || 0),
             isTaxInclusive: document.getElementById('contract_tax_inclusive')?.checked || false,
             advancePaymentAmount: parseFloat(document.getElementById('contract_advance')?.value || 0),
             guaranteeExpiry: document.getElementById('contract_guarantee_expiry')?.value || null
         };
+
+        // Basic field validation
+        if (!data.projectId || isNaN(data.projectId)) {
+            window.toast.show('Please select a project.', 'error');
+            return;
+        }
+        if (!data.title) {
+            window.toast.show('Please enter a contract title.', 'error');
+            return;
+        }
+        if (!data.value || isNaN(data.value) || data.value <= 0) {
+            window.toast.show('Please enter a valid contract value.', 'error');
+            return;
+        }
 
         // Calculate financial breakdown
         data.retentionAmount = (data.value * (data.retentionPercentage / 100));
@@ -663,30 +730,32 @@ export const FD_Contracts = {
             const token = localStorage.getItem('mcms_auth_token');
 
             // File Upload Logic
-            const fileInput = document.getElementById('contract_document');
-            if (fileInput && fileInput.files[0]) {
-                const formData = new FormData();
-                formData.append('file', fileInput.files[0]);
-                
-                const uploadRes = await fetch('/api/v1/upload', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                if (!uploadRes.ok) throw new Error('File upload failed');
-                const uploadResult = await uploadRes.json();
-                const uploadData = uploadResult.data || uploadResult;
-                data.documentUrl = uploadData.url;
-                data.fileName = uploadData.originalName;
-            }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            const uploadRes = await fetch('/api/v1/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (!uploadRes.ok) throw new Error('File upload failed');
+            const uploadResult = await uploadRes.json();
+            const uploadData = uploadResult.data || uploadResult;
+            data.documentUrl = uploadData.url;
+            data.fileName = uploadData.originalName;
+
             const res = await fetch('/api/v1/contracts', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...data, materialsList: JSON.stringify(materials), refCode: 'CON-' + Date.now().toString(36).toUpperCase() })
             });
-            if (!res.ok) throw new Error('System error creating contract');
             
             const result = await res.json();
+            if (!res.ok) {
+                const errMsg = result?.error?.details?.map(d => `${d.field}: ${d.message}`).join(', ') || result?.error?.message || 'System error creating contract';
+                throw new Error(errMsg);
+            }
+            
             const contract = result.data || result;
             
             window.toast.show('Contract established successfully', 'success');

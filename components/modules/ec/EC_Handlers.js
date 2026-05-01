@@ -210,8 +210,15 @@ export const EC_Handlers = {
     },
 
     async handleProcurementReceipt(item) {
-        const qty = Number(document.getElementById('receive_qty')?.value);
+        const qtyInput = document.getElementById('receive_qty');
+        const qty = Number(qtyInput?.value);
         if (!qty) return;
+
+        const btn = document.querySelector('button[onclick*="handleProcurementReceipt"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing...';
+        }
 
         window.toast.show('Recording physical receipt and updating silo…', 'info');
 
@@ -231,6 +238,10 @@ export const EC_Handlers = {
                 window.toast.show('Physical stock verified and added to silo.', 'success');
             }, 800);
         } catch (error) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'Confirm Physical Receipt';
+            }
             console.error('[EC] Receipt failed:', error);
             window.toast.show('Failed to record receipt: ' + (error.message || 'Server error'), 'error');
         }
@@ -320,25 +331,11 @@ export const EC_Handlers = {
         const data = this.inventory[materialName];
         if (!data) return;
 
-        // Build allocation list from inventoryByProject
-        const allocations = [];
-        Object.entries(this.inventoryByProject || {}).forEach(([projectId, items]) => {
-            const item = items.find(i => i.materialName === materialName);
-            if (item && item.quantityOnHand > 0) {
-                const project = (this.activeProjects || []).find(p => p.id == projectId);
-                allocations.push({
-                    projectName: project ? project.name : `Project ${projectId}`,
-                    sectorName: item.sectorName,
-                    qty: Number(item.quantityOnHand)
-                });
-            }
-        });
-
         window.drawer.open('Material Inventory Breakdown', window.DrawerTemplates.inventoryDetails({
             materialName,
             totalQty: data.qty,
             unit: data.unit,
-            allocations
+            allocations: data.allocations || []
         }));
     },
 
@@ -488,39 +485,47 @@ export const EC_Handlers = {
     },
 
     async _loadInventory() {
+        if (this.isLoadingInventory) return;
+        this.isLoadingInventory = true;
         try {
-            const data = await inventoryApi.getBySector(1); // Sector 1 is Main Yard
-            const invMap = {};
+            const data = await inventoryApi.getAll();
+            const items = Array.isArray(data) ? data : (data.data || []);
             
-            if (Array.isArray(data)) {
-                data.forEach(item => {
-                    invMap[item.materialName] = {
-                        qty: Number(item.quantity) || 0,
-                        thresh: Number(item.minThreshold) || 100,
-                        unit: item.unit || 'Units',
-                        category: item.category || 'Materials'
-                    };
+            const invMap = {};
+            const projectMap = {};
+            
+            items.forEach(item => {
+                // System Total Map
+                invMap[item.materialName] = {
+                    qty: Number(item.totalQuantity) || 0,
+                    unit: item.unit || 'Units',
+                    thresh: 100, // Default threshold
+                    category: 'Materials',
+                    allocations: item.allocations
+                };
+
+                // Project-specific Map for the breakdown view
+                item.allocations.forEach(alloc => {
+                    if (!projectMap[alloc.projectId]) projectMap[alloc.projectId] = [];
+                    projectMap[alloc.projectId].push({
+                        materialName: item.materialName,
+                        quantityOnHand: alloc.quantity,
+                        sectorName: alloc.sectorName,
+                        sectorId: alloc.sectorId
+                    });
                 });
-            } else if (data && data.data) {
-                // If wrapped in a data object
-                data.data.forEach(item => {
-                    invMap[item.materialName] = {
-                        qty: Number(item.quantity) || 0,
-                        thresh: Number(item.minThreshold) || 100,
-                        unit: item.unit || 'Units',
-                        category: item.category || 'Materials'
-                    };
-                });
-            }
+            });
             
             this.inventory = invMap;
+            this.inventoryByProject = projectMap;
             
-            if (this.currentView === 'inventory') {
+            if (this.currentView === 'inventory' || this.currentView === 'dashboard') {
                 this._refreshCurrentView();
             }
         } catch (error) {
-            console.error('[EC] Failed to load yard inventory:', error);
-            // Don't toast on every background refresh, only log
+            console.error('[EC] Failed to load inventory:', error);
+        } finally {
+            this.isLoadingInventory = false;
         }
     },
 

@@ -470,6 +470,9 @@ async function router(req, res) {
   // INVENTORY ROUTES
   // ============================================
   if (resource === 'inventory') {
+    if (!id && method === 'GET') {
+      return inventoryController.getAll(req, res);
+    }
     if (id === 'distribute' && method === 'POST') {
       return inventoryController.distribute(req, res);
     }

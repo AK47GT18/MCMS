@@ -7,7 +7,7 @@ export const FD_Records = {
             const { PM_Reports } = await import('../pm/PM_Reports.js');
             const container = document.getElementById('fd-reports-root');
             if (container) {
-                container.innerHTML = PM_Reports.render();
+                container.innerHTML = PM_Reports.getReportsView();
                 PM_Reports.init();
             }
         }, 0);

@@ -57,8 +57,9 @@ export const FD_Procurement = {
             const rows = data.materials.map(m => `
                 <tr>
                     <td style="font-weight: 600;">${m.materialName}</td>
-                    <td style="text-align: right;">${Number(m.requiredQuantity).toLocaleString()} ${m.unit}</td>
-                    <td style="text-align: right; color: var(--emerald);">${Number(m.procuredQuantity).toLocaleString()} ${m.unit}</td><td style="text-align: right; color: var(--blue); font-weight: 600;">${Number(m.procuredQuantity * 0.85).toLocaleString()} ${m.unit}</td>
+                    <td style="text-align: right; font-weight: 600;">${Number(m.requiredQuantity).toLocaleString()} ${m.unit}</td>
+                    <td style="text-align: right; color: var(--emerald); font-weight: 700;">${Number(m.procuredQuantity).toLocaleString()} ${m.unit}</td>
+                    <td style="text-align: right; color: var(--blue); font-weight: 700;">${Number(m.receivedQuantity || 0).toLocaleString()} ${m.unit}</td>
                     <td style="text-align: right; color: ${m.remainingQuantity > 0 ? 'var(--red)' : 'var(--slate-500)'};">${Number(m.remainingQuantity).toLocaleString()} ${m.unit}</td>
                     <td style="width: 200px;">
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -84,6 +85,7 @@ export const FD_Procurement = {
                             <th>Material</th>
                             <th style="text-align: right;">Required (Budget)</th>
                             <th style="text-align: right;">Procured</th>
+                            <th style="text-align: right;">Received</th>
                             <th style="text-align: right;">Remaining</th>
                             <th>Fulfillment Progress</th>
                         </tr>

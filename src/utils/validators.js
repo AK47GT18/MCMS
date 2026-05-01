@@ -106,16 +106,25 @@ const roadEstimationInputSchema = z.object({
 
 const createContractSchema = z.object({
   refCode: z.string().min(1).max(30),
-  projectId: z.number().int().positive().optional(),
+  projectId: z.coerce.number().int().positive().optional(),
   vendorName: z.string().max(255).optional(),
   title: z.string().min(1).max(255),
-  value: z.number().positive().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  value: z.coerce.number().positive().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   status: z.enum(['active', 'draft', 'expired', 'cancelled']).optional(),
   documentUrl: z.string().optional(),
+  fileName: z.string().optional(),
   materialsList: z.string().optional(),
   contractType: z.string().max(50).optional(),
+  // Financial Precision Fields
+  retentionPercentage: z.coerce.number().min(0).optional(),
+  retentionAmount: z.coerce.number().min(0).optional(),
+  isTaxInclusive: z.coerce.boolean().optional(),
+  vatAmount: z.coerce.number().min(0).optional(),
+  whtAmount: z.coerce.number().min(0).optional(),
+  advancePaymentAmount: z.coerce.number().min(0).optional(),
+  guaranteeExpiry: z.string().nullable().optional(),
 });
 
 const updateContractSchema = createContractSchema.partial();

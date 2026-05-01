@@ -167,6 +167,7 @@ async function create(data) {
   const project = await prisma.project.create({
     data: {
       ...data,
+      status: 'active',
       budgetSpent: 0,
     },
     include: {
@@ -669,7 +670,6 @@ async function extendProject(projectId, newEndDate, reason, approver) {
   });
 
   // 5. Notify all project stakeholders
-  const emailService = require('../emails/email.service');
   const notificationTargets = [];
 
   // Get all role-holders for this project

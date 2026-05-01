@@ -79,7 +79,7 @@ model Project {
   projectType          ProjectTypeEnum?       @map("project_type")
   radius               Int?                   @default(500)
   suspensionReason     String?                @map("suspension_reason")
-  status               String                 @default("planning") @db.VarChar(20)
+  status               String                 @default("active") @db.VarChar(20)
   currentPhase         Int                    @default(1) @map("current_phase")
   assetLogs            AssetLog[]
   assets               Asset[]

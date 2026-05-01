@@ -59,6 +59,9 @@ export class FinanceDashboard {
             case 'ledger': return this.getLedgerView();
             case 'reports': return this.getRecordsView();
             case 'audit': return this.getAuditView();
+            case 'portfolio': 
+                this.currentView = 'dashboard';
+                return this.getDashboardView();
             default: return this.getPlaceholderView(this.currentView);
         }
     }
@@ -76,7 +79,6 @@ export class FinanceDashboard {
             'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
             'bcr': { title: 'PM Uplift Requests', context: 'Budget Extensions' },
             'ledger': { title: 'Commitments Ledger', context: 'Organizational Obligations' },
-
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
             'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
         };
@@ -97,16 +99,77 @@ export class FinanceDashboard {
         `;
     }
 
+    _refreshCurrentView() {
+        const container = document.getElementById('finance-content-area');
+        if (container) {
+            container.innerHTML = this.getCurrentViewHTML();
+        }
+    }
+
     switchView(view) {
         this.currentView = view;
         // Use the global app page loader for proper DOM re-injection
         if (window.app && typeof window.app.loadPage === 'function') {
             window.app.loadPage(view);
         } else {
-            // Fallback: re-render into content area
-            const content = document.getElementById('finance-content-area');
-            if (content) content.innerHTML = this.getCurrentViewHTML();
+            this._refreshCurrentView();
         }
+    }
+
+    renderLoadingState() {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                <div>Loading data...</div>
+            </div>
+        `;
+    }
+
+    renderEmptyState(message) {
+        return `
+            <div style="padding: 40px; text-align: center; color: var(--slate-400);">
+                <i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 12px;"></i>
+                <div>${message}</div>
+            </div>
+        `;
+    }
+
+    escapeHTML(str) {
+        return str?.toString().replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m])) || '';
+    }
+
+    toggleDropdown(btn) {
+        const content = btn.nextElementSibling;
+        const isVisible = content.style.display === 'block';
+        
+        // Close all others
+        document.querySelectorAll('.dropdown-content').forEach(d => d.style.display = 'none');
+        
+        if (!isVisible) {
+            content.style.display = 'block';
+            const close = (e) => {
+                if (!btn.contains(e.target)) {
+                    content.style.display = 'none';
+                    document.removeEventListener('click', close);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', close), 0);
+        }
+    }
+
+    updateHeaderStats() {
+        if (!this.allProjects) return;
+        
+        const activeCount = this.allProjects.filter(p => p.status === 'active' || p.status === 'in_progress').length;
+        const portfolioValue = this.allProjects.reduce((sum, p) => sum + (parseFloat(p.contractSum || p.budget || 0)), 0);
+        
+        const activeEl = document.getElementById('stat-active-projects');
+        const valueEl = document.getElementById('stat-portfolio-value');
+        
+        if (activeEl) activeEl.textContent = activeCount;
+        if (valueEl) valueEl.textContent = `MWK ${portfolioValue.toLocaleString()}`;
     }
 }
 

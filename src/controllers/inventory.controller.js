@@ -125,6 +125,15 @@ const consume = asyncHandler(async (req, res) => {
   response.success(res, result);
 });
 
+const getAll = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director'])) return;
+
+  const result = await inventoryService.getAll();
+  response.success(res, result);
+});
+
 /**
  * Get inventory for a specific project (across all sectors)
  */
@@ -179,6 +188,7 @@ const receiveShipment = asyncHandler(async (req, res) => {
 module.exports = {
   getBySector,
   getByProject,
+  getAll,
   distribute,
   consume,
   getIncomingShipments,

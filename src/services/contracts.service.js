@@ -39,6 +39,7 @@ async function getById(id) {
     include: {
       project: { select: { id: true, code: true, name: true } },
       milestones: { orderBy: { dueDate: 'asc' } },
+      items: true,
       versions: { 
         include: { createdBy: { select: { name: true } } },
         orderBy: { versionNumber: 'asc' }

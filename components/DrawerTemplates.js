@@ -510,6 +510,37 @@ export const DrawerTemplates = {
             </div>
 
             <div style="padding: 24px;">
+                <!-- Materials Section -->
+                <div style="margin-bottom: 32px;">
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Procured Materials & Specs</h4>
+                    <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm);">
+                        <div style="padding: 10px 16px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
+                            <div style="flex: 2;">Item Specification</div>
+                            <div style="flex: 1; text-align: right;">Quantity</div>
+                            <div style="flex: 1.2; text-align: right;">Total Est. Value</div>
+                        </div>
+                        ${contract.items && contract.items.length > 0 ? contract.items.map(item => `
+                            <div style="padding: 12px 16px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center;">
+                                <div style="flex: 2;">
+                                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${item.materialName}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">${item.unitPrice ? 'MWK ' + Number(item.unitPrice).toLocaleString() + ' per ' + (item.unit || 'unit') : (item.unit || 'Standard Unit')}</div>
+                                </div>
+                                <div style="flex: 1; text-align: right;">
+                                    <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${item.quantity} ${item.unit || ''}</div>
+                                </div>
+                                <div style="flex: 1.2; text-align: right;">
+                                    <div style="font-size: 13px; font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono';">MWK ${Number(item.totalCost || 0).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        `).join('') : `
+                            <div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 12px;">
+                                <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                                No specific material line items attached to this agreement.
+                            </div>
+                        `}
+                    </div>
+                </div>
+
                 <!-- Variation Orders Section -->
                 <div style="margin-bottom: 32px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -2001,11 +2032,11 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Status</label>
                 <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px;">
-                    <option value="planning">Planning</option>
                     <option value="active">Active</option>
                     <option value="on_hold">On Hold</option>
                     <option value="completed">Completed</option>
                     <option value="delayed">Delayed</option>
+                    <option value="suspended">Suspended</option>
                 </select>
             </div>
             <div class="form-group" style="margin-bottom:16px;">
@@ -4596,45 +4627,60 @@ Contract Admin</textarea>
     `,
 
     inventoryDetails: (data) => `
-        <div style="padding: 24px;">
-            <div style="background: var(--slate-900); padding: 24px; border-radius: 16px; color: white; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-                <div style="font-size: 11px; font-weight: 800; color: #818cf8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Resource Allocation</div>
-                <h3 style="font-size: 20px; font-weight: 900; letter-spacing: -0.02em;">${data.materialName}</h3>
-                <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 12px;">
-                    <span style="font-size: 24px; font-weight: 900; color: white; font-family: 'JetBrains Mono';">${data.totalQty.toLocaleString()}</span>
-                    <span style="font-size: 13px; color: #94a3b8; font-weight: 700;">${data.unit} (System Total)</span>
+        <div style="padding: 20px; background: #fff;">
+            <div style="background: var(--orange-light); padding: 16px; border-radius: 12px; border: 1px solid rgba(249, 115, 22, 0.2); margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+                <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--orange); box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <div>
+                    <div style="font-size: 10px; font-weight: 800; color: var(--orange); text-transform: uppercase; letter-spacing: 0.1em;">${data.materialName}</div>
+                    <div style="font-size: 22px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono', monospace;">
+                        ${Number(data.totalQty).toLocaleString()} <span style="font-size: 12px; color: var(--slate-500); font-weight: 700;">${data.unit} Total</span>
+                    </div>
                 </div>
             </div>
 
-            <h4 style="font-size: 13px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.05em;">Project Ownership Breakdown</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+                <h4 style="font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em;">Project Allocations</h4>
+                <div style="font-size: 10px; font-weight: 700; color: var(--orange);">${data.allocations.length} Active Sites</div>
+            </div>
             
-            <div style="display: grid; gap: 12px;">
-                ${data.allocations.map(a => `
-                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 800; color: var(--slate-900); font-size: 14px;">${a.projectName}</div>
-                            <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">Sector: ${a.sectorName || 'Main Yard'}</div>
+            <div style="display: grid; gap: 8px; margin-bottom: 20px;">
+                ${data.allocations.length === 0 ? `
+                    <div style="padding: 24px; text-align: center; background: var(--slate-50); border: 1px dashed var(--slate-200); border-radius: 12px; color: var(--slate-400); font-size: 12px;">
+                        No project-specific stock found.
+                    </div>
+                ` : data.allocations.map(a => `
+                    <div style="background: #fff; border: 1px solid var(--slate-100); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-location-dot" style="font-size: 12px; color: var(--orange);"></i>
+                            <div>
+                                <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.projectName || 'Central Silo'}</div>
+                                <div style="font-size: 10px; color: var(--slate-500);">${a.sectorName}</div>
+                            </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-family: 'JetBrains Mono'; font-weight: 900; font-size: 16px; color: var(--indigo-600);">${a.qty.toLocaleString()}</div>
-                            <div style="font-size: 11px; color: var(--slate-400); font-weight: 600;">Available Stock</div>
+                            <div style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 15px; color: var(--slate-900);">${Number(a.quantity).toLocaleString()}</div>
                         </div>
                     </div>
                 `).join('')}
-
-                ${data.allocations.length === 0 ? '<div style="padding: 32px; text-align: center; color: var(--slate-400); font-size: 13px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-200);">No specific project allocations found.</div>' : ''}
             </div>
 
-            <div style="margin-top: 32px; padding: 16px; background: #fefce8; border: 1px solid #fef08a; border-radius: 12px; display: flex; gap: 12px;">
-                <i class="fas fa-shield-halved" style="color: #ca8a04; margin-top: 3px;"></i>
-                <div style="font-size: 12px; color: #854d0e; line-height: 1.5;">
-                    <strong>Inventory Lock:</strong> This material is legally bound to the specific projects listed above. Transferring stock between projects requires Finance Director authorization.
+            <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px; display: flex; gap: 12px; align-items: flex-start;">
+                <i class="fas fa-shield-halved" style="color: #ca8a04; font-size: 14px; margin-top: 2px;"></i>
+                <div style="font-size: 11px; color: #854d0e; line-height: 1.4;">
+                    <strong>Inventory Lock:</strong> Legally bound to the sites above. Site transfers require <strong>Finance Director Authorization</strong> via Formal Variation Order.
                 </div>
             </div>
             
-            <button class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 24px; padding: 14px;" onclick="window.drawer.close()">
-                Close Details
-            </button>
+            <div style="margin-top: 24px;">
+                <button class="btn" style="width: 100%; justify-content: center; padding: 14px; font-weight: 800; font-size: 13px; border-radius: 10px; background: var(--orange); color: white; border: none; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2); cursor: pointer; transition: all 0.2s ease;" 
+                    onclick="window.drawer.close()"
+                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(249, 115, 22, 0.3)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(249, 115, 22, 0.2)'">
+                    ACKNOWLEDGE & CLOSE
+                </button>
+            </div>
         </div>
     `,
 
