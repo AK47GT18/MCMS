@@ -158,19 +158,27 @@ export const PM_Contracts = {
             return;
         }
 
-        const rows = filtered.map(item => `
-            <tr>
-                <td><span class="project-id">${this.escapeHTML(item.code || item.refCode || 'CNT-' + item.id)}</span></td>
-                <td style="font-weight:600;">${this.escapeHTML(item.title)}</td>
-                ${this.currentContractTab === 'vendor' ? `<td>${this.escapeHTML(item.vendorName || item.vendor?.name || 'N/A')}</td>` : ''}
-                <td><span class="status active" style="background:var(--slate-100); color:var(--slate-600);">${this.escapeHTML((item.type || item.contractType || 'Service').replace(/_/g, ' '))}</span></td>
-                <td>v${this.escapeHTML(item.version || '1.0')}</td>
-                <td>${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}</td>
-                <td>
-                    <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractView(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i></button>
-                </td>
-            </tr>
-        `).join('');
+        const rows = filtered.map(item => {
+            const isLocked = item.items?.some(i => Number(i.receivedQty) > 0);
+            return `
+                <tr style="${isLocked ? 'background: var(--slate-50);' : ''}">
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="project-id">${this.escapeHTML(item.code || item.refCode || 'CNT-' + item.id)}</span>
+                            ${isLocked ? `<i class="fas fa-lock" style="color: var(--slate-400); font-size: 10px;" title="Financial Lock: Active receipts detected. Changes require formal [VARIATION]."></i>` : ''}
+                        </div>
+                    </td>
+                    <td style="font-weight:600;">${this.escapeHTML(item.title)}</td>
+                    ${this.currentContractTab === 'vendor' ? `<td>${this.escapeHTML(item.vendorName || item.vendor?.name || 'N/A')}</td>` : ''}
+                    <td><span class="status active" style="background:var(--slate-100); color:var(--slate-600);">${this.escapeHTML((item.type || item.contractType || 'Service').replace(/_/g, ' '))}</span></td>
+                    <td>v${this.escapeHTML(item.version || '1.0')}</td>
+                    <td>${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractView(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
 
         container.innerHTML = `
             <table>

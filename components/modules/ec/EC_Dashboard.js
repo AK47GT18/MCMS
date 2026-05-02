@@ -53,6 +53,11 @@ export const EC_Dashboard = {
                 <div class="data-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
                     <div class="data-card-header">
                         <div class="card-title">Inventory Health</div>
+                        ${lowStockCount > 0 ? `
+                            <button class="btn btn-red btn-xs" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.ecModule.reorderAllCritical()">
+                                <i class="fas fa-shopping-cart"></i> Reorder All
+                            </button>
+                        ` : ''}
                     </div>
                     <div style="padding: 16px;" id="ec-logistics-status">
                         ${this.isLoadingInventory && inventoryEntries.length === 0
@@ -67,7 +72,14 @@ export const EC_Dashboard = {
                                     <div style="margin-bottom: 16px; padding: 12px; background: white; border-radius: 12px; border: 1px solid var(--slate-100);">
                                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
                                             <span style="font-weight: 700; color: var(--slate-700);">${name}</span>
-                                            <span style="color: ${data.qty <= data.thresh ? 'var(--red)' : 'var(--indigo-600)'}; font-weight: 800;">${data.qty} ${data.unit}</span>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span style="color: ${data.qty <= data.thresh ? 'var(--red)' : 'var(--indigo-600)'}; font-weight: 800;">${data.qty} ${data.unit}</span>
+                                                ${data.qty <= data.thresh ? `
+                                                    <button class="btn btn-red btn-xs" style="width:20px; height:20px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="window.app.ecModule.reorderMaterial('${name}')" title="Replenish ${name}">
+                                                        <i class="fas fa-plus" style="font-size: 8px;"></i>
+                                                    </button>
+                                                ` : ''}
+                                            </div>
                                         </div>
                                         <div style="height: 8px; background: var(--slate-100); border-radius: 4px; overflow: hidden;">
                                             <div style="width: ${Math.min(100, (data.qty / Math.max(data.thresh * 3, 1)) * 100)}%; background: ${data.qty <= data.thresh ? 'linear-gradient(90deg, var(--red), #f87171)' : 'linear-gradient(90deg, var(--indigo-500), var(--indigo-600))'}; height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>

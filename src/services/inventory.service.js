@@ -171,8 +171,22 @@ async function consume(data, user) {
   logger.info(`Stock consumed: ${quantity} ${inventory.unit} of ${materialName} from sector ${sectorId}`);
 
   // Threshold Depletion Check
-  if (Number(updatedInventory.quantityOnHand) <= Number(updatedInventory.lowThreshold) && Number(updatedInventory.lowThreshold) > 0) {
-    triggerDepletionAlert(updatedInventory, inventory.sector);
+  const currentQty = Number(updatedInventory.quantityOnHand);
+  const lowThreshold = Number(updatedInventory.lowThreshold);
+  
+  // 1. Check explicit lowThreshold
+  if (lowThreshold > 0 && currentQty <= lowThreshold) {
+    await triggerDepletionAlert(updatedInventory, inventory.sector, 'THRESHOLD_REACHED');
+  } 
+  // 2. Check 20% Rule (if no notification sent recently)
+  else if (inventory.totalQtyAllocated && currentQty <= (Number(inventory.totalQtyAllocated) * 0.2)) {
+    // Only alert if we haven't alerted in the last 24 hours to avoid spam
+    const lastAlert = updatedInventory.lastNotificationAt ? new Date(updatedInventory.lastNotificationAt) : null;
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    if (!lastAlert || lastAlert < oneDayAgo) {
+      await triggerDepletionAlert(updatedInventory, inventory.sector, 'LOW_STOCK_20');
+    }
   }
 
   return { inventory: updatedInventory, log };
@@ -181,21 +195,38 @@ async function consume(data, user) {
 /**
  * Internal method to handle Depletion Alerts
  */
-async function triggerDepletionAlert(inventory, sector) {
-  logger.warn(`Depletion Alert: ${inventory.materialName} in sector ${sector.id} is at or below threshold (${inventory.quantityOnHand} <= ${inventory.lowThreshold})`);
+async function triggerDepletionAlert(inventory, sector, alertType) {
+  logger.warn(`Depletion Alert [${alertType}]: ${inventory.materialName} in sector ${sector.id} is low (${inventory.quantityOnHand} ${inventory.unit})`);
   
   try {
     const pm = await prisma.user.findFirst({
       where: { id: sector.project.managerId }
     });
 
-    if (pm) {
-      await emailService.sendNotification(
-        pm,
-        `Low Stock Alert: ${inventory.materialName} in ${sector.name}`,
-        `The inventory level for ${inventory.materialName} in Sector ${sector.name} (${sector.project.name}) has dropped to ${inventory.quantityOnHand} ${inventory.unit}, which is at or below the threshold of ${inventory.lowThreshold} ${inventory.unit}. Please action a replenishment request if necessary.`
-      );
+    const ec = await prisma.user.findFirst({
+      where: { role: 'Equipment_Coordinator' }
+    });
+
+    const subject = alertType === 'LOW_STOCK_20' 
+      ? `CRITICAL LOW STOCK (20%): ${inventory.materialName} in ${sector.name}`
+      : `Low Stock Alert: ${inventory.materialName} in ${sector.name}`;
+
+    const message = alertType === 'LOW_STOCK_20'
+      ? `CRITICAL: The inventory level for ${inventory.materialName} in Sector ${sector.name} (${sector.project.name}) has dropped to 20% of allocated volume (${inventory.quantityOnHand} ${inventory.unit} remaining). Immediate replenishment required.`
+      : `The inventory level for ${inventory.materialName} in Sector ${sector.name} (${sector.project.name}) has dropped to ${inventory.quantityOnHand} ${inventory.unit}, which is at or below the threshold of ${inventory.lowThreshold} ${inventory.unit}.`;
+
+    const recipients = [pm, ec].filter(u => u && u.email);
+
+    for (const user of recipients) {
+      await emailService.sendNotification(user, subject, message);
     }
+
+    // Update last notification timestamp
+    await prisma.inventory.update({
+      where: { id: inventory.id },
+      data: { lastNotificationAt: new Date() }
+    });
+
   } catch (error) {
     logger.error('Failed to send depletion alert email:', error.message);
   }

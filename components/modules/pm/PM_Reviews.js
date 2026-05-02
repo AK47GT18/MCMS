@@ -124,8 +124,8 @@ export const PM_Reviews = {
             <tr>
                 <td style="font-weight: 700;">${new Date(item.date || item.createdAt).toLocaleDateString()}</td>
                 <td>${this.escapeHTML(item.projectName || 'Site Project')}</td>
-                <td>${item.supervisorName || 'FS'}</td>
-                <td>${item.workPercentage}%</td>
+                <td>${item.submitter?.name || 'FS'}</td>
+                <td>${item.workProgress || 0}%</td>
                 <td><span class="status pending">SUBMITTED</span></td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.openDailyLogReviewDrawer('${item.id}', '${item.projectId}')">Review Progress</button>

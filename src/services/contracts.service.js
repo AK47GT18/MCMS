@@ -24,6 +24,7 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
           include: { createdBy: { select: { name: true } } },
           orderBy: { versionNumber: 'desc' }
         },
+        items: { select: { receivedQty: true } },
         _count: { select: { milestones: true } },
       },
     }),
@@ -147,9 +148,18 @@ async function create(data, userId) {
 async function update(id, data, userId) {
   const existing = await prisma.contract.findUnique({
     where: { id },
-    include: { project: { select: { id: true, name: true, manager: { select: { email: true } } } } }
+    include: { 
+      project: { select: { id: true, name: true, manager: { select: { email: true } } } },
+      items: true
+    }
   });
   if (!existing) throw new AppError('Contract not found', 404);
+
+  // Financial Integrity: Check if contract is locked
+  const isLocked = existing.items.some(item => Number(item.receivedQty) > 0);
+  if (isLocked && !data.changeNotes?.startsWith('[VARIATION]')) {
+    throw new AppError('Contract is locked due to active receipts. Updates must be submitted as a [VARIATION].', 403);
+  }
 
   const contract = await prisma.contract.update({ where: { id }, data });
   
@@ -173,17 +183,17 @@ async function update(id, data, userId) {
     }
   });
 
-  logger.info('Contract updated and version record created', { contractId: id, version: nextVersionNum });
+  logger.info('Contract updated and version record created', { contractId: id, version: nextVersionNum, isLocked });
   
   if (userId) {
-    await auditService.log(userId, 'UPDATE_CONTRACT', 'Contract', id, data);
+    await auditService.log(userId, 'UPDATE_CONTRACT', 'Contract', id, { ...data, isLocked });
   }
   
   if (existing.project && existing.project.manager && existing.project.manager.email) {
     await emailService.sendNotification(
       existing.project.manager.email,
       'Contract Updated',
-      `Contract ${contract.refCode} for project ${existing.project.name} has been updated.`
+      `Contract ${contract.refCode} for project ${existing.project.name} has been updated ${isLocked ? '(Formal Variation)' : ''}.`
     ).catch(e => logger.error('PM Email failed', e));
   }
   
@@ -191,7 +201,19 @@ async function update(id, data, userId) {
 }
 
 async function remove(id, userId) {
-  await getById(id);
+  const contract = await prisma.contract.findUnique({
+    where: { id },
+    include: { items: true }
+  });
+  
+  if (!contract) throw new AppError('Contract not found', 404);
+
+  // Financial Integrity Check
+  const hasReceipts = contract.items.some(item => Number(item.receivedQty) > 0);
+  if (hasReceipts) {
+    throw new AppError('CRITICAL: Cannot delete contract with active material receipts. Financial trail must be preserved.', 403);
+  }
+
   await prisma.contract.delete({ where: { id } });
   logger.info('Contract deleted', { contractId: id });
   
@@ -234,4 +256,25 @@ async function getByProject(projectId) {
   });
 }
 
-module.exports = { getAll, getById, create, update, remove, approve, getByProject };
+/**
+ * Check if a contract is locked based on receipts
+ */
+async function isContractLocked(id) {
+  const contract = await prisma.contract.findUnique({
+    where: { id },
+    include: { items: true }
+  });
+  if (!contract) return false;
+  return contract.items.some(item => Number(item.receivedQty) > 0);
+}
+
+module.exports = { 
+  getAll, 
+  getById, 
+  create, 
+  update, 
+  remove, 
+  approve, 
+  getByProject,
+  isContractLocked
+};

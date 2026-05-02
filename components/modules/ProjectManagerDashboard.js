@@ -36,7 +36,7 @@ export class ProjectManagerDashboard {
     constructor() {
         this.currentView = 'portfolio';
         this.selectedProjectId = null; 
-        this.currentGanttViewMode = 'Day'; 
+        this.currentGanttViewMode = 'Month'; 
         
         // WebSocket Real-time listeners
         this.initRealtimeListeners();

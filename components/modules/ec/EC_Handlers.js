@@ -732,5 +732,63 @@ export const EC_Handlers = {
         } finally {
             this._currentDispatchContext = null;
         }
+    },
+
+    async reorderMaterial(materialName) {
+        if (!confirm(`Generate one-click replenishment request for ${materialName}?`)) return;
+
+        window.toast.show(`Requesting ${materialName} replenishment…`, 'info');
+
+        try {
+            // Find a project to link this to (defaulting to project 1 if none found)
+            const projectsRes = await client.get('/projects');
+            const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.data || []);
+            const targetProject = projects[0]?.id || 1; 
+
+            await client.post('/assets-scheduler/replenishment', {
+                projectId: targetProject,
+                materialName: materialName,
+                quantityNeeded: 500, 
+                notes: 'Automated low-stock replenishment from EC Dashboard.'
+            });
+
+            window.toast.show(`${materialName} replenishment requested from Finance.`, 'success');
+            await this._loadInventory();
+        } catch (error) {
+            console.error('[EC] Reorder failed:', error);
+            window.toast.show('Reorder failed: ' + (error.message || 'Server error'), 'error');
+        }
+    },
+
+    async reorderAllCritical() {
+        const criticalItems = Object.entries(this.inventory)
+            .filter(([_, data]) => data.qty <= data.thresh)
+            .map(([name]) => name);
+
+        if (criticalItems.length === 0) return;
+        if (!confirm(`Generate replenishment requests for ALL ${criticalItems.length} critical materials?`)) return;
+
+        window.toast.show('Processing batch reorder…', 'info');
+
+        try {
+            const projectsRes = await client.get('/projects');
+            const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.data || []);
+            const targetProject = projects[0]?.id || 1;
+
+            for (const item of criticalItems) {
+                await client.post('/assets-scheduler/replenishment', {
+                    projectId: targetProject,
+                    materialName: item,
+                    quantityNeeded: 500,
+                    notes: 'Automated batch replenishment (Critical Stock).'
+                });
+            }
+
+            window.toast.show('Batch replenishment requests submitted.', 'success');
+            await this._loadInventory();
+        } catch (error) {
+            console.error('[EC] Batch reorder failed:', error);
+            window.toast.show('Batch reorder failed.', 'error');
+        }
     }
 };

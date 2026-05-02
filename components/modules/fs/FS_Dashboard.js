@@ -38,17 +38,13 @@ export const FS_Dashboard = {
                     <div style="color: var(--orange); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-camera"></i></div>
                     <div style="font-weight: 800; font-size: 13px;">Daily Log</div>
                 </div>
-                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS)">
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.app.fsModule.openResourceRequestDrawer()">
                     <div style="color: var(--blue); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-plus-circle"></i></div>
                     <div style="font-weight: 800; font-size: 13px;">Request</div>
                 </div>
-                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident)">
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.app.fsModule.switchView('reporting')">
                     <div style="color: var(--red); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-helmet-safety"></i></div>
-                    <div style="font-weight: 800; font-size: 13px;">Incident</div>
-                </div>
-                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint)">
-                    <div style="color: var(--amber); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div style="font-weight: 800; font-size: 13px;">Issue</div>
+                    <div style="font-weight: 800; font-size: 13px;">Safety & Issues</div>
                 </div>
             </div>
 
@@ -73,6 +69,19 @@ export const FS_Dashboard = {
                             <span>Execution Progress</span>
                             <span>${this.assignedProject?.progress || 0}% Complete</span>
                         </div>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <div class="data-card-header"><div class="card-title">Project Work Zone (Geofence)</div></div>
+                    <div id="fs-geofence-map" style="height: 200px; background: var(--slate-100); position: relative;">
+                        <div id="map-loading-overlay" style="position: absolute; inset: 0; background: rgba(255,255,255,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--slate-500);">
+                            <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Initializing Map...
+                        </div>
+                    </div>
+                    <div style="padding: 12px; font-size: 11px; color: var(--slate-500); display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-info-circle"></i> Submission allowed within the circle.</span>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.initGeofenceMap()"><i class="fas fa-sync"></i> Reset</button>
                     </div>
                 </div>
 
@@ -104,12 +113,107 @@ export const FS_Dashboard = {
 
     async _loadAssignedProject() {
         try {
+            console.log('[FS] Loading assigned projects...');
             const result = await client.get('/projects');
-            const projects = Array.isArray(result) ? result : (result.data || []);
+            console.log('[FS] Projects result:', result);
+            const projects = Array.isArray(result) ? result : (result.projects || result.data || []);
+            console.log('[FS] Found projects:', projects.length);
+
             // Get the first project assigned to this supervisor
             this.assignedProject = projects[0] || null;
+            console.log('[FS] Assigned project:', this.assignedProject);
+            
+            // Re-cache requisition mapping data whenever the project is loaded/updated
+            if (this.assignedProject && typeof this._cacheRequisitionData === 'function') {
+                await this._cacheRequisitionData();
+            }
+
+            this._refreshCurrentView();
+
+            // Initialize map if on dashboard
+            if (this.currentView === 'dashboard') {
+                setTimeout(() => this.initGeofenceMap(), 500);
+            }
         } catch (error) {
             console.error('[FS] Failed to load assigned project:', error);
+        }
+    },
+
+    initGeofenceMap() {
+        const mapContainer = document.getElementById('fs-geofence-map');
+        if (!mapContainer || !this.assignedProject) {
+            console.log('[FS Map] Skipping init: container or project missing');
+            return;
+        }
+
+        // Clear existing map instance if any
+        if (this.geofenceMap) {
+            this.geofenceMap.remove();
+        }
+
+        const { lat, lng, radius, name } = this.assignedProject;
+        const projectLat = parseFloat(lat);
+        const projectLng = parseFloat(lng);
+
+        if (isNaN(projectLat) || isNaN(projectLng)) {
+            console.warn('[FS Map] Invalid coordinates:', lat, lng);
+            mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--red);">Project coordinates not configured.</div>';
+            return;
+        }
+
+        // Use the aliased Leaflet if standard L is not available or corrupted
+        const Leaflet = window.MKAKA_L || window.L;
+        if (!Leaflet || typeof Leaflet.map !== 'function') {
+            console.error('[FS Map] Leaflet library not found or corrupted!', Leaflet);
+            mapContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--red);">Map library failed to load.</div>';
+            return;
+        }
+
+        console.log('[FS Map] Initializing for:', name, projectLat, projectLng);
+
+        // Initialize Leaflet
+        this.geofenceMap = Leaflet.map('fs-geofence-map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([projectLat, projectLng], 15);
+
+        Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.geofenceMap);
+
+        // Add Geofence Circle
+        Leaflet.circle([projectLat, projectLng], {
+            color: '#10b981',
+            fillColor: '#10b981',
+            fillOpacity: 0.15,
+            radius: radius || 500
+        }).addTo(this.geofenceMap);
+
+        // Add Project Marker
+        Leaflet.marker([projectLat, projectLng]).addTo(this.geofenceMap)
+            .bindPopup(`<b>${name}</b><br>Work Zone`)
+            .openPopup();
+
+        // Hide loading overlay
+        const overlay = document.getElementById('map-loading-overlay');
+        if (overlay) overlay.style.display = 'none';
+
+        // Attempt to show user's current location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const userLat = pos.coords.latitude;
+                const userLng = pos.coords.longitude;
+                console.log('[FS Map] User location:', userLat, userLng);
+                
+                Leaflet.circleMarker([userLat, userLng], {
+                    radius: 6,
+                    fillColor: '#3b82f6',
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(this.geofenceMap).bindTooltip("You are here");
+            }, (err) => {
+                console.warn('[FS Map] Could not get user location:', err);
+            }, { enableHighAccuracy: true });
         }
     },
 
@@ -222,5 +326,116 @@ export const FS_Dashboard = {
             console.error('[FS] Failed to load rejected logs:', error);
             window.toast.show('Failed to load rejected logs', 'error');
         }
+    },
+
+    async handleSafetyReply(incidentId) {
+        const textInput = document.getElementById('safety-reply-text');
+        if (!textInput || !textInput.value.trim()) return;
+
+        if (!incidentId) {
+            window.toast?.show('Cannot reply to an unsaved incident. Submit first.', 'warning');
+            return;
+        }
+
+        const btn = textInput.nextElementSibling;
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        try {
+            await client.post(`/safety-incidents/${incidentId}/reply`, {
+                content: textInput.value.trim()
+            });
+
+            window.toast?.show('Reply added.', 'success');
+            
+            // Reload the drawer with updated data
+            // To do this properly, we'd refetch the incident and call DrawerTemplates.safetyIncident(incident)
+            // For now, we will just close it or clear the input
+            textInput.value = '';
+            window.drawer?.close();
+        } catch (error) {
+            console.error('[FS] Error adding safety reply:', error);
+            window.toast?.show('Failed to add reply.', 'error');
+        } finally {
+            if (btn) {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+            }
+        }
+    },
+
+    triggerSafetyCamera() {
+        if (window.toast) {
+            window.toast.show('Camera launched', 'info');
+        }
+        
+        // This simulates a native camera trigger or file input click
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const previewDiv = document.getElementById('safety-photo-preview');
+                if (previewDiv) {
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.style.cssText = 'width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--slate-200);';
+                    previewDiv.appendChild(img);
+                    
+                    // Hide placeholder text if it exists
+                    const emptyText = previewDiv.querySelector('div[style*="text-align:center"]');
+                    if (emptyText) emptyText.style.display = 'none';
+
+                    // Attach to global gallery for submission
+                    window.photoGalleries = window.photoGalleries || {};
+                    window.photoGalleries['safetyIncident'] = window.photoGalleries['safetyIncident'] || [];
+                    window.photoGalleries['safetyIncident'].push({
+                        dataUrl: ev.target.result,
+                        timestamp: Date.now(),
+                        name: file.name
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        input.click();
+    },
+
+    async viewSafetyIncidents() {
+        try {
+            // Fetch safety incidents using raw client to the correct endpoint
+            const res = await client.get('/safety-incidents', { projectId: this.assignedProject?.id });
+            const incidents = Array.isArray(res) ? res : (res.data || []);
+            
+            window.drawer.open('Safety Log', window.DrawerTemplates.safetyIncidentTable(incidents));
+        } catch (err) {
+            console.error('[FS] Error fetching safety incidents:', err);
+            window.toast?.show('Failed to load safety incidents', 'error');
+            // Fallback to empty table
+            window.drawer.open('Safety Log', window.DrawerTemplates.safetyIncidentTable([]));
+        }
+    },
+
+    async viewIssues() {
+        try {
+            const res = await client.get('/issues', { projectId: this.assignedProject?.id });
+            const issues = Array.isArray(res) ? res : (res.data || []);
+            
+            window.drawer.open('Site Issues', window.DrawerTemplates.issueTable(issues));
+        } catch (err) {
+            console.error('[FS] Error fetching issues:', err);
+            window.toast?.show('Failed to load issues', 'error');
+            // Fallback to empty table
+            window.drawer.open('Site Issues', window.DrawerTemplates.issueTable([]));
+        }
     }
 };
+

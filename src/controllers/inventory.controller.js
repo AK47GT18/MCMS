@@ -185,6 +185,37 @@ const receiveShipment = asyncHandler(async (req, res) => {
   response.success(res, result);
 });
 
+/**
+ * Initiate a return (Reverse Dispatch)
+ */
+const initiateReturn = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Field_Supervisor', 'Project_Manager', 'Managing_Director'])) return;
+
+  const body = await parseBody(req);
+  const result = await returnsService.initiateReturn(body, user);
+
+  // Broadcast
+  websocket.broadcastToChannel('logistics', 'INVENTORY_RETURNED', {
+    action: 'return',
+    materialName: body.materialName,
+    quantity: body.quantity,
+    fromSectorId: body.fromSectorId,
+    toSectorId: body.toSectorId,
+    userId: user.id
+  });
+
+  await auditService.logFromRequest(req, 'REVERSE_DISPATCH (Return)', 'Inventory', body.fromSectorId, body.materialName, {
+    quantity: body.quantity,
+    toSectorId: body.toSectorId,
+    reference: body.reference
+  });
+
+  response.success(res, result, 'Reverse dispatch completed successfully');
+});
+
 module.exports = {
   getBySector,
   getByProject,
@@ -192,5 +223,6 @@ module.exports = {
   distribute,
   consume,
   getIncomingShipments,
-  receiveShipment
+  receiveShipment,
+  initiateReturn
 };

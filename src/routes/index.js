@@ -264,6 +264,9 @@ async function router(req, res) {
   // TASKS ROUTES
   // ============================================
   if (resource === 'tasks') {
+    if (id === 'config' && method === 'GET') {
+      return tasksController.getConfig(req, res);
+    }
     if (!id) {
       if (method === 'GET') {
         const url = new URL(req.url, `http://${req.headers.host}`);
@@ -330,7 +333,13 @@ async function router(req, res) {
     if (id === 'recommendations' && action && method === 'GET') {
       return assetSchedulerController.getRecommendations(req, res, action);
     }
-    return methodNotAllowed(res, ['GET']);
+    if (id === 'replenishment' && method === 'POST') {
+      return assetSchedulerController.createReplenishment(req, res);
+    }
+    if (action === 'replenishment-approve' && method === 'POST') {
+      return assetSchedulerController.approveReplenishment(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
   }
 
   // ============================================
@@ -484,6 +493,9 @@ async function router(req, res) {
     }
     if (id === 'receive-shipment' && method === 'POST') {
       return inventoryController.receiveShipment(req, res);
+    }
+    if (id === 'return' && method === 'POST') {
+      return inventoryController.initiateReturn(req, res);
     }
     if (id === 'sector' && action && method === 'GET') {
       // url pattern: /inventory/sector/:sectorId => resource='inventory', id='sector', action=':sectorId'

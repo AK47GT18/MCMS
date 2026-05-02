@@ -15,7 +15,9 @@ export const PM_MissingHandlers = {
         const lngEl = document.getElementById(prefix + 'lng');
         if (latEl) latEl.textContent = lat.toFixed(6);
         if (lngEl) lngEl.textContent = lng.toFixed(6);
+        
         if (prefix === 'proj_') {
+            if (this.wizardState) this.wizardState.locationSet = true;
             this.saveWizardCache();
         }
     },

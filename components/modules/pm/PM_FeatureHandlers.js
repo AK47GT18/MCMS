@@ -333,6 +333,11 @@ export const PM_FeatureHandlers = {
             return false;
         }
 
+        if (!this.wizardState?.locationSet) {
+            window.toast.show('Please click on the map to set the site location and geofence center', 'warning');
+            return false;
+        }
+
         return true;
     },
 

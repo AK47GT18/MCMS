@@ -1,0 +1,44 @@
+{
+    "phases": [
+        {
+            "id": "PHASE_1",
+            "name": "Phase 1: Mobilization & Site Clearance",
+            "tasks": [
+                "Establish Site Office",
+                "Bush Clearing & Grubbing",
+                "Removal of Topsoil",
+                "Traffic Management Setup"
+            ]
+        },
+        {
+            "id": "PHASE_2",
+            "name": "Phase 2: Earthworks & Sub-base",
+            "tasks": [
+                "Excavation to Level",
+                "Fill & Compaction",
+                "Sub-base Laying",
+                "Culvert Construction"
+            ]
+        },
+        {
+            "id": "PHASE_3",
+            "name": "Phase 3: Base Course & Paving",
+            "tasks": [
+                "Base Course Priming",
+                "Asphalt Laying",
+                "Shoulder Construction",
+                "Drainage Completion"
+            ]
+        },
+        {
+            "id": "PHASE_4",
+            "name": "Phase 4: Road Furniture & Finishing",
+            "tasks": [
+                "Road Marking",
+                "Signage Installation",
+                "Guardrail Fitting",
+                "Site De-mobilization"
+            ]
+        }
+    ]
+}

@@ -25,7 +25,32 @@ const getRecommendations = asyncHandler(async (req, res, projectId) => {
     response.success(res, recommendations);
 });
 
+const createReplenishment = asyncHandler(async (req, res) => {
+    const user = await authenticate(req, res);
+    if (!user) return;
+
+    const replenishment = await schedulerService.createReplenishmentRequest({
+        ...req.body,
+        requestedBy: user.id
+    });
+    response.success(res, replenishment, 'Replenishment request created');
+});
+
+const approveReplenishment = asyncHandler(async (req, res, id) => {
+    const user = await authenticate(req, res);
+    if (!user) return;
+
+    if (!['Finance_Director', 'Project_Manager'].includes(user.role)) {
+        return response.forbidden(res, 'Not authorized to approve replenishment');
+    }
+
+    const updated = await schedulerService.bridgeToProcurement(id);
+    response.success(res, updated, 'Replenishment request approved');
+});
+
 module.exports = {
     getConflicts,
-    getRecommendations
+    getRecommendations,
+    createReplenishment,
+    approveReplenishment
 };

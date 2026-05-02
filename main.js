@@ -38,6 +38,16 @@ const TOKEN_KEY = 'mcms_auth_token';
 const API_BASE = '/api/v1';
 const USE_REAL_AUTH = true; // Feature flag for migration
 
+// Prevent bfcache from exposing logged-in state after logout
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+    }
+});
+
 // --- Global Error Boundary ---
 window.addEventListener('error', (event) => {
     console.error('Global Error Caught:', event.error);
@@ -1049,7 +1059,9 @@ window.submitDailyProgressLog = (btn) => {
         progressIncrement: document.getElementById('daily-progress-increment')?.value,
         narrative: document.getElementById('daily-narrative')?.value,
         expenseItems: items,
-        sos: document.getElementById('sos-toggle')?.checked
+        sos: document.getElementById('sos-toggle')?.checked,
+        phaseId: document.getElementById('log-project-phase')?.value,
+        taskName: document.getElementById('log-project-task')?.value
     }).finally(() => {
         btn.innerHTML = originalText;
         btn.disabled = false;

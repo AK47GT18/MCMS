@@ -50,12 +50,12 @@ async function getById(id) {
 
 async function create(data, userId) {
   // Extract progress increment if provided in the payload
-  const { progressIncrement, task_id, submissionLat, submissionLng, expenseItems, ...logData } = data;
+  const { progressIncrement, task_id, submissionLat, submissionLng, expenseItems, assetUsages, ...logData } = data;
 
   // Validate geofence
   const project = await prisma.project.findUnique({
     where: { id: data.projectId },
-    select: { id: true, lat: true, lng: true, radius: true }
+    select: { id: true, lat: true, lng: true, radius: true, managerId: true }
   });
 
   if (!project) throw new AppError('Project not found', 404);
@@ -80,10 +80,44 @@ async function create(data, userId) {
     throw new AppError('Location coordinates are required to submit a daily log.', 400);
   }
 
+  // --- HARDENING: Validate Photo Geotags ---
+  if (logData.photos && Array.isArray(logData.photos)) {
+    // Require at least 3 photos as per FS policy
+    if (logData.photos.length < 3) {
+      throw new AppError('Evidence required: Please capture at least 3 photos of site progress.', 400);
+    }
+
+    for (const photo of logData.photos) {
+      if (photo.location && photo.location.lat && photo.location.lng) {
+        const photoGeofence = checkGeofence(
+          Number(photo.location.lat), Number(photo.location.lng),
+          Number(project.lat || 0), Number(project.lng || 0),
+          project.radius || 500
+        );
+        
+        if (!photoGeofence.isWithin) {
+          throw new AppError(`Evidence rejected: Photo "${photo.name || 'Site Image'}" was captured outside the project site (${Math.round(photoGeofence.distanceMeters)}m away).`, 400);
+        }
+        
+        // Temporal validation (30-min window)
+        const photoTime = photo.timestamp;
+        const now = Date.now();
+        if (photoTime && (now - photoTime > 1800000)) { // 30 minutes
+          throw new AppError(`Evidence rejected: Photo "${photo.name || 'Site Image'}" is too old (> 30 mins). Please capture fresh evidence.`, 400);
+        }
+      } else {
+        throw new AppError(`Evidence rejected: Photo "${photo.name || 'Site Image'}" is missing GPS metadata.`, 400);
+      }
+    }
+  } else {
+    throw new AppError('Evidence required: Please capture at least 3 photos of site progress.', 400);
+  }
+
   const log = await prisma.dailyLog.create({
     data: {
       ...logData,
       task_id: task_id,
+      workProgress: progressIncrement,
       submittedBy: userId,
       logDate: new Date(data.logDate),
       submissionLat,
@@ -92,6 +126,17 @@ async function create(data, userId) {
       ...(expenseItems && expenseItems.length > 0 && {
         expenses: {
           create: expenseItems
+        }
+      }),
+      ...(assetUsages && assetUsages.length > 0 && {
+        assetUsages: {
+          create: assetUsages.map(u => ({
+            assetId: Number(u.assetId),
+            operatorName: u.operatorName || 'Site Operator',
+            hoursOperated: parseFloat(u.hoursOperated || 0),
+            fuelConsumed: parseFloat(u.fuelConsumed || 0),
+            roleInPhase: u.roleInPhase
+          }))
         }
       })
     },

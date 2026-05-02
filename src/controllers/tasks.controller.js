@@ -105,4 +105,22 @@ const updateProgress = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getByProject, getByStatus, getById, create, update, remove, updateProgress };
+const getConfig = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const config = require('../config/tasks_config.json');
+  response.success(res, config);
+});
+
+module.exports = { 
+  getAll, 
+  getByProject, 
+  getByStatus, 
+  getById, 
+  create, 
+  update, 
+  remove, 
+  updateProgress,
+  getConfig
+};

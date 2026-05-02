@@ -107,8 +107,82 @@ async function getRecommendations(projectId) {
     return recommendations;
 }
 
+/**
+ * Create a replenishment request when stock is low
+ */
+async function createReplenishmentRequest(data) {
+    const { projectId, sectorId, materialName, quantityNeeded, requestedBy, notes } = data;
+
+    // Generate code: REP-PRJ-DATE-ID
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const count = await prisma.replenishmentRequest.count();
+    const reqCode = `REP-${projectId}-${dateStr}-${count + 1}`;
+
+    return await prisma.replenishmentRequest.create({
+        data: {
+            reqCode,
+            projectId: parseInt(projectId),
+            sectorId: sectorId ? parseInt(sectorId) : null,
+            materialName,
+            quantityNeeded: parseFloat(quantityNeeded),
+            requestedBy: parseInt(requestedBy),
+            notes,
+            status: 'pending_finance'
+        }
+    });
+}
+
+/**
+ * Bridge replenishment request to procurement
+ */
+async function bridgeToProcurement(replenishmentId) {
+    const req = await prisma.replenishmentRequest.findUnique({
+        where: { id: parseInt(replenishmentId) },
+        include: { project: true }
+    });
+
+    if (!req) throw new Error('Replenishment request not found');
+
+    return await prisma.replenishmentRequest.update({
+        where: { id: parseInt(replenishmentId) },
+        data: { status: 'approved' }
+    });
+}
+
+/**
+ * Check if an asset is due for maintenance before dispatch
+ */
+async function isAssetAvailableForDispatch(assetId, durationDays = 7) {
+    const asset = await prisma.asset.findUnique({
+        where: { id: parseInt(assetId) },
+        include: { maintenanceRecords: { orderBy: { nextServiceDate: 'desc' }, take: 1 } }
+    });
+
+    if (!asset) return false;
+    if (asset.status !== 'available') return false;
+
+    if (asset.maintenanceRecords.length > 0) {
+        const nextService = asset.maintenanceRecords[0].nextServiceDate;
+        if (nextService) {
+            const dueDate = new Date(nextService);
+            const now = new Date();
+            const limitDate = new Date();
+            limitDate.setDate(now.getDate() + durationDays);
+
+            if (dueDate < limitDate) {
+                return false; 
+            }
+        }
+    }
+
+    return true;
+}
+
 module.exports = {
     detectConflicts,
     getRecommendations,
+    createReplenishmentRequest,
+    bridgeToProcurement,
+    isAssetAvailableForDispatch,
     PHASE_ASSET_REQUIREMENTS
 };

@@ -18,7 +18,19 @@ const getAll = asyncHandler(async (req, res) => {
   const options = validateBody(query, paginationSchema, res);
   if (!options) return;
   
-  const result = await projectsService.getAll({ ...options, status: query.status });
+  // Filter by supervisor/manager if user has limited scope
+  const filters = { ...options, status: query.status };
+  const userRole = user.role.replace(/ /g, '_');
+  
+  if (userRole === 'Field_Supervisor') {
+    filters.fieldSupervisorId = user.id;
+  } else if (userRole === 'Project_Manager') {
+    filters.managerId = user.id;
+  } else if (query.fieldSupervisorId) {
+    filters.fieldSupervisorId = query.fieldSupervisorId;
+  }
+  
+  const result = await projectsService.getAll(filters);
   response.paginated(res, result.projects, result.page, result.limit, result.total);
 });
 

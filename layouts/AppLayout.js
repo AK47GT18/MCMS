@@ -413,10 +413,13 @@ export class AppLayout {
                     if (drawerId === 'submitComplaint') {
                         const projectId = window.app?.pmModule?.selectedProjectId || null;
                         window.app?.openIssueDrawer(projectId, title);
+                    } else if (drawerId === 'safetyIncident') {
+                        // safetyIncident is a function template - invoke it
+                        window.drawer.open(title, DrawerTemplates.safetyIncident());
                     } else {
                         const template = DrawerTemplates[drawerId];
                         if (template) {
-                            window.drawer.open(title, template);
+                            window.drawer.open(title, typeof template === 'function' ? template() : template);
                         }
                     }
                 } else {

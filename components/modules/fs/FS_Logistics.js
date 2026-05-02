@@ -2,6 +2,7 @@ import client from '../../../src/api/client.js';
 import tasksApi from '../../../src/api/tasks.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 import assets from '../../../src/api/assets.api.js';
+import inventoryApi from '../../../src/api/inventory.api.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
@@ -35,7 +36,12 @@ export const FS_Logistics = {
                                     <td style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 15px; color: ${data.qty === 0 ? 'var(--red)' : 'var(--slate-900)'};">${data.qty} ${data.unit}</td>
                                     <td style="font-size: 12px; color: var(--slate-500);">${data.sectorName || '--'}</td>
                                     <td style="text-align: right;">
-                                        <button class="btn btn-secondary" onclick="window.drawer.open('Log Burn', window.DrawerTemplates.logMaterialBurn(${JSON.stringify({ name, ...data }).replace(/"/g, '&quot;')}))" ${data.qty === 0 ? 'disabled' : ''}>Log Consumption</button>
+                                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                            <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Log Burn', window.DrawerTemplates.logMaterialBurn(${JSON.stringify({ name, ...data }).replace(/"/g, '&quot;')}))" ${data.qty === 0 ? 'disabled' : ''}>Log Consumption</button>
+                                            <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openReturnDrawer('${name}')" style="color: var(--orange); border-color: var(--orange-light);" ${data.qty === 0 ? 'disabled' : ''}>
+                                                <i class="fas fa-undo"></i> Return
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -165,7 +171,24 @@ export const FS_Logistics = {
     toggleRequestType(type, btn) {
         const machView = document.getElementById('fs_machinery_req_view');
         const matView = document.getElementById('fs_material_req_view');
+        const btnMachinery = document.getElementById('fs_btn_machinery');
+        const btnMaterials = document.getElementById('fs_btn_materials');
+
         if (!machView || !matView) return;
+
+        // Reset both buttons to inactive state (slate/transparent)
+        [btnMachinery, btnMaterials].forEach(b => {
+            if (b) {
+                b.style.background = 'transparent';
+                b.style.color = 'var(--slate-600)';
+                b.classList.remove('active');
+            }
+        });
+
+        // Set active state (orange/white)
+        btn.style.background = 'var(--orange)';
+        btn.style.color = 'white';
+        btn.classList.add('active');
 
         if (type === 'machinery') {
             machView.style.display = 'block';
@@ -174,40 +197,146 @@ export const FS_Logistics = {
             machView.style.display = 'none';
             matView.style.display = 'block';
         }
-
-        document.querySelectorAll('.active-resource').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
     },
 
-    async handleSubmitRequisition() {
-        const isMachinery = document.getElementById('fs_btn_machinery')?.classList.contains('active');
-        const item = isMachinery ? document.getElementById('fs_req_asset')?.value : document.getElementById('fs_req_material')?.value;
-        const qty = isMachinery ? 1 : document.getElementById('fs_req_qty')?.value;
+    // Initialize requisition cart
+    requisitionCart: [],
+
+    addItemToRequisition(type) {
+        const selectId = type === 'machinery' ? 'fs_mac_select' : 'fs_mat_select';
+        const qtyId = type === 'machinery' ? 'fs_mac_qty' : 'fs_mat_qty';
         
-        // Frontend Validation
-        if (!item || ( !isMachinery && !qty)) {
-            if (window.toast) window.toast.show('Please select a material/asset and specify quantity.', 'warning');
+        const selectEl = document.getElementById(selectId);
+        const qtyInput = document.getElementById(qtyId);
+        
+        if (!selectEl || !selectEl.value || !qtyInput || !qtyInput.value) {
+            if (window.toast) window.toast.show('Please select an item and quantity', 'warning');
             return;
         }
 
-        console.log('[FS] Transmitting request to Equipment Coordinator…');
+        const qty = parseFloat(qtyInput.value);
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+        
+        const item = {
+            category: type,
+            itemName: selectEl.value,
+            quantity: qty,
+            unit: selectedOption.dataset.unit || 'units',
+            available: selectedOption.dataset.available !== 'false',
+            type: selectedOption.dataset.type || ''
+        };
+
+        // Add to cart
+        this.requisitionCart.push(item);
+        
+        // Refresh UI
+        this._renderRequisitionCart();
+        
+        // Feedback
+        if (window.toast) window.toast.show(`Added ${item.itemName} to list`, 'success');
+    },
+
+    removeItemFromRequisition(index) {
+        this.requisitionCart.splice(index, 1);
+        this._renderRequisitionCart();
+    },
+
+    _renderRequisitionCart() {
+        const container = document.getElementById('fs_items_container');
+        const countLabel = document.querySelector('#fs_requisition_items_list label');
+        const messageArea = document.getElementById('fs_req_message_area');
+        
+        if (!container) return;
+
+        if (this.requisitionCart.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; font-style: italic;">No items added yet.</div>';
+            if (countLabel) countLabel.innerText = 'Selected Items (0)';
+            if (messageArea) messageArea.style.display = 'none';
+            return;
+        }
+
+        if (countLabel) countLabel.innerText = `Selected Items (${this.requisitionCart.length})`;
+
+        // Check for unavailable items to show inline warning
+        const hasUnavailable = this.requisitionCart.some(item => item.category === 'machinery' && !item.available);
+        if (messageArea) {
+            if (hasUnavailable) {
+                messageArea.style.display = 'block';
+                messageArea.innerHTML = `
+                    <div style="padding: 12px; background: #FFF1F2; border-left: 4px solid var(--red); border-radius: 8px; display: flex; gap: 10px; align-items: flex-start; animation: fadeIn 0.3s ease;">
+                        <i class="fas fa-exclamation-circle" style="color: var(--red); margin-top: 2px;"></i>
+                        <div style="font-size: 12px; color: #991B1B; font-weight: 500; line-height: 1.4;">
+                            <strong style="display: block; margin-bottom: 2px;">Availability Notice</strong>
+                            One or more selected machines are currently on a waitlist. Requesting them will alert the EC to provide an ETA.
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageArea.style.display = 'none';
+            }
+        }
+
+        container.innerHTML = this.requisitionCart.map((item, index) => `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: white; border: 1px solid var(--slate-200); border-radius: 10px; animation: slideIn 0.2s ease;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; background: ${item.category === 'machinery' ? '#EFF6FF' : '#F0FDF4'}; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: ${item.category === 'machinery' ? 'var(--blue)' : 'var(--emerald)'}; font-size: 14px;">
+                        <i class="fas ${item.category === 'machinery' ? 'fa-tractor' : 'fa-boxes'}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 13px; color: var(--slate-900);">${item.itemName}</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">${item.quantity} ${item.unit} ${item.category === 'machinery' && !item.available ? '• <span style="color:var(--red); font-weight:700;">Waitlist</span>' : ''}</div>
+                    </div>
+                </div>
+                <button onclick="window.app.fsModule.removeItemFromRequisition(${index})" style="border: none; background: transparent; color: var(--slate-400); padding: 8px; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--slate-400)'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+    },
+
+    async handleSubmitRequisition() {
+        if (this.requisitionCart.length === 0) {
+            if (window.toast) window.toast.show('Please add at least one item to your request.', 'warning');
+            return;
+        }
+
+        const urgency = document.getElementById('fs_req_urgency')?.value || 'normal';
+
+        // Format items for API
+        const formattedItems = this.requisitionCart.map(item => ({
+            itemName: item.itemName,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: 0 // Will be filled by EC/Finance
+        }));
 
         try {
-            // Submit via API
-            const result = await client.post('/requisitions', {
+            if (window.toast) window.toast.show('Submitting requisition...', 'info');
+            
+            const payload = {
                 projectId: this.assignedProject?.id || 1,
-                totalAmount: 0,
-                vendorName: 'Internal Request',
-                items: [{ itemName: item, quantity: Number(qty) || 1, unitPrice: 0 }]
-            });
+                items: formattedItems,
+                requestDate: new Date().toISOString(),
+                urgency: urgency,
+                status: 'pending',
+                notes: `Batch request from Field Supervisor for ${this.assignedProject?.name || 'Site'}`,
+                vendorName: 'Equipment Coordinator',
+                totalAmount: 0
+            };
 
+            const result = await client.post('/requisitions', payload);
+
+            const summary = this.requisitionCart.map(i => `${i.quantity}x ${i.itemName}`).join(', ');
             if (window.toast) {
-                window.toast.show(`Request for ${item} sent to Finance Director for approval.`, 'success');
+                window.toast.show(`Requisition sent for: ${summary}`, 'success');
             }
+
+            // Clear cart
+            this.requisitionCart = [];
 
             setTimeout(() => {
                 window.drawer.close();
-                console.log(`[FS] Request for ${item} submitted:`, result);
+                console.log(`[FS] Requisition submitted:`, result);
             }, 800);
         } catch (error) {
             console.error('[FS] Request failed:', error);
@@ -270,6 +399,83 @@ export const FS_Logistics = {
             }, 600);
         } catch (error) {
             console.error('[FS] Consumption failed:', error);
+        }
+    },
+
+    openReturnDrawer(materialName) {
+        const data = this.siteInventory[materialName];
+        if (!data) return;
+
+        window.drawer.open('Initiate Reverse Dispatch (Return)', `
+            <div class="p-6">
+                <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Material for Recovery</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${materialName}</div>
+                    <div style="font-size: 13px; color: var(--slate-600); margin-top: 4px;">Current Site Balance: <strong>${data.qty} ${data.unit}</strong></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Quantity to Return</label>
+                    <input type="number" id="return_qty" class="form-input" placeholder="0.00" value="${data.qty}">
+                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Enter the exact quantity being loaded back for the Yard.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Return Reason</label>
+                    <select id="return_reason" class="form-input">
+                        <option value="surplus">Surplus Materials (Phase Complete)</option>
+                        <option value="wrong_spec">Wrong Specification Delivered</option>
+                        <option value="quality_issue">Quality/Damage Issues</option>
+                        <option value="reallocation">Strategic Reallocation</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="return_notes" class="form-input" placeholder="Details about the return conditions..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; background: var(--orange); border: none; margin-top: 12px;" 
+                    onclick="window.app.fsModule.handleExecuteReturn('${materialName}')">
+                    <i class="fas fa-truck-ramp-box"></i> Confirm Reverse Dispatch
+                </button>
+            </div>
+        `);
+    },
+
+    async handleExecuteReturn(name) {
+        const qty = Number(document.getElementById('return_qty')?.value);
+        const reason = document.getElementById('return_reason')?.value;
+        const notes = document.getElementById('return_notes')?.value;
+
+        if (!qty || qty <= 0) {
+            window.toast.show('Please specify a valid quantity.', 'warning');
+            return;
+        }
+
+        const material = this.siteInventory[name];
+        if (!material || material.qty < qty) {
+            window.toast.show('Insufficient site stock for this return.', 'error');
+            return;
+        }
+
+        window.toast.show('Processing resource recovery…', 'info');
+
+        try {
+            await client.post('/inventory/return', {
+                fromSectorId: material.sectorId,
+                toSectorId: 1, 
+                materialName: name,
+                quantity: qty,
+                notes: `[RECOVERY] Reason: ${reason}. ${notes}`
+            });
+
+            window.toast.show(`${qty} ${material.unit} of ${name} returned to Yard.`, 'success');
+            window.drawer.close();
+            await this._loadSiteInventory();
+        } catch (error) {
+            console.error('[FS] Return failed:', error);
+            window.toast.show('Return failed: ' + (error.message || 'Server error'), 'error');
         }
     }
 };

@@ -23,9 +23,16 @@ export const FS_Tasks = {
 
         try {
             const projectId = this.assignedProject?.id || 1;
-            const result = await tasks.getByProject(projectId);
+            console.log('[FS] Loading tasks for project:', projectId);
+            const result = await tasksApi.getByProject(projectId);
+            console.log('[FS] Tasks API result:', result);
             const data = result.data || result;
             const taskList = Array.isArray(data) ? data : (data.tasks || []);
+            console.log('[FS] Task list:', taskList);
+            
+            if (taskList.length > 0) {
+                console.log('[FS] First task sample:', taskList[0]);
+            }
 
             if (taskList.length === 0) {
                 container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--slate-400);">No tasks assigned yet.</div>';
@@ -88,7 +95,6 @@ export const FS_Tasks = {
                         </select>
                     </div>
                 </div>
-                </div>
                 <div id="gantt-chart-container" style="position: relative; overflow-x:auto; background: white; min-height: 400px; padding: 20px; border: 1px solid var(--slate-100); border-radius: 8px;">
                     <div class="gantt-landscape-prompt">
                         <div style="text-align: center; color: white;">
@@ -110,23 +116,36 @@ export const FS_Tasks = {
             if (!el) return;
 
             const projectId = this.assignedProject?.id || 1;
-            const response = await tasks.getByProject(projectId);
+            console.log('[FS Gantt] Fetching tasks for project:', projectId);
+            const response = await tasksApi.getByProject(projectId);
+            console.log('[FS Gantt] Response received:', response);
             const data = response.data || response;
             const tasksList = Array.isArray(data) ? data : (data.tasks || []);
+            console.log('[FS Gantt] Task count:', tasksList.length);
 
             if (tasksList.length === 0) {
                 el.innerHTML = '<div style="padding:40px; text-align:center; color:var(--slate-400);">No tasks scheduled yet.</div>';
                 return;
             }
 
-            const mappedTasks = tasksList.map(t => ({
-                id: (t.id || t.code).toString(),
-                name: t.name,
-                start: t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                end: t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                progress: t.progress || 0,
-                dependencies: t.dependencyId ? t.dependencyId.toString() : ''
-            }));
+            const mappedTasks = tasksList.map(task => {
+                try {
+                    return {
+                        id: task.id.toString(),
+                        name: task.name,
+                        // Frappe Gantt expects YYYY-MM-DD format
+                        start: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                        end: task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                        progress: task.progress || 0,
+                        dependencies: task.dependencyId ? task.dependencyId.toString() : ''
+                    };
+                } catch (err) {
+                    console.error('[FS Gantt] Error mapping task:', task, err);
+                    return null;
+                }
+            }).filter(t => t !== null);
+
+            console.log('[FS Gantt] Mapped tasks:', mappedTasks);
 
             el.innerHTML = '';
 
@@ -207,13 +226,47 @@ export const FS_Tasks = {
 
             // Add extra fields if payload override provided
             if (payloadOverride) {
-                if (payloadOverride.taskId) payload.taskId = parseInt(payloadOverride.taskId);
+                if (payloadOverride.taskId) payload.task_id = parseInt(payloadOverride.taskId);
                 if (payloadOverride.progressIncrement) payload.progressIncrement = parseInt(payloadOverride.progressIncrement);
                 if (payloadOverride.expenseItems) payload.expenseItems = payloadOverride.expenseItems;
                 if (payloadOverride.sos) payload.isSos = true;
+                
+                // Active Sync Metadata
+                if (payloadOverride.phaseId) {
+                    const phase = this.taskConfig?.phases?.find(p => p.id === payloadOverride.phaseId);
+                    payload.activePhase = phase ? phase.name : payloadOverride.phaseId;
+                }
+                if (payloadOverride.taskName) payload.activeTask = payloadOverride.taskName;
+            }
+
+            // --- HARDENING: Attach Evidence Photos ---
+            const gallery = window.photoGalleries['dailyLog'] || [];
+            payload.photos = gallery.map(p => ({
+                dataUrl: p.dataUrl,
+                location: p.location,
+                timestamp: p.timestamp,
+                name: p.name
+            }));
+
+            // --- ADDED: Extract Machine Usage ---
+            const machineRows = document.querySelectorAll('.machine-usage-row');
+            if (machineRows.length > 0) {
+                payload.assetUsage = Array.from(machineRows).map(row => {
+                    return {
+                        assetId: parseInt(row.querySelector('.machine-select').value) || 0,
+                        hoursUsed: parseFloat(row.querySelector('.machine-hours').value) || 0,
+                        fuelConsumed: parseFloat(row.querySelector('.machine-fuel').value) || 0,
+                        operator: row.querySelector('.machine-operator').value || ''
+                    };
+                }).filter(a => a.assetId > 0);
             }
 
             await dailyLogs.create(payload);
+            
+            // Clear gallery on success
+            window.photoGalleries['dailyLog'] = [];
+            if (typeof window.renderPhotoGallery === 'function') window.renderPhotoGallery('dailyLog');
+            
             console.log('[FS] Daily progress logged successfully');
             window.drawer.close();
             this._loadDashboardStats(); // Refresh stats 
@@ -221,7 +274,116 @@ export const FS_Tasks = {
             console.error('Log submission error:', error);
             let errorMsg = error.response?.data?.message || error.message || 'Failed to submit log';
             errorMsg = errorMsg.replace('ValidationError: ', '').replace('AppError: ', '');
-            console.error('[FS] Log submission error:', error);
+            
+            if (window.toast) {
+                window.toast.show(errorMsg, 'error');
+            } else {
+                alert(errorMsg);
+            }
+        }
+    },
+
+    submitDailyProgressLog(btn) {
+        if (window.validatePhotos && !window.validatePhotos('progressLog')) return;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying site coordinates...';
+        btn.disabled = true;
+
+        this.handleDailyLogSubmit({
+            taskId: document.getElementById('daily-log-task-id')?.value,
+            progressIncrement: document.getElementById('daily-progress-increment')?.value,
+            narrative: document.getElementById('daily-narrative')?.value,
+            phaseId: document.getElementById('log-project-phase')?.value,
+            taskName: document.getElementById('log-project-task')?.value,
+            sos: document.getElementById('sos-flag')?.checked
+        }).finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    },
+
+    addMachineUsageRow() {
+        const container = document.getElementById('machine-usage-rows');
+        if (!container) return;
+        
+        if (container.querySelector('div[style*="text-align: center"]')) {
+            container.innerHTML = ''; // clear empty state
+        }
+        
+        const row = document.createElement('div');
+        row.className = 'machine-usage-row';
+        row.style.cssText = 'background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 6px; position: relative;';
+        
+        const siteAssets = this.siteAssets || [];
+        const options = siteAssets.map(a => `<option value="${a.id}">${a.name} (${a.assetCode || a.id})</option>`).join('');
+
+        row.innerHTML = `
+            <i class="fas fa-times" style="position: absolute; top: 12px; right: 12px; color: var(--red); cursor: pointer;" onclick="this.parentElement.remove()"></i>
+            <div style="margin-bottom: 8px;">
+                <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Machine</label>
+                <select class="form-input machine-select" style="padding: 6px; font-size: 12px; height: 30px;">
+                    <option value="">Select equipment...</option>
+                    ${options}
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div>
+                    <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Hours Used</label>
+                    <input type="number" class="form-input machine-hours" placeholder="e.g. 8" style="padding: 6px; font-size: 12px; height: 30px;">
+                </div>
+                <div>
+                    <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Fuel (L)</label>
+                    <input type="number" class="form-input machine-fuel" placeholder="e.g. 45" style="padding: 6px; font-size: 12px; height: 30px;">
+                </div>
+            </div>
+            <div>
+                <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Operator / Driver</label>
+                <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 30px;">
+            </div>
+        `;
+        container.appendChild(row);
+    },
+
+    async initializePhaseDropdown() {
+        const phaseSelect = document.getElementById('log-project-phase');
+        if (!phaseSelect) return;
+
+        try {
+            console.log('[FS] Synchronizing project phases...');
+            const config = await client.get('/tasks/config');
+            this.taskConfig = config.data || config;
+            
+            phaseSelect.innerHTML = '<option value="">Select Phase...</option>';
+            this.taskConfig.phases.forEach(phase => {
+                const opt = document.createElement('option');
+                opt.value = phase.id;
+                opt.innerText = phase.name;
+                phaseSelect.appendChild(opt);
+            });
+        } catch (error) {
+            console.error('Failed to load tasks config:', error);
+            phaseSelect.innerHTML = '<option value="">Error loading config</option>';
+        }
+    },
+
+    handlePhaseChange(phaseId) {
+        const taskSelect = document.getElementById('log-project-task');
+        if (!taskSelect) return;
+
+        if (!phaseId) {
+            taskSelect.innerHTML = '<option value="">Select phase first...</option>';
+            return;
+        }
+
+        const phase = this.taskConfig.phases.find(p => p.id === phaseId);
+        if (phase) {
+            taskSelect.innerHTML = '<option value="">Select Task...</option>';
+            phase.tasks.forEach(task => {
+                const opt = document.createElement('option');
+                opt.value = task;
+                opt.innerText = task;
+                taskSelect.appendChild(opt);
+            });
         }
     }
 };

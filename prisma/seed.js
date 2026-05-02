@@ -234,7 +234,8 @@ async function main() {
                 budgetTotal: p.budgetTotal,
                 startDate: p.startDate,
                 endDate: p.endDate,
-                managerId: pm.id
+                managerId: pm.id,
+                fieldSupervisorId: p.code === 'CEN-01' ? userMap['m.banda@mkaka.mw'].id : null
             }
         });
         projectMap[p.code] = project;

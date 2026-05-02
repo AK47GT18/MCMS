@@ -56,6 +56,8 @@ model User {
   variationOrdersRequested  VariationOrder[]      @relation("VORequestor")
   variationOrdersApproved   VariationOrder[]      @relation("VOApprover")
   materialUsages            MaterialUsage[]       @relation("UsageReporter")
+  assetUsages              AssetUsage[]          @relation("Operator")
+  safetyReplies            SafetyIncidentReply[]
 
   @@map("users")
 }
@@ -102,6 +104,7 @@ model Project {
   extensionRequests    ProjectExtensionRequest[]
   variationOrders      VariationOrder[]
   materialUsages       MaterialUsage[]
+  assetUsages          AssetUsage[]
 
   @@map("projects")
 }
@@ -265,6 +268,7 @@ model Asset {
   assetLogs          AssetLog[]
   currentProject     Project?            @relation(fields: [currentProjectId], references: [id])
   maintenanceRecords MaintenanceRecord[]
+  assetUsages        AssetUsage[]
 
   @@index([currentProjectId])
   @@index([status])
@@ -303,6 +307,31 @@ model AssetLog {
 
   @@index([assetId])
   @@map("asset_logs")
+}
+
+model AssetUsage {
+  id               Int      @id @default(autoincrement())
+  assetId          Int      @map("asset_id")
+  operatorId       Int?     @map("operator_id")
+  projectId        Int?     @map("project_id")
+  dailyLogId       Int?     @map("daily_log_id")
+  usageDate        DateTime @map("usage_date") @db.Date
+  roleInPhase      String?  @map("role_in_phase") @db.VarChar(255)
+  fuelConsumed     Decimal? @map("fuel_consumed") @db.Decimal(10, 2)
+  hoursOperated    Decimal? @map("hours_operated") @db.Decimal(10, 2)
+  operatorName     String?  @map("operator_name") @db.VarChar(255)
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  asset            Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  project          Project? @relation(fields: [projectId], references: [id])
+  dailyLog         DailyLog? @relation(fields: [dailyLogId], references: [id])
+  operator         User?    @relation("Operator", fields: [operatorId], references: [id])
+
+  @@index([assetId])
+  @@index([projectId])
+  @@index([usageDate])
+  @@map("asset_usages")
 }
 
 model Requisition {
@@ -386,10 +415,14 @@ model DailyLog {
   submissionLng    Decimal?              @map("submission_lng") @db.Decimal(11, 8)
   locationVerified Boolean               @default(false) @map("location_verified")
   task_id          Int?
+  workProgress     Int?                  @map("work_progress")
+  activePhase      String?               @map("active_phase") @db.VarChar(100)
+  activeTask       String?               @map("active_task") @db.VarChar(255)
   project          Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   submitter        User?                 @relation(fields: [submittedBy], references: [id])
   tasks            Task?                 @relation(fields: [task_id], references: [id])
   expenses         DailyLogExpense[]
+  assetUsages      AssetUsage[]
 
   @@index([projectId, logDate])
   @@map("daily_logs")
@@ -424,8 +457,23 @@ model SafetyIncident {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   project         Project?  @relation(fields: [projectId], references: [id])
   reporter        User?     @relation(fields: [reportedBy], references: [id])
+  replies         SafetyIncidentReply[]
 
   @@map("safety_incidents")
+}
+
+model SafetyIncidentReply {
+  id               Int      @id @default(autoincrement())
+  incidentId       Int      @map("incident_id")
+  userId           Int      @map("user_id")
+  message          String   @db.Text
+  photos           Json?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  incident         SafetyIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id])
+
+  @@map("safety_incident_replies")
 }
 
 model AuditLog {
@@ -793,6 +841,8 @@ model Inventory {
   lastRestockedAt DateTime?      @map("last_restocked_at") @db.Timestamptz(6)
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  minThreshold    Decimal        @default(0) @map("min_threshold") @db.Decimal(18, 3)
+  lastNotificationAt DateTime?   @map("last_notification_at") @db.Timestamptz(6)
   sector          Sector         @relation(fields: [sectorId], references: [id], onDelete: Cascade)
   logs            InventoryLog[]
 

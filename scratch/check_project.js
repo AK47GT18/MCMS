@@ -3,9 +3,8 @@ const prisma = new PrismaClient();
 
 async function check() {
   try {
-    const tasks = await prisma.task.findMany();
-    console.log('Total Tasks in DB:', tasks.length);
-    console.log('Project IDs in Tasks:', [...new Set(tasks.map(t => t.projectId))]);
+    const p = await prisma.project.findUnique({ where: { id: 9 } });
+    console.log('Project 9:', JSON.stringify(p, null, 2));
   } catch (e) {
     console.error(e);
   } finally {

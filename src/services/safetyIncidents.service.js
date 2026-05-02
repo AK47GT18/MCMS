@@ -19,6 +19,12 @@ async function getAll(options = {}) {
     include: {
       reporter: { select: { id: true, name: true, email: true } },
       project: { select: { id: true, name: true } },
+      replies: {
+        include: {
+          user: { select: { id: true, name: true, role: true } }
+        },
+        orderBy: { createdAt: 'asc' }
+      }
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -37,8 +43,23 @@ async function updateStatus(id, status, approverId) {
   return incident;
 }
 
+async function addReply(incidentId, userId, content, media = []) {
+  return prisma.safetyIncidentReply.create({
+    data: {
+      incidentId: Number(incidentId),
+      userId: Number(userId),
+      content,
+      media: media || [],
+    },
+    include: {
+      user: { select: { id: true, name: true, role: true } }
+    }
+  });
+}
+
 module.exports = {
   create,
   getAll,
   updateStatus,
+  addReply,
 };

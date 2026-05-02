@@ -80,6 +80,63 @@ function initProjectJobs() {
       logger.error('Error running 10-day due date cron job:', error);
     }
   });
+  
+  // Inventory Threshold Check - Run every 12 hours
+  cron.schedule('0 */12 * * *', async () => {
+    logger.info('Running inventory threshold scan...');
+    try {
+      const inventories = await prisma.inventory.findMany({
+        where: {
+          OR: [
+            { quantityOnHand: { lte: prisma.inventory.lowThreshold } },
+            // Logic for 20% rule would require knowing totalAllocated, which we have in DB now
+            { 
+              quantityOnHand: { 
+                lte: { 
+                  multiply: [0.2, { _ref: 'totalQtyAllocated' }] 
+                } 
+              } 
+            }
+          ]
+        },
+        include: {
+          sector: { include: { project: { include: { manager: true } } } }
+        }
+      });
+
+      // Prisma doesn't support _ref in lte easily in standard findMany without raw, 
+      // so we'll fetch and filter if needed, or use a simpler check for now.
+      // Re-fetching all and filtering for simplicity in this environment
+      const allInventory = await prisma.inventory.findMany({
+        include: { sector: { include: { project: { include: { manager: true } } } } }
+      });
+
+      const lowStock = allInventory.filter(inv => {
+        const qty = Number(inv.quantityOnHand);
+        const threshold = Number(inv.lowThreshold);
+        const total = Number(inv.totalQtyAllocated || 0);
+        
+        return (threshold > 0 && qty <= threshold) || (total > 0 && qty <= (total * 0.2));
+      });
+
+      if (lowStock.length > 0) {
+        logger.warn(`Found ${lowStock.length} low stock items during scan.`);
+        // Notify respective managers
+        for (const inv of lowStock) {
+          const pm = inv.sector?.project?.manager;
+          if (pm && pm.email) {
+            await emailService.sendNotification(
+              pm,
+              `INVENTORY ALERT: ${inv.materialName} is low`,
+              `Automated scan detected low stock for ${inv.materialName} in Sector ${inv.sector.name} of ${inv.sector.project.name}. Current quantity: ${inv.quantityOnHand} ${inv.unit}.`
+            );
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Error running inventory cron job:', error);
+    }
+  });
 }
 
 module.exports = {

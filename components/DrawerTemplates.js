@@ -311,7 +311,7 @@ export const DrawerTemplates = {
                     </div>
                 </button>
 
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident)">
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident())">
                     <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-helmet-safety"></i>
                     </div>
@@ -415,52 +415,89 @@ export const DrawerTemplates = {
 
 
 
-    safetyIncident: `
-        <div style="padding: 24px;">
-            <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; border: 1px solid var(--orange-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
-                <i class="fas fa-helmet-safety" style="color: var(--orange); font-size: 20px;"></i>
-                <div style="font-weight: 700; color: var(--orange-hover); font-size: 14px;">HSE Safety Incident Report</div>
+    safetyIncident: (incident) => `
+        <div style="padding: 0;">
+            <div style="padding: 16px 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 800; font-size: 16px; color: #991B1B;">${incident?.id ? 'Incident Report: ' + incident.id : 'New Safety Incident'}</div>
+                    <div style="font-size: 12px; color: #B91C1C;">Priority: ${incident?.priority || 'High'}</div>
+                </div>
+                <div class="status-badge" style="background: white; color: #991B1B; border: 1px solid #FECACA; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;">
+                    ${(incident?.status || 'PENDING').toUpperCase()}
+                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div class="form-group">
+            <div style="padding: 24px; max-height: calc(100vh - 120px); overflow-y: auto;">
+                <div class="form-group" style="margin-bottom: 20px;">
                     <label class="form-label">Incident Type</label>
-                    <select class="form-input">
-                        <option>Injury / First Aid</option>
-                        <option>Near Miss</option>
-                        <option>Hazard Identified</option>
-                        <option>Equipment Failure (Safety)</option>
-                    </select>
+                    <input type="text" class="form-input" value="${incident?.type || 'Injury'}" readonly style="width: 100%; background: #F8FAFC;">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Site Area</label>
-                    <select class="form-input">
-                        <option>Sector 1: Foundation</option>
-                        <option>Sector 2: Warehouse</option>
-                        <option>Sector 3: Main Block</option>
-                    </select>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Narrative / Description</label>
+                    <div style="background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px; font-size: 14px; color: var(--slate-700); line-height: 1.6;">
+                        ${incident?.description || 'No description provided.'}
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">Evidence Capture</label>
+                    <div id="safety-photo-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                        ${(incident?.photos || []).map(p => `<img src="${p}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--slate-200);">`).join('')}
+                    </div>
+                    ${!incident?.id ? `
+                    <label class="camera-btn" style="border: 2px dashed #FECACA; background: #FFF5F5; padding: 20px; text-align: center; border-radius: 12px; color: #B91C1C; cursor: pointer; display: block;" onclick="window.app.fsModule?.triggerSafetyCamera()">
+                        <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
+                        <div style="font-weight: 700; font-size: 13px;">Capture Scene / Hazard</div>
+                    </label>
+                    ` : ''}
+                </div>
+
+                <div style="border-top: 1px solid var(--slate-200); padding-top: 24px; margin-top: 24px;">
+                    <h4 style="font-size: 12px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 16px;">Handling Thread / Replies</h4>
+                    
+                    <div id="safety-reply-thread" style="margin-bottom: 24px; border: 1px solid var(--slate-200); border-radius: 8px; overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                                <tr>
+                                    <th style="padding: 12px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">User / Role</th>
+                                    <th style="padding: 12px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Date / Time</th>
+                                    <th style="padding: 12px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(incident?.replies || []).length === 0 ? `
+                                    <tr>
+                                        <td colspan="3" style="text-align: center; padding: 24px; color: var(--slate-400); font-size: 12px; background: white;">
+                                            No handling updates yet.
+                                        </td>
+                                    </tr>
+                                ` : incident.replies.map(reply => `
+                                    <tr style="border-bottom: 1px solid var(--slate-100); background: white;">
+                                        <td style="padding: 12px; vertical-align: top;">
+                                            <div style="font-weight: 700; font-size: 12px; color: var(--slate-900);">${reply.user?.name || 'System'}</div>
+                                            <div style="font-size: 10px; color: var(--slate-500);">${reply.user?.role?.replace(/_/g, ' ') || 'User'}</div>
+                                        </td>
+                                        <td style="padding: 12px; vertical-align: top; font-size: 11px; color: var(--slate-600);">
+                                            ${new Date(reply.createdAt).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
+                                        </td>
+                                        <td style="padding: 12px; vertical-align: top; font-size: 13px; color: var(--slate-700); line-height: 1.5;">
+                                            ${reply.content}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="reply-input-box" style="display: flex; gap: 12px; background: white; padding: 12px; border: 1px solid var(--slate-200); border-radius: 12px; box-shadow: var(--shadow-sm);">
+                        <textarea id="safety-reply-text" style="flex: 1; border: none; outline: none; font-size: 13px; resize: none; background: transparent;" placeholder="Type a reply or update..." rows="1"></textarea>
+                        <button class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;" onclick="window.app.fsModule?.handleSafetyReply('${incident?.id}')">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Person(s) Involved</label>
-                <input type="text" class="form-input" data-vrules="required|minLen:2" placeholder="Name or Staff ID...">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Incident Description</label>
-                <textarea class="form-input" data-vrules="required|minLen:10" rows="4" placeholder="Describe what happened and immediate actions taken..."></textarea>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Scene Photos</label>
-                <div style="border: 2px dashed var(--slate-300); padding: 24px; text-align: center; border-radius: 8px; background: var(--slate-50); color: var(--slate-500); cursor: pointer;" onclick="window.toast.show('Camera launched', 'info')">
-                    <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
-                    <p style="font-size: 13px; margin: 0;">Tap to Capture Site Condition</p>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; background: var(--orange); border-color: var(--orange); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('HSE Report Filed. SMS Alert sent to Safety Officer.', 'info'); window.drawer.close();">Log Incident</button>
         </div>
     `,
 
@@ -1323,7 +1360,20 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <button id="daily-log-submit-btn" class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="window.submitDailyProgressLog(this)"><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
+            <div id="machinery-usage-section" style="background: #F0F9FF; padding: 16px; border-radius: 8px; border: 1px solid #BAE6FD; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <label class="form-label" style="color: #0369A1; font-weight: 700; margin: 0;"><i class="fas fa-truck-monster"></i> Machinery Usage</label>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; background: white; border-color: #BAE6FD;" onclick="window.app.fsModule?.addMachineUsageRow()">
+                        <i class="fas fa-plus"></i> Add Machine
+                    </button>
+                </div>
+                <div id="machine-usage-rows" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Machinery usage rows will be injected here -->
+                    <div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery usage logged today.</div>
+                </div>
+            </div>
+
+            <button id="daily-log-submit-btn" class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.fsModule?.submitDailyProgressLog(this)"><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
         </div>
     `,
 
@@ -3822,107 +3872,95 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    requestResourceFS: `
-        <div class="drawer-section">
-            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Resource Request (FD Approval Required)</h3>
-            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Submit a request for materials or equipment. This will be reviewed by the Finance Director and coordinated by Logistics.</p>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Resource Category *</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button class="btn btn-secondary active-resource" id="fs_btn_machinery" onclick="window.app.fsModule?.toggleRequestType('machinery', this)">Machinery</button>
-                    <button class="btn btn-secondary" id="fs_btn_materials" onclick="window.app.fsModule?.toggleRequestType('materials', this)">Materials</button>
+    requestResourceFS: (projectData = {}) => `
+        <div class="drawer-section" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; background: rgba(255, 107, 0, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--orange); margin-right: 12px; font-size: 18px;">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+                <div>
+                    <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin: 0;">Resource Requisition</h3>
+                    <div style="font-size: 12px; color: var(--slate-500);">Add multiple items to your request</div>
                 </div>
             </div>
 
-            <div id="fs_machinery_req_view" style="margin-bottom: 20px;">
-                <label class="form-label">Required Machinery *</label>
-                <select id="fs_req_asset" class="form-input" style="width: 100%;">
-                    <optgroup label="Earthmoving">
-                        <option value="Excavator">Excavator (Heavy Duty)</option>
-                        <option value="Bulldozer">Bulldozer (Earthmoving)</option>
-                        <option value="Backhoe">Backhoe Loader</option>
-                        <option value="Motor Grader">Motor Grader (Leveling)</option>
-                    </optgroup>
-                    <optgroup label="Compaction & Paving">
-                        <option value="Roller">Roller (Compaction)</option>
-                        <option value="Compactor">Plate Compactor</option>
-                        <option value="Paver">Asphalt Paver</option>
-                    </optgroup>
-                    <optgroup label="Lifting & Hoisting">
-                        <option value="Crane">Crane (Mobile/Tower)</option>
-                        <option value="Forklift">Forklift (Material Handling)</option>
-                        <option value="Boom Lift">Boom Lift (Aerial)</option>
-                    </optgroup>
-                    <optgroup label="Transport & Logistics">
-                        <option value="Tipper">Tipper Truck</option>
-                        <option value="Dump Truck">Dump Truck (Haulage)</option>
-                        <option value="Water Bowser">Water Bowser (Suppression)</option>
-                        <option value="Road Sweeper">Road Sweeper</option>
-                    </optgroup>
-                    <optgroup label="Concrete & Drilling">
-                        <option value="Concrete Mixer">Concrete Mixer</option>
-                        <option value="Concrete Pump">Concrete Pump</option>
-                        <option value="Pile Driver">Pile Driver</option>
-                    </optgroup>
-                    <optgroup label="Utilities & Support">
-                        <option value="Generator">Generator (Power Supply)</option>
-                        <option value="Welding Machine">Welding Machine</option>
-                        <option value="Scaffolding Set">Scaffolding Set</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div id="fs_material_req_view" style="display: none; margin-bottom: 20px;">
-                <label class="form-label">Required Material *</label>
-                <select id="fs_req_material" class="form-input" style="width: 100%;">
-                    <optgroup label="Cement & Concrete">
-                        <option value="Cement OPC">Cement OPC (Bags)</option>
-                        <option value="Concrete Blocks">Concrete Blocks</option>
-                    </optgroup>
-                    <optgroup label="Bituminous">
-                        <option value="Bitumen G-Grade">Bitumen G-Grade (Drums)</option>
-                        <option value="Emulsion Primer">Emulsion Primer</option>
-                    </optgroup>
-                    <optgroup label="Aggregates">
-                        <option value="Crushed Stone">Crushed Stone (Tonnes)</option>
-                        <option value="River Sand">River Sand (Tonnes)</option>
-                        <option value="Gravel">Gravel (Tonnes)</option>
-                        <option value="Aggregate Base">Aggregate Base (Tonnes)</option>
-                    </optgroup>
-                    <optgroup label="Fuel & Fluids">
-                        <option value="Diesel Fuel">Diesel Fuel (Litres)</option>
-                    </optgroup>
-                    <optgroup label="Steel & Hardware">
-                        <option value="Steel Rebar">Steel Rebar (Tonnes)</option>
-                        <option value="Binding Wire">Binding Wire (Rolls)</option>
-                        <option value="Nails (Box)">Nails (Box)</option>
-                    </optgroup>
-                    <optgroup label="Drainage & Roadworks">
-                        <option value="PVC Pipes">PVC Pipes</option>
-                        <option value="Kerb Stones">Kerb Stones</option>
-                        <option value="Geotextile Fabric">Geotextile Fabric (m²)</option>
-                        <option value="Waterproof Membrane">Waterproof Membrane</option>
-                    </optgroup>
-                </select>
-                <div style="margin-top: 12px;">
-                    <label class="form-label">Quantity *</label>
-                    <input type="number" id="fs_req_qty" class="form-input" data-vrules="required|min:1" style="width: 100%;" placeholder="0.00">
-                </div>
-            </div>
-
+            <div id="fs_req_message_area" style="margin-bottom: 16px; display: none;"></div>
 
             <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Priority</label>
-                <select id="fs_req_urgency" class="form-input" style="width: 100%;">
+                <label class="form-label" style="color: var(--slate-700); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">1. Choose Category</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--slate-50); padding: 4px; border-radius: 10px; border: 1px solid var(--slate-200);">
+                    <button class="btn active" id="fs_btn_machinery" 
+                        onclick="window.app.fsModule?.toggleRequestType('machinery', this)" 
+                        style="padding: 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; transition: all 0.2s; background: var(--orange); color: white;">
+                        <i class="fas fa-tractor" style="margin-right: 6px;"></i> Machinery
+                    </button>
+                    <button class="btn" id="fs_btn_materials" 
+                        onclick="window.app.fsModule?.toggleRequestType('materials', this)" 
+                        style="padding: 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; transition: all 0.2s; background: transparent; color: var(--slate-600);">
+                        <i class="fas fa-boxes" style="margin-right: 6px;"></i> Materials
+                    </button>
+                </div>
+            </div>
+
+            <div id="fs_resource_selector_box" style="padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-300); margin-bottom: 20px;">
+                <div id="fs_machinery_req_view">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Equipment Model</label>
+                    <select id="fs_mac_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
+                        ${(projectData?.recommendedMachines || []).length > 0 ? (projectData.recommendedMachines || []).map((m) => `
+                            <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.type}: ${m.model}</option>
+                        `).join('') : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || 'RT-5'}</option>`}
+                    </select>
+                    
+                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+                        <div style="flex: 1;">
+                            <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 4px; text-transform: uppercase;">Quantity</label>
+                            <input type="number" id="fs_mac_qty" class="form-input" value="1" min="1" style="width: 100%; border-radius: 8px; padding: 8px;">
+                        </div>
+                        <button class="btn" onclick="window.app.fsModule?.addItemToRequisition('machinery')" style="margin-top: 20px; background: var(--slate-900); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px;">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                </div>
+
+                <div id="fs_material_req_view" style="display: none;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Material Type</label>
+                    <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
+                        ${(projectData?.recommendedMaterials || []).length > 0 ? (projectData.recommendedMaterials || []).map((m) => `
+                            <option value="${m.name}" data-unit="${m.unit}">${m.name} (${m.unit})</option>
+                        `).join('') : `<option value="" disabled>No materials mapped for ${projectData?.roadSpecification?.roadType || 'RT-5'}</option>`}
+                    </select>
+
+                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+                        <div style="flex: 1;">
+                            <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 4px; text-transform: uppercase;">Amount</label>
+                            <input type="number" id="fs_mat_qty" class="form-input" value="1" min="1" step="0.1" style="width: 100%; border-radius: 8px; padding: 8px;">
+                        </div>
+                        <button class="btn" onclick="window.app.fsModule?.addItemToRequisition('material')" style="margin-top: 20px; background: var(--slate-900); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px;">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fs_requisition_items_list" style="margin-bottom: 24px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-700); margin-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid var(--slate-100); padding-bottom: 8px;">Selected Items (0)</label>
+                <div id="fs_items_container" style="display: flex; flex-direction: column; gap: 8px; min-height: 40px;">
+                    <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; font-style: italic;">No items added yet.</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px; padding: 16px; background: #FFF9F5; border-radius: 12px; border: 1px solid #FFE5D4;">
+                <label class="form-label" style="color: var(--orange-dark); font-weight: 700; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block;">Overall Priority</label>
+                <select id="fs_req_urgency" class="form-input" style="width: 100%; border: none; background: transparent; font-weight: 700; color: var(--slate-800);">
                     <option value="normal">Normal (Scheduled)</option>
-                    <option value="urgent">Urgent (Stopper)</option>
+                    <option value="urgent"> Urgent (Impacts Critical Path)</option>
                 </select>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--slate-900); border-color: var(--slate-900);" 
+            <button class="btn" style="width: 100%; padding: 16px; background: var(--orange); border: none; border-radius: 12px; color: white; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3); transition: transform 0.2s;" 
+                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'"
                 onclick="window.app.fsModule?.handleSubmitRequisition()">
-                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Request to Logistics/EC
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Requisition
             </button>
         </div>
     `,
@@ -4724,6 +4762,117 @@ Contract Admin</textarea>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Log</button>
             </div>
         </div>
+    `,
+
+    safetyIncidentTable: (incidents = []) => `
+        <div class="drawer-section" style="padding: 0;">
+            <div style="padding: 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 18px; font-weight: 800; color: #991B1B; margin: 0;">Safety Incidents</h3>
+                    <div style="font-size: 12px; color: #B91C1C; margin-top: 4px;">Track and respond to site incidents</div>
+                </div>
+                <button class="btn btn-primary" style="background: #DC2626; border-color: #DC2626;" onclick="window.drawer.open('Report Safety Incident', window.DrawerTemplates.safetyIncident())">
+                    <i class="fas fa-plus"></i> Report New
+                </button>
+            </div>
+            
+            <div style="padding: 24px;">
+                ${incidents.length === 0 ? `
+                    <div style="padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
+                        <i class="fas fa-shield-check" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i>
+                        <div>No safety incidents reported.</div>
+                    </div>
+                ` : `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--slate-200); text-align: left;">
+                                <th style="padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: var(--slate-500);">ID / Date</th>
+                                <th style="padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: var(--slate-500);">Type</th>
+                                <th style="padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: var(--slate-500);">Status</th>
+                                <th style="padding: 12px 8px; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${incidents.map(inc => `
+                                <tr style="border-bottom: 1px solid var(--slate-100); background: white; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                                    <td style="padding: 16px 8px;">
+                                        <div style="font-weight: 700; font-size: 13px;">${inc.id || 'N/A'}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">${new Date(inc.createdAt || Date.now()).toLocaleDateString()}</div>
+                                    </td>
+                                    <td style="padding: 16px 8px;">
+                                        <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${inc.type || 'General'}</div>
+                                        <div style="font-size: 11px; color: ${inc.priority === 'High' ? 'var(--red)' : 'var(--amber)'}; font-weight: 700;">${inc.priority || 'Medium'} Priority</div>
+                                    </td>
+                                    <td style="padding: 16px 8px;">
+                                        <span class="badge ${inc.status === 'resolved' ? 'badge-success' : 'badge-warning'}">${(inc.status || 'PENDING').toUpperCase()}</span>
+                                    </td>
+                                    <td style="padding: 16px 8px; text-align: right;">
+                                        <button class="btn btn-secondary btn-sm" onclick='window.drawer.open("Incident Details", window.DrawerTemplates.safetyIncident(${JSON.stringify(inc).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
+                                            View Thread
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `}
+            </div>
+        </div>
+    `,
+
+    issueTable: (issues = []) => `
+        <div class="drawer-section" style="padding: 0;">
+            <div style="padding: 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 18px; font-weight: 800; color: #92400E; margin: 0;">Site Issues</h3>
+                    <div style="font-size: 12px; color: #B45309; margin-top: 4px;">Track and respond to operational issues</div>
+                </div>
+                <button class="btn btn-primary" style="background: #D97706; border-color: #D97706;" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint)">
+                    <i class="fas fa-plus"></i> Report New
+                </button>
+            </div>
+            
+            <div style="padding: 24px;">
+                ${issues.length === 0 ? `
+                    <div style="padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
+                        <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i>
+                        <div>No open issues reported.</div>
+                    </div>
+                ` : `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--slate-200); text-align: left;">
+                                <th style="padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: var(--slate-500);">ID / Date</th>
+                                <th style="padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: var(--slate-500);">Category</th>
+                                <th style="padding: 12px 8px; font-size: 11px; text-transform: uppercase; color: var(--slate-500);">Status</th>
+                                <th style="padding: 12px 8px; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${issues.map(iss => `
+                                <tr style="border-bottom: 1px solid var(--slate-100); background: white; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                                    <td style="padding: 16px 8px;">
+                                        <div style="font-weight: 700; font-size: 13px;">${iss.id || 'N/A'}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">${new Date(iss.createdAt || Date.now()).toLocaleDateString()}</div>
+                                    </td>
+                                    <td style="padding: 16px 8px;">
+                                        <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${iss.category || 'General'}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">${iss.severity || 'Medium'} Severity</div>
+                                    </td>
+                                    <td style="padding: 16px 8px;">
+                                        <span class="badge ${iss.status === 'resolved' ? 'badge-success' : 'badge-warning'}">${(iss.status || 'PENDING').toUpperCase()}</span>
+                                    </td>
+                                    <td style="padding: 16px 8px; text-align: right;">
+                                        <button class="btn btn-secondary btn-sm" onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(iss).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
+                                            View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `}
+            </div>
+        </div>
     `
 };
-

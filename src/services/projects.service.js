@@ -18,10 +18,13 @@ const ALLOWED_SORT_FIELDS = [
   'budgetTotal', 'budgetSpent', 'startDate', 'endDate', 'createdAt'
 ];
 
-async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status }) {
+async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, fieldSupervisorId, managerId }) {
   try {
     const skip = (page - 1) * limit;
-    const where = status ? { status } : {};
+    const where = {};
+    if (status) where.status = status;
+    if (fieldSupervisorId) where.fieldSupervisorId = Number(fieldSupervisorId);
+    if (managerId) where.managerId = Number(managerId);
     
     // Defensive check for sortBy
     const validSortBy = ALLOWED_SORT_FIELDS.includes(sortBy) ? sortBy : 'createdAt';
@@ -42,6 +45,7 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
               avatarUrl: true,
             },
           },
+          roadSpecification: true,
           _count: {
             select: {
               tasks: true,
