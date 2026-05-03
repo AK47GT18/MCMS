@@ -186,11 +186,7 @@ export class ProjectManagerDashboard {
                 </div>`;
         }
         if (this.currentView === 'gantt' || this.currentView === 'execution') {
-             return `
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary"><i class="fas fa-sliders"></i> Filter</button>
-                    <button class="btn btn-primary" onclick="window.drawer.open('Add Task', window.DrawerTemplates.addTask)"><i class="fas fa-calendar-plus"></i> Add Task</button>
-                </div>`;
+             return '';
         }
         if (this.currentView === 'users') {
              return `

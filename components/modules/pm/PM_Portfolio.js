@@ -25,19 +25,6 @@ export const PM_Portfolio = {
                       <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('completed')">Completed</div>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        <div class="filter-group">
-                            <select class="form-select" onchange="(window.app.pmModule || window.app.fmModule).filterProjectsByStatus(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-size: 14px; cursor: pointer;">
-                                <option value="all">All Statuses</option>
-                                <option value="active">Active</option>
-                                <option value="completed">Completed</option>
-                                <option value="on_hold">On Hold</option>
-                                <option value="suspended">Suspended</option>
-                                <option value="delayed">Delayed</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectDrawer()" style="background: var(--slate-900); border-color: var(--slate-900);">
-                            <i class="fas fa-plus"></i> Initialize Project
-                        </button>
                     </div>
                 </div>
               <div id="projects-table-container">
@@ -163,6 +150,8 @@ export const PM_Portfolio = {
                         <div class="dropdown-content" style="display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: var(--shadow-md); z-index: 100; border-radius: 4px; border: 1px solid var(--slate-200);">
                             <a href="#" onclick="event.preventDefault(); (window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-eye" style="width: 20px;"></i> View Details</a>
                             <a href="#" onclick="event.preventDefault(); window.app.pmModule?.openEditProjectDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-edit" style="width: 20px;"></i> Edit Project</a>
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule?.openSuspendProjectDrawer('${project.id}');" style="color: var(--amber-dark); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px; border-top: 1px solid var(--slate-100);"><i class="fas fa-pause-circle" style="width: 20px;"></i> Suspend Project</a>
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule?.handleCompleteProject('${project.id}');" style="color: var(--emerald-dark); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-check-circle" style="width: 20px;"></i> Mark as Complete</a>
                         </div>
                     </div>
                 </td>

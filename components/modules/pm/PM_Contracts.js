@@ -593,9 +593,9 @@ export const PM_Contracts = {
     if (!projectId) return;
 
     // Show loading in fields
-    const sumEl = document.getElementById("contract_value");
-    const startEl = document.getElementById("contract_start");
-    const endEl = document.getElementById("contract_end");
+    const sumEl = document.getElementById("contract_value") || document.getElementById("edit_contract_value");
+    const startEl = document.getElementById("contract_start") || document.getElementById("edit_contract_start");
+    const endEl = document.getElementById("contract_end") || document.getElementById("edit_contract_end");
     const codeEl = document.getElementById("contract_ref");
 
     if (sumEl) sumEl.disabled = true;
@@ -773,13 +773,10 @@ export const PM_Contracts = {
     }
   },
 
-  openUploadNewVersion(contractId, currentValue) {
+  openEditContractDrawer(contract) {
     window.drawer.open(
-      "New Contract Version",
-      window.DrawerTemplates.contractUploadVersion({
-        id: contractId,
-        value: currentValue,
-      }),
+      "Contract Revision & Versioning",
+      window.DrawerTemplates.editContract(contract),
     );
 
     setTimeout(() => {
@@ -801,78 +798,32 @@ export const PM_Contracts = {
     }, 100);
   },
 
-  async submitNewVersion(contractId) {
-    const notes = document.getElementById("v-change-notes")?.value;
-    const fileInput = document.getElementById("v-file-input");
-    const newValueInput = document.getElementById("v-new-amount");
-    const file = fileInput?.files[0];
-
-    if (!notes || notes.length < 5) {
-      window.toast.show("Please provide descriptive change notes.", "error");
-      return;
-    }
-
-    if (!file) {
-      window.toast.show("Please select a contract document (PDF).", "error");
-      return;
-    }
-
-    window.toast.show("Uploading new version...", "info");
-
-    try {
-      const formData = new FormData();
-      formData.append("document", file);
-      formData.append("changeNotes", notes);
-
-      if (newValueInput && newValueInput.value) {
-        formData.append("value", parseFloat(newValueInput.value));
-      }
-
-      const token = localStorage.getItem("mcms_auth_token");
-      const response = await fetch(`/api/v1/contracts/${contractId}/versions`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Upload failed");
-
-      window.toast.show("New version uploaded successfully!", "success");
-      window.drawer.close();
-      // Refresh the view
-      if (this.viewContract) this.viewContract(contractId);
-      this.loadContractsData();
-    } catch (error) {
-      window.toast.show("Failed to upload version: " + error.message, "error");
-    }
-  },
-
-  openEditContractDrawer(contract) {
-    window.drawer.open(
-      "Edit Contract Details",
-      window.DrawerTemplates.editContract(contract),
-    );
-  },
-
   async submitContractUpdate(contractId) {
     try {
-      const data = {
-        title: document.getElementById("edit_contract_title").value,
-        value: parseFloat(document.getElementById("edit_contract_value").value),
-        startDate: document.getElementById("edit_contract_start").value || null,
-        endDate: document.getElementById("edit_contract_end").value || null,
-        changeNotes: document.getElementById("edit_contract_notes").value,
-      };
+      const fileInput = document.getElementById("v-file-input");
+      const file = fileInput?.files[0];
+      const notes = document.getElementById("edit_contract_notes").value;
 
-      window.toast.show("Updating contract details...", "info");
+      const formData = new FormData();
+      formData.append("value", parseFloat(document.getElementById("edit_contract_value").value));
+      formData.append("status", document.getElementById("edit_contract_status").value);
+      formData.append("startDate", document.getElementById("edit_contract_start").value || "");
+      formData.append("endDate", document.getElementById("edit_contract_end").value || "");
+      formData.append("changeNotes", notes);
+      
+      if (file) {
+        formData.append("document", file);
+      }
+
+      window.toast.show("Committing revision & version...", "info");
       const token = localStorage.getItem("mcms_auth_token");
-      const res = await fetch(`/api/v1/contracts/${contractId}`, {
-        method: "PATCH",
+      
+      const res = await fetch(`/api/v1/contracts/${contractId}/versions`, {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -880,10 +831,14 @@ export const PM_Contracts = {
         throw new Error(err.message || "Update failed");
       }
 
-      window.toast.show("Contract metadata updated and versioned", "success");
-      // Re-open viewer to show updated details
-      this.viewContract(contractId);
-      this.loadContractsData();
+      window.toast.show("Contract revised and new version committed", "success");
+      window.drawer.close();
+      
+      // Refresh the table first
+      await this.loadContractsData();
+      
+      // Then re-open the viewer with fresh data if needed
+      setTimeout(() => this.viewContract(contractId), 300);
     } catch (err) {
       window.toast.show(err.message, "error");
     }

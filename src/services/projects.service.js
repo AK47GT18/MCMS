@@ -310,6 +310,23 @@ async function create(data, user) {
  */
 async function update(id, data, user) {
   const existingProject = await getById(id);
+
+  // Helper to convert date strings to ISO-8601 DateTime format
+  const convertToDateTime = (dateString) => {
+    if (!dateString) return undefined;
+    if (dateString instanceof Date) return dateString;
+    if (typeof dateString === 'string' && dateString.includes('T')) return new Date(dateString);
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return new Date(`${dateString}T00:00:00.000Z`);
+    }
+    return new Date(dateString);
+  };
+
+  const processedData = {
+    ...data,
+    ...(data.startDate && { startDate: convertToDateTime(data.startDate) }),
+    ...(data.endDate && { endDate: convertToDateTime(data.endDate) }),
+  };
   
   // Helper to fetch involved parties for notifications
   const getInvolvedParties = async (managerEmail, managerName) => {
@@ -396,7 +413,7 @@ async function update(id, data, user) {
 
   const project = await prisma.project.update({
     where: { id },
-    data,
+    data: processedData,
     include: {
       manager: {
         select: { id: true, name: true },

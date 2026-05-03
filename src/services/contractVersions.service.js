@@ -42,13 +42,20 @@ async function create(contractId, data, userId, file) {
     }
   });
 
-  // Sync main contract with latest version document info
-  if (file) {
-    await prisma.contract.update({
-      where: { id: contractId },
-      data: { documentUrl, fileName }
-    });
-  }
+  // Sync main contract with latest version data (Value, Status, Dates, Document)
+  const syncData = {
+    value: data.value ? Number(data.value) : contract.value,
+    status: data.status || contract.status,
+    startDate: data.startDate ? new Date(data.startDate) : contract.startDate,
+    endDate: data.endDate ? new Date(data.endDate) : contract.endDate,
+    documentUrl,
+    fileName
+  };
+
+  await prisma.contract.update({
+    where: { id: contractId },
+    data: syncData
+  });
 
   // Audit log
   await auditService.log(

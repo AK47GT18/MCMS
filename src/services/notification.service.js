@@ -18,6 +18,10 @@ const auditService = require('./audit.service');
 async function create(data) {
   const { userId, targetRole, type = 'info', icon = 'fa-bell', title, message, link } = data;
 
+  if (data.broadcast) {
+    return broadcast({ type, icon, title, message, link });
+  }
+
   if (targetRole && !userId) {
     return notifyRole(targetRole, { type, icon, title, message, link });
   }
@@ -97,6 +101,31 @@ async function notifyRole(role, data) {
 }
 
 /**
+ * Create notifications for ALL active users in the system (Broadcast)
+ * @param {Object} data - { type, icon, title, message, link }
+ */
+async function broadcast(data) {
+  const users = await prisma.user.findMany({
+    where: { isActive: true, deletedAt: null },
+    select: { id: true }
+  });
+
+  const notifications = [];
+  for (const user of users) {
+    try {
+      // Use direct prisma creation if we don't want to trigger separate audit/logger for each?
+      // No, calling create() ensures email and push are triggered for everyone.
+      const n = await create({ ...data, userId: user.id, broadcast: false });
+      notifications.push(n);
+    } catch (err) {
+      logger.error(`Error creating broadcast notification for user ${user.id}:`, err);
+    }
+  }
+
+  return notifications;
+}
+
+/**
  * Get notifications for a user
  * @param {number} userId
  * @param {Object} options - { limit, unreadOnly }
@@ -156,5 +185,6 @@ module.exports = {
   getByUser,
   markRead,
   markAllRead,
-  getUnreadCount
+  getUnreadCount,
+  broadcast
 };

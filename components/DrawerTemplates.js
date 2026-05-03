@@ -587,8 +587,8 @@ export const DrawerTemplates = {
 
   contractView: (contract) => {
     const versions = contract.versions || [];
-    const latestVersion =
-      versions.length > 0 ? versions[versions.length - 1] : null;
+    const latestVersion = versions.length > 0 ? versions[0] : null;
+    const currentVersionNum = latestVersion ? latestVersion.versionNumber : 1;
 
     return `
         <div style="padding: 0;">
@@ -740,9 +740,6 @@ export const DrawerTemplates = {
                 }
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Contract Documents</h4>
-                    <button class="btn btn-secondary btn-sm" onclick="(window.app.fmModule || window.app.pmModule)?.openUploadNewVersion(${contract.id}, ${contract.value})">
-                        <i class="fas fa-plus"></i> New Version
-                    </button>
                 </div>
                 
                 <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
@@ -752,9 +749,9 @@ export const DrawerTemplates = {
                     <div style="flex: 1;">
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || "Master_Agreement_Signed.pdf"}</div>
                         <div style="font-size: 11px; color: var(--slate-500);">
-                            <span style="font-weight: 700; color: var(--orange);">Version ${versions.length || 1}</span> • 
-                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> • 
-                            ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
+                            <span style="font-weight: 700; color: var(--orange);">Version v${currentVersionNum}</span> • 
+                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${(latestVersion?.createdBy?.name) || contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> • 
+                            ${latestVersion ? new Date(latestVersion.createdAt).toLocaleDateString() : (contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : new Date().toLocaleDateString())}
                         </div>
                     </div>
                     <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.viewDocument('${contract.documentUrl || ""}', '${contract.fileName || ""}')">
@@ -806,7 +803,6 @@ export const DrawerTemplates = {
                             </div>
                         `,
                                 )
-                                .reverse()
                                 .join("")
                             : `
                             <div style="text-align: center; padding: 32px; color: var(--slate-400); font-size: 13px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-200);">
@@ -839,89 +835,9 @@ export const DrawerTemplates = {
     `;
   },
 
-  contractUploadVersion: (contract) => `
-        <div style="padding: 24px;">
-            <div style="background: var(--slate-50); padding: 16px; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
-                <i class="fas fa-file-export" style="color: var(--orange); font-size: 20px;"></i>
-                <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">Upload New Contract Version</div>
-            </div>
 
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Revised Contract Value (Optional)</label>
-                <input type="number" id="v-new-amount" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="Leave empty if unchanged" value="${contract.value || ""}">
-                <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">Update this if the new version includes a change in the total contract value.</div>
-            </div>
 
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Change Description</label>
-                <textarea id="v-change-notes" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" rows="3" placeholder="Explain what changed in this version (e.g. Price adjustment, Scope change)..." style="width: 100%;"></textarea>
-            </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Upload Document (PDF)</label>
-                <div id="v-drop-zone" style="border: 2px dashed var(--slate-300); border-radius: 12px; padding: 40px; text-align: center; color: var(--slate-500); font-size: 13px; background: var(--slate-50); cursor: pointer; transition: all 0.2s ease;">
-                    <i class="fas fa-cloud-arrow-up" style="font-size: 32px; margin-bottom: 12px; color: var(--slate-400);"></i>
-                    <p style="margin: 0; font-weight: 600;">Drag new version here or <span style="color: var(--orange);">browse files</span></p>
-                    <p style="font-size: 11px; margin-top: 8px; color: var(--slate-400);">Maximum size 10MB</p>
-                </div>
-                <input type="file" id="v-file-input" style="display: none;" accept=".pdf">
-                <div id="v-file-status" style="margin-top: 12px; font-size: 12px; font-weight: 600; text-align: center;"></div>
-            </div>
-
-            <div style="display: flex; gap: 12px;">
-                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement.parentElement)){return} (window.app.fmModule || window.app.pmModule)?.submitNewVersion(${contract.id})">
-                    <i class="fas fa-upload" style="margin-right: 8px;"></i> Upload & Increment Version
-                </button>
-            </div>
-        </div>
-    `,
-
-  editContract: (contract) => `
-        <div style="padding: 24px;">
-            <div style="margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
-                <i class="fas fa-edit" style="color: var(--slate-600); font-size: 24px;"></i>
-                <div>
-                    <div style="font-weight: 800; color: var(--slate-900); font-size: 15px;">Edit Contract Details</div>
-                    <div style="font-size: 11px; color: var(--slate-500);">Updating metadata for ${contract.refCode}</div>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
-                <input type="text" id="edit_contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" value="${contract.title}">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
-                <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" value="${contract.value}">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
-                    <input type="date" id="edit_contract_start" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" value="${contract.startDate ? contract.startDate.split("T")[0] : ""}">
-                </div>
-                <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
-                    <input type="date" id="edit_contract_end" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" value="${contract.endDate ? contract.endDate.split("T")[0] : ""}">
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Change Notes / Variation Reason *</label>
-                <textarea id="edit_contract_notes" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="3" placeholder="Explain why these changes are being made..."></textarea>
-            </div>
-
-            <div style="display: flex; gap: 12px;">
-                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.app.pmModule?.viewContract(${contract.id})">Cancel</button>
-                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" 
-                    onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement.parentElement)){return} (window.app.fmModule || window.app.pmModule)?.submitContractUpdate(${contract.id})">
-                    <i class="fas fa-save" style="margin-right: 8px;"></i> Update & Record Version
-                </button>
-            </div>
-        </div>
-    `,
 
   requestFunds: `
         <div class="drawer-section">
@@ -1765,47 +1681,80 @@ export const DrawerTemplates = {
     };
 
     return `
-        <div class="drawer-section">
-            <div id="edit-contract-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
-            
-            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-100); border-radius: 8px; border-left: 4px solid var(--slate-400);">
-                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Editing: ${contract.refCode}</div>
-                <div style="font-size: 11px; color: var(--slate-500);">${contract.project?.name || "No Project"}</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom:16px;">
-                 <label class="form-label">Contract Value (MWK)</label>
-                 <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" value="${contract.value || ""}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
-            </div>
-
-            <div class="form-group" style="margin-bottom:16px;">
-                 <label class="form-label">Vendor Name</label>
-                 <input type="text" id="edit_contract_vendor" class="form-input" data-vrules="required|minLen:2" value="${contract.vendorName || ""}" style="width:100%; padding:10px;">
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
-                <div class="form-group">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" id="edit_contract_start" class="form-input" value="${formatDate(contract.startDate)}" style="width:100%; padding:10px;">
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
+                <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--orange); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    <i class="fas fa-file-signature"></i>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">End Date</label>
-                    <input type="date" id="edit_contract_end" class="form-input" value="${formatDate(contract.endDate)}" style="width:100%; padding:10px;">
+                <div>
+                    <div style="font-weight: 800; color: #9a3412; font-size: 15px;">Contract Revision & Versioning</div>
+                    <div style="font-size: 11px; color: var(--orange); font-weight: 600; text-transform: uppercase;">
+                        Ref: ${contract.refCode || contract.code || "CNT-" + contract.id} | <span style="color: #9a3412;">Current: v${contract.versions && contract.versions.length > 0 ? contract.versions[0].versionNumber : "1"}</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom:24px;">
-                <label class="form-label">Contract Status</label>
-                <select id="edit_contract_status" class="form-input" style="width:100%; padding:10px;">
-                    <option value="draft" ${contract.status === "draft" ? "selected" : ""}>Draft</option>
-                    <option value="pending_approval" ${contract.status === "pending_approval" ? "selected" : ""}>Pending Approval</option>
-                    <option value="active" ${contract.status === "active" ? "selected" : ""}>Active</option>
-                    <option value="expired" ${contract.status === "expired" ? "selected" : ""}>Expired</option>
-                    <option value="cancelled" ${contract.status === "cancelled" ? "selected" : ""}>Cancelled</option>
-                </select>
+            <!-- Metadata Section -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK)</label>
+                     <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" value="${contract.value || ""}" style="width:100%; padding:10px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Status</label>
+                    <select id="edit_contract_status" class="form-input" style="width:100%; padding:10px; border: 1px solid var(--slate-300); border-radius: 8px; font-weight: 600;">
+                        <option value="draft" ${contract.status === "draft" ? "selected" : ""}>Draft</option>
+                        <option value="pending_approval" ${contract.status === "pending_approval" ? "selected" : ""}>Pending Approval</option>
+                        <option value="active" ${contract.status === "active" ? "selected" : ""}>Active</option>
+                        <option value="expired" ${contract.status === "expired" ? "selected" : ""}>Expired</option>
+                        <option value="cancelled" ${contract.status === "cancelled" ? "selected" : ""}>Cancelled</option>
+                    </select>
+                </div>
             </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUpdateContract(${contract.id})">Save Changes</button>
+            <div style="margin-bottom:20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Schedule Timeline</label>
+                    <button class="btn btn-sm" style="font-size: 10px; padding: 2px 8px; background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-weight: 700;" 
+                        onclick="(window.app.pmModule || window.app.caModule)?.onProjectContractSelected('${contract.projectId}')">
+                        <i class="fas fa-sync-alt"></i> Sync with Project
+                    </button>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <input type="date" id="edit_contract_start" class="form-input" value="${formatDate(contract.startDate)}" style="width:100%; padding:10px; border-radius: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <input type="date" id="edit_contract_end" class="form-input" value="${formatDate(contract.endDate)}" style="width:100%; padding:10px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="height: 1px; background: var(--slate-100); margin: 24px 0;"></div>
+
+            <!-- Versioning Section -->
+            <div style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Change Description / Variation Reason *</label>
+                <textarea id="edit_contract_notes" class="form-input" data-vrules="required|minLen:10" oninput="window.V?.checkField(this)" rows="3" placeholder="Explain why these changes are being made and what is included in the new document version..." style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Upload Revised Document (Optional PDF)</label>
+                <div id="v-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
+                    <i class="fas fa-cloud-arrow-up" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                    <div id="v-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Drag new version here or browse</div>
+                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Leave empty to update metadata only</div>
+                    <input type="file" id="v-file-input" accept=".pdf" style="display: none;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange); padding: 14px; font-weight: 800;" 
+                    onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} (window.app.caModule || window.app.pmModule || window.app.fmModule)?.submitContractUpdate(${contract.id})">
+                    <i class="fas fa-upload" style="margin-right: 8px;"></i> Commit Revision & Version
+                </button>
+            </div>
         </div>
         `;
   },
@@ -2474,6 +2423,24 @@ export const DrawerTemplates = {
                  </div>
              </div>
              <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Vendor onboarding request submitted for approval', 'success')">Submit Application</button>
+        </div>
+    `,
+
+  suspendProject: `
+        <div class="drawer-section">
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Project ID / Code</label>
+                <input type="text" id="suspend_project_id" class="form-input" style="width:100%; padding:10px; background:var(--slate-50);" readonly>
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; padding:10px; background:var(--slate-50);" readonly>
+             </div>
+             <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label v-req">Reason for Suspension</label>
+                <textarea id="suspend_project_reason" class="form-input" style="width:100%; padding:10px;" rows="4" placeholder="Enter reason (e.g. Funding frozen, Community issues)..."></textarea>
+             </div>
+             <button class="btn btn-primary" style="width:100%; padding:12px; background:var(--amber-dark); border-color:var(--amber-dark);" onclick="window.app.pmModule?.handleSuspendProject()">Suspend Project</button>
         </div>
     `,
 
@@ -4491,7 +4458,14 @@ Contract Admin</textarea>
             </div>
 
             <div id="phase-editor-content" style="display: none;">
-                <div id="phase-editor-list" style="padding: 16px 24px;"></div>
+                <div style="padding: 12px 24px; background: #FEFCE8; border-bottom: 1px solid #FEF08A; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="phase-cascade-toggle" checked style="width: 16px; height: 16px; cursor: pointer;">
+                        <label for="phase-cascade-toggle" style="font-size: 12px; font-weight: 700; color: #854D0E; cursor: pointer;">Auto-cascade shifts downstream</label>
+                    </div>
+                    <div style="font-size: 11px; color: #A16207; font-style: italic;">Recommended for delays</div>
+                </div>
+                <div id="phase-editor-list" style="padding: 16px 24px; max-height: 400px; overflow-y: auto;"></div>
 
                 <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: var(--slate-50); display: flex; gap: 10px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
@@ -4905,10 +4879,13 @@ Contract Admin</textarea>
             <div style="margin-bottom: 24px;">
                 <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Project Manager / Supervisor</div>
                 <div style="display: flex; align-items: center; gap: 12px; background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
-                    <div style="width: 32px; height: 32px; background: var(--blue-light); color: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${(p.managerName || "S").charAt(0)}</div>
+                    <div style="width: 32px; height: 32px; background: var(--blue-light); color: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${(p.manager?.name || p.managerName || "U").charAt(0)}</div>
                     <div>
-                        <div style="font-size: 13px; font-weight: 700;">${p.managerName || "Assigned Supervisor"}</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Field Lead</div>
+                        <div style="font-size: 13px; font-weight: 700;">${p.manager?.name || p.managerName || "Unassigned"}</div>
+                        <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">
+                            ${p.manager ? `${p.manager.email || 'No email'} ${p.manager.phone ? '• ' + p.manager.phone : ''}` : 'No contact details available'}
+                        </div>
+                        <div style="font-size: 10px; font-weight: 700; color: var(--blue); margin-top: 4px; text-transform: uppercase;">Supervisor</div>
                     </div>
                 </div>
             </div>

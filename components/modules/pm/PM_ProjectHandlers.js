@@ -215,7 +215,7 @@ export const PM_ProjectHandlers = {
                     setVal('proj_supervisor', project.managerId || project.manager_id);
                 });
 
-                this.initializeProjectMap(0, 'project-location-map', {
+                this.initializeProjectMap(0, 'project-map', {
                     lat: project.lat || -13.9626,
                     lng: project.lng || 33.7741,
                     radius: project.radius || 500
@@ -261,6 +261,18 @@ export const PM_ProjectHandlers = {
              await projects.update(id, { status: 'suspended', suspensionReason: reason });
              window.toast.show('Project suspended', 'warning');
              window.drawer.close();
+             this.loadProjectsFromAPI();
+         } catch (error) {
+             window.toast.show(error.message, 'error');
+         }
+    },
+
+    async handleCompleteProject(id) {
+         if (!confirm("Are you sure you want to mark this project as completed? This action cannot be easily undone.")) return;
+
+         try {
+             await projects.update(id, { status: 'completed' });
+             window.toast.show('Project marked as completed', 'success');
              this.loadProjectsFromAPI();
          } catch (error) {
              window.toast.show(error.message, 'error');

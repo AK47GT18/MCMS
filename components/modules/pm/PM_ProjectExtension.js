@@ -46,29 +46,70 @@ export const PM_ProjectExtension = {
         if (!this.ganttPhaseEditorTasks) return;
         
         const btn = document.querySelector('button[onclick="window.app.pmModule.handlePhaseEditorSave()"]');
-        const origText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-        btn.disabled = true;
+        const origText = btn?.innerHTML || 'Save All Phase Dates';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+        }
 
         try {
-            const tasksApi = await import('../../../src/api/tasks.api.js');
+            const notificationsApi = await import('../../../src/api/notifications.api.js');
             const updates = [];
+            const changeDetails = [];
+            let maxEndDate = null;
+
             for (const t of this.ganttPhaseEditorTasks) {
                 const s = document.getElementById(`phase-start-${t.id}`)?.value;
                 const e = document.getElementById(`phase-end-${t.id}`)?.value;
                 if (!s || !e) continue;
                 
+                // Track latest end date for the project
+                const taskEndDate = new Date(e);
+                if (!maxEndDate || taskEndDate > maxEndDate) {
+                    maxEndDate = taskEndDate;
+                }
+
                 const origS = t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : '';
                 const origE = t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : '';
                 
                 if (s !== origS || e !== origE) {
-                    updates.push(tasksApi.default.update(t.id, { startDate: s, endDate: e }));
+                    updates.push(tasksApi.update(t.id, { startDate: s, endDate: e }));
+                    changeDetails.push({
+                        name: t.name,
+                        oldDates: `${origS} to ${origE}`,
+                        newDates: `${s} to ${e}`
+                    });
                 }
             }
             
             if (updates.length > 0) {
                 await Promise.all(updates);
-                window.toast?.show(`Updated ${updates.length} phases and cascaded dependencies`, 'success');
+                
+                // 1. Sync Project End Date
+                const projectResponse = await projects.getById(this.selectedProjectId);
+                const project = projectResponse.data || projectResponse;
+                
+                const currentProjectEnd = project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '';
+                const newProjectEnd = maxEndDate.toISOString().split('T')[0];
+
+                if (newProjectEnd !== currentProjectEnd) {
+                    await projects.update(this.selectedProjectId, { endDate: newProjectEnd });
+                    window.toast?.show(`Project schedule extended. Master end date synced to ${newProjectEnd}`, 'info');
+                }
+
+                // 2. Broadcast Notification (Triggers emails in backend)
+                const changeSummary = changeDetails.map(c => `• ${c.name}: [${c.oldDates}] → [${c.newDates}]`).join('\n');
+                
+                await notificationsApi.default.create({
+                    broadcast: true,
+                    type: 'warning',
+                    icon: 'fa-calendar-alt',
+                    title: 'Construction Phase Changes',
+                    message: `Schedule updates for project "${project.name}":\n\n${changeSummary}\n\nProject Master end date updated to: ${newProjectEnd}. PM and FD, please review and update the physical project master document.`,
+                    link: `/pm-dashboard.html?project=${this.selectedProjectId}&view=gantt`
+                });
+
+                window.toast?.show(`Updated ${updates.length} phases and broadcasted notifications to all members`, 'success');
                 this.renderGanttChart(); 
             } else {
                 window.toast?.show('No changes detected', 'info');
@@ -77,7 +118,7 @@ export const PM_ProjectExtension = {
             
         } catch (error) {
             console.error('Failed to save phases', error);
-            window.toast?.show('Error saving phases', 'error');
+            window.toast?.show('Error saving phases: ' + error.message, 'error');
         } finally {
             if (btn) {
                 btn.innerHTML = origText;
@@ -115,9 +156,11 @@ export const PM_ProjectExtension = {
         }
 
         const btn = document.getElementById('ext-req-submit-btn');
-        const origText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-        btn.disabled = true;
+        const origText = btn?.innerHTML || 'Submit Extension Request';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            btn.disabled = true;
+        }
 
         try {
             const timelineApi = await import('../../../src/api/timelineExtensions.api.js');
@@ -182,5 +225,4 @@ export const PM_ProjectExtension = {
             window.toast.show(error.message, 'error');
         }
     }
-
 };

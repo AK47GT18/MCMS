@@ -154,6 +154,8 @@ const createContractVersionSchema = z.object({
   title: z.string().max(255).optional(),
   value: z.coerce.number().positive().optional(),
   status: z.string().max(20).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   changeNotes: z.string().optional(),
 });
 

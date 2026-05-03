@@ -440,21 +440,27 @@ export const PM_Gantt = {
             // Save state
             this.ganttPhaseEditorTasks = tasksList;
 
+            const todayStr = new Date().toISOString().split('T')[0];
             listEl.innerHTML = tasksList.map((t, idx) => `
                 <div class="form-group" style="margin-bottom: 16px; background: white; padding: 12px; border: 1px solid var(--slate-200); border-radius: 6px;">
                     <div style="font-weight: 700; color: var(--slate-800); font-size: 13px; margin-bottom: 8px;">Phase ${idx + 1}: ${this.escapeHTML(t.name)}</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">Start Date</label>
-                            <input type="date" id="phase-start-${t.id}" class="form-input" style="width: 100%; padding: 6px; font-size: 12px;" value="${t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : ''}">
+                            <input type="date" id="phase-start-${t.id}" class="form-input phase-editor-date" data-task-id="${t.id}" data-type="start" data-idx="${idx}" min="${todayStr}" style="width: 100%; padding: 6px; font-size: 12px;" value="${t.startDate ? new Date(t.startDate).toISOString().split('T')[0] : ''}">
                         </div>
                         <div>
                             <label style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">End Date</label>
-                            <input type="date" id="phase-end-${t.id}" class="form-input" style="width: 100%; padding: 6px; font-size: 12px;" value="${t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : ''}">
+                            <input type="date" id="phase-end-${t.id}" class="form-input phase-editor-date" data-task-id="${t.id}" data-type="end" data-idx="${idx}" min="${todayStr}" style="width: 100%; padding: 6px; font-size: 12px;" value="${t.endDate ? new Date(t.endDate).toISOString().split('T')[0] : ''}">
                         </div>
                     </div>
                 </div>
             `).join('');
+
+            // Wire up cascading listeners
+            listEl.querySelectorAll('.phase-editor-date').forEach(input => {
+                input.addEventListener('change', (e) => this.handlePhaseDateChange(e));
+            });
             
         } catch (error) {
             console.error('Failed to load tasks for editor', error);
@@ -487,5 +493,97 @@ export const PM_Gantt = {
                 this.ganttInstance.scroll_today();
             }
         }, 100);
+    },
+
+    handlePhaseDateChange(e) {
+        const input = e.target;
+        const taskIdx = parseInt(input.dataset.idx);
+        const type = input.dataset.type;
+        const tasks = this.ganttPhaseEditorTasks;
+        if (!tasks || taskIdx === -1) return;
+
+        const currentTask = tasks[taskIdx];
+        
+        // Use current input values as reference for the shift calculation
+        const startInput = document.getElementById(`phase-start-${currentTask.id}`);
+        const endInput = document.getElementById(`phase-end-${currentTask.id}`);
+        
+        if (!startInput || !endInput) return;
+
+        const isCascadeEnabled = document.getElementById('phase-cascade-toggle')?.checked;
+
+        if (type === 'start') {
+            const oldS = new Date(currentTask.startDate);
+            const newS = new Date(startInput.value);
+            const shiftMs = newS.getTime() - oldS.getTime();
+            if (shiftMs === 0) return;
+            
+            const currentE = new Date(endInput.value);
+            const newE = new Date(currentE.getTime() + shiftMs);
+            endInput.value = newE.toISOString().split('T')[0];
+            
+            if (isCascadeEnabled) {
+                if (shiftMs < 0) {
+                    if (!confirm("Start date moved back. Pull forward all subsequent phases?")) return;
+                }
+                this.applyCascadeShift(taskIdx, shiftMs);
+            }
+        } else if (type === 'end') {
+            const oldE = new Date(currentTask.endDate);
+            const newE = new Date(endInput.value);
+            const shiftMs = newE.getTime() - oldE.getTime();
+            if (shiftMs === 0) return;
+            
+            if (isCascadeEnabled) {
+                if (shiftMs < 0) {
+                    if (!confirm("Phase duration reduced. Pull forward all subsequent phases?")) return;
+                }
+                this.applyCascadeShift(taskIdx, shiftMs);
+            }
+        }
+    },
+
+    applyCascadeShift(fromIdx, shiftMs) {
+        if (shiftMs === 0) return;
+        const tasks = this.ganttPhaseEditorTasks;
+        
+        // We shift every task after fromIdx
+        for (let i = fromIdx + 1; i < tasks.length; i++) {
+            const t = tasks[i];
+            const sIn = document.getElementById(`phase-start-${t.id}`);
+            const eIn = document.getElementById(`phase-end-${t.id}`);
+            
+            if (sIn && eIn) {
+                const s = new Date(sIn.value);
+                const e = new Date(eIn.value);
+                
+                const newS = new Date(s.getTime() + shiftMs);
+                const newE = new Date(e.getTime() + shiftMs);
+                
+                sIn.value = newS.toISOString().split('T')[0];
+                eIn.value = newE.toISOString().split('T')[0];
+                
+                // Add a visual cue
+                sIn.style.backgroundColor = '#FFFBEB';
+                eIn.style.backgroundColor = '#FFFBEB';
+                setTimeout(() => {
+                    sIn.style.backgroundColor = '';
+                    eIn.style.backgroundColor = '';
+                }, 1000);
+            }
+        }
+    },
+
+    escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[m];
+        });
     }
 };

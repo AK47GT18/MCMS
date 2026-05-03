@@ -317,16 +317,13 @@ export const FD_Contracts = {
       const project = result.data || result;
 
       // Pre-fill values
-      const valInput = document.getElementById("contract_value");
-      if (valInput) valInput.value = project.budgetTotal || 0;
+      const valInput = document.getElementById("contract_value") || document.getElementById("edit_contract_value");
+      const startInput = document.getElementById("contract_start") || document.getElementById("edit_contract_start");
+      const endInput = document.getElementById("contract_end") || document.getElementById("edit_contract_end");
 
-      const startInput = document.getElementById("contract_start");
-      if (startInput && project.startDate)
-        startInput.value = project.startDate.split("T")[0];
-
-      const endInput = document.getElementById("contract_end");
-      if (endInput && project.endDate)
-        endInput.value = project.endDate.split("T")[0];
+      if (valInput) valInput.value = project.contractValue || project.budgetTotal || 0;
+      if (startInput && project.startDate) startInput.value = project.startDate.split("T")[0];
+      if (endInput && project.endDate) endInput.value = project.endDate.split("T")[0];
 
       // Random Code Generation
       const refInput = document.getElementById("contract_ref");
@@ -1014,30 +1011,55 @@ export const FD_Contracts = {
 
   openEditContractDrawer(contract) {
     window.drawer.open(
-      "Edit Contract Details",
+      "Contract Revision & Versioning",
       window.DrawerTemplates.editContract(contract),
     );
+
+    setTimeout(() => {
+      const dropZone = document.getElementById("v-drop-zone");
+      const fileInput = document.getElementById("v-file-input");
+      const status = document.getElementById("v-file-status");
+
+      if (dropZone && fileInput) {
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            status.innerHTML = `<span style="color: var(--emerald);"><i class="fas fa-check-circle"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</span>`;
+            dropZone.style.borderColor = "var(--emerald)";
+            dropZone.style.background = "#F0FDF4";
+          }
+        };
+      }
+    }, 100);
   },
 
   async submitContractUpdate(contractId) {
     try {
-      const data = {
-        title: document.getElementById("edit_contract_title").value,
-        value: parseFloat(document.getElementById("edit_contract_value").value),
-        startDate: document.getElementById("edit_contract_start").value || null,
-        endDate: document.getElementById("edit_contract_end").value || null,
-        changeNotes: document.getElementById("edit_contract_notes").value,
-      };
+      const fileInput = document.getElementById("v-file-input");
+      const file = fileInput?.files[0];
+      const notes = document.getElementById("edit_contract_notes").value;
 
-      window.toast.show("Updating contract details...", "info");
+      const formData = new FormData();
+      formData.append("value", parseFloat(document.getElementById("edit_contract_value").value));
+      formData.append("status", document.getElementById("edit_contract_status").value);
+      formData.append("startDate", document.getElementById("edit_contract_start").value || "");
+      formData.append("endDate", document.getElementById("edit_contract_end").value || "");
+      formData.append("changeNotes", notes);
+      
+      if (file) {
+        formData.append("document", file);
+      }
+
+      window.toast.show("Committing revision & version...", "info");
       const token = localStorage.getItem("mcms_auth_token");
-      const res = await fetch(`/api/v1/contracts/${contractId}`, {
-        method: "PATCH",
+      
+      const res = await fetch(`/api/v1/contracts/${contractId}/versions`, {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -1045,10 +1067,14 @@ export const FD_Contracts = {
         throw new Error(err.message || "Update failed");
       }
 
-      window.toast.show("Contract metadata updated and versioned", "success");
-      // Re-open viewer to show updated details
-      this.viewContract(contractId);
-      this.loadContractsData();
+      window.toast.show("Contract revised and new version committed", "success");
+      window.drawer.close();
+
+      // Refresh the table first
+      await this.loadContractsData();
+
+      // Then re-open the viewer with fresh data if needed
+      setTimeout(() => this.viewContract(contractId), 300);
     } catch (err) {
       window.toast.show(err.message, "error");
     }
