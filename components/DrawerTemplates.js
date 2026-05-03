@@ -3245,7 +3245,7 @@ Contract Admin</textarea>
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
                 <div>
                     <div style="font-size:18px; font-weight:800; color:var(--slate-900);">Issue #${issue.id}</div>
-                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by ${issue.reportedBy || "Site Manager"}</div>
+                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by ${issue.reporter?.name || "Site Manager"} • ${issue.createdAt ? new Date(issue.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Recently"}</div>
                 </div>
                 <span class="status ${issue.status === "open" ? "pending" : "active"}" id="drawer_complaint_status" style="font-weight:700;">${issue.status.toUpperCase()}</span>
             </div>
@@ -3268,6 +3268,7 @@ Contract Admin</textarea>
                 </p>
             </div>
 
+            ${(issue.status === 'open' || issue.status === 'investigating') ? `
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
                 <label class="form-label" style="margin-bottom:12px; font-weight:700;">Resolution Management</label>
 
@@ -3285,10 +3286,21 @@ Contract Admin</textarea>
                     <textarea id="resolution-notes" class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."></textarea>
                 </div>
             </div>
+            ` : `
+            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
+                <label class="form-label" style="margin-bottom:12px; font-weight:700;"><i class="fas fa-check-circle" style="color:var(--emerald);"></i> Resolution History</label>
+                <div style="font-size:13px; color:var(--slate-700); line-height:1.6;">
+                    ${issue.resolutionNotes || "This issue was closed with no specific notes recorded."}
+                </div>
+                ${issue.resolvedAt ? `<div style="font-size:11px; color:var(--slate-500); margin-top:12px;">Resolved on ${new Date(issue.resolvedAt).toLocaleString()}</div>` : ""}
+            </div>
+            `}
 
             <div style="border-top:1px solid var(--slate-200); padding-top:24px; display: flex; gap: 12px;">
-                <button class="btn btn-secondary" style="flex: 1; justify-content:center;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-secondary" style="flex: 1; justify-content:center;" onclick="window.drawer.close()">Close</button>
+                ${(issue.status === 'open' || issue.status === 'investigating') ? `
                 <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleResolveIssue('${issue.id}')">Submit Resolution</button>
+                ` : ""}
             </div>
         </div>
     `,

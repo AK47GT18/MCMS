@@ -12,6 +12,7 @@ import contracts from '../../../src/api/contracts.api.js';
 
 export const PM_Issues = {
     getIssuesView() {
+        console.log('[DEBUG] Loading Issues View - Version 2.0');
         setTimeout(() => this.loadIssuesFromAPI(), 0);
         return `
             <div class="view-content" style="padding: 24px;">
@@ -23,7 +24,7 @@ export const PM_Issues = {
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.loadIssuesFromAPI()"><i class="fas fa-sync"></i> Refresh</button>
-                            <button class="btn btn-action btn-sm" onclick="window.app.openIssueDrawer(${this.selectedProjectId || 'null'}, 'Report Issue')"><i class="fas fa-plus"></i> Report Issue</button>
+                            <button class="btn btn-action btn-sm" onclick="window.app.openIssueDrawer(null, 'Report Issue')"><i class="fas fa-plus"></i> Report Issue</button>
                         </div>
                     </div>
                     
@@ -33,7 +34,7 @@ export const PM_Issues = {
                 </div>
             </div>
         `;
-    },
+    },
 
     async loadIssuesFromAPI(isPolling = false) {
         const container = document.getElementById('issues-table-container');
@@ -62,19 +63,26 @@ export const PM_Issues = {
             if (this._issuesPollingTimer) clearTimeout(this._issuesPollingTimer);
             this._issuesPollingTimer = setTimeout(() => this.loadIssuesFromAPI(true), 15000); // Poll every 15s
         }
-    },
+    },
 
     renderIssuesTable(issuesList) {
         const rows = issuesList.map(item => `
             <tr>
                 <td style="font-weight: 700;">ISS-${this.escapeHTML(item.id)}</td>
                 <td><span class="badge" style="background: var(--orange-light); color: var(--orange-hover); font-size: 10px; padding: 2px 8px; border-radius: 4px;">${this.escapeHTML(item.category || 'Site')}</span></td>
-                <td title="${this.escapeHTML(item.description)}" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHTML(item.description)}</td>
-                <td>${this.escapeHTML(item.projectName || item.project?.name || 'Central')}</td>
-                <td><span class="status ${item.priority === 'high' ? 'red' : 'active'}" style="background: ${item.priority === 'high' ? '#FEE2E2' : '#F0F9FF'}; color: ${item.priority === 'high' ? '#991B1B' : '#075985'};">${this.escapeHTML(item.priority?.toUpperCase() || 'NORMAL')}</span></td>
-                <td><span class="status ${item.status === 'open' ? 'pending' : 'active'}">${this.escapeHTML(item.status?.toUpperCase() || 'OPEN')}</span></td>
                 <td>
-                    <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')})); window.app.pmModule.initIssueResolutionForm(${JSON.stringify(item).replace(/"/g, '&quot;')})">Respond</button>
+                    <div style="font-weight: 600; font-size: 13px;">${this.escapeHTML(item.reporter?.name || 'Site Manager')}</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">${item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Today'}</div>
+                </td>
+                <td title="${this.escapeHTML(item.description)}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHTML(item.description)}</td>
+                <td>${this.escapeHTML(item.projectName || item.project?.name || 'Central')}</td>
+                <td><span class="status ${item.priority?.toLowerCase() === 'high' ? 'red' : 'active'}" style="background: ${item.priority?.toLowerCase() === 'high' ? '#FEE2E2' : '#F0F9FF'}; color: ${item.priority?.toLowerCase() === 'high' ? '#991B1B' : '#075985'};">${this.escapeHTML(item.priority?.toUpperCase() || 'NORMAL')}</span></td>
+                <td><span class="status ${item.status === 'open' ? 'pending' : (item.status === 'resolved' || item.status === 'closed') ? 'active' : 'locked'}">${this.escapeHTML(item.status?.toUpperCase() || 'OPEN')}</span></td>
+                <td>
+                    ${(item.status === 'open') ? 
+                        `<button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')})); window.app.pmModule.initIssueResolutionForm(${JSON.stringify(item).replace(/"/g, '&quot;')})">Respond</button>` :
+                        `<button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-history"></i> History</button>`
+                    }
                 </td>
             </tr>
         `).join('');
@@ -82,10 +90,47 @@ export const PM_Issues = {
         return `
             <table class="data-table">
                 <thead>
-                    <tr><th>ID</th><th>Type</th><th>Description</th><th>Project</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
+                    <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Submitted By</th>
+                        <th>Description</th>
+                        <th>Project</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
         `;
+    },
+
+    renderLoadingState() {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                <div>Loading issues...</div>
+            </div>
+        `;
+    },
+
+    renderEmptyState(message) {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
+                <i class="fas fa-clipboard-check" style="font-size: 32px; margin-bottom: 16px; opacity: 0.3;"></i>
+                <div>${message}</div>
+            </div>
+        `;
+    },
+
+    escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 };
