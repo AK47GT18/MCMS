@@ -15,6 +15,7 @@
     <link href="vendor/fonts/manrope.css" rel="stylesheet">
     <link href="vendor/fonts/inter.css" rel="stylesheet">
     <link href="vendor/fonts/material-symbols.css" rel="stylesheet">
+    <script src="vendor/chartjs/chart.min.js"></script>
     <link rel="icon" href="icon-192.png">
     
     <style>
@@ -496,6 +497,29 @@
         
         .modal-link-center { text-align: center; margin-top: 20px; }
 
+        /* Password Input Enhancements */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .password-toggle:hover { color: var(--primary); }
+
         /* Form Validation Styles */
         .input-error {
             border-color: #ef4444 !important;
@@ -789,7 +813,12 @@
                 </div>
                 <div class="form-group">
                     <label for="login-pass">Password</label>
-                    <input type="password" id="login-pass" name="password" placeholder="••••••••" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-pass" name="password" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
+                        </button>
+                    </div>
                 </div>
                 <div style="text-align: right; margin-bottom: 20px;">
                     <span class="modal-link" onclick="switchModal('loginModal', 'forgotModal')" role="button" tabindex="0">Forgot Password?</span>
@@ -819,6 +848,23 @@
         </div>
     </div>
 
+    <div id="codeModal" class="modal-overlay" onclick="handleOutsideClick(event, 'codeModal')">
+        <div class="modal-box">
+            <span class="material-symbols-outlined close-modal" onclick="closeModal('codeModal')">close</span>
+            <div class="modal-header">
+                <h3>Verification Code</h3>
+                <p>Enter the 6-digit code sent to your email.</p>
+            </div>
+            <form id="codeForm" novalidate>
+                <div class="form-group">
+                    <label for="reset-code">6-Digit Code</label>
+                    <input type="text" id="reset-code" name="code" placeholder="123456" required data-validate="number" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 8px; font-family: monospace;">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;">Verify Code</button>
+            </form>
+        </div>
+    </div>
+
     <div id="resetModal" class="modal-overlay" onclick="handleOutsideClick(event, 'resetModal')">
         <div class="modal-box">
             <span class="material-symbols-outlined close-modal" onclick="closeModal('resetModal')">close</span>
@@ -829,11 +875,21 @@
             <form id="resetForm" novalidate>
                 <div class="form-group">
                     <label for="reset-pass">New Password</label>
-                    <input type="password" id="reset-pass" name="password" placeholder="••••••••" required data-validate="strong-password" data-strength-meter="true">
+                    <div class="password-wrapper">
+                        <input type="password" id="reset-pass" name="password" placeholder="••••••••" required data-validate="strong-password" data-strength-meter="true">
+                        <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="reset-confirm">Confirm Password</label>
-                    <input type="password" id="reset-confirm" name="confirmPassword" placeholder="••••••••" required data-match="reset-pass">
+                    <div class="password-wrapper">
+                        <input type="password" id="reset-confirm" name="confirmPassword" placeholder="••••••••" required data-match="reset-pass">
+                        <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
+                        </button>
+                    </div>
                 </div>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center;">Update Password</button>
             </form>
@@ -845,9 +901,21 @@
         import { modal } from './components/ui/ModalManager.js';
         import { toast } from './components/ui/ToastManager.js';
 
-        // Expose to window for inline onclick handlers (legacy support)
         window.modal = modal;
         window.toast = toast;
+
+        // Password Toggle Logic
+        window.togglePassword = (btn) => {
+            const input = btn.previousElementSibling;
+            const icon = btn.querySelector('span');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        };
 
         // Modal Logic Helper
         window.openModal = (id) => {
@@ -991,14 +1059,29 @@
                             throw new Error(data.error || data.message || 'Request failed');
                         }
                         
-                        window.closeModal('forgotModal');
-                        modal.success('Check Your Email', 'We have sent password reset instructions to your email address.');
+                        window.switchModal('forgotModal', 'codeModal');
+                        toast.success('6-Digit Code sent to your email.');
                     } catch (error) {
                         displayFormError(forgotForm, error.message);
                     } finally {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     }
+                });
+            }
+
+            // 2.5 Code Form (OTP Verification step)
+            let storedResetCode = '';
+            const codeForm = document.getElementById('codeForm');
+            if (codeForm) {
+                const validator = new FormValidator(codeForm);
+                codeForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    clearFormError(codeForm);
+                    if (!validator.validate()) return;
+                    
+                    storedResetCode = codeForm.querySelector('input[name="code"]').value;
+                    window.switchModal('codeModal', 'resetModal');
                 });
             }
 
@@ -1017,7 +1100,7 @@
                     btn.disabled = true;
                     
                     try {
-                        const token = new URLSearchParams(window.location.search).get('token');
+                        const token = storedResetCode; // Use the 6-digit code
                         const newPassword = resetForm.querySelector('input[name="password"]').value;
                         
                         const response = await fetch(`${API_BASE}/auth/reset-password`, {

@@ -16,8 +16,10 @@ const getAll = asyncHandler(async (req, res) => {
   const filters = {};
   if (query.projectId) filters.projectId = query.projectId;
   if (query.status) filters.status = query.status;
+  
+  const userRole = user.role.replace(/ /g, '_');
   // PMs only see their own projects' requests
-  if (user.role === 'Project_Manager') filters.managerId = user.id;
+  if (userRole === 'Project_Manager') filters.managerId = user.id;
 
   const requests = await timelineExtService.getAll(filters);
   response.success(res, requests);
@@ -43,7 +45,8 @@ const approve = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
 
-  if (user.role !== 'Project_Manager') {
+  const userRole = user.role.replace(/ /g, '_');
+  if (userRole !== 'Project_Manager') {
     return response.error(res, 'Only a Project Manager can approve extension requests', 403);
   }
 
@@ -56,7 +59,8 @@ const reject = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
 
-  if (user.role !== 'Project_Manager') {
+  const userRole = user.role.replace(/ /g, '_');
+  if (userRole !== 'Project_Manager') {
     return response.error(res, 'Only a Project Manager can reject extension requests', 403);
   }
 

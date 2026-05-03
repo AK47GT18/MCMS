@@ -189,7 +189,7 @@ async function forgotPassword(email) {
     return { message: 'If that email exists, a reset link has been sent.' };
   }
   
-  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
   const resetExpiryMinutes = parseInt(process.env.PASSWORD_RESET_EXPIRY_MINUTES || '10', 10);
   const resetExpires = new Date(Date.now() + resetExpiryMinutes * 60 * 1000);
   

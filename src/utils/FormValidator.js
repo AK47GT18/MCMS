@@ -23,7 +23,7 @@ export class FormValidator {
             email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
             phone: /^[\d\s\+\-\(\)]{10,}$/, // Min 10 chars, allows format chars
             password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, // 8+ chars, 1 upper, 1 lower, 1 num
-            'strong-password': /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, 
+            'strong-password': /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 
             required: /\S+/, // Non-empty
             url: /^https?:\/\/.+/,
             number: /^\d+$/,
@@ -156,6 +156,7 @@ export class FormValidator {
         const messages = {
             email: 'Please enter a valid email address.',
             password: 'Must be 8+ chars with uppercase, lowercase, and number.',
+            'strong-password': 'Must be 8+ chars with uppercase, lowercase, number, and special character.',
             phone: 'Please enter a valid phone number (min 10 digits).',
             url: 'Please enter a valid URL (http/https).',
             number: 'Please enter a valid number.',

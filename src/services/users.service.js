@@ -148,8 +148,10 @@ async function update(id, data) {
   
   const updateData = { ...data };
   
+  let plainPassword = null;
   // Hash password if provided
   if (updateData.password) {
+    plainPassword = updateData.password;
     updateData.passwordHash = await bcrypt.hash(updateData.password, 10);
     delete updateData.password;
     updateData.mustChangePassword = true; // Force change on next login if admin reset it
@@ -184,8 +186,15 @@ async function update(id, data) {
     ? `The following changes were made to your account:\n- ${changes.join('\n- ')}`
     : 'Your account details have been updated.';
 
+  let finalMessage = `${changeText}\n\nIf you did not authorize this, please contact support.`;
+
+  // If password was reset, append it to the email
+  if (plainPassword) {
+      finalMessage = `Your password has been reset by an administrator.\n\nYour new temporary password is: ${plainPassword}\n\nPlease login and change it immediately.\n\n${finalMessage}`;
+  }
+
   // Send update notification
-  emailService.sendNotification(user, 'Account Updated', `${changeText}\n\nIf you did not authorize this, please contact support.`)
+  emailService.sendNotification(user, 'Account Updated', finalMessage)
     .catch(err => logger.error('Failed to send update email', err));
   
   return { user, changes };

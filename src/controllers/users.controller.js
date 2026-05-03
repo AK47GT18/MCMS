@@ -39,7 +39,7 @@ const getById = asyncHandler(async (req, res, id) => {
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasRole(req, res, ['System_Technician', 'Managing_Director'])) return;
+  if (!hasRole(req, res, ['Project_Manager', 'System_Technician', 'Managing_Director'])) return;
   
   const body = await parseBody(req);
   const data = validateBody(body, createUserSchema, res);
@@ -76,7 +76,7 @@ const update = asyncHandler(async (req, res, id) => {
 const remove = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasRole(req, res, ['System_Technician', 'Managing_Director'])) return;
+  if (!hasRole(req, res, ['Project_Manager', 'System_Technician', 'Managing_Director'])) return;
   
   const userId = validateId(id, res);
   if (!userId) return;

@@ -53,7 +53,7 @@ const create = asyncHandler(async (req, res) => {
   const data = validateBody(body, createProjectSchema, res);
   if (!data) return;
   
-  const result = await projectsService.create(data);
+  const result = await projectsService.create(data, user);
   response.created(res, result);
 });
 

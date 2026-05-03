@@ -143,7 +143,7 @@ async function getByCode(code) {
  * @param {Object} data - Project data
  * @returns {Promise<Object>} Created project
  */
-async function create(data) {
+async function create(data, user) {
   // Validate dates
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -179,6 +179,25 @@ async function create(data) {
         select: { id: true, name: true, email: true },
       },
     },
+  });
+
+  // Log to Audit Trail
+  const auditService = require('./audit.service');
+  await auditService.log({
+    userId: user?.id,
+    userName: user?.name,
+    userRole: user?.role,
+    action: 'CREATE_PROJECT',
+    targetType: 'Project',
+    targetId: project.id,
+    targetCode: project.code,
+    details: { 
+        name: project.name, 
+        budget: project.budgetTotal, 
+        startDate: project.startDate,
+        endDate: project.endDate,
+        fieldSupervisorId: data.fieldSupervisorId 
+    }
   });
   
   logger.info('Project created', { projectId: project.id, code: project.code });

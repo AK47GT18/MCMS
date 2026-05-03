@@ -9,6 +9,47 @@ export const PM_MissingHandlers = {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     },
 
+    validateInline(id) {
+        const input = document.getElementById(id);
+        if (!input) return;
+        
+        const errorEl = document.getElementById(id + '-error');
+        let errorMsg = '';
+        const value = input.value;
+
+        if (input.type === 'number') {
+            const num = parseFloat(value);
+            if (isNaN(num)) {
+                errorMsg = 'Please enter a valid number';
+            } else if (num < 0) {
+                errorMsg = 'Negative values are not allowed';
+                input.value = 0;
+                input.classList.add('v-shake'); // Use v-shake from CSS
+                setTimeout(() => input.classList.remove('v-shake'), 400);
+            }
+        } else if (input.type === 'date') {
+            const today = new Date().toISOString().split('T')[0];
+            if (value < today && id === 'proj_start') {
+                errorMsg = 'Start date cannot be in the past';
+            } else if (id === 'proj_end') {
+                const start = document.getElementById('proj_start')?.value;
+                if (start && value < start) {
+                    errorMsg = 'End date cannot be before start date';
+                }
+            }
+        } else if (!value.trim() && input.hasAttribute('required')) {
+            errorMsg = 'This field is required';
+        }
+
+        if (errorEl) {
+            errorEl.textContent = errorMsg;
+            errorEl.style.display = errorMsg ? 'block' : 'none';
+        }
+        
+        input.style.borderColor = errorMsg ? 'var(--red)' : 'var(--slate-300)';
+        input.style.background = errorMsg ? 'var(--red-light)' : 'white';
+    },
+
     updateCoords(lat, lng, containerId = 'project-map') {
         const prefix = containerId === 'edit-project-map' ? 'edit_proj_' : 'proj_';
         const latEl = document.getElementById(prefix + 'lat');
@@ -416,10 +457,33 @@ export const PM_MissingHandlers = {
         this.initializeVerificationMap(lat, lng, project?.lat, project?.lng, project?.radius);
     },
 
+    validateRoadSpecForm() {
+        const fields = ['road_length', 'road_width', 'road_zone', 'road_town_dist'];
+        let isValid = true;
+
+        fields.forEach(id => {
+            this.validateInline(id);
+            const errorEl = document.getElementById(id + '-error');
+            if (errorEl && errorEl.style.display !== 'none') {
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            window.toast.show('Please correct the specifications in Step 2', 'warning');
+        }
+        return isValid;
+    },
+
     async handleWizardNav(direction) {
         // Validate Step 1 before leaving
         if (this.wizardState.currentStep === 1 && direction > 0) {
             if (!this.validateProjectForm()) return;
+        }
+
+        // Validate Step 2 before leaving
+        if (this.wizardState.currentStep === 2 && direction > 0) {
+            if (!this.validateRoadSpecForm()) return;
         }
 
         const newStep = this.wizardState.currentStep + direction;
@@ -746,7 +810,7 @@ export const PM_MissingHandlers = {
 
             if (supervisors.length > 0) {
                 select.innerHTML = '<option value="">Select Supervisor</option>' + 
-                    supervisors.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    supervisors.map(s => `<option value="${s.id}">(Available) ${s.name}</option>`).join('');
             } else {
                 select.innerHTML = '<option value="">No unassigned supervisors available</option>';
             }
@@ -829,18 +893,5 @@ export const PM_MissingHandlers = {
                 btn.innerHTML = originalContent;
             }
         }
-    },
-
-    updateMapRadius(radius) {
-        if (this.geofenceCircle) {
-            this.geofenceCircle.setRadius(parseFloat(radius) || 0);
-        }
-    },
-
-    updateCoords(lat, lng) { ['proj_lat', 'edit_proj_lat'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = Number(lat).toFixed(6); }); ['proj_lng', 'edit_proj_lng'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = Number(lng).toFixed(6); }); return; 
-        const latEl = document.getElementById('proj_lat');
-        const lngEl = document.getElementById('proj_lng');
-        if (latEl) latEl.textContent = lat.toFixed(6);
-        if (lngEl) lngEl.textContent = lng.toFixed(6);
     }
 };

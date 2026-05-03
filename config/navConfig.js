@@ -51,7 +51,6 @@ export const NAV_ITEMS = {
             ]
         }
     ],
-    // Default fallback for other roles (simplified for now)
     [ROLES.PROJECT_MANAGER]: [
         {
             section: 'Main',

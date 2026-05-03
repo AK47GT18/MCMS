@@ -16,19 +16,29 @@ export const PM_Audit = {
         return `
             <div class="data-card">
                 <div class="data-card-header">
-                    <div class="card-title">Immutable Audit & Security Log</div>
-                    <div style="display: flex; gap: 8px;">
+                    <div class="card-title">Immutable Audit &amp; Security Log</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <div style="position: relative;">
                             <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--slate-400); font-size: 12px;"></i>
-                            <input type="text" id="audit-search" class="form-input" placeholder="Search actor or action..." style="width: 220px; padding: 6px 12px 6px 30px; font-size: 13px;" onkeyup="if(event.key === 'Enter') window.app.pmModule.loadAuditLogs()">
+                            <input type="text" id="audit-search" class="form-input" placeholder="Search actor or action..." style="width: 200px; padding: 6px 12px 6px 30px; font-size: 13px;" onkeyup="if(event.key === 'Enter') window.app.pmModule.loadAuditLogs()">
                         </div>
+                        <select id="audit-action-filter" class="form-input" style="width: 160px; padding: 4px 8px; font-size: 13px;" onchange="window.app.pmModule.loadAuditLogs()">
+                            <option value="all">All Actions</option>
+                            <option value="CREATE_PROJECT">Create Project</option>
+                            <option value="APPROVE">Approve</option>
+                            <option value="REJECT">Reject</option>
+                            <option value="LOGIN">Login</option>
+                            <option value="CREATE_USER">Create User</option>
+                            <option value="UPDATE_PROJECT">Update Project</option>
+                            <option value="DELETE">Delete</option>
+                        </select>
                         <select id="audit-severity-filter" class="form-input" style="width: 120px; padding: 4px 8px; font-size: 13px;" onchange="window.app.pmModule.loadAuditLogs()">
                             <option value="all">All Levels</option>
                             <option value="info">Info</option>
                             <option value="warning">Warning</option>
                             <option value="error">Error / Critical</option>
                         </select>
-                        <button class="btn btn-secondary" onclick="window.app.pmModule.loadAuditLogs()" data-tooltip="Refresh local logs"><i class="fas fa-sync"></i></button>
+                        <button class="btn btn-secondary" onclick="window.app.pmModule.loadAuditLogs()" data-tooltip="Refresh"><i class="fas fa-sync"></i></button>
                     </div>
                 </div>
                 <div id="audit-table-container">
@@ -36,7 +46,7 @@ export const PM_Audit = {
                 </div>
             </div>
         `;
-    },
+    },
 
     async loadAuditLogs() {
         const container = document.getElementById('audit-table-container');
@@ -44,11 +54,13 @@ export const PM_Audit = {
 
         const search = document.getElementById('audit-search')?.value;
         const severity = document.getElementById('audit-severity-filter')?.value;
+        const actionFilter = document.getElementById('audit-action-filter')?.value;
 
         try {
             const params = { limit: 100 };
             if (search) params.search = search;
             if (severity && severity !== 'all') params.severity = severity;
+            if (actionFilter && actionFilter !== 'all') params.action = actionFilter;
 
             const response = await audit.getAll(params);
             const data = response.data || response;
@@ -61,8 +73,8 @@ export const PM_Audit = {
 
             container.innerHTML = this.renderAuditTable(logs);
         } catch (error) {
-             console.error('Failed to load audit logs:', error);
-             container.innerHTML = `
+            console.error('Failed to load audit logs:', error);
+            container.innerHTML = `
                 <div style="padding: 24px; text-align: center; color: var(--red);">
                     <i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
                     <div>Failed to load logs: ${error.message}</div>
@@ -70,7 +82,7 @@ export const PM_Audit = {
                 </div>
             `;
         }
-    },
+    },
 
     renderAuditTable(logs) {
         const rows = logs.map(log => {

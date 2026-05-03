@@ -51,7 +51,7 @@ export const PM_ProjectExtension = {
         btn.disabled = true;
 
         try {
-            const tasksApi = await import('../../src/api/tasks.api.js');
+            const tasksApi = await import('../../../src/api/tasks.api.js');
             const updates = [];
             for (const t of this.ganttPhaseEditorTasks) {
                 const s = document.getElementById(`phase-start-${t.id}`)?.value;
@@ -120,7 +120,7 @@ export const PM_ProjectExtension = {
         btn.disabled = true;
 
         try {
-            const timelineApi = await import('../../src/api/timelineExtensions.api.js');
+            const timelineApi = await import('../../../src/api/timelineExtensions.api.js');
             await timelineApi.default.create({
                 projectId,
                 requestedEndDate: newDate,

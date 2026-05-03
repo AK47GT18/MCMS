@@ -40,7 +40,7 @@ export const EC_Handlers = {
         const container = document.getElementById('material_sheet_container');
         if (!container) return;
 
-        const materials = this.phaseMaterials[phaseId];
+        const materials = (this.phaseMaterials || {})[phaseId];
         if (!materials) {
             container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400);">No materials listed for this phase.</div>';
             return;
@@ -534,9 +534,32 @@ export const EC_Handlers = {
         const mainBtn = document.getElementById('btn_authorize_dispatch') || document.getElementById('btn_execute_dispatch');
         if (!container) return { allAvailable: false, shortfalls: [] };
 
-        let html = `<div style="font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 20px; height: 1px; background: var(--slate-200);"></span>
-                        Stock Verification
+        // If no items, reset to initial state
+        if (!items || items.length === 0) {
+            container.innerHTML = `
+                <i class="fas fa-microchip" style="font-size: 24px; color: var(--slate-300); opacity: 0.5;"></i>
+                <div style="text-align: center;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">Intelligence: Awaiting Input</div>
+                    <div style="font-size: 10px; color: var(--slate-400); margin-top: 2px;">Select project and resources to calculate logistics impact</div>
+                </div>
+            `;
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            container.style.padding = '24px';
+            container.style.background = 'var(--slate-50)';
+            container.style.border = '1px dashed var(--slate-200)';
+            return { allAvailable: true, shortfalls: [] };
+        }
+
+        container.style.display = 'block';
+        container.style.padding = '0';
+        container.style.background = 'transparent';
+        container.style.border = 'none';
+
+        let html = `<div style="font-size: 11px; font-weight: 800; color: var(--slate-500); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-microchip" style="color: var(--blue);"></i>
+                        <span>Inventory Impact Intelligence</span>
                         <span style="flex: 1; height: 1px; background: var(--slate-200);"></span>
                     </div>`;
         
@@ -559,38 +582,48 @@ export const EC_Handlers = {
                 shortfalls.push({ name, requested, available, deficit: requested - available });
             }
 
-            const statusText = available === 0 
-                ? `<span style="color: var(--red); font-weight: 700;">No ${name} left</span>`
-                : `<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">${available} → <strong style="color: ${isShort ? 'var(--red)' : 'var(--emerald)'}">${isShort ? 'SHORT' : remaining}</strong></span>`;
+            const percent = Math.min(100, Math.max(0, (available / requested) * 100));
+            const barColor = isShort ? 'var(--red)' : 'var(--emerald)';
 
             html += `
-                <div style="background: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid ${isShort ? 'rgba(239, 68, 68, 0.2)' : 'var(--slate-200)'}; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: ${isShort ? 'var(--red)' : 'var(--emerald)'}"></div>
-                        <div style="font-weight: 600; font-size: 13px; color: var(--slate-700);">${name}</div>
+                <div style="background: white; padding: 14px; border-radius: 12px; margin-bottom: 12px; border: 1px solid ${isShort ? 'rgba(239, 68, 68, 0.2)' : 'var(--slate-200)'}; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 6px; height: 6px; border-radius: 50%; background: ${barColor}"></div>
+                            <div style="font-weight: 700; font-size: 13px; color: var(--slate-800);">${name}</div>
+                        </div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;">
+                            ${available.toLocaleString()} / ${requested.toLocaleString()}
+                        </div>
                     </div>
-                    <div>${statusText}</div>
+                    <div style="height: 4px; background: var(--slate-100); border-radius: 2px; overflow: hidden;">
+                        <div style="height: 100%; width: ${percent}%; background: ${barColor}; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; font-weight: 600; color: ${isShort ? 'var(--red)' : 'var(--slate-500)'};">
+                        <span>${isShort ? `Deficit: ${(requested - available).toLocaleString()}` : `Surplus: ${remaining.toLocaleString()}`}</span>
+                        <span>${Math.round(percent)}% Match</span>
+                    </div>
                 </div>
             `;
         });
 
         if (!allAvailable) {
             html += `
-                <div style="margin-top: 16px; padding: 16px; background: #fff5f5; border-radius: 12px; border: 1px solid #feb2b2;">
-                    <div style="font-size: 12px; color: #c53030; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-exclamation-triangle"></i> Action Required
+                <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 100%); border-radius: 12px; border: 1px solid #FEB2B2; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);">
+                    <div style="font-size: 12px; color: #C53030; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <i class="fas fa-triangle-exclamation"></i> Critical Shortage
                     </div>
-                    <div style="font-size: 11px; color: #742a2a; margin-bottom: 14px; line-height: 1.4;">
-                        ${anyAvailable ? 'Inventory is insufficient for a full dispatch.' : 'The Yard is completely out of requested materials.'}
+                    <div style="font-size: 12px; color: #742A2A; margin-bottom: 16px; line-height: 1.5; font-weight: 500;">
+                        ${anyAvailable ? 'Supply chain gap detected. Yard stock cannot fulfill the total requirement.' : 'Requested assets are completely unavailable in the central yard.'}
                     </div>
-                    <button class="btn" style="width: 100%; font-size: 12px; background: #c53030; color: white; border: none; padding: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;" 
+                    <button class="btn" style="width: 100%; font-size: 12px; background: #C53030; color: white; border: none; padding: 14px; font-weight: 700; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 10px rgba(197, 48, 48, 0.3); transition: all 0.2s;" 
+                        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'"
                         onclick="window.app.ecModule.handlePartialDispatchProcess()">
-                        <i class="fas fa-paper-plane"></i> ${anyAvailable ? 'Dispatch Available & Notify FM' : 'Request Stock from FM Now'}
+                        <i class="fas fa-bolt"></i> ${anyAvailable ? 'Dispatch Available & Escalate' : 'Trigger Emergency Procurement'}
                     </button>
                 </div>
             `;
             
-            // Logic to hide main button and ETA if no stock at all
             if (mainBtn) {
                 const etaContainer = document.getElementById('eta_container');
                 if (!anyAvailable) {
@@ -604,20 +637,28 @@ export const EC_Handlers = {
                     if (etaContainer) etaContainer.style.display = 'block';
                 }
             }
-        } else if (mainBtn) {
-            mainBtn.style.display = 'flex';
-            mainBtn.style.opacity = '1';
-            mainBtn.style.pointerEvents = 'auto';
-            const etaContainer = document.getElementById('eta_container');
-            if (etaContainer) etaContainer.style.display = 'block';
+        } else {
+            html += `
+                <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border-radius: 12px; border: 1px solid #BBF7D0; display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--emerald); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #166534;">Logistics Validated</div>
+                        <div style="font-size: 11px; color: #15803d;">All requested assets are available for immediate dispatch.</div>
+                    </div>
+                </div>
+            `;
+            if (mainBtn) {
+                mainBtn.style.display = 'flex';
+                mainBtn.style.opacity = '1';
+                mainBtn.style.pointerEvents = 'auto';
+                const etaContainer = document.getElementById('eta_container');
+                if (etaContainer) etaContainer.style.display = 'block';
+            }
         }
 
         container.innerHTML = html;
-        container.style.display = 'block';
-        container.style.border = 'none';
-        container.style.background = 'transparent';
-        container.style.padding = '0';
-
         return { allAvailable, shortfalls };
     },
 

@@ -306,35 +306,29 @@ export const PM_FeatureHandlers = {
     },
 
     validateProjectForm() {
-        const name = document.getElementById('proj_name')?.value;
-        const budget = document.getElementById('proj_budget')?.value;
-        const supervisor = document.getElementById('proj_supervisor')?.value;
-        const start = document.getElementById('proj_start')?.value;
-        const end = document.getElementById('proj_end')?.value;
+        const fields = ['proj_name', 'proj_client', 'proj_budget', 'proj_supervisor', 'proj_start', 'proj_end'];
+        let isValid = true;
 
-        if (!name || !budget || !supervisor || !start || !end) {
-            window.toast.show('Please fill in all mandatory fields (Name, Budget, Supervisor, Dates)', 'warning');
-            return false;
-        }
+        fields.forEach(id => {
+            this.validateInline(id);
+            const errorEl = document.getElementById(id + '-error');
+            if (errorEl && errorEl.style.display !== 'none') {
+                isValid = false;
+            }
+        });
 
-        const today = new Date().toISOString().split('T')[0];
-        if (start < today) {
-            window.toast.show('Project start date cannot be in the past', 'warning');
-            return false;
-        }
-
-        if (end < start) {
-            window.toast.show('End date cannot be before start date', 'warning');
-            return false;
-        }
-
-        if (parseFloat(budget) <= 0) {
-            window.toast.show('Allocated budget must be greater than zero', 'warning');
+        if (!isValid) {
+            window.toast.show('Please correct the errors in Step 1', 'warning');
             return false;
         }
 
         if (!this.wizardState?.locationSet) {
             window.toast.show('Please click on the map to set the site location and geofence center', 'warning');
+            const mapPrompt = document.getElementById('map-prompt');
+            if (mapPrompt) {
+                mapPrompt.classList.add('v-shake');
+                setTimeout(() => mapPrompt.classList.remove('v-shake'), 400);
+            }
             return false;
         }
 

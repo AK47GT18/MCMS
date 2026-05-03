@@ -17,6 +17,7 @@ import { PM_FeatureHandlers } from './pm/PM_FeatureHandlers.js';
 import { PM_UserHandlers } from './pm/PM_UserHandlers.js';
 import { PM_Config } from './pm/PM_Config.js';
 import { PM_SystemHelpers } from './pm/PM_SystemHelpers.js';
+import { PM_ProjectExtension } from './pm/PM_ProjectExtension.js';
 import { StatCard } from '../ui/StatCard.js';
 import { ROLES } from '../../config/roles.js';
 import client from '../../src/api/client.js';
@@ -415,4 +416,4 @@ export class ProjectManagerDashboard {
 }
 
 // Apply modular mixins
-Object.assign(ProjectManagerDashboard.prototype, PM_MissingHandlers, PM_Portfolio, PM_Gantt, PM_Budget, PM_Teams, PM_Contracts, PM_Fleet, PM_Reports, PM_Reviews, PM_Issues, PM_Users, PM_Audit, PM_Config, PM_ProjectHandlers, PM_ReviewHandlers, PM_FeatureHandlers, PM_UserHandlers, PM_SystemHelpers);
+Object.assign(ProjectManagerDashboard.prototype, PM_MissingHandlers, PM_Portfolio, PM_Gantt, PM_Budget, PM_Teams, PM_Contracts, PM_Fleet, PM_Reports, PM_Reviews, PM_Issues, PM_Users, PM_Audit, PM_Config, PM_ProjectHandlers, PM_ReviewHandlers, PM_FeatureHandlers, PM_UserHandlers, PM_SystemHelpers, PM_ProjectExtension);

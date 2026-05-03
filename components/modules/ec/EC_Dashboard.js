@@ -68,42 +68,86 @@ export const EC_Dashboard = {
                                     <i class="fas fa-warehouse" style="font-size: 32px; opacity: 0.2; margin-bottom: 12px;"></i>
                                     <div style="font-size: 12px; font-weight: 600;">Silo is empty</div>
                                 </div>`
-                                : inventoryEntries.map(([name, data]) => `
-                                    <div style="margin-bottom: 16px; padding: 12px; background: white; border-radius: 12px; border: 1px solid var(--slate-100);">
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
-                                            <span style="font-weight: 700; color: var(--slate-700);">${name}</span>
-                                            <div style="display: flex; align-items: center; gap: 8px;">
-                                                <span style="color: ${data.qty <= data.thresh ? 'var(--red)' : 'var(--indigo-600)'}; font-weight: 800;">${data.qty} ${data.unit}</span>
-                                                ${data.qty <= data.thresh ? `
-                                                    <button class="btn btn-red btn-xs" style="width:20px; height:20px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="window.app.ecModule.reorderMaterial('${name}')" title="Replenish ${name}">
-                                                        <i class="fas fa-plus" style="font-size: 8px;"></i>
-                                                    </button>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                        <div style="height: 8px; background: var(--slate-100); border-radius: 4px; overflow: hidden;">
-                                            <div style="width: ${Math.min(100, (data.qty / Math.max(data.thresh * 3, 1)) * 100)}%; background: ${data.qty <= data.thresh ? 'linear-gradient(90deg, var(--red), #f87171)' : 'linear-gradient(90deg, var(--indigo-500), var(--indigo-600))'}; height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
-                                        </div>
-                                    </div>
-                                `).join('')
+                                : inventoryEntries.map(([name, data], i) => {
+                                     const pct = Math.min(100, (data.qty / Math.max(data.thresh * 5, 1)) * 100);
+                                     const isLow = data.qty <= data.thresh;
+                                     const color = this._getMaterialColor(name, i);
+                                     return `
+                                     <div style="margin-bottom: 24px; padding: 16px; background: white; border-radius: 16px; border: 1px solid var(--slate-100); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-end;">
+                                             <div>
+                                                 <div style="font-weight: 800; color: var(--slate-900); font-size: 14px;">${name}</div>
+                                                 <div style="font-size: 11px; color: var(--slate-400); font-weight: 700; text-transform: uppercase;">Stock Integrity Scan</div>
+                                             </div>
+                                             <div style="text-align: right;">
+                                                 <div style="color: ${isLow ? '#ef4444' : color.main}; font-weight: 900; font-family: 'JetBrains Mono'; font-size: 15px;">${data.qty.toLocaleString()}</div>
+                                                 <div style="font-size: 10px; color: var(--slate-400); font-weight: 700; text-transform: uppercase;">${data.unit} Available</div>
+                                             </div>
+                                         </div>
+                                         <div style="height: 10px; background: var(--slate-50); border-radius: 5px; overflow: hidden; border: 1px solid var(--slate-100);">
+                                             <div style="width: ${pct}%; background: ${isLow ? 'linear-gradient(90deg, #ef4444, #f87171)' : color.grad}; height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 10px ${isLow ? 'rgba(239, 68, 68, 0.2)' : color.glow};"></div>
+                                         </div>
+                                     </div>
+                                `;}).join('')
                         }
                     </div>
                 </div>
 
-                <div class="data-card" style="grid-column: 1 / -1; margin-top: 0; background: linear-gradient(to bottom, #fff, #f8fafc); border: 1px solid var(--slate-200);">
-                    <div class="data-card-header" style="border-bottom: 1px solid var(--slate-100);">
-                        <div class="card-title"><i class="fas fa-bolt" style="color: var(--orange); margin-right: 8px;"></i> Intelligence: Asset Conflict Monitor</div>
-                        <button class="btn btn-secondary" onclick="window.app.ecModule?._loadConflicts()"><i class="fas fa-sync"></i> Refresh</button>
+                <div class="data-card" style="grid-column: 1 / -1; background: white; border-radius: 24px; border: 1px solid var(--slate-200); box-shadow: 0 4px 20px rgba(0,0,0,0.02); overflow: hidden;">
+                    <div class="data-card-header" style="padding: 32px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; background: white; border: 1px solid var(--slate-200); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--orange); font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div>
+                                <div class="card-title" style="font-size: 20px; font-weight: 800; color: var(--slate-900); margin: 0;">Intelligence: Asset Conflict Monitor</div>
+                                <div style="color: var(--slate-500); font-size: 13px; font-weight: 500;">Predictive analysis of equipment scheduling conflicts</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="background: white; color: var(--slate-700); border: 1px solid var(--slate-200); font-weight: 700; font-size: 13px; padding: 10px 20px; border-radius: 12px;" onclick="window.app.ecModule?._loadConflicts()">
+                            <i class="fas fa-sync" style="margin-right: 8px; color: var(--orange);"></i> Refresh Analysis
+                        </button>
                     </div>
-                    <div style="padding: 24px;">
+                    <div style="padding: 32px;">
                         ${this.isLoadingConflicts && this.conflicts.length === 0
                             ? '<div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 13px;"><i class="fas fa-circle-notch fa-spin"></i><div>Detecting conflicts…</div></div>'
                             : this.conflicts.length === 0
                                 ? `
-                                <div style="padding: 40px; text-align: center; color: var(--slate-500); background: white; border-radius: 12px; border: 1px dashed var(--slate-200);">
-                                    <div style="font-size: 32px; color: var(--emerald); margin-bottom: 16px;"><i class="fas fa-check-double"></i></div>
-                                    <div style="font-weight: 800; font-size: 15px; color: var(--slate-800);">Fleet Schedule is Clear</div>
-                                    <div style="font-size: 13px; margin-top: 4px;">No concurrent asset requests found for active project timelines.</div>
+                                <div style="background: var(--slate-50); border: 1px dashed var(--slate-200); border-radius: 20px; padding: 60px 40px; text-align: center; position: relative; overflow: hidden;">
+                                    <!-- Subtle Radar Animation -->
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                                    
+                                    <div style="position: relative; z-index: 1;">
+                                        <div style="position: relative; width: 90px; height: 90px; margin: 0 auto 28px; display: flex; align-items: center; justify-content: center;">
+                                            <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--emerald); opacity: 0.2; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                                            <div style="width: 64px; height: 64px; border-radius: 20px; background: white; border: 1px solid var(--emerald); display: flex; align-items: center; justify-content: center; color: var(--emerald); font-size: 28px; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.1);">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="display: inline-flex; align-items: center; gap: 8px; background: white; padding: 6px 14px; border-radius: 30px; border: 1px solid var(--emerald-light); margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                                            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); animation: pulse 1.5s infinite;"></span>
+                                            <span style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase; letter-spacing: 0.5px;">System Scan Complete</span>
+                                        </div>
+
+                                        <h3 style="font-size: 24px; font-weight: 900; color: var(--slate-900); margin: 0; letter-spacing: -0.02em;">Fleet Schedule is Clear</h3>
+                                        <p style="font-size: 15px; color: var(--slate-500); margin: 12px auto 0; font-weight: 500; max-width: 450px; line-height: 1.6;">Intelligence systems report zero concurrent asset requests or logistical bottlenecks across current project timelines.</p>
+
+                                        <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; border-top: 1px solid var(--slate-200); padding-top: 32px;">
+                                            <div>
+                                                <div style="font-size: 11px; color: var(--slate-400); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Last Analysis</div>
+                                                <div style="font-size: 13px; color: var(--slate-700); font-weight: 700;">Real-time (Active)</div>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 11px; color: var(--slate-400); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Risk Level</div>
+                                                <div style="font-size: 13px; color: var(--emerald); font-weight: 800;">Negligible</div>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 11px; color: var(--slate-400); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Fleet Status</div>
+                                                <div style="font-size: 13px; color: var(--slate-700); font-weight: 700;">Optimized</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>`
                                 : `
                                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
@@ -136,22 +180,178 @@ export const EC_Dashboard = {
 
     _renderBurnChart(entries) {
         if (entries.length === 0) return '';
-        const maxQty = Math.max(...entries.map(([, d]) => d.qty), 1);
-        const colors = ['var(--indigo-500)', 'var(--orange-500)', 'var(--emerald-500)', 'var(--red-500)', 'var(--purple-500)'];
-        
         return `
-            <div style="height: 240px; background: white; border-radius: 16px; display: flex; align-items: flex-end; gap: 48px; padding: 32px; border: 1px solid var(--slate-100); box-shadow: inset 0 -4px 10px rgba(0,0,0,0.02);">
-                ${entries.map(([name, data], i) => {
-                    const pct = Math.max(5, (data.qty / maxQty) * 100);
-                    return `
-                        <div style="flex: 1; height: ${pct}%; background: ${colors[i % colors.length]}; border-radius: 8px 8px 4px 4px; position: relative; min-height: 12px; transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                            <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--slate-600); white-space: nowrap;">${name.split(' ')[0]}</div>
-                            <div style="position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-weight: 800; font-size: 12px; color: var(--slate-800);">${data.qty}</div>
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent); border-radius: 8px 8px 0 0;"></div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="height: 300px; position: relative; padding: 20px;">
+                <canvas id="ec-burn-chart-canvas"></canvas>
             </div>
         `;
+    },
+
+    initCharts() {
+        if (this.currentView !== 'dashboard') return;
+        
+        // Wait for Chart.js if not yet loaded
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not yet loaded, retrying in 100ms...');
+            setTimeout(() => this.initCharts(), 100);
+            return;
+        }
+
+        const entries = Object.entries(this.inventory || {});
+        if (entries.length === 0) {
+            console.warn('No inventory entries for charts');
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            this._initBurnChart(entries);
+            this._initHealthChart(entries);
+        });
+    },
+
+    _initBurnChart(entries) {
+        const ctx = document.getElementById('ec-burn-chart-canvas');
+        if (!ctx) {
+            console.error('Burn chart canvas not found');
+            return;
+        }
+
+        if (this.burnChartInstance) this.burnChartInstance.destroy();
+
+        const labels = entries.map(([name]) => name.split(' ')[0]);
+        const data = entries.map(([, d]) => d.qty);
+        const colors = entries.map(([name], i) => this._getMaterialColor(name, i).main);
+
+        try {
+            this.burnChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Material Qty',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1000 },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { size: 14, weight: '800' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: true, color: 'rgba(0,0,0,0.03)', drawBorder: false },
+                            ticks: { font: { size: 11, weight: '600' }, color: '#64748b' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, weight: '700' }, color: '#475569' }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Failed to init burn chart:', e);
+        }
+    },
+
+    _initHealthChart(entries) {
+        const container = document.getElementById('ec-logistics-status');
+        if (!container) {
+            console.error('Health chart container not found');
+            return;
+        }
+
+        container.innerHTML = '<div style="height: 300px; position: relative;"><canvas id="ec-health-chart-canvas"></canvas></div>';
+        
+        const ctx = document.getElementById('ec-health-chart-canvas');
+        if (!ctx) {
+            console.error('Health chart canvas not found');
+            return;
+        }
+
+        if (this.healthChartInstance) this.healthChartInstance.destroy();
+
+        const labels = entries.map(([name]) => name);
+        const data = entries.map(([, d]) => d.qty);
+        const colors = entries.map(([name], i) => {
+            const isLow = this.inventory[name]?.qty <= this.inventory[name]?.thresh;
+            return isLow ? '#ef4444' : this._getMaterialColor(name, i).main;
+        });
+
+        try {
+            this.healthChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1000 },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            padding: 12,
+                            cornerRadius: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { display: true, color: 'rgba(0,0,0,0.03)' },
+                            ticks: { font: { size: 10, weight: '600' } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: '700' }, color: '#475569' }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Failed to init health chart:', e);
+        }
+    },
+
+    _getMaterialColor(name, i) {
+        const materialColors = {
+            'Bitumen': { main: '#1e293b' },
+            'Portland': { main: '#0369a1' },
+            'Sand': { main: '#b45309' },
+            'Steel': { main: '#475569' }
+        };
+
+        const key = Object.keys(materialColors).find(k => name.includes(k));
+        if (key) return materialColors[key];
+
+        const fallbacks = [
+            { main: '#15803d' },
+            { main: '#0e7490' },
+            { main: '#4338ca' }
+        ];
+        return fallbacks[i % fallbacks.length];
     }
 };

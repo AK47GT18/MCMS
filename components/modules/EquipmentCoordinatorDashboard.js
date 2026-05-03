@@ -133,6 +133,9 @@ export class EquipmentCoordinatorDashboard {
         const container = document.getElementById('ec-content-area');
         if (container) {
             container.innerHTML = this.getCurrentViewHTML();
+            if (this.currentView === 'dashboard') {
+                this.initCharts();
+            }
         }
     }
 

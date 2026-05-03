@@ -34,6 +34,10 @@ export const PM_UserHandlers = {
         const id = formData.get('id');
         const data = Object.fromEntries(formData.entries());
         delete data.id;
+        
+        if (!data.password || data.password.trim() === '') {
+            delete data.password;
+        }
 
         try {
             await users.update(id, data);
@@ -159,8 +163,17 @@ export const PM_UserHandlers = {
         }
         if (!/[A-Z]/.test(pass)) pass += 'A';
         if (!/[0-9]/.test(pass)) pass += '1';
+        if (!/[!@#$%^&*]/.test(pass)) pass += '!';
         
-        const passInput = document.getElementById(inputId) || document.querySelector(`input[name="password"]`);
+        let passInput;
+        if (inputId) {
+            passInput = document.getElementById(inputId);
+        } else if (event && event.target) {
+            passInput = event.target.closest('.form-group, div').querySelector('input[name="password"]');
+        } else {
+            passInput = document.querySelector(`input[name="password"]`);
+        }
+
         if (passInput) {
             passInput.value = pass;
             passInput.type = 'text'; 

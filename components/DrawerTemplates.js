@@ -821,48 +821,56 @@ export const DrawerTemplates = {
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                    <input type="text" id="proj_name" class="form-input" data-vrules="required|minLen:3" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
+                    <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
+                    <input type="text" id="proj_name" class="form-input" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
+                    <div id="proj_name-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
                 
                 <div style="margin-bottom: 16px;">
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                    <input type="text" id="proj_client" class="form-input" data-vrules="required|minLen:2" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
+                    <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
+                    <input type="text" id="proj_client" class="form-input" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
+                    <div id="proj_client-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                    <input type="number" id="proj_budget" class="form-input" data-vrules="required|min:1" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
+                    <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
+                    <input type="number" id="proj_budget" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
+                    <div id="proj_budget-error" class="v-msg v-msg-err" style="display:none;"></div>
                     <span style="font-size:11px; color:var(--slate-500); margin-top:4px; display:inline-block;"><i class="fas fa-info-circle"></i> For road works, the estimate must fit within this envelope.</span>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
-                        <input type="date" id="proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                        <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
+                        <input type="date" id="proj_start" class="form-input" required onchange="(window.app.pmModule || window.app.fsModule).validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                        <div id="proj_start-error" class="v-msg v-msg-err" style="display:none;"></div>
                     </div>
                     <div>
-                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
-                        <input type="date" id="proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                        <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
+                        <input type="date" id="proj_end" class="form-input" required onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
+                        <div id="proj_end-error" class="v-msg v-msg-err" style="display:none;"></div>
                     </div>
                 </div>
                 
-                <div style="margin-bottom: 16px;">
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Field Supervisor (Mandatory)</label>
-                    <select id="proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" required>
-                        <option value="">Loading supervisors...</option>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Field Supervisor</label>
+                    <select id="proj_supervisor" class="form-input" required onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                        <option value="">Select Supervisor</option>
                     </select>
+                    <div id="proj_supervisor-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
 
-                <div style="margin-bottom: 16px;">
-                    <div style="margin-bottom: 12px;">
-                        <label style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:4px;">
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label v-req" style="margin-bottom: 0;">
                             <span>Geofence Radius (meters)</span>
-                            <span id="proj_radius_val">500m</span>
+                            <span id="proj_radius_val" style="color: var(--orange); font-weight: 700;">500m</span>
                         </label>
-                        <input type="range" id="proj_radius_input" min="50" max="5000" step="50" value="500" style="width:100%; accent-color:var(--orange);" oninput="document.getElementById('proj_radius_val').innerText = this.value + 'm'; if(window.app.pmModule && window.app.pmModule.geofenceCircle) { window.app.pmModule.geofenceCircle.setRadius(this.value); }">
                     </div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
+                    <input type="range" id="proj_radius_input" min="50" max="5000" step="50" value="500" style="width:100%; accent-color:var(--orange);" oninput="document.getElementById('proj_radius_val').innerText = this.value + 'm'; if(window.app.pmModule && window.app.pmModule.geofenceCircle) { window.app.pmModule.geofenceCircle.setRadius(this.value); }">
+                    <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">Site reporting is only allowed within this radius.</div>
+                </div>
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
                     <div id="project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Loading Map...</div>
                     </div>
@@ -870,45 +878,46 @@ export const DrawerTemplates = {
                         <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="proj_lat">-13.9626</span></div>
                         <div style="font-size: 11px; color: var(--slate-500);">Long: <span id="proj_lng">33.7741</span></div>
                     </div>
-                </div>
             </div>
 
-            <!-- STEP 2: Road Specification -->
             <div id="wizard-pane-2" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
-                <div style="background: var(--slate-100); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
-                    <i class="fas fa-road" style="color: var(--orange); font-size: 20px;"></i>
+                <div style="background: var(--slate-100); padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center;">
+                    <i class="fas fa-road" style="color: var(--orange); font-size: 18px;"></i>
                     <div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">RCMS Road Specification</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">RCMS Road Specification</div>
                         <div style="font-size: 11px; color: var(--slate-600);">Defines phase logic and base material calculations</div>
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 12px;">
                     <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Road Class/Type</label>
-                    <select id="road_type" class="form-input" style="width:100%; padding:10px; font-weight:600; color:var(--slate-800);">
+                    <select id="road_type" class="form-input" onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; font-weight:600; color:var(--slate-800);">
                         <option value="RT-1">RT-1 Earth (2-5 yrs design life)</option>
                         <option value="RT-2">RT-2 Gravel (5-10 yrs design life)</option>
                         <option value="RT-3">RT-3 Surface Dressed (10-15 yrs)</option>
                         <option value="RT-4" selected>RT-4 Asphalt (15-20 yrs)</option>
                         <option value="RT-5">RT-5 Concrete (30-50 yrs)</option>
                     </select>
+                    <div id="road_type-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div>
-                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Total Length (km)</label>
-                        <input type="number" id="road_length" class="form-input" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" placeholder="e.g. 15.5" step="0.1">
+                        <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Total Length (km)</label>
+                        <input type="number" id="road_length" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" placeholder="e.g. 15.5" step="0.1">
+                        <div id="road_length-error" class="v-msg v-msg-err" style="display:none;"></div>
                     </div>
                     <div>
-                        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Avg Width (m)</label>
-                        <input type="number" id="road_width" class="form-input" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" value="7.0" step="0.5">
+                        <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Avg Width (m)</label>
+                        <input type="number" id="road_width" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" value="7.0" step="0.5">
+                        <div id="road_width-error" class="v-msg v-msg-err" style="display:none;"></div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div>
                         <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Number of Lanes</label>
-                        <select id="road_lanes" class="form-input" style="width:100%; padding:10px;">
+                        <select id="road_lanes" class="form-input" onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px;">
                             <option value="1">1 Lane (Single track)</option>
                             <option value="2" selected>2 Lanes (Standard)</option>
                             <option value="4">4 Lanes (Dual Carriageway)</option>
@@ -916,7 +925,7 @@ export const DrawerTemplates = {
                     </div>
                     <div>
                         <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Primary Terrain</label>
-                        <select id="road_terrain" class="form-input" style="width:100%; padding:10px;">
+                        <select id="road_terrain" class="form-input" onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px;">
                             <option value="Flat">Flat</option>
                             <option value="Rolling">Rolling</option>
                             <option value="Hilly/Mountainous">Hilly/Mountainous</option>
@@ -924,19 +933,21 @@ export const DrawerTemplates = {
                             <option value="Swampy/Wetland">Swampy/Wetland</option>
                             <option value="Urban">Urban</option>
                         </select>
-                        <div style="font-size:10px; color:var(--slate-500); margin-top:4px;">Affects earthworks multipliers</div>
+                        <div style="font-size:10px; color:var(--slate-500); margin-top:3px;">Affects earthworks multipliers</div>
                     </div>
                 </div>
 
-                <div style="margin-bottom: 16px;">
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Geographical Zone / District</label>
-                    <input type="text" id="road_zone" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. Northern Region - Mzimba">
+                <div style="margin-bottom: 12px;">
+                    <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Geographical Zone / District</label>
+                    <input type="text" id="road_zone" class="form-input" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px;" placeholder="e.g. Northern Region - Mzimba">
+                    <div id="road_zone-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
 
-                <div style="margin-bottom: 16px;">
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Distance from Nearest Town (km)</label>
-                    <input type="number" id="road_town_dist" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. 25" value="10">
-                    <div style="font-size:10px; color:var(--slate-500); margin-top:4px;">Affects accessibility / transport multipliers</div>
+                <div style="margin-bottom: 12px;">
+                    <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Distance from Nearest Town (km)</label>
+                    <input type="number" id="road_town_dist" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px;" placeholder="e.g. 25" value="10">
+                    <div id="road_town_dist-error" class="v-msg v-msg-err" style="display:none;"></div>
+                    <div style="font-size:10px; color:var(--slate-500); margin-top:3px;">Affects accessibility / transport multipliers</div>
                 </div>
             </div>
 
@@ -1906,9 +1917,9 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label" style="display:block; font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:6px;">Equipment ID/Name</label>
                 <select id="assign_equipment" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" onchange="window.app?.equipModule?.checkEquipmentConflict?.(this.value)">
-                    <option value="EQP-045">EQP-045: Caterpillar 320D Excavator</option>
-                    <option value="EQP-012">EQP-012: Tata Tipper 10T</option>
-                    <option value="EQP-008">EQP-008: Winget Concrete Mixer</option>
+                    <option value="EQP-045">(Available) EQP-045: Caterpillar 320D Excavator</option>
+                    <option value="EQP-012">(Available) EQP-012: Tata Tipper 10T</option>
+                    <option value="EQP-008">(Waitlist) EQP-008: Winget Concrete Mixer</option>
                 </select>
             </div>
 
@@ -2394,39 +2405,41 @@ Contract Admin</textarea>
 
     newUser: `
         <div class="drawer-section">
-            <form id="createUserForm" novalidate>
+            <form id="newUserForm" onsubmit="event.preventDefault(); window.app.pmModule.handleCreateUser(new FormData(this))">
                 <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label" for="new_user_name">Full Name</label>
-                    <input type="text" id="new_user_name" name="name" class="form-input" placeholder="e.g., John Doe" style="width: 100%;" required data-validate="name">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="e.g., John Doe" style="width: 100%;" required>
                 </div>
                 <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label" for="new_user_role">Role</label>
-                    <select id="new_user_role" name="role" class="form-input" style="width: 100%;" required>
+                    <label class="form-label">Role / Access Level</label>
+                    <select name="role" class="form-input" style="width: 100%;" required>
                         <option value="">Select Role...</option>
                         <option value="Project Manager">Project Manager</option>
                         <option value="Finance Director">Finance Director</option>
                         <option value="Field Supervisor">Field Supervisor</option>
                         <option value="Contract Administrator">Contract Administrator</option>
                         <option value="Equipment Coordinator">Equipment Coordinator</option>
+                        <option value="Operations Manager">Operations Manager</option>
+                        <option value="Managing Director">Managing Director</option>
                         <option value="System Technician">System Technician</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label" for="new_user_email">Email Address</label>
-                    <input type="email" id="new_user_email" name="email" class="form-input" placeholder="j.doe@mkaka.mw" style="width: 100%;" required data-validate="email">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="j.doe@mkaka.mw" style="width: 100%;" required>
                 </div>
                 <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label" for="new_user_phone">Phone Number</label>
-                    <input type="tel" id="new_user_phone" name="phone" class="form-input" placeholder="+265..." style="width: 100%;" required data-validate="phone">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" name="phone" class="form-input" placeholder="+265..." style="width: 100%;">
                 </div>
                 <div class="form-group" style="margin-bottom: 24px;">
-                    <label class="form-label" for="new_user_password">Initial Password</label>
+                    <label class="form-label">Initial Password</label>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="new_user_password" name="password" class="form-input" placeholder="********" style="width: 100%;" required data-validate="strong-password" data-strength-meter="true">
-                        <button type="button" id="btn-generate-pass" class="btn btn-secondary" style="white-space: nowrap;">Generate</button>
+                        <input type="password" name="password" class="form-input" placeholder="********" style="width: 100%;" required>
+                        <button type="button" class="btn btn-secondary btn-generate-pass" style="white-space: nowrap;">Generate</button>
                     </div>
-                    <p style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">User will be prompted to change this on first login.</p>
                 </div>
+                <div id="create-user-error" style="display: none; color: var(--red); font-size: 12px; margin-bottom: 16px; padding: 10px; background: var(--red-light); border-radius: 4px;"></div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">Create User Account</button>
             </form>
         </div>
@@ -2434,45 +2447,62 @@ Contract Admin</textarea>
 
     editUser: `
         <div class="drawer-section">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
-                <div style="width: 48px; height: 48px; background: var(--slate-800); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">SJ</div>
-                <div>
-                    <div style="font-weight: 700; color: var(--slate-900);">Sarah Jenkins</div>
-                    <div style="font-size: 13px; color: var(--slate-500);">Project Manager</div>
+            <form id="editUserForm" onsubmit="event.preventDefault(); window.app.pmModule.handleUpdateUser(new FormData(this))">
+                <input type="hidden" name="id">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-input" style="width: 100%;" required>
                 </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-input" value="Sarah Jenkins" style="width: 100%;">
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Role</label>
-                <select class="form-input" style="width: 100%;">
-                    <option selected>Project Manager</option>
-                    <option>Finance Director</option>
-                    <option>Field Supervisor</option>
-                    <option>System Technician</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-input" value="s.jenkins@mkaka.mw" style="width: 100%;">
-            </div>
-            
-            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--slate-100); display: flex; flex-direction: column; gap: 12px;">
-                <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase;">Administrative Actions</div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-input" style="width: 100%;" required>
+                        <option value="Project Manager">Project Manager</option>
+                        <option value="Finance Director">Finance Director</option>
+                        <option value="Field Supervisor">Field Supervisor</option>
+                        <option value="Contract Administrator">Contract Administrator</option>
+                        <option value="Equipment Coordinator">Equipment Coordinator</option>
+                        <option value="Operations Manager">Operations Manager</option>
+                        <option value="Managing Director">Managing Director</option>
+                        <option value="System Technician">System Technician</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" style="width: 100%;" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" name="phone" class="form-input" style="width: 100%;">
+                </div>
                 
-                <button class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px;" onclick="window.toast.show('Password reset email sent to user', 'info')">
-                    <i class="fas fa-key" style="color: var(--slate-400);"></i> Force Password Reset
-                </button>
-                
-                <button class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="window.modal.confirm('Delete User', 'Are you sure you want to delete this user? This action cannot be undone.', () => { window.drawer.close(); window.toast.show('User account deleted', 'error'); })">
-                    <i class="fas fa-user-slash"></i> Deactivate & Delete User
-                </button>
-            </div>
+                <div id="edit-user-error" style="display: none; color: var(--red); font-size: 12px; margin-bottom: 16px; padding: 10px; background: var(--red-light); border-radius: 4px;"></div>
 
-            <button class="btn btn-primary" style="width: 100%; margin-top: 24px; padding: 12px;" onclick="window.drawer.close(); window.toast.show('User details updated', 'success')">Save Changes</button>
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--slate-100);">
+                    <label class="form-label">Reset Password</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" name="password" class="form-input" style="width: 100%;" placeholder="Leave blank to keep current">
+                        <button type="button" class="btn btn-secondary btn-generate-pass" style="white-space: nowrap;" onclick="window.app.pmModule.generateTempPassword(null)">Generate</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--slate-100); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase;">Administrative Actions</div>
+                    
+                    <button type="button" id="btn-unlock-user" class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; display: none;" onclick="window.app.pmModule.unlockUser(this.closest('form').querySelector('[name=id]').value)">
+                        <i class="fas fa-user-check" style="color: var(--emerald);"></i> Reactivate Account
+                    </button>
+
+                    <button type="button" id="btn-deactivate-user" class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="window.app.pmModule.lockUser(this.closest('form').querySelector('[name=id]').value)">
+                        <i class="fas fa-user-slash"></i> Deactivate Account
+                    </button>
+                    
+                    <button type="button" class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="window.app.pmModule.deleteUser(this.closest('form').querySelector('[name=id]').value)">
+                        <i class="fas fa-trash-alt"></i> Permanently Purge User
+                    </button>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px; padding: 12px;">Save Changes</button>
+            </form>
         </div>
     `,
 
@@ -3907,7 +3937,7 @@ Contract Admin</textarea>
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Equipment Model</label>
                     <select id="fs_mac_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
                         ${(projectData?.recommendedMachines || []).length > 0 ? (projectData.recommendedMachines || []).map((m) => `
-                            <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.type}: ${m.model}</option>
+                            <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.available ? '(Available)' : '(Waitlist)'} ${m.type}: ${m.model}</option>
                         `).join('') : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || 'RT-5'}</option>`}
                     </select>
                     
@@ -4473,7 +4503,11 @@ Contract Admin</textarea>
                 </div>
             </div>
             
-            <div id="edit-project-map" style="height: 200px; background: #eee; border-radius: 8px; margin-bottom: 24px;"></div>
+            <div id="project-map" style="height: 250px; background: #eee; border-radius: 8px; margin-bottom: 24px; position: relative; cursor: crosshair;">
+                <div id="map-prompt" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; color: var(--orange); border: 1px solid var(--orange); pointer-events: none; z-index: 1000; animation: pulse 2s infinite; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <i class="fas fa-map-marker-alt"></i> CLICK MAP TO SET LOCATION
+                </div>
+            </div>
             <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 24px; display: flex; justify-content: space-between;">
                 <span>Lat: <span id="edit_proj_lat">--</span></span>
                 <span>Lng: <span id="edit_proj_lng">--</span></span>
@@ -4498,37 +4532,6 @@ Contract Admin</textarea>
                 <i class="fas fa-exclamation-triangle"></i> This will halt all active workflows and site reporting for this project.
             </div>
             <button class="btn btn-danger" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleSuspendProject()">Suspend Project Now</button>
-        </div>
-    `,
-
-    extendProject: (project) => `
-        <div style="padding: 24px;">
-            <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-                <div style="font-weight: 700; color: var(--orange-dark);">${project.name}</div>
-                <div style="font-size: 12px; color: var(--orange);">Extending contract timeline</div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                <div class="form-group">
-                    <label class="form-label">Current End Date</label>
-                    <input type="date" id="extend_current_end" class="form-input" value="${project.endDate ? project.endDate.split('T')[0] : ''}" readonly style="width: 100%; background: var(--slate-50);">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">New End Date</label>
-                    <input type="date" id="extend_new_end" class="form-input" style="width: 100%; border-color: var(--orange); font-weight: 700;">
-                </div>
-            </div>
-
-            <div id="extend_preview" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 12px; color: #0369a1;">
-                <i class="fas fa-info-circle"></i> <span id="extend_preview_text"></span>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Modification Note</label>
-                <textarea id="extend_reason" class="form-input" rows="3" placeholder="Reference BCR or Addendum #..."></textarea>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; background: var(--orange); border-color: var(--orange);" onclick="window.app.pmModule.handleExtendProject('${project.id}')">Confirm Extension</button>
         </div>
     `,
 
@@ -4573,6 +4576,9 @@ Contract Admin</textarea>
 
     assignResource: (projects) => `
         <div style="padding: 24px;">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Strategic Asset Dispatch</h3>
+            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Allocate materials and machinery to active project sites.</p>
+            
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project / Site</label>
                 <select id="assign_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule.handleTimelineProjectChange(this.value)">
@@ -4610,8 +4616,12 @@ Contract Admin</textarea>
                     <label class="form-label">Search Asset Registry</label>
                     <input type="text" class="form-input" placeholder="Search by name, plate, or type..." style="width: 100%;">
                 </div>
-                <div style="margin-top: 12px; max-height: 200px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px;">
-                    <div style="padding: 12px; text-align: center; color: var(--slate-400); font-size: 12px;">Start typing to search assets...</div>
+                <div style="margin-top: 12px; max-height: 200px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 12px; background: var(--slate-50);">
+                    <div style="padding: 32px 16px; text-align: center; color: var(--slate-400);">
+                        <i class="fas fa-search-plus" style="font-size: 20px; margin-bottom: 8px; opacity: 0.5;"></i>
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Registry Search</div>
+                        <div style="font-size: 10px; opacity: 0.8;">Enter asset name or serial to filter fleet</div>
+                    </div>
                 </div>
             </div>
 
@@ -4619,8 +4629,8 @@ Contract Admin</textarea>
                 <label class="form-label">Site Supervisor / Recipient</label>
                 <select id="assign_fs" class="form-input" style="width: 100%;">
                     <option value="">Select Supervisor...</option>
-                    <option value="Mike Banda">Mike Banda (Sector 1)</option>
-                    <option value="Grace Chibwe">Grace Chibwe (Sector 2)</option>
+                    <option value="Mike Banda">(Available) Mike Banda (Sector 1)</option>
+                    <option value="Grace Chibwe">(Available) Grace Chibwe (Sector 2)</option>
                 </select>
             </div>
 
@@ -4632,8 +4642,12 @@ Contract Admin</textarea>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
             </div>
 
-            <div id="dispatch_impact_summary" style="margin-bottom: 24px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px dashed var(--slate-300); display: block;">
-                <div style="font-size: 11px; color: var(--slate-400); text-align: center;">Calculating inventory impact...</div>
+            <div id="dispatch_impact_summary" style="margin-bottom: 24px; padding: 24px; border-radius: 12px; background: var(--slate-50); border: 1px dashed var(--slate-200); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+                <i class="fas fa-microchip" style="font-size: 24px; color: var(--slate-300); opacity: 0.5;"></i>
+                <div style="text-align: center;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">Intelligence: Awaiting Input</div>
+                    <div style="font-size: 10px; color: var(--slate-400); margin-top: 2px;">Select project and resources to calculate logistics impact</div>
+                </div>
             </div>
 
             <button class="btn btn-primary" id="btn_execute_dispatch" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleExecuteDispatch()">Authorize & Execute Dispatch</button>
