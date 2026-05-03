@@ -180,9 +180,6 @@ export class ProjectManagerDashboard {
         if (this.currentView === 'portfolio' || this.currentView === 'dashboard') {
             return `
                 <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" onclick="window.app.openIssueDrawer(${this.selectedProjectId || 'null'}, 'Report Issue')">
-                        <i class="fas fa-exclamation-triangle"></i> <span>Report Issue</span>
-                    </button>
                     <button class="btn btn-action" onclick="window.app.pmModule.openNewProjectDrawer()">
                         <i class="fas fa-plus-circle"></i> <span>New Project</span>
                     </button>

@@ -247,7 +247,6 @@ export class AppLayout {
                     <a href="#" class="nav-link ${item.active ? 'active' : ''}" data-id="${item.id}" ${item.action ? `data-action="${item.action}"` : ''} ${item.drawerId ? `data-drawer-id="${item.drawerId}"` : ''}>
                         <span class="nav-icon">${item.icon}</span>
                         <span>${item.label}</span>
-                        ${item.badge ? `<span class="nav-badge" style="margin-left:auto; background:var(--red); color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">${item.badge}</span>` : ''}
                     </a>
                 `).join('')}
             </div>
