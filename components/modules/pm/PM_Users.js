@@ -127,9 +127,9 @@ export const PM_Users = {
                             <div style="font-weight: 600; ${isLocked ? 'color: var(--slate-400);' : ''}">${this.escapeHTML(user.name)}</div>
                         </div>
                     </td>
-                    <td>${this.escapeHTML(formatRole(user.role))}</td>
-                    <td>${this.escapeHTML(user.email)}</td>
-                    <td>${this.escapeHTML(user.phone || '-')}</td>
+                    <td><span style="font-size: 11px; background: var(--slate-100); padding: 2px 8px; border-radius: 4px; font-weight: 600;">${this.escapeHTML(formatRole(user.role))}</span></td>
+                    <td>${this.escapeHTML(user.email || 'N/A')}</td>
+                    <td><span style="font-family: 'JetBrains Mono'; font-size: 12px;">${this.escapeHTML(user.phone || '-')}</span></td>
                     <td><span class="status ${isLocked ? 'inactive' : 'active'}">${isLocked ? 'Locked' : 'Active'}</span></td>
                     <td>
                         <div style="display: flex; gap: 4px;">

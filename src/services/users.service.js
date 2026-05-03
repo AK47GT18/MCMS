@@ -254,6 +254,9 @@ async function getByRole(role) {
       id: true,
       name: true,
       email: true,
+      phone: true,
+      role: true,
+      isLocked: true,
       avatarUrl: true,
     },
   });

@@ -306,6 +306,7 @@ const V = {
     attach,
     attachAll,
     checkField,
+    validateField: checkField, // Alias for template consistency
     validateForm,
     checkPasswordStrength,
     charCounter,

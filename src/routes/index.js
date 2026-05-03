@@ -31,6 +31,7 @@ const assetSchedulerController = require('../controllers/assetScheduler.controll
 const pushController = require('../controllers/push.controller');
 const dispatchController = require('../controllers/dispatch.controller');
 const pmController = require('../controllers/pm.controller');
+const vendorsController = require('../controllers/vendors.controller');
 const uploadController = require('../controllers/upload.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
@@ -217,7 +218,20 @@ async function router(req, res) {
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
   
-  // Vendor Routes Removed  
+  // ============================================
+  // VENDORS ROUTES
+  // ============================================
+  if (resource === 'vendors') {
+    if (!id) {
+      if (method === 'GET') return vendorsController.getAll(req, res);
+      if (method === 'POST') return vendorsController.create(req, res);
+      return methodNotAllowed(res, ['GET', 'POST']);
+    }
+    if (method === 'GET') return vendorsController.getById(req, res);
+    if (method === 'PUT' || method === 'PATCH') return vendorsController.update(req, res);
+    if (method === 'DELETE') return vendorsController.remove(req, res);
+    return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
+  }
   // ============================================
   // CONTRACTS ROUTES
   // ============================================
@@ -234,7 +248,12 @@ async function router(req, res) {
     }
     if (!id) {
       if (method === 'GET') return contractsController.getAll(req, res);
-      if (method === 'POST') return contractsController.create(req, res);
+      if (method === 'POST') {
+        return upload.single('document')(req, res, (err) => {
+          if (err) return response.error(res, err ? err.message : 'Upload failed', 400);
+          return contractsController.create(req, res);
+        });
+      }
       return methodNotAllowed(res, ['GET', 'POST']);
     }
     if (action === 'approve' && method === 'POST') {

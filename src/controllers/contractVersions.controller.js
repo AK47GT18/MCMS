@@ -21,7 +21,7 @@ const getByContract = asyncHandler(async (req, res, id) => {
 const create = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Contract_Administrator')) return;
+  if (!hasMinimumRole(req, res, 'Project_Manager')) return;
   
   const contractId = validateId(id, res);
   if (!contractId) return;

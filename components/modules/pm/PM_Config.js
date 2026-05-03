@@ -79,7 +79,6 @@ export const PM_Config = {
                             <th>Phase</th>
                             <th>Unit</th>
                             <th>Baseline Price</th>
-                            <th>Rate/Km</th>
                             <th style="width: 80px;">Actions</th>
                         </tr>
                     </thead>
@@ -91,7 +90,6 @@ export const PM_Config = {
                                 <td style="font-size: 12px; color: var(--slate-600);">${c.phase || 'General'}</td>
                                 <td style="font-size: 12px;">${c.unit}</td>
                                 <td style="font-family: 'JetBrains Mono'; font-weight: 700; color: var(--slate-900);">MWK ${Number(c.basePrice).toLocaleString()}</td>
-                                <td style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--slate-500);">${c.costPerKm ? 'MWK ' + Number(c.costPerKm).toLocaleString() : '—'}</td>
                                 <td>
                                     <div style="display: flex; gap: 8px;">
                                         <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 600;" onclick="window.app.pmModule.openEditPriceDrawer('${c.id}')">
@@ -150,7 +148,6 @@ export const PM_Config = {
         const phase = document.getElementById('price-phase').value;
         const basePrice = parseFloat(document.getElementById('price-base-amount').value);
         const unit = document.getElementById('price-unit').value;
-        const costPerKm = parseFloat(document.getElementById('price-cost-per-km').value || 0);
 
         if (!materialName || isNaN(basePrice)) {
             window.toast.show('Please fill in all required fields.', 'error');
@@ -158,7 +155,7 @@ export const PM_Config = {
         }
 
         try {
-            await client.post('/pm/material-prices', { materialName, category, phase, basePrice, unit, costPerKm });
+            await client.post('/pm/material-prices', { materialName, category, phase, basePrice, unit });
             window.toast.show('Price configuration saved successfully.', 'success');
             window.drawer.close();
             this.loadMaterialPrices();
@@ -219,7 +216,9 @@ export const PM_Config = {
             window.drawer.close();
             
             // Refresh contract view if open
-            if (window.app.fmModule?.viewContract) {
+            if (window.app.pmModule?.viewContract) {
+                window.app.pmModule.viewContract(contractId);
+            } else if (window.app.fmModule?.viewContract) {
                 window.app.fmModule.viewContract(contractId);
             }
         } catch (err) {

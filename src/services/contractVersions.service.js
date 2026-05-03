@@ -56,13 +56,28 @@ async function create(contractId, data, userId, file) {
     { contractId, versionNumber, fileName }
   );
 
-  // Notify PM
-  if (contract.project && contract.project.manager) {
-    await emailService.sendNotification(
-      contract.project.manager.email,
-      'New Contract Version Uploaded',
-      `A new version (V${versionNumber}) for contract ${contract.refCode} has been uploaded by user ID ${userId}. \nFile: ${fileName}\nChange Notes: ${data.changeNotes || 'None'}`
-    ).catch(e => console.error('Failed to notify PM', e));
+  // Role-based Notifications (PM <-> FD)
+  const creator = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, name: true } });
+  
+  if (creator?.role === 'Project_Manager') {
+    // Notify all Finance Directors
+    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { email: true } });
+    for (const fd of fds) {
+      await emailService.sendNotification(
+        fd.email,
+        'New Contract Version by Project Manager',
+        `A new version (V${versionNumber}) for contract ${contract.refCode} has been uploaded by PM ${creator.name}. \nChange Notes: ${data.changeNotes || 'None'}`
+      ).catch(e => console.error('FD Version Notification failed', e));
+    }
+  } else if (creator?.role === 'Finance_Director') {
+    // Notify the Project Manager
+    if (contract.project && contract.project.manager && contract.project.manager.email) {
+      await emailService.sendNotification(
+        contract.project.manager.email,
+        'New Contract Version by Finance Director',
+        `A new version (V${versionNumber}) for contract ${contract.refCode} has been uploaded by FD ${creator.name}. \nChange Notes: ${data.changeNotes || 'None'}`
+      ).catch(e => console.error('PM Version Notification failed', e));
+    }
   }
 
   return version;

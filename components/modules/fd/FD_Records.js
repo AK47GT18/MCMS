@@ -26,7 +26,7 @@ export const FD_Records = {
             <div class="data-card">
                 <div class="data-card-header">
                     <div class="card-title">Vendor Registry & Risk Analysis</div>
-                    <button class="btn btn-primary" onclick="window.toast.show('Onboarding drawer coming soon', 'info')"><i class="fas fa-plus"></i> Add Vendor</button>
+                    <button class="btn btn-primary" onclick="window.app.fmModule?.openVendorDrawer()"><i class="fas fa-plus"></i> Add Vendor</button>
                 </div>
                 <div id="fm-vendors-table-container">
                     <div style="padding: 40px; text-align: center; color: var(--slate-400);">
@@ -43,28 +43,13 @@ export const FD_Records = {
         if (!container) return;
 
         try {
-            const response = await client.get('/contracts?limit=100');
-            const allContracts = response.data?.contracts || response.data || [];
-            
-            const vendorsMap = new Map();
-            allContracts.forEach(c => {
-                if (!c.vendorId) return;
-                if (!vendorsMap.has(c.vendorId)) {
-                    vendorsMap.set(c.vendorId, {
-                        id: c.vendorId,
-                        name: c.vendor?.name || c.vendorName || `Vendor ${c.vendorId}`,
-                        category: c.category || 'Materials',
-                        activeContracts: 0,
-                        delays: c.deliveryDelays || 0,
-                        variance: c.priceVariance || 0,
-                        rating: c.vendorRating || 4.5
-                    });
-                }
-                const v = vendorsMap.get(c.vendorId);
-                if (c.status === 'Active') v.activeContracts++;
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch('/api/v1/vendors?limit=100', {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            const vendors = Array.from(vendorsMap.values());
+            if (!response.ok) throw new Error('Failed to fetch vendors');
+            const result = await response.json();
+            const vendors = result.data?.vendors || result.vendors || result || [];
 
             if (vendors.length === 0) {
                 container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);">No vendors found in active contracts.</div>`;
@@ -82,17 +67,14 @@ export const FD_Records = {
                             return `
                                 <tr>
                                     <td style="font-weight: 600;">${v.name}</td>
-                                    <td>${v.category}</td>
+                                    <td>${v.category || 'General'}</td>
                                     <td>
                                         <span class="status ${risk.class}" style="background: ${risk.bg}; color: ${risk.color};">
                                             ${risk.label}
                                         </span>
-                                        <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">
-                                            ${v.delays} delays | ${v.variance}% variance
-                                        </div>
                                     </td>
-                                    <td style="text-align: center; font-weight: 700;">${v.activeContracts}</td>
-                                    <td style="color: #FBBF24;">${this._renderStars(v.rating)}</td>
+                                    <td style="text-align: center; font-weight: 700;">${v._count?.contracts || v.activeContracts || 0}</td>
+                                    <td style="color: #FBBF24;">${this._renderStars(v.rating || 5.0)}</td>
                                 </tr>
                             `;
                         }).join('')}
@@ -112,13 +94,51 @@ export const FD_Records = {
     },
 
     _renderStars(rating) {
-        const full = Math.floor(rating);
-        const half = rating % 1 >= 0.5;
+        const r = parseFloat(rating) || 0;
+        const full = Math.floor(r);
+        const half = r % 1 >= 0.5;
         let html = '';
         for (let i = 0; i < full; i++) html += '<i class="fas fa-star"></i>';
         if (half) html += '<i class="fas fa-star-half-alt"></i>';
-        const empty = 5 - full - (half ? 1 : 0);
+        const empty = Math.max(0, 5 - full - (half ? 1 : 0));
         for (let i = 0; i < empty; i++) html += '<i class="far fa-star"></i>';
         return html;
+    },
+
+    openVendorDrawer() {
+        window.drawer.open('Onboard New Vendor', window.DrawerTemplates.newVendor);
+    },
+
+    async submitVendor() {
+        try {
+            const data = {
+                name: document.getElementById('vendor_name').value,
+                category: document.getElementById('vendor_category').value,
+                riskLevel: document.getElementById('vendor_risk').value,
+                rating: parseFloat(document.getElementById('vendor_rating').value)
+            };
+
+            window.toast.show('Onboarding vendor...', 'info');
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch('/api/v1/vendors', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Onboarding failed');
+            }
+
+            window.toast.show('Vendor registered successfully', 'success');
+            window.drawer.close();
+            this.loadVendorsData();
+        } catch (err) {
+            window.toast.show(err.message, 'error');
+        }
     }
 };

@@ -1,36 +1,37 @@
-import client from '../../../src/api/client.js';
-import projects from '../../../src/api/projects.api.js';
-import users from '../../../src/api/users.api.js';
-import dailyLogs from '../../../src/api/dailyLogs.api.js';
-import requisitions from '../../../src/api/requisitions.api.js';
-import audit from '../../../src/api/audit.api.js';
-import procurement from '../../../src/api/procurement.api.js';
-import assets from '../../../src/api/assets.api.js';
-import issues from '../../../src/api/issues.api.js';
-import tasks from '../../../src/api/tasks.api.js';
-import contracts from '../../../src/api/contracts.api.js';
+import client from "../../../src/api/client.js";
+import projects from "../../../src/api/projects.api.js";
+import users from "../../../src/api/users.api.js";
+import dailyLogs from "../../../src/api/dailyLogs.api.js";
+import requisitions from "../../../src/api/requisitions.api.js";
+import audit from "../../../src/api/audit.api.js";
+import procurement from "../../../src/api/procurement.api.js";
+import assets from "../../../src/api/assets.api.js";
+import issues from "../../../src/api/issues.api.js";
+import tasks from "../../../src/api/tasks.api.js";
+import contracts from "../../../src/api/contracts.api.js";
 
 export const PM_Contracts = {
-    getContractsView() {
-        this.currentContractTab = this.currentContractTab || 'project';
-        this.projectFilter = '';
-        this.vendorFilter = '';
-        
-        setTimeout(() => this.loadContractsData(), 0);
-        
-        return `
+  getContractsView() {
+    this.currentContractTab = this.currentContractTab || "project";
+    this.projectFilter = "";
+    this.vendorFilter = "";
+
+    setTimeout(() => this.loadContractsData(), 0);
+
+    return `
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Contract Registry & Legal Repository</div>
-                    ${this.currentContractTab === 'project' 
+                    ${
+                      this.currentContractTab === "project"
                         ? `<button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
                         : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.pmModule?.loadContractProjects(); window.app.pmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
                     }
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
-                    <div class="tab ${this.currentContractTab === 'project' ? 'active' : ''}" data-tab="project" onclick="window.app.pmModule.switchContractTab('project')">Project Contracts</div>
-                    <div class="tab ${this.currentContractTab === 'vendor' ? 'active' : ''}" data-tab="vendor" onclick="window.app.pmModule.switchContractTab('vendor')">Vendor Contracts</div>
+                    <div class="tab ${this.currentContractTab === "project" ? "active" : ""}" data-tab="project" onclick="window.app.pmModule.switchContractTab('project')">Project Contracts</div>
+                    <div class="tab ${this.currentContractTab === "vendor" ? "active" : ""}" data-tab="vendor" onclick="window.app.pmModule.switchContractTab('vendor')">Vendor Contracts</div>
                 </div>
                 
                 <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; gap: 16px;">
@@ -38,12 +39,16 @@ export const PM_Contracts = {
                         <option value="">All Projects</option>
                         <!-- Projects loaded dynamically -->
                     </select>
-                    ${this.currentContractTab === 'vendor' ? `
+                    ${
+                      this.currentContractTab === "vendor"
+                        ? `
                     <select id="contract-vendor-filter" class="form-input" style="max-width: 250px;" onchange="window.app.pmModule.handleContractFilterChange()">
                         <option value="">All Vendors</option>
                         <!-- Vendors loaded dynamically -->
                     </select>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
 
                 <div id="contracts-table-container">
@@ -51,267 +56,345 @@ export const PM_Contracts = {
                 </div>
             </div>
         `;
-    },
+  },
 
-    switchContractTab(tab) {
-        this.currentContractTab = tab;
-        this.projectFilter = '';
-        this.vendorFilter = '';
-        if (window.app) window.app.loadPage('contracts');
-    },
-    
-    handleContractFilterChange() {
-        this.projectFilter = document.getElementById('contract-project-filter')?.value || '';
-        if (this.currentContractTab === 'vendor') {
-            this.vendorFilter = document.getElementById('contract-vendor-filter')?.value || '';
-        }
-        this.renderContractsTable();
-    },
+  switchContractTab(tab) {
+    this.currentContractTab = tab;
+    this.projectFilter = "";
+    this.vendorFilter = "";
+    if (window.app) window.app.loadPage("contracts");
+  },
 
-    async loadContractsData() {
-        const container = document.getElementById('contracts-table-container');
-        if (!container) return;
+  handleContractFilterChange() {
+    this.projectFilter =
+      document.getElementById("contract-project-filter")?.value || "";
+    if (this.currentContractTab === "vendor") {
+      this.vendorFilter =
+        document.getElementById("contract-vendor-filter")?.value || "";
+    }
+    this.renderContractsTable();
+  },
 
-        try {
-            // Load filters data
-            client.get('/projects?limit=50').then(res => {
-                const projectsData = Array.isArray(res) ? res : (res.data || []);
-                const select = document.getElementById('contract-project-filter');
-                if (select) {
-                    projectsData.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p.id;
-                        opt.textContent = p.name;
-                        if (this.projectFilter == p.id) opt.selected = true;
-                        select.appendChild(opt);
-                    });
-                }
-            }).catch(e => console.error('Error loading projects for filter', e));
+  async loadContractsData() {
+    const container = document.getElementById("contracts-table-container");
+    if (!container) return;
 
-            // Load contracts
-            const response = await contracts.getAll({ limit: 100 });
-            const data = response.data || response;
-            const allContracts = Array.isArray(data) ? data : data.contracts || [];
-            
-            // Store raw contracts
-            this.allContracts = allContracts;
-            
-            // Populate vendor filter dynamically from contracts
-            if (this.currentContractTab === 'vendor') {
-                const vendorSelect = document.getElementById('contract-vendor-filter');
-                if (vendorSelect) {
-                    const uniqueVendors = new Map();
-                    allContracts.forEach(c => {
-                        if (c.vendorId) {
-                            uniqueVendors.set(c.vendorId, c.vendor?.name || c.vendorName || `Vendor ${c.vendorId}`);
-                        }
-                    });
-                    vendorSelect.innerHTML = '<option value="">All Vendors</option>';
-                    uniqueVendors.forEach((name, id) => {
-                        const opt = document.createElement('option');
-                        opt.value = id;
-                        opt.textContent = name;
-                        if (this.vendorFilter == id) opt.selected = true;
-                        vendorSelect.appendChild(opt);
-                    });
-                }
+    try {
+      // Load filters data
+      client
+        .get("/projects?limit=50")
+        .then((res) => {
+          const projectsData = Array.isArray(res) ? res : res.data || [];
+          const select = document.getElementById("contract-project-filter");
+          if (select) {
+            projectsData.forEach((p) => {
+              const opt = document.createElement("option");
+              opt.value = p.id;
+              opt.textContent = p.name;
+              if (this.projectFilter == p.id) opt.selected = true;
+              select.appendChild(opt);
+            });
+          }
+        })
+        .catch((e) => console.error("Error loading projects for filter", e));
+
+      // Load contracts
+      const response = await contracts.getAll({ limit: 100 });
+      const data = response.data || response;
+      const allContracts = Array.isArray(data) ? data : data.contracts || [];
+
+      // Store raw contracts
+      this.allContracts = allContracts;
+
+      // Populate vendor filter dynamically from contracts
+      if (this.currentContractTab === "vendor") {
+        const vendorSelect = document.getElementById("contract-vendor-filter");
+        if (vendorSelect) {
+          const uniqueVendors = new Map();
+          allContracts.forEach((c) => {
+            if (c.vendorId) {
+              uniqueVendors.set(
+                c.vendorId,
+                c.vendor?.name || c.vendorName || `Vendor ${c.vendorId}`,
+              );
             }
-            
-            this.renderContractsTable();
-
-        } catch (error) {
-            console.error('Failed to load contracts:', error);
-            container.innerHTML = this.renderEmptyState('Failed to load contract registry.');
+          });
+          vendorSelect.innerHTML = '<option value="">All Vendors</option>';
+          uniqueVendors.forEach((name, id) => {
+            const opt = document.createElement("option");
+            opt.value = id;
+            opt.textContent = name;
+            if (this.vendorFilter == id) opt.selected = true;
+            vendorSelect.appendChild(opt);
+          });
         }
-    },
+      }
 
-    renderContractsTable() {
-        const container = document.getElementById('contracts-table-container');
-        if (!container) return;
-        
-        if (!this.allContracts || this.allContracts.length === 0) {
-            container.innerHTML = this.renderEmptyState('No contracts found in the repository.');
-            return;
-        }
+      this.renderContractsTable();
+    } catch (error) {
+      console.error("Failed to load contracts:", error);
+      container.innerHTML = this.renderEmptyState(
+        "Failed to load contract registry.",
+      );
+    }
+  },
 
-        // Filter by tab type
-        let filtered = this.allContracts.filter(c => {
-            if (this.currentContractTab === 'vendor') {
-                return c.contractType === 'supply' || c.contractType === 'vendor' || c.vendorId != null;
-            } else {
-                return c.contractType === 'project' || c.contractType === 'client' || (c.vendorId == null && c.projectId != null);
-            }
-        });
+  renderContractsTable() {
+    const container = document.getElementById("contracts-table-container");
+    if (!container) return;
 
-        // Filter by project
-        if (this.projectFilter) {
-            filtered = filtered.filter(c => c.projectId == this.projectFilter);
-        }
-        
-        // Filter by vendor
-        if (this.currentContractTab === 'vendor' && this.vendorFilter) {
-            filtered = filtered.filter(c => c.vendorId == this.vendorFilter);
-        }
+    if (!this.allContracts || this.allContracts.length === 0) {
+      container.innerHTML = this.renderEmptyState(
+        "No contracts found in the repository.",
+      );
+      return;
+    }
 
-        if (filtered.length === 0) {
-            container.innerHTML = this.renderEmptyState('No contracts match the selected filters.');
-            return;
-        }
+    // Filter by tab type
+    let filtered = this.allContracts.filter((c) => {
+      if (this.currentContractTab === "vendor") {
+        return (
+          c.contractType === "supply" ||
+          c.contractType === "vendor" ||
+          c.vendorId != null
+        );
+      } else {
+        return (
+          c.contractType === "project" ||
+          c.contractType === "client" ||
+          (c.vendorId == null && c.projectId != null)
+        );
+      }
+    });
 
-        const rows = filtered.map(item => {
-            const isLocked = item.items?.some(i => Number(i.receivedQty) > 0);
-            return `
-                <tr style="${isLocked ? 'background: var(--slate-50);' : ''}">
+    // Filter by project
+    if (this.projectFilter) {
+      filtered = filtered.filter((c) => c.projectId == this.projectFilter);
+    }
+
+    // Filter by vendor
+    if (this.currentContractTab === "vendor" && this.vendorFilter) {
+      filtered = filtered.filter((c) => c.vendorId == this.vendorFilter);
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = this.renderEmptyState(
+        "No contracts match the selected filters.",
+      );
+      return;
+    }
+
+    const rows = filtered
+      .map((item) => {
+        const isLocked = item.items?.some((i) => Number(i.receivedQty) > 0);
+        return `
+                <tr style="${isLocked ? "background: var(--slate-50);" : ""}">
                     <td>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="project-id">${this.escapeHTML(item.code || item.refCode || 'CNT-' + item.id)}</span>
-                            ${isLocked ? `<i class="fas fa-lock" style="color: var(--slate-400); font-size: 10px;" title="Financial Lock: Active receipts detected. Changes require formal [VARIATION]."></i>` : ''}
+                            <span class="project-id">${this.escapeHTML(item.code || item.refCode || "CNT-" + item.id)}</span>
+                            ${isLocked ? `<i class="fas fa-lock" style="color: var(--slate-400); font-size: 10px;" title="Financial Lock: Active receipts detected. Changes require formal [VARIATION]."></i>` : ""}
                         </div>
                     </td>
                     <td style="font-weight:600;">${this.escapeHTML(item.title)}</td>
-                    ${this.currentContractTab === 'vendor' ? `<td>${this.escapeHTML(item.vendorName || item.vendor?.name || 'N/A')}</td>` : ''}
-                    <td><span class="status active" style="background:var(--slate-100); color:var(--slate-600);">${this.escapeHTML((item.type || item.contractType || 'Service').replace(/_/g, ' '))}</span></td>
-                    <td>v${this.escapeHTML(item.version || '1.0')}</td>
-                    <td>${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}</td>
+                    ${this.currentContractTab === "vendor" ? `<td>${this.escapeHTML(item.vendorName || item.vendor?.name || "N/A")}</td>` : ""}
+                    <td><span class="status active" style="background:var(--slate-100); color:var(--slate-600);">${this.escapeHTML((item.type || item.contractType || "Service").replace(/_/g, " "))}</span></td>
+                    <td style="font-weight: 600; color: var(--orange);">v${item.versions && item.versions.length > 0 ? item.versions[0].versionNumber : "1.0"}</td>
+                    <td>${item.endDate ? new Date(item.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Contract Viewer', window.DrawerTemplates.contractView(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule?.viewContract(${item.id})"><i class="fas fa-eye"></i></button>
                     </td>
                 </tr>
             `;
-        }).join('');
+      })
+      .join("");
 
-        container.innerHTML = `
+    container.innerHTML = `
             <table>
                 <thead>
                     <tr>
                         <th>Contract ID</th>
                         <th>Title</th>
-                        ${this.currentContractTab === 'vendor' ? '<th>Vendor</th>' : ''}
+                        ${this.currentContractTab === "vendor" ? "<th>Vendor</th>" : ""}
                         <th>Type</th>
                         <th>Version</th>
-                        <th>Expiry Date</th>
+                        <th>End Date</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
         `;
-    },
+  },
 
-    async loadContractProjects() {
-        const select = document.getElementById('contract_project');
-        if (!select) return;
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const res = await fetch('/api/v1/projects?status=active', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await res.json();
-            const projects = result.data || result.items || [];
-            select.innerHTML = '<option value="">Select a project...</option>' + projects.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join('');
-        } catch (err) { console.error(err); }
-    },
+  initProjectContractUpload() {
+    const dropZone = document.getElementById("v-drop-zone");
+    const fileInput = document.getElementById("v-file-input");
+    const status = document.getElementById("v-file-status");
+    if (!dropZone || !fileInput) return;
 
-    initContractUpload() {
-        const dropZone = document.getElementById('contract-drop-zone');
-        const fileInput = document.getElementById('contract_document');
-        const status = document.getElementById('contract-file-status');
-        if (!dropZone || !fileInput) return;
-        dropZone.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => {
-            if (e.target.files[0]) {
-                status.innerHTML = `<span style="color: var(--emerald); font-size: 12px;"><i class="fas fa-check-circle"></i> ${e.target.files[0].name}</span>`;
-                dropZone.style.borderColor = 'var(--emerald)';
-            }
-        };
+    dropZone.onclick = () => fileInput.click();
 
-        const valueInput = document.getElementById('contract_value');
-        if (valueInput) {
-            valueInput.oninput = () => this.calculateContractValue(true);
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 25 * 1024 * 1024) {
+          window.toast.show("File too large (Max 25MB)", "error");
+          fileInput.value = "";
+          return;
         }
-    },
+        status.innerHTML = `<span style="color: var(--emerald); font-weight: 700;"><i class="fas fa-check-circle"></i> ${file.name}</span>`;
+        dropZone.style.borderColor = "var(--emerald)";
+        dropZone.style.background = "#f0fdf4";
+        this.pendingContractFile = file;
+      }
+    };
 
-    async onContractProjectSelected(projectId) {
-        const list = document.getElementById('contract-materials-list');
-        const section = document.getElementById('contract-materials-section');
-        if (!list || !projectId) return;
-        section.style.display = 'block';
-        list.innerHTML = `
+    // Handle Drag & Drop
+    dropZone.ondragover = (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "var(--orange)";
+    };
+    dropZone.ondragleave = () => {
+      dropZone.style.borderColor = "var(--orange)";
+    };
+    dropZone.ondrop = (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === "application/pdf") {
+        fileInput.files = e.dataTransfer.files;
+        fileInput.onchange({ target: fileInput });
+      } else {
+        window.toast.show("Only PDF files allowed", "warning");
+      }
+    };
+  },
+
+  async loadContractProjects() {
+    const select = document.getElementById("contract_project");
+    if (!select) return;
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch("/api/v1/projects?status=active", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await res.json();
+      const projects = result.data || result.items || [];
+      select.innerHTML =
+        '<option value="">Select a project...</option>' +
+        projects
+          .map((p) => `<option value="${p.id}">${p.code} – ${p.name}</option>`)
+          .join("");
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  initContractUpload() {
+    const dropZone = document.getElementById("contract-drop-zone");
+    const fileInput = document.getElementById("contract_document");
+    const status = document.getElementById("contract-file-status");
+    if (!dropZone || !fileInput) return;
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+      if (e.target.files[0]) {
+        status.innerHTML = `<span style="color: var(--emerald); font-size: 12px;"><i class="fas fa-check-circle"></i> ${e.target.files[0].name}</span>`;
+        dropZone.style.borderColor = "var(--emerald)";
+      }
+    };
+
+    const valueInput = document.getElementById("contract_value");
+    if (valueInput) {
+      valueInput.oninput = () => this.calculateContractValue(true);
+    }
+  },
+
+  async onContractProjectSelected(projectId) {
+    const list = document.getElementById("contract-materials-list");
+    const section = document.getElementById("contract-materials-section");
+    if (!list || !projectId) return;
+    section.style.display = "block";
+    list.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; padding: 20px;">
                 <i class="fas fa-circle-notch fa-spin" style="margin-right: 8px; color: var(--orange);"></i>
                 <span style="font-size: 13px; color: var(--slate-500);">Fetching project requirements & budget...</span>
             </div>
         `;
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            
-            // 1. Fetch Project Details for Auto-fill
-            const projRes = await fetch(`/api/v1/projects/${projectId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const projResult = await projRes.json();
-            const project = projResult.data || projResult;
-            
-            // Auto-fill dates
-            const startEl = document.getElementById('contract_start');
-            const endEl = document.getElementById('contract_end');
-            if (startEl && project.startDate) startEl.value = project.startDate.split('T')[0];
-            if (endEl && project.endDate) endEl.value = project.endDate.split('T')[0];
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
 
-            // 2. Fetch Materials and Budget
-            const res = await fetch(`/api/v1/projects/${projectId}/materials`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await res.json();
-            const data = result.data || result;
-            const materials = data.materials || [];
-            const budget = data.budgetSummary || {};
-            
-            // Store budget for submission check
-            this.currentProjectBudget = budget;
-            
-            // Pre-fill Agreed Contract Sum with remaining budget as a hint (if 0)
-            const valInput = document.getElementById('contract_value');
-            if (valInput && (!valInput.value || valInput.value == '0')) {
-                valInput.value = budget.remaining || 0;
-            }
+      // 1. Fetch Project Details for Auto-fill
+      const projRes = await fetch(`/api/v1/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const projResult = await projRes.json();
+      const project = projResult.data || projResult;
 
-            // Update Budget Display
-            const budgetDisplay = document.getElementById('contract-budget-status');
-            if (budgetDisplay) {
-                const remaining = Number(budget.remaining || 0);
-                const percent = Number(budget.percentUsed || 0);
-                budgetDisplay.innerHTML = `
-                    <div style="background: ${remaining < 1000000 ? '#fef2f2' : 'var(--slate-50)'}; border: 1px solid ${remaining < 1000000 ? '#fee2e2' : 'var(--slate-200)'}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+      // Auto-fill dates
+      const startEl = document.getElementById("contract_start");
+      const endEl = document.getElementById("contract_end");
+      if (startEl && project.startDate)
+        startEl.value = project.startDate.split("T")[0];
+      if (endEl && project.endDate) endEl.value = project.endDate.split("T")[0];
+
+      // 2. Fetch Materials and Budget
+      const res = await fetch(`/api/v1/projects/${projectId}/materials`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await res.json();
+      const data = result.data || result;
+      const materials = data.materials || [];
+      const budget = data.budgetSummary || {};
+
+      // Store budget for submission check
+      this.currentProjectBudget = budget;
+
+      // Pre-fill Agreed Contract Sum with remaining budget as a hint (if 0)
+      const valInput = document.getElementById("contract_value");
+      if (valInput && (!valInput.value || valInput.value == "0")) {
+        valInput.value = budget.remaining || 0;
+      }
+
+      // Update Budget Display
+      const budgetDisplay = document.getElementById("contract-budget-status");
+      if (budgetDisplay) {
+        const remaining = Number(budget.remaining || 0);
+        const percent = Number(budget.percentUsed || 0);
+        budgetDisplay.innerHTML = `
+                    <div style="background: ${remaining < 1000000 ? "#fef2f2" : "var(--slate-50)"}; border: 1px solid ${remaining < 1000000 ? "#fee2e2" : "var(--slate-200)"}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Project Funds</span>
-                            <span style="font-size: 14px; font-weight: 800; color: ${remaining < 1000000 ? 'var(--red)' : 'var(--slate-900)'};">MWK ${remaining.toLocaleString()}</span>
+                            <span style="font-size: 14px; font-weight: 800; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"};">MWK ${remaining.toLocaleString()}</span>
                         </div>
                         <div style="height: 6px; background: var(--slate-200); border-radius: 3px; overflow: hidden;">
-                            <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? 'var(--red)' : 'var(--emerald)'};"></div>
+                            <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? "var(--red)" : "var(--emerald)"};"></div>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-top: 6px;">
                             <span style="font-size: 10px; color: var(--slate-400);">${percent}% Budget Utilized</span>
-                            ${remaining < 1000000 ? '<span style="font-size: 10px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> CRITICAL BALANCE</span>' : ''}
+                            ${remaining < 1000000 ? '<span style="font-size: 10px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> CRITICAL BALANCE</span>' : ""}
                         </div>
                     </div>
                 `;
-            }
+      }
 
-            if (materials.length === 0) { 
-                list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">No specifications found for this project.</div>'; 
-                return; 
-            }
+      if (materials.length === 0) {
+        list.innerHTML =
+          '<div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">No specifications found for this project.</div>';
+        return;
+      }
 
-            list.innerHTML = `
+      list.innerHTML = `
                 <div style="padding: 8px 12px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
                     <div style="flex: 2;">Material Name</div>
                     <div style="flex: 1; text-align: right;">Total Required</div>
                     <div style="flex: 1; text-align: right;">Already Contracted</div>
                     <div style="flex: 1.2; text-align: right;">New Qty</div>
                 </div>
-                ${materials.map((m, i) => {
-                    const remainingNeeded = Math.max(0, m.quantity - m.contractedQuantity);
+                ${materials
+                  .map((m, i) => {
+                    const remainingNeeded = Math.max(
+                      0,
+                      m.quantity - m.contractedQuantity,
+                    );
                     return `
                         <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
@@ -327,7 +410,7 @@ export const PM_Contracts = {
                                 <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${m.quantity}</div>
                             </div>
                             <div style="flex: 1; text-align: right;">
-                                <div style="font-size: 12px; font-weight: 600; color: ${m.contractedQuantity > 0 ? 'var(--orange)' : 'var(--slate-400)'};">${m.contractedQuantity}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: ${m.contractedQuantity > 0 ? "var(--orange)" : "var(--slate-400)"};">${m.contractedQuantity}</div>
                             </div>
                             <div style="flex: 1.2; text-align: right;">
                                 <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
@@ -336,276 +419,507 @@ export const PM_Contracts = {
                             </div>
                         </div>
                     `;
-                }).join('')}
+                  })
+                  .join("")}
             `;
-            this.calculateContractValue();
-        } catch (err) { 
-            list.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 12px;">Error loading materials list.</div>'; 
+      this.calculateContractValue();
+    } catch (err) {
+      list.innerHTML =
+        '<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 12px;">Error loading materials list.</div>';
+    }
+  },
+
+  calculateContractValue(fromManualInput = false) {
+    const checkboxes = document.querySelectorAll(
+      'input[name="contract_material"]:checked',
+    );
+    let total = 0;
+
+    if (fromManualInput) {
+      total = parseFloat(document.getElementById("contract_value")?.value || 0);
+    } else {
+      checkboxes.forEach((cb) => {
+        const index = cb.value;
+        const price = parseFloat(cb.dataset.price || 0);
+        const qtyInput = document.getElementById(`m_qty_${index}`);
+        const qty = parseFloat(qtyInput?.value || 0);
+        total += price * qty;
+      });
+    }
+
+    const valueInput = document.getElementById("contract_value");
+    if (valueInput) {
+      if (!fromManualInput) {
+        valueInput.value = total;
+      }
+
+      // Real-time Budget Validation
+      const remainingBudget = this.currentProjectBudget?.remaining || 0;
+      const submitBtn = document.querySelector(
+        'button[onclick*="submitContract"]',
+      );
+
+      if (total > remainingBudget) {
+        valueInput.style.color = "var(--red)";
+        if (submitBtn) {
+          submitBtn.style.opacity = "0.7";
+          submitBtn.disabled = true;
         }
-    },
-
-    calculateContractValue(fromManualInput = false) {
-        const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
-        let total = 0;
-        
-        if (fromManualInput) {
-            total = parseFloat(document.getElementById('contract_value')?.value || 0);
-        } else {
-            checkboxes.forEach(cb => {
-                const index = cb.value;
-                const price = parseFloat(cb.dataset.price || 0);
-                const qtyInput = document.getElementById(`m_qty_${index}`);
-                const qty = parseFloat(qtyInput?.value || 0);
-                total += (price * qty);
-            });
+      } else {
+        valueInput.style.color = "var(--slate-900)";
+        if (submitBtn) {
+          submitBtn.style.opacity = "1";
+          submitBtn.disabled = false;
         }
-        
-        const valueInput = document.getElementById('contract_value');
-        if (valueInput) {
-            if (!fromManualInput) {
-                valueInput.value = total;
-            }
+      }
+    }
+  },
 
-            // Real-time Budget Validation
-            const remainingBudget = this.currentProjectBudget?.remaining || 0;
-            const submitBtn = document.querySelector('button[onclick*="submitContract"]');
-            
-            if (total > remainingBudget) {
-                valueInput.style.color = 'var(--red)';
-                if (submitBtn) {
-                    submitBtn.style.opacity = '0.7';
-                    submitBtn.disabled = true;
-                }
-            } else {
-                valueInput.style.color = 'var(--slate-900)';
-                if (submitBtn) {
-                    submitBtn.style.opacity = '1';
-                    submitBtn.disabled = false;
-                }
-            }
-        }
-    },
+  async submitContract() {
+    const data = {
+      projectId: document.getElementById("contract_project")?.value,
+      vendorName: document.getElementById("contract_vendor")?.value,
+      title: document.getElementById("contract_title")?.value,
+      value: parseFloat(document.getElementById("contract_value")?.value),
+      startDate: document.getElementById("contract_start")?.value,
+      endDate: document.getElementById("contract_end")?.value,
+      retentionPercentage: parseFloat(
+        document.getElementById("contract_retention")?.value || 0,
+      ),
+      isTaxInclusive:
+        document.getElementById("contract_tax_inclusive")?.checked || false,
+      advancePaymentAmount: parseFloat(
+        document.getElementById("contract_advance")?.value || 0,
+      ),
+      guaranteeExpiry:
+        document.getElementById("contract_guarantee_expiry")?.value || null,
+    };
 
-    async submitContract() {
-        const data = {
-            projectId: document.getElementById('contract_project')?.value,
-            vendorName: document.getElementById('contract_vendor')?.value,
-            title: document.getElementById('contract_title')?.value,
-            value: parseFloat(document.getElementById('contract_value')?.value),
-            startDate: document.getElementById('contract_start')?.value,
-            endDate: document.getElementById('contract_end')?.value,
-            retentionPercentage: parseFloat(document.getElementById('contract_retention')?.value || 0),
-            isTaxInclusive: document.getElementById('contract_tax_inclusive')?.checked || false,
-            advancePaymentAmount: parseFloat(document.getElementById('contract_advance')?.value || 0),
-            guaranteeExpiry: document.getElementById('contract_guarantee_expiry')?.value || null
-        };
+    if (!data.projectId || !data.vendorName || !data.title || !data.value) {
+      window.toast.show("Please fill all required fields.", "warning");
+      return;
+    }
 
-        if (!data.projectId || !data.vendorName || !data.title || !data.value) {
-            window.toast.show('Please fill all required fields.', 'warning');
-            return;
-        }
+    window.toast.show("Establishing contract...", "info");
 
-        window.toast.show('Establishing contract...', 'info');
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch("/api/v1/contracts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          contractType: "vendor",
+          refCode: "CON-" + Date.now().toString(36).toUpperCase(),
+        }),
+      });
+      if (!res.ok) throw new Error("System error creating contract");
 
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const res = await fetch('/api/v1/contracts', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...data, contractType: 'vendor', refCode: 'CON-' + Date.now().toString(36).toUpperCase() })
-            });
-            if (!res.ok) throw new Error('System error creating contract');
-            
-            window.toast.show('Contract established successfully', 'success');
-            window.drawer.close();
-            this.loadContractsData();
-        } catch (err) { window.toast.show(err.message, 'error'); }
-    },
+      window.toast.show("Contract established successfully", "success");
+      window.drawer.close();
+      this.loadContractsData();
+    } catch (err) {
+      window.toast.show(err.message, "error");
+    }
+  },
 
-    openNewProjectContract() {
-        window.drawer.open('Project Master Agreement', window.DrawerTemplates.newProjectContract);
-        setTimeout(() => {
-            this.loadContractProjects();
-            this.initMasterContractUpload();
-        }, 100);
-    },
+  async viewContract(id) {
+    window.toast.show("Loading contract...", "info");
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
 
-    initMasterContractUpload() {
-        const dropZone = document.getElementById('v-drop-zone');
-        const fileInput = document.getElementById('v-file-input');
-        const status = document.getElementById('v-file-status');
-        if (!dropZone || !fileInput) return;
+      // Fetch contract details
+      const contractRes = await fetch(`/api/v1/contracts/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!contractRes.ok) throw new Error("Failed to fetch contract");
+      const contractResult = await contractRes.json();
+      const contract = contractResult.data || contractResult;
 
+      // Fetch version history
+      const versionsRes = await fetch(`/api/v1/contracts/${id}/versions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (versionsRes.ok) {
+        const versionsResult = await versionsRes.json();
+        contract.versions = versionsResult.data || versionsResult || [];
+      } else {
+        contract.versions = [];
+      }
+
+      window.drawer.open(
+        "Contract Viewer",
+        window.DrawerTemplates.contractView(contract),
+      );
+    } catch (error) {
+      console.error("View contract error:", error);
+      window.toast.show("Could not load contract details.", "error");
+    }
+  },
+
+  openNewProjectContract() {
+    window.drawer.open(
+      "Project Master Agreement",
+      window.DrawerTemplates.newProjectContract,
+    );
+    setTimeout(() => {
+      this.loadContractProjects();
+      this.initMasterContractUpload();
+    }, 100);
+  },
+
+  initMasterContractUpload() {
+    const dropZone = document.getElementById("v-drop-zone");
+    const fileInput = document.getElementById("v-file-input");
+    const status = document.getElementById("v-file-status");
+    if (!dropZone || !fileInput) return;
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.selectedMasterFile = file;
+        status.innerHTML = `<span style="color: var(--emerald); font-size: 13px;"><i class="fas fa-check-circle"></i> ${file.name}</span>`;
+        dropZone.style.borderColor = "var(--emerald)";
+        dropZone.style.background = "#f0fdf4";
+      }
+    };
+  },
+
+  async onProjectContractSelected(projectId) {
+    if (!projectId) return;
+
+    // Show loading in fields
+    const sumEl = document.getElementById("contract_value");
+    const startEl = document.getElementById("contract_start");
+    const endEl = document.getElementById("contract_end");
+    const codeEl = document.getElementById("contract_ref");
+
+    if (sumEl) sumEl.disabled = true;
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await res.json();
+      const project = result.data || result;
+
+      if (sumEl) {
+        sumEl.value = project.contractValue || project.budgetTotal || 0;
+        sumEl.disabled = false;
+      }
+      if (startEl && project.startDate) {
+        startEl.value = project.startDate.split("T")[0];
+      }
+      if (endEl && project.endDate) {
+        endEl.value = project.endDate.split("T")[0];
+      }
+      if (codeEl) {
+        codeEl.value = project.code || "";
+      }
+
+      window.toast.show(`Auto-filled details for ${project.name}`, "info");
+    } catch (err) {
+      console.error("Auto-fill failed:", err);
+      if (sumEl) sumEl.disabled = false;
+    }
+  },
+
+  async submitProjectContract() {
+    const projectId = document.getElementById("contract_project")?.value;
+    const refCode = document.getElementById("contract_ref")?.value;
+    const value = parseFloat(document.getElementById("contract_value")?.value);
+    const startDate = document.getElementById("contract_start")?.value;
+    const endDate = document.getElementById("contract_end")?.value;
+    const justification = document.getElementById(
+      "contract_justification",
+    )?.value;
+
+    if (!projectId || !refCode || isNaN(value) || !justification) {
+      window.toast.show(
+        "Please fill all required fields, including justification.",
+        "warning",
+      );
+      return;
+    }
+
+    if (!this.selectedMasterFile) {
+      window.toast.show("Please upload the signed master document.", "warning");
+      return;
+    }
+
+    window.toast.show("Archiving master agreement...", "info");
+
+    try {
+      const formData = new FormData();
+      formData.append("projectId", projectId);
+      formData.append("refCode", refCode);
+      formData.append("value", value);
+      formData.append("startDate", startDate);
+      formData.append("endDate", endDate);
+      formData.append("justification", justification);
+      formData.append("title", "Project Master Agreement");
+      formData.append("contractType", "project");
+      formData.append("document", this.selectedMasterFile);
+
+      const result = await contracts.create(formData);
+
+      // Send Notifications
+      this.sendContractNotification(
+        "Master Agreement Created",
+        `Project Master for ${refCode} has been archived by ${window.currentUser?.name}. Justification: ${justification}`,
+      );
+
+      window.toast.show("Master agreement archived", "success");
+      this.selectedMasterFile = null;
+      window.drawer.close();
+      this.loadContractsData();
+    } catch (err) {
+      console.error("[Contract Error]", err);
+      window.toast.show(err.message || "Failed to archive contract", "error");
+    }
+  },
+
+  async submitContract() {
+    const data = {
+      projectId: document.getElementById("contract_project")?.value,
+      vendorName: document.getElementById("contract_vendor")?.value,
+      title: document.getElementById("contract_title")?.value,
+      value: parseFloat(document.getElementById("contract_value")?.value),
+      startDate: document.getElementById("contract_start")?.value,
+      endDate: document.getElementById("contract_end")?.value,
+      justification: document.getElementById("contract_justification")?.value,
+      retentionPercentage: parseFloat(
+        document.getElementById("contract_retention")?.value || 0,
+      ),
+      isTaxInclusive:
+        document.getElementById("contract_tax_inclusive")?.checked || false,
+      advancePaymentAmount: parseFloat(
+        document.getElementById("contract_advance")?.value || 0,
+      ),
+      guaranteeExpiry:
+        document.getElementById("contract_guarantee_expiry")?.value || null,
+    };
+
+    if (
+      !data.projectId ||
+      !data.vendorName ||
+      !data.title ||
+      !data.value ||
+      !data.justification
+    ) {
+      window.toast.show(
+        "Please fill all required fields, including justification.",
+        "warning",
+      );
+      return;
+    }
+
+    window.toast.show("Establishing contract...", "info");
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch("/api/v1/contracts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          contractType: "vendor",
+          refCode: "CON-" + Date.now().toString(36).toUpperCase(),
+        }),
+      });
+      if (!res.ok) throw new Error("System error creating contract");
+
+      // Send Notifications
+      this.sendContractNotification(
+        "Vendor Contract Established",
+        `New Vendor Contract for ${data.vendorName} established by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}. Justification: ${data.justification}`,
+      );
+
+      window.toast.show("Contract established successfully", "success");
+      window.drawer.close();
+      this.loadContractsData();
+    } catch (err) {
+      window.toast.show(err.message, "error");
+    }
+  },
+
+  async sendContractNotification(title, message) {
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      await fetch("/api/v1/notifications/broadcast", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title,
+          message: message,
+          roles: ["Project Manager", "Finance Director"],
+          priority: "high",
+          type: "contract",
+        }),
+      });
+    } catch (err) {
+      console.warn("Broadcast notification failed:", err);
+    }
+  },
+
+  openUploadNewVersion(contractId, currentValue) {
+    window.drawer.open(
+      "New Contract Version",
+      window.DrawerTemplates.contractUploadVersion({
+        id: contractId,
+        value: currentValue,
+      }),
+    );
+
+    setTimeout(() => {
+      const dropZone = document.getElementById("v-drop-zone");
+      const fileInput = document.getElementById("v-file-input");
+      const status = document.getElementById("v-file-status");
+
+      if (dropZone && fileInput) {
         dropZone.onclick = () => fileInput.click();
         fileInput.onchange = (e) => {
-            if (e.target.files[0]) {
-                status.innerHTML = `<span style="color: var(--emerald); font-size: 13px;"><i class="fas fa-check-circle"></i> ${e.target.files[0].name}</span>`;
-                dropZone.style.borderColor = 'var(--emerald)';
-                dropZone.style.background = '#f0fdf4';
-            }
+          const file = e.target.files[0];
+          if (file) {
+            status.innerHTML = `<span style="color: var(--emerald);"><i class="fas fa-check-circle"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</span>`;
+            dropZone.style.borderColor = "var(--emerald)";
+            dropZone.style.background = "#F0FDF4";
+          }
         };
-    },
+      }
+    }, 100);
+  },
 
-    async onProjectContractSelected(projectId) {
-        if (!projectId) return;
-        
-        // Show loading in fields
-        const sumEl = document.getElementById('contract_value');
-        const startEl = document.getElementById('contract_start');
-        const endEl = document.getElementById('contract_end');
-        const codeEl = document.getElementById('contract_ref');
-        
-        if (sumEl) sumEl.disabled = true;
-        
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const res = await fetch(`/api/v1/projects/${projectId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await res.json();
-            const project = result.data || result;
-            
-            if (sumEl) {
-                sumEl.value = project.contractSum || project.budget || 0;
-                sumEl.disabled = false;
-            }
-            if (startEl && project.startDate) {
-                startEl.value = project.startDate.split('T')[0];
-            }
-            if (endEl && project.endDate) {
-                endEl.value = project.endDate.split('T')[0];
-            }
-            if (codeEl) {
-                codeEl.value = project.code || '';
-            }
-            
-            window.toast.show(`Auto-filled details for ${project.name}`, 'info');
-        } catch (err) {
-            console.error('Auto-fill failed:', err);
-            if (sumEl) sumEl.disabled = false;
-        }
-    },
+  async submitNewVersion(contractId) {
+    const notes = document.getElementById("v-change-notes")?.value;
+    const fileInput = document.getElementById("v-file-input");
+    const newValueInput = document.getElementById("v-new-amount");
+    const file = fileInput?.files[0];
 
-    async submitProjectContract() {
-        const data = {
-            projectId: document.getElementById('contract_project')?.value,
-            refCode: document.getElementById('contract_ref')?.value,
-            value: parseFloat(document.getElementById('contract_value')?.value),
-            startDate: document.getElementById('contract_start')?.value,
-            endDate: document.getElementById('contract_end')?.value,
-            justification: document.getElementById('contract_justification')?.value,
-            title: 'Project Master Agreement',
-            contractType: 'project'
-        };
+    if (!notes || notes.length < 5) {
+      window.toast.show("Please provide descriptive change notes.", "error");
+      return;
+    }
 
-        if (!data.projectId || !data.refCode || !data.value || !data.justification) {
-            window.toast.show('Please fill all required fields, including justification.', 'warning');
-            return;
-        }
+    if (!file) {
+      window.toast.show("Please select a contract document (PDF).", "error");
+      return;
+    }
 
-        window.toast.show('Archiving master agreement...', 'info');
+    window.toast.show("Uploading new version...", "info");
 
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const res = await fetch('/api/v1/contracts', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (!res.ok) throw new Error('Failed to archive contract');
-            
-            const result = await res.json();
-            const contractId = result.data?.id || result.id;
+    try {
+      const formData = new FormData();
+      formData.append("document", file);
+      formData.append("changeNotes", notes);
 
-            // Send Notifications
-            this.sendContractNotification('Master Agreement Created', `Project Master for ${data.refCode} has been archived by ${window.currentUser?.name}. Justification: ${data.justification}`);
+      if (newValueInput && newValueInput.value) {
+        formData.append("value", parseFloat(newValueInput.value));
+      }
 
-            window.toast.show('Master agreement archived', 'success');
-            window.drawer.close();
-            this.loadContractsData();
-        } catch (err) { window.toast.show(err.message, 'error'); }
-    },
+      const token = localStorage.getItem("mcms_auth_token");
+      const response = await fetch(`/api/v1/contracts/${contractId}/versions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
-    async submitContract() {
-        const data = {
-            projectId: document.getElementById('contract_project')?.value,
-            vendorName: document.getElementById('contract_vendor')?.value,
-            title: document.getElementById('contract_title')?.value,
-            value: parseFloat(document.getElementById('contract_value')?.value),
-            startDate: document.getElementById('contract_start')?.value,
-            endDate: document.getElementById('contract_end')?.value,
-            justification: document.getElementById('contract_justification')?.value,
-            retentionPercentage: parseFloat(document.getElementById('contract_retention')?.value || 0),
-            isTaxInclusive: document.getElementById('contract_tax_inclusive')?.checked || false,
-            advancePaymentAmount: parseFloat(document.getElementById('contract_advance')?.value || 0),
-            guaranteeExpiry: document.getElementById('contract_guarantee_expiry')?.value || null
-        };
+      if (!response.ok) throw new Error("Upload failed");
 
-        if (!data.projectId || !data.vendorName || !data.title || !data.value || !data.justification) {
-            window.toast.show('Please fill all required fields, including justification.', 'warning');
-            return;
-        }
+      window.toast.show("New version uploaded successfully!", "success");
+      window.drawer.close();
+      // Refresh the view
+      if (this.viewContract) this.viewContract(contractId);
+      this.loadContractsData();
+    } catch (error) {
+      window.toast.show("Failed to upload version: " + error.message, "error");
+    }
+  },
 
-        window.toast.show('Establishing contract...', 'info');
+  openEditContractDrawer(contract) {
+    window.drawer.open(
+      "Edit Contract Details",
+      window.DrawerTemplates.editContract(contract),
+    );
+  },
 
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            const res = await fetch('/api/v1/contracts', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...data, contractType: 'vendor', refCode: 'CON-' + Date.now().toString(36).toUpperCase() })
-            });
-            if (!res.ok) throw new Error('System error creating contract');
+  async submitContractUpdate(contractId) {
+    try {
+      const data = {
+        title: document.getElementById("edit_contract_title").value,
+        value: parseFloat(document.getElementById("edit_contract_value").value),
+        startDate: document.getElementById("edit_contract_start").value || null,
+        endDate: document.getElementById("edit_contract_end").value || null,
+        changeNotes: document.getElementById("edit_contract_notes").value,
+      };
 
-            // Send Notifications
-            this.sendContractNotification('Vendor Contract Established', `New Vendor Contract for ${data.vendorName} established by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}. Justification: ${data.justification}`);
-            
-            window.toast.show('Contract established successfully', 'success');
-            window.drawer.close();
-            this.loadContractsData();
-        } catch (err) { window.toast.show(err.message, 'error'); }
-    },
+      window.toast.show("Updating contract details...", "info");
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/contracts/${contractId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-    async sendContractNotification(title, message) {
-        try {
-            const token = localStorage.getItem('mcms_auth_token');
-            await fetch('/api/v1/notifications/broadcast', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: title,
-                    message: message,
-                    roles: ['Project Manager', 'Finance Director'],
-                    priority: 'high',
-                    type: 'contract'
-                })
-            });
-        } catch (err) {
-            console.warn('Broadcast notification failed:', err);
-        }
-    },
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Update failed");
+      }
 
-    renderLoadingState() {
-        return `
+      window.toast.show("Contract metadata updated and versioned", "success");
+      // Re-open viewer to show updated details
+      this.viewContract(contractId);
+      this.loadContractsData();
+    } catch (err) {
+      window.toast.show(err.message, "error");
+    }
+  },
+
+  renderLoadingState() {
+    return `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
                 <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
                 <div>Loading contracts...</div>
             </div>
         `;
-    },
+  },
 
-    renderEmptyState(message) {
-        return `
+  renderEmptyState(message) {
+    return `
             <div style="padding: 40px; text-align: center; color: var(--slate-400);">
                 <i class="fas fa-file-contract" style="font-size: 32px; margin-bottom: 12px;"></i>
                 <div>${message}</div>
             </div>
         `;
-    },
+  },
 
-    escapeHTML(str) {
-        return str?.toString().replace(/[&<>"']/g, m => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        }[m])) || '';
-    }
+  escapeHTML(str) {
+    return (
+      str?.toString().replace(
+        /[&<>"']/g,
+        (m) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[m],
+      ) || ""
+    );
+  },
 };

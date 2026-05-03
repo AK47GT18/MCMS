@@ -1,24 +1,43 @@
 export const DrawerTemplates = {
-    escapeHTML(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    },
+  escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  },
 
-    documentViewer: (url, fileName = 'Document') => {
-        const isPdf = url.toLowerCase().includes('.pdf') || url.includes('type=pdf');
-        const fileExt = fileName.split('.').pop().toUpperCase();
-        
-        return `
+  documentViewer: (url, fileName = "Document") => {
+    if (!url || url === "null" || url === "") {
+      return `
+                <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 48px; text-align: center;">
+                    <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--slate-400); margin-bottom: 24px;">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <h3 style="font-size: 18px; font-weight: 700; color: var(--slate-800); margin-bottom: 8px;">Document Not Found</h3>
+                    <p style="font-size: 14px; color: var(--slate-500); max-width: 320px; line-height: 1.6;">
+                        This contract record exists but the associated legal document was not successfully archived. 
+                        Please contact the Project Manager or re-upload the signed agreement.
+                    </p>
+                    <button class="btn btn-secondary" onclick="window.drawer.close()" style="margin-top: 24px;">Return to Registry</button>
+                </div>
+            `;
+    }
+
+    const isPdf =
+      (url || "").toLowerCase().includes(".pdf") ||
+      (fileName || "").toLowerCase().includes(".pdf") ||
+      (url || "").includes("type=pdf");
+    const fileExt = (fileName || "document.pdf").split(".").pop().toUpperCase();
+
+    return `
             <div style="height: 100%; display: flex; flex-direction: column; background: var(--slate-50);">
                 <div style="padding: 16px 24px; border-bottom: 1px solid var(--slate-200); background: white; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); z-index: 10;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 36px; height: 36px; border-radius: 8px; background: ${isPdf ? '#FEF2F2' : '#F0F9FF'}; color: ${isPdf ? '#EF4444' : '#0369A1'}; display: flex; align-items: center; justify-content: center; font-size: 18px;">
-                            <i class="fas ${isPdf ? 'fa-file-pdf' : 'fa-file-word'}"></i>
+                        <div style="width: 36px; height: 36px; border-radius: 8px; background: ${isPdf ? "#FEF2F2" : "#F0F9FF"}; color: ${isPdf ? "#EF4444" : "#0369A1"}; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                            <i class="fas ${isPdf ? "fa-file-pdf" : "fa-file-word"}"></i>
                         </div>
                         <div>
                             <div style="font-size: 14px; font-weight: 800; color: var(--slate-800);">${fileName}</div>
@@ -36,22 +55,32 @@ export const DrawerTemplates = {
                 </div>
                 
                 <div style="flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column;">
-                    ${isPdf ? `
+                    ${
+                      isPdf
+                        ? `
                         <iframe src="${url}#toolbar=0&navpanes=0" style="width: 100%; height: 100%; border: none; background: var(--slate-100);"></iframe>
-                    ` : `
+                    `
+                        : `
                         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 48px; text-align: center; background: white; margin: 24px; border-radius: 16px; border: 1px dashed var(--slate-300);">
-                            <div style="width: 100px; height: 100px; border-radius: 24px; background: var(--slate-50); display: flex; align-items: center; justify-content: center; color: var(--slate-300); font-size: 48px; margin-bottom: 24px; border: 1px solid var(--slate-100);">
+                            <div style="width: 100px; height: 100px; border-radius: 24px; background: #F0F9FF; display: flex; align-items: center; justify-content: center; color: #0369A1; font-size: 48px; margin-bottom: 24px; border: 1px solid #E0F2FE;">
                                 <i class="fas fa-file-word"></i>
                             </div>
-                            <h3 style="font-size: 20px; font-weight: 800; color: var(--slate-800); margin-bottom: 12px;">In-App Preview Unavailable</h3>
-                            <p style="font-size: 14px; color: var(--slate-500); max-width: 360px; line-height: 1.6; margin-bottom: 32px;">
-                                Microsoft Word (DOCX) files are encrypted for security. To view or edit this document with full formatting, please download it to your device.
+                            <h3 style="font-size: 20px; font-weight: 800; color: var(--slate-800); margin-bottom: 12px;">Document Preview Locked</h3>
+                            <p style="font-size: 14px; color: var(--slate-500); max-width: 400px; line-height: 1.6; margin-bottom: 32px;">
+                                This <strong>${fileExt}</strong> document is protected by the MCMS Secure Document Pipeline. 
+                                In-app rendering for complex Office formats is restricted to maintain formatting fidelity and security.
                             </p>
-                            <a href="${url}" download="${fileName}" class="btn btn-primary" style="padding: 14px 32px; font-weight: 700; background: var(--orange); border-color: var(--orange); box-shadow: var(--shadow-md);">
-                                <i class="fas fa-download" style="margin-right: 8px;"></i> Download & Open Document
-                            </a>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-secondary" onclick="window.downloadDocument('${url}', '${fileName}')" style="padding: 12px 24px; font-weight: 700;">
+                                    <i class="fas fa-download" style="margin-right: 8px;"></i> Download Local Copy
+                                </button>
+                                <button class="btn btn-primary" onclick="window.drawer.close()" style="padding: 12px 24px; font-weight: 700; background: var(--orange); border-color: var(--orange);">
+                                    <i class="fas fa-check" style="margin-right: 8px;"></i> Acknowledge
+                                </button>
+                            </div>
                         </div>
-                    `}
+                    `
+                    }
                 </div>
                 
                 <div style="padding: 12px 24px; background: white; border-top: 1px solid var(--slate-200); font-size: 11px; color: var(--slate-400); display: flex; justify-content: space-between; align-items: center;">
@@ -63,42 +92,42 @@ export const DrawerTemplates = {
                 </div>
             </div>
         `;
-    },
+  },
 
-    materialPriceForm: (data = {}) => `
+  materialPriceForm: (data = {}) => `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Material Name</label>
-                <input type="text" id="price-material-name" class="form-input" data-vrules="required" value="${data.materialName || ''}" placeholder="e.g. Cement (42.5R)" style="width: 100%;">
+                <input type="text" id="price-material-name" class="form-input" data-vrules="required" value="${data.materialName || ""}" placeholder="e.g. Cement (42.5R)" style="width: 100%;">
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Category</label>
                     <select id="price-category" class="form-input" style="width: 100%;">
-                        <option value="Aggregates" ${data.category === 'Aggregates' ? 'selected' : ''}>Aggregates</option>
-                        <option value="Bitumen" ${data.category === 'Bitumen' ? 'selected' : ''}>Bitumen</option>
-                        <option value="Cement" ${data.category === 'Cement' ? 'selected' : ''}>Cement</option>
-                        <option value="Fuel" ${data.category === 'Fuel' ? 'selected' : ''}>Fuel</option>
-                        <option value="Earthworks" ${data.category === 'Earthworks' ? 'selected' : ''}>Earthworks</option>
-                        <option value="Drainage" ${data.category === 'Drainage' ? 'selected' : ''}>Drainage</option>
-                        <option value="Road Furniture" ${data.category === 'Road Furniture' ? 'selected' : ''}>Road Furniture</option>
-                        <option value="Others" ${data.category === 'Others' ? 'selected' : ''}>Others</option>
+                        <option value="Aggregates" ${data.category === "Aggregates" ? "selected" : ""}>Aggregates</option>
+                        <option value="Bitumen" ${data.category === "Bitumen" ? "selected" : ""}>Bitumen</option>
+                        <option value="Cement" ${data.category === "Cement" ? "selected" : ""}>Cement</option>
+                        <option value="Fuel" ${data.category === "Fuel" ? "selected" : ""}>Fuel</option>
+                        <option value="Earthworks" ${data.category === "Earthworks" ? "selected" : ""}>Earthworks</option>
+                        <option value="Drainage" ${data.category === "Drainage" ? "selected" : ""}>Drainage</option>
+                        <option value="Road Furniture" ${data.category === "Road Furniture" ? "selected" : ""}>Road Furniture</option>
+                        <option value="Others" ${data.category === "Others" ? "selected" : ""}>Others</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project Phase</label>
                     <select id="price-phase" class="form-input" style="width: 100%;">
-                        <option value="General" ${data.phase === 'General' ? 'selected' : ''}>General / Unassigned</option>
-                        <option value="Phase 1: Clearing & Grubbing" ${data.phase === 'Phase 1: Clearing & Grubbing' ? 'selected' : ''}>Phase 1: Clearing & Grubbing</option>
-                        <option value="Phase 2: Earthworks / Subgrade" ${data.phase === 'Phase 2: Earthworks / Subgrade' ? 'selected' : ''}>Phase 2: Earthworks / Subgrade</option>
-                        <option value="Phase 3: Sub-base Construction" ${data.phase === 'Phase 3: Sub-base Construction' ? 'selected' : ''}>Phase 3: Sub-base Construction</option>
-                        <option value="Phase 4: Base Course Construction" ${data.phase === 'Phase 4: Base Course Construction' ? 'selected' : ''}>Phase 4: Base Course Construction</option>
-                        <option value="Phase 5: Surfacing" ${data.phase === 'Phase 5: Surfacing' ? 'selected' : ''}>Phase 5: Surfacing</option>
-                        <option value="Phase 6: Drainage" ${data.phase === 'Phase 6: Drainage' ? 'selected' : ''}>Phase 6: Drainage</option>
-                        <option value="Phase 7: Road Furniture & Accessories" ${data.phase === 'Phase 7: Road Furniture & Accessories' ? 'selected' : ''}>Phase 7: Road Furniture & Accessories</option>
-                        <option value="Phase 8: Bridge Construction" ${data.phase === 'Phase 8: Bridge Construction' ? 'selected' : ''}>Phase 8: Bridge Construction</option>
-                        <option value="Phase 9: Site Establishment" ${data.phase === 'Phase 9: Site Establishment' ? 'selected' : ''}>Phase 9: Site Establishment</option>
+                        <option value="General" ${data.phase === "General" ? "selected" : ""}>General / Unassigned</option>
+                        <option value="Phase 1: Clearing & Grubbing" ${data.phase === "Phase 1: Clearing & Grubbing" ? "selected" : ""}>Phase 1: Clearing & Grubbing</option>
+                        <option value="Phase 2: Earthworks / Subgrade" ${data.phase === "Phase 2: Earthworks / Subgrade" ? "selected" : ""}>Phase 2: Earthworks / Subgrade</option>
+                        <option value="Phase 3: Sub-base Construction" ${data.phase === "Phase 3: Sub-base Construction" ? "selected" : ""}>Phase 3: Sub-base Construction</option>
+                        <option value="Phase 4: Base Course Construction" ${data.phase === "Phase 4: Base Course Construction" ? "selected" : ""}>Phase 4: Base Course Construction</option>
+                        <option value="Phase 5: Surfacing" ${data.phase === "Phase 5: Surfacing" ? "selected" : ""}>Phase 5: Surfacing</option>
+                        <option value="Phase 6: Drainage" ${data.phase === "Phase 6: Drainage" ? "selected" : ""}>Phase 6: Drainage</option>
+                        <option value="Phase 7: Road Furniture & Accessories" ${data.phase === "Phase 7: Road Furniture & Accessories" ? "selected" : ""}>Phase 7: Road Furniture & Accessories</option>
+                        <option value="Phase 8: Bridge Construction" ${data.phase === "Phase 8: Bridge Construction" ? "selected" : ""}>Phase 8: Bridge Construction</option>
+                        <option value="Phase 9: Site Establishment" ${data.phase === "Phase 9: Site Establishment" ? "selected" : ""}>Phase 9: Site Establishment</option>
                     </select>
                 </div>
             </div>
@@ -106,42 +135,42 @@ export const DrawerTemplates = {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Base Price (MWK)</label>
-                    <input type="number" id="price-base-amount" class="form-input" data-vrules="required|min:0" value="${data.basePrice || ''}" placeholder="0.00" style="width: 100%; font-weight: 700; font-family: 'JetBrains Mono';">
+                    <input type="number" id="price-base-amount" class="form-input" data-vrules="required|min:0" value="${data.basePrice || ""}" placeholder="0.00" style="width: 100%; font-weight: 700; font-family: 'JetBrains Mono';">
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Unit</label>
                     <select id="price-unit" class="form-input" style="width: 100%;">
-                        <option value="Bag" ${data.unit === 'Bag' ? 'selected' : ''}>Bag</option>
-                        <option value="m3" ${data.unit === 'm3' ? 'selected' : ''}>m³</option>
-                        <option value="ton" ${data.unit === 'ton' ? 'selected' : ''}>Tonne</option>
-                        <option value="litres" ${data.unit === 'litres' ? 'selected' : ''}>Litres</option>
-                        <option value="m" ${data.unit === 'm' ? 'selected' : ''}>Meter (m)</option>
-                        <option value="unit" ${data.unit === 'unit' ? 'selected' : ''}>Unit</option>
-                        <option value="drum" ${data.unit === 'drum' ? 'selected' : ''}>Drum</option>
+                        <option value="Bag" ${data.unit === "Bag" ? "selected" : ""}>Bag</option>
+                        <option value="m3" ${data.unit === "m3" ? "selected" : ""}>m³</option>
+                        <option value="ton" ${data.unit === "ton" ? "selected" : ""}>Tonne</option>
+                        <option value="litres" ${data.unit === "litres" ? "selected" : ""}>Litres</option>
+                        <option value="m" ${data.unit === "m" ? "selected" : ""}>Meter (m)</option>
+                        <option value="unit" ${data.unit === "unit" ? "selected" : ""}>Unit</option>
+                        <option value="drum" ${data.unit === "drum" ? "selected" : ""}>Drum</option>
                     </select>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Rate per Kilometer (MWK/Km)</label>
-                <input type="number" id="price-cost-per-km" class="form-input" value="${data.costPerKm || ''}" placeholder="Optional estimation rate" style="width: 100%; font-family: 'JetBrains Mono';">
-                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Used for distance-based procurement forecasting.</div>
-            </div>
+
 
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handlePriceConfigSubmit(${data.id || 'null'})">
-                    <i class="fas fa-save" style="margin-right: 8px;"></i> ${data.id ? 'Update Configuration' : 'Save Configuration'}
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handlePriceConfigSubmit(${data.id || "null"})">
+                    <i class="fas fa-save" style="margin-right: 8px;"></i> ${data.id ? "Update Configuration" : "Save Configuration"}
                 </button>
                 
-                ${data.id ? `
+                ${
+                  data.id
+                    ? `
                     <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red-light); background: transparent;" onclick="window.app.pmModule.deleteMaterialPrice('${data.id}')">
                         <i class="fas fa-trash-can" style="margin-right: 8px;"></i> Delete Configuration
                     </button>
-                ` : ''}
+                `
+                    : ""
+                }
             </div>
         </div>
     `,
-    variationOrderForm: (contractId) => `
+  variationOrderForm: (contractId) => `
         <div style="padding: 24px;">
             <div style="background: var(--orange-light); padding: 12px; border-radius: 8px; border: 1px solid var(--orange-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-file-signature" style="color: var(--orange); font-size: 20px;"></i>
@@ -177,7 +206,7 @@ export const DrawerTemplates = {
             </button>
         </div>
     `,
-    transactionEntry: `
+  transactionEntry: `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Transaction Type</label>
@@ -235,7 +264,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    whistleblowerPortal: `
+  whistleblowerPortal: `
         <div style="padding: 24px;">
             <div style="background: var(--red-light); padding: 16px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-shield-halved" style="color: var(--red); font-size: 20px;"></i>
@@ -287,7 +316,7 @@ export const DrawerTemplates = {
             <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
         </div>
     `,
-    safetyIncident: `
+  safetyIncident: `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <div style="background: var(--red-light); padding: 16px; border-radius: 8px; border: 1px solid var(--red-border); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
@@ -326,7 +355,7 @@ export const DrawerTemplates = {
             <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.toast.show('Safety incident reported. HQ notified.', 'error'); window.drawer.close();">Submit Incident Report</button>
         </div>
     `,
-    reportingMenu: `
+  reportingMenu: `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <div style="margin-bottom: 24px; text-align: center;">
@@ -416,7 +445,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    submitComplaint: `
+  submitComplaint: `
         <div class="drawer-section">
             <div style="background: var(--amber-light); padding: 16px; border-radius: 8px; border: 1px solid var(--amber-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-exclamation-triangle" style="color: var(--amber-dark); font-size: 20px;"></i>
@@ -458,46 +487,46 @@ export const DrawerTemplates = {
         </div>
     `,
 
-
-
-
-
-    safetyIncident: (incident) => `
+  safetyIncident: (incident) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div style="font-weight: 800; font-size: 16px; color: #991B1B;">${incident?.id ? 'Incident Report: ' + incident.id : 'New Safety Incident'}</div>
-                    <div style="font-size: 12px; color: #B91C1C;">Priority: ${incident?.priority || 'High'}</div>
+                    <div style="font-weight: 800; font-size: 16px; color: #991B1B;">${incident?.id ? "Incident Report: " + incident.id : "New Safety Incident"}</div>
+                    <div style="font-size: 12px; color: #B91C1C;">Priority: ${incident?.priority || "High"}</div>
                 </div>
                 <div class="status-badge" style="background: white; color: #991B1B; border: 1px solid #FECACA; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;">
-                    ${(incident?.status || 'PENDING').toUpperCase()}
+                    ${(incident?.status || "PENDING").toUpperCase()}
                 </div>
             </div>
 
             <div style="padding: 24px; max-height: calc(100vh - 120px); overflow-y: auto;">
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label class="form-label">Incident Type</label>
-                    <input type="text" class="form-input" value="${incident?.type || 'Injury'}" readonly style="width: 100%; background: #F8FAFC;">
+                    <input type="text" class="form-input" value="${incident?.type || "Injury"}" readonly style="width: 100%; background: #F8FAFC;">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label class="form-label">Narrative / Description</label>
                     <div style="background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px; font-size: 14px; color: var(--slate-700); line-height: 1.6;">
-                        ${incident?.description || 'No description provided.'}
+                        ${incident?.description || "No description provided."}
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label">Evidence Capture</label>
                     <div id="safety-photo-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
-                        ${(incident?.photos || []).map(p => `<img src="${p}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--slate-200);">`).join('')}
+                        ${(incident?.photos || []).map((p) => `<img src="${p}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--slate-200);">`).join("")}
                     </div>
-                    ${!incident?.id ? `
+                    ${
+                      !incident?.id
+                        ? `
                     <label class="camera-btn" style="border: 2px dashed #FECACA; background: #FFF5F5; padding: 20px; text-align: center; border-radius: 12px; color: #B91C1C; cursor: pointer; display: block;" onclick="window.app.fsModule?.triggerSafetyCamera()">
                         <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
                         <div style="font-weight: 700; font-size: 13px;">Capture Scene / Hazard</div>
                     </label>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
 
                 <div style="border-top: 1px solid var(--slate-200); padding-top: 24px; margin-top: 24px;">
@@ -513,26 +542,34 @@ export const DrawerTemplates = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${(incident?.replies || []).length === 0 ? `
+                                ${
+                                  (incident?.replies || []).length === 0
+                                    ? `
                                     <tr>
                                         <td colspan="3" style="text-align: center; padding: 24px; color: var(--slate-400); font-size: 12px; background: white;">
                                             No handling updates yet.
                                         </td>
                                     </tr>
-                                ` : incident.replies.map(reply => `
+                                `
+                                    : incident.replies
+                                        .map(
+                                          (reply) => `
                                     <tr style="border-bottom: 1px solid var(--slate-100); background: white;">
                                         <td style="padding: 12px; vertical-align: top;">
-                                            <div style="font-weight: 700; font-size: 12px; color: var(--slate-900);">${reply.user?.name || 'System'}</div>
-                                            <div style="font-size: 10px; color: var(--slate-500);">${reply.user?.role?.replace(/_/g, ' ') || 'User'}</div>
+                                            <div style="font-weight: 700; font-size: 12px; color: var(--slate-900);">${reply.user?.name || "System"}</div>
+                                            <div style="font-size: 10px; color: var(--slate-500);">${reply.user?.role?.replace(/_/g, " ") || "User"}</div>
                                         </td>
                                         <td style="padding: 12px; vertical-align: top; font-size: 11px; color: var(--slate-600);">
-                                            ${new Date(reply.createdAt).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})}
+                                            ${new Date(reply.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                                         </td>
                                         <td style="padding: 12px; vertical-align: top; font-size: 13px; color: var(--slate-700); line-height: 1.5;">
                                             ${reply.content}
                                         </td>
                                     </tr>
-                                `).join('')}
+                                `,
+                                        )
+                                        .join("")
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -548,49 +585,76 @@ export const DrawerTemplates = {
         </div>
     `,
 
+  contractView: (contract) => {
+    const versions = contract.versions || [];
+    const latestVersion =
+      versions.length > 0 ? versions[versions.length - 1] : null;
 
-
-    contractView: (contract) => {
-        const versions = contract.versions || [];
-        const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
-        
-        return `
+    return `
         <div style="padding: 0;">
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: linear-gradient(to right, var(--slate-50), #fff);">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
                     <div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${contract.refCode || 'CTR-' + contract.id}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${contract.refCode || "CTR-" + contract.id}</div>
                         <div style="color: var(--slate-500); font-size: 13px; font-weight: 500;">${contract.title}</div>
                     </div>
-                    <span class="status active" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; background: var(--emerald-light); color: var(--emerald);">${contract.status || 'ACTIVE'}</span>
+                    <span class="status active" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; background: var(--emerald-light); color: var(--emerald);">${contract.status || "ACTIVE"}</span>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+                    ${
+                      contract.contractType !== "project"
+                        ? `
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor / Party</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.vendorName || '-'}</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.vendorName || "-"}</div>
                     </div>
+                    `
+                        : `
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Linked Project</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.project?.name || "Master Project"}</div>
+                    </div>
+                    `
+                    }
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Contract Value</div>
-                        <div style="font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono'; font-size: 15px;">MWK ${(Number(contract.value || 0)).toLocaleString()}</div>
+                        <div style="font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono'; font-size: 15px;">MWK ${Number(contract.value || 0).toLocaleString()}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Start Date</div>
-                        <div style="font-weight: 600; color: var(--slate-700);">${contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</div>
+                        <div style="font-weight: 600; color: var(--slate-700);">${contract.startDate ? new Date(contract.startDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Expiry Date</div>
-                        <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">End Date</div>
+                        <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
+                    ${
+                      contract.contractType !== "project"
+                        ? `
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Retention (${contract.retentionPercentage || 0}%)</div>
-                        <div style="font-weight: 700; color: var(--orange); font-size: 14px;">MWK ${(Number(contract.retentionAmount || 0)).toLocaleString()}</div>
+                        <div style="font-weight: 700; color: var(--orange); font-size: 14px;">MWK ${Number(contract.retentionAmount || 0).toLocaleString()}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Tax Liabilities (VAT/WHT)</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${(Number((contract.vatAmount || 0) + (contract.whtAmount || 0))).toLocaleString()}</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number((contract.vatAmount || 0) + (contract.whtAmount || 0)).toLocaleString()}</div>
                     </div>
+                    `
+                        : ""
+                    }
                 </div>
+                
+                ${
+                  contract.justification
+                    ? `
+                <div style="margin-top: 24px; padding: 16px; background: #fff; border: 1px solid var(--slate-200); border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Justification / Purpose</div>
+                    <div style="font-size: 13px; color: var(--slate-700); line-height: 1.6;">${contract.justification}</div>
+                </div>
+                `
+                    : ""
+                }
             </div>
 
             <div style="padding: 24px;">
@@ -603,29 +667,40 @@ export const DrawerTemplates = {
                             <div style="flex: 1; text-align: right;">Quantity</div>
                             <div style="flex: 1.2; text-align: right;">Total Est. Value</div>
                         </div>
-                        ${contract.items && contract.items.length > 0 ? contract.items.map(item => `
+                        ${
+                          contract.items && contract.items.length > 0
+                            ? contract.items
+                                .map(
+                                  (item) => `
                             <div style="padding: 12px 16px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center;">
                                 <div style="flex: 2;">
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${item.materialName}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">${item.unitPrice ? 'MWK ' + Number(item.unitPrice).toLocaleString() + ' per ' + (item.unit || 'unit') : (item.unit || 'Standard Unit')}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">${item.unitPrice ? "MWK " + Number(item.unitPrice).toLocaleString() + " per " + (item.unit || "unit") : item.unit || "Standard Unit"}</div>
                                 </div>
                                 <div style="flex: 1; text-align: right;">
-                                    <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${item.quantity} ${item.unit || ''}</div>
+                                    <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${item.quantity} ${item.unit || ""}</div>
                                 </div>
                                 <div style="flex: 1.2; text-align: right;">
                                     <div style="font-size: 13px; font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono';">MWK ${Number(item.totalCost || 0).toLocaleString()}</div>
                                 </div>
                             </div>
-                        `).join('') : `
+                        `,
+                                )
+                                .join("")
+                            : `
                             <div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 12px;">
                                 <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
                                 No specific material line items attached to this agreement.
                             </div>
-                        `}
+                        `
+                        }
                     </div>
                 </div>
 
                 <!-- Variation Orders Section -->
+                ${
+                  contract.contractType !== "project"
+                    ? `
                 <div style="margin-bottom: 32px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Variation Orders (VO)</h4>
@@ -634,26 +709,38 @@ export const DrawerTemplates = {
                         </button>
                     </div>
                     <div id="variation-orders-list">
-                        ${contract.variationOrders && contract.variationOrders.length > 0 ? contract.variationOrders.map(vo => `
+                        ${
+                          contract.variationOrders &&
+                          contract.variationOrders.length > 0
+                            ? contract.variationOrders
+                                .map(
+                                  (vo) => `
                             <div style="padding: 10px; background: white; border: 1px solid var(--slate-200); border-radius: 8px; margin-bottom: 8px;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                     <span style="font-weight: 700; font-size: 12px; color: var(--slate-800);">${vo.voCode}</span>
-                                    <span style="font-family: 'JetBrains Mono'; font-weight: 700; color: ${vo.amount >= 0 ? 'var(--emerald)' : 'var(--red)'}; font-size: 11px;">
-                                        ${vo.amount >= 0 ? '+' : ''}${vo.amount.toLocaleString()} MWK
+                                    <span style="font-family: 'JetBrains Mono'; font-weight: 700; color: ${vo.amount >= 0 ? "var(--emerald)" : "var(--red)"}; font-size: 11px;">
+                                        ${vo.amount >= 0 ? "+" : ""}${vo.amount.toLocaleString()} MWK
                                     </span>
                                 </div>
                                 <div style="font-size: 11px; color: var(--slate-500); line-height: 1.4;">${vo.reason}</div>
                             </div>
-                        `).join('') : `
+                        `,
+                                )
+                                .join("")
+                            : `
                             <div style="font-size: 11px; color: var(--slate-400); text-align: center; padding: 12px; border: 1px dashed var(--slate-200); border-radius: 8px; background: white;">
                                 No Variation Orders recorded for this contract.
                             </div>
-                        `}
+                        `
+                        }
                     </div>
                 </div>
+                `
+                    : ""
+                }
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Contract Documents</h4>
-                    <button class="btn btn-secondary btn-sm" onclick="window.app.fmModule?.openUploadNewVersion(${contract.id})">
+                    <button class="btn btn-secondary btn-sm" onclick="(window.app.fmModule || window.app.pmModule)?.openUploadNewVersion(${contract.id}, ${contract.value})">
                         <i class="fas fa-plus"></i> New Version
                     </button>
                 </div>
@@ -663,64 +750,96 @@ export const DrawerTemplates = {
                         <i class="fas fa-file-pdf"></i>
                     </div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || 'Signed_Contract_Final.pdf'}</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || "Master_Agreement_Signed.pdf"}</div>
                         <div style="font-size: 11px; color: var(--slate-500);">
                             <span style="font-weight: 700; color: var(--orange);">Version ${versions.length || 1}</span> • 
-                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${contract.createdBy?.name || 'Authorized Official'}</span> • 
-                            ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'Today'}
+                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> • 
+                            ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
                         </div>
                     </div>
-                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.viewDocument('${contract.documentUrl}', '${contract.fileName || 'Contract.pdf'}')">
+                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.viewDocument('${contract.documentUrl || ""}', '${contract.fileName || ""}')">
                         <i class="fas fa-external-link-alt"></i>
+                    </button>
+                    <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="window.downloadDocument('${contract.documentUrl || ""}', '${contract.fileName || ""}')">
+                        <i class="fas fa-download"></i>
                     </button>
                 </div>
 
                 <div style="margin-bottom: 32px;">
-                    <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Version History</h4>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${versions.length > 0 ? versions.map((v, idx) => `
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber}</div>
-                                    <div>
-                                        <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${v.fileName || 'Contract_Revision.pdf'}</div>
-                                        <div style="font-size: 10px; color: var(--slate-400); display: flex; align-items: center; gap: 4px;">
-                                            <i class="fas fa-user-edit" style="font-size: 9px;"></i>
-                                            By ${v.createdBy?.name || 'System Admin'} • ${new Date(v.createdAt).toLocaleDateString()}
+                    <h4 style="font-size: 13px; font-weight: 800; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-history" style="color: var(--orange);"></i> Version History & Audit Trace
+                    </h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${
+                          versions.length > 0
+                            ? versions
+                                .map(
+                                  (v, idx) => `
+                            <div style="display: flex; flex-direction: column; padding: 16px; background: white; border-radius: 12px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="width: 32px; height: 32px; background: var(--slate-100); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--slate-500);">V${v.versionNumber}</div>
+                                        <div>
+                                            <div style="font-size: 14px; font-weight: 700; color: var(--slate-800);">${v.fileName || (contract.contractType === "project" ? "Master_Agreement_V" + v.versionNumber + ".pdf" : "Contract_V" + v.versionNumber + ".pdf")}</div>
+                                            <div style="font-size: 12px; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
+                                                <i class="fas fa-user-circle" style="font-size: 11px;"></i>
+                                                ${v.createdBy?.name || window.currentUser?.name || "Authorized Official"} • ${new Date(v.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn btn-secondary btn-sm" title="View" onclick="window.viewDocument('${v.documentUrl || ""}', '${v.fileName || (contract.contractType === "project" ? "Master_Agreement_V" + v.versionNumber + ".pdf" : "Contract_V" + v.versionNumber + ".pdf")}')" style="padding: 6px 10px;">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" title="Download" onclick="window.downloadDocument('${v.documentUrl || ""}', '${v.fileName || (contract.contractType === "project" ? "Master_Agreement_V" + v.versionNumber + ".pdf" : "Contract_V" + v.versionNumber + ".pdf")}')" style="padding: 6px 10px;">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style="display: flex; gap: 4px;">
-                                    <button class="btn btn-icon-sm" title="View" onclick="window.viewDocument('${v.documentUrl}', '${v.fileName || 'Contract_V' + v.versionNumber + '.pdf'}')"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-icon-sm" title="Download" onclick="window.downloadDocument('${v.documentUrl}', '${v.fileName || 'Contract_V' + v.versionNumber + '.pdf'}')"><i class="fas fa-download"></i></button>
+                                <div style="padding: 12px 16px; background: var(--slate-50); border-radius: 8px; border-left: 4px solid var(--orange); font-size: 13px; color: var(--slate-700); line-height: 1.5;">
+                                    <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; display: flex; justify-content: space-between;">
+                                        <span>Change Authorization & Intent</span>
+                                        <span style="color: var(--orange);">${v.versionNumber === 1 ? "ORIGINAL BASELINE" : "REVISION V" + v.versionNumber}</span>
+                                    </div>
+                                    ${v.changeNotes || "Master agreement baseline establishment and legal archiving."}
                                 </div>
                             </div>
-                        `).reverse().join('') : `
-                            <div style="text-align: center; padding: 20px; color: var(--slate-400); font-size: 12px; background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
-                                No prior versions tracked for this contract.
+                        `,
+                                )
+                                .reverse()
+                                .join("")
+                            : `
+                            <div style="text-align: center; padding: 32px; color: var(--slate-400); font-size: 13px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-200);">
+                                <i class="fas fa-history" style="font-size: 24px; margin-bottom: 12px; opacity: 0.5;"></i>
+                                <div>No prior versions tracked for this contract.</div>
                             </div>
-                        `}
+                        `
+                        }
                     </div>
                 </div>
 
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 32px;">
-                    <i class="fas fa-shield-check" style="color: #16a34a; font-size: 18px; margin-top: 2px;"></i>
-                    <div style="font-size: 13px; color: #15803d; line-height: 1.5;">
-                        <strong>Compliance Status:</strong> This contract is active and all associated insurance policies are valid. No payment blocks detected.
+                <div style="background: ${contract.status === "expired" ? "#fef2f2" : "#f0fdf4"}; border: 1px solid ${contract.status === "expired" ? "#fecaca" : "#bbf7d0"}; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 32px;">
+                    <i class="fas ${contract.status === "expired" ? "fa-exclamation-triangle" : "fa-shield-check"}" style="color: ${contract.status === "expired" ? "#dc2626" : "#16a34a"}; font-size: 18px; margin-top: 2px;"></i>
+                    <div style="font-size: 13px; color: ${contract.status === "expired" ? "#991b1b" : "#15803d"}; line-height: 1.5;">
+                        <strong>Compliance Status:</strong> ${contract.status === "expired" ? "This contract has expired and requires immediate renewal or extension." : "This contract is active and all associated insurance policies are valid. No payment blocks detected."}
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="(window.app.fmModule || window.app.pmModule)?.openEditContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
+                        <i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Details
+                    </button>
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
-                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.downloadDocument('${contract.documentUrl}', '${contract.fileName || 'Contract_Latest.pdf'}')">
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.downloadDocument('${contract.documentUrl || ""}', '${contract.fileName || "Contract_Latest.pdf"}')">
                         <i class="fas fa-download" style="margin-right: 8px;"></i> Download Latest PDF
                     </button>
                 </div>
             </div>
         </div>
-    `},
+    `;
+  },
 
-    contractUploadVersion: (contractId) => `
+  contractUploadVersion: (contract) => `
         <div style="padding: 24px;">
             <div style="background: var(--slate-50); padding: 16px; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-file-export" style="color: var(--orange); font-size: 20px;"></i>
@@ -728,8 +847,14 @@ export const DrawerTemplates = {
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Revised Contract Value (Optional)</label>
+                <input type="number" id="v-new-amount" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="Leave empty if unchanged" value="${contract.value || ""}">
+                <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">Update this if the new version includes a change in the total contract value.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Change Description</label>
-                <textarea id="v-change-notes" class="form-input" rows="3" placeholder="Explain what changed in this version (e.g. Price adjustment, Scope change)..." style="width: 100%;"></textarea>
+                <textarea id="v-change-notes" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" rows="3" placeholder="Explain what changed in this version (e.g. Price adjustment, Scope change)..." style="width: 100%;"></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
@@ -745,14 +870,60 @@ export const DrawerTemplates = {
 
             <div style="display: flex; gap: 12px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.submitNewVersion(${contractId})">
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement.parentElement)){return} (window.app.fmModule || window.app.pmModule)?.submitNewVersion(${contract.id})">
                     <i class="fas fa-upload" style="margin-right: 8px;"></i> Upload & Increment Version
                 </button>
             </div>
         </div>
     `,
 
-    requestFunds: `
+  editContract: (contract) => `
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-edit" style="color: var(--slate-600); font-size: 24px;"></i>
+                <div>
+                    <div style="font-weight: 800; color: var(--slate-900); font-size: 15px;">Edit Contract Details</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Updating metadata for ${contract.refCode}</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
+                <input type="text" id="edit_contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" value="${contract.title}">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK) *</label>
+                <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" value="${contract.value}">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
+                    <input type="date" id="edit_contract_start" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" value="${contract.startDate ? contract.startDate.split("T")[0] : ""}">
+                </div>
+                <div>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
+                    <input type="date" id="edit_contract_end" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" value="${contract.endDate ? contract.endDate.split("T")[0] : ""}">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Change Notes / Variation Reason *</label>
+                <textarea id="edit_contract_notes" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="3" placeholder="Explain why these changes are being made..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.app.pmModule?.viewContract(${contract.id})">Cancel</button>
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange);" 
+                    onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement.parentElement)){return} (window.app.fmModule || window.app.pmModule)?.submitContractUpdate(${contract.id})">
+                    <i class="fas fa-save" style="margin-right: 8px;"></i> Update & Record Version
+                </button>
+            </div>
+        </div>
+    `,
+
+  requestFunds: `
         <div class="drawer-section">
             <div style="margin-bottom: 24px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover); display: flex; gap: 12px; align-items: center;">
                  <i class="fas fa-file-invoice-dollar" style="color: var(--orange); font-size: 20px;"></i>
@@ -797,7 +968,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    investigation: `
+  investigation: `
         <div style="padding: 24px;">
             <div style="text-align: center; margin-bottom: 24px;">
                 <div style="width: 64px; height: 64px; background: var(--red-light); color: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px;">
@@ -828,7 +999,7 @@ export const DrawerTemplates = {
             </div>
         </div>
     `,
-    newProject: `
+  newProject: `
         <div class="drawer-section" style="padding-bottom: 80px;">
             <div id="project-form-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -869,42 +1040,36 @@ export const DrawerTemplates = {
 
                 <div style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                    <input type="text" id="proj_name" class="form-input" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
-                    <div id="proj_name-error" class="v-msg v-msg-err" style="display:none;"></div>
+                    <input type="text" id="proj_name" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                    <input type="text" id="proj_client" class="form-input" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
-                    <div id="proj_client-error" class="v-msg v-msg-err" style="display:none;"></div>
+                    <input type="text" id="proj_client" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
                 </div>
 
                 <div style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                    <input type="number" id="proj_budget" class="form-input" min="1" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
-                    <div id="proj_budget-error" class="v-msg v-msg-err" style="display:none;"></div>
+                    <input type="number" id="proj_budget" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
                     <span style="font-size:11px; color:var(--slate-500); margin-top:4px; display:inline-block;"><i class="fas fa-info-circle"></i> For road works, the estimate must fit within this envelope.</span>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
                         <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
-                        <input type="date" id="proj_start" class="form-input" required onchange="(window.app.pmModule || window.app.fsModule).validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
-                        <div id="proj_start-error" class="v-msg v-msg-err" style="display:none;"></div>
+                        <input type="date" id="proj_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split("T")[0]}">
                     </div>
                     <div>
                         <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">End Date</label>
-                        <input type="date" id="proj_end" class="form-input" required onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split('T')[0]}">
-                        <div id="proj_end-error" class="v-msg v-msg-err" style="display:none;"></div>
+                        <input type="date" id="proj_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" min="${new Date().toISOString().split("T")[0]}">
                     </div>
                 </div>
                 
                 <div class="form-group" style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Field Supervisor</label>
-                    <select id="proj_supervisor" class="form-input" required onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
+                    <select id="proj_supervisor" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
                         <option value="">Select Supervisor</option>
                     </select>
-                    <div id="proj_supervisor-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
 
                 <div style="margin-bottom: 24px;">
@@ -940,26 +1105,23 @@ export const DrawerTemplates = {
 
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label class="form-label" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Road Class/Type</label>
-                    <select id="road_type" class="form-input" onchange="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; font-weight:600; color:var(--slate-800);">
+                    <select id="road_type" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width:100%; padding:10px; font-weight:600; color:var(--slate-800);">
                         <option value="RT-1">RT-1 Earth (2-5 yrs design life)</option>
                         <option value="RT-2">RT-2 Gravel (5-10 yrs design life)</option>
                         <option value="RT-3">RT-3 Surface Dressed (10-15 yrs)</option>
                         <option value="RT-4" selected>RT-4 Asphalt (15-20 yrs)</option>
                         <option value="RT-5">RT-5 Concrete (30-50 yrs)</option>
                     </select>
-                    <div id="road_type-error" class="v-msg v-msg-err" style="display:none;"></div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div>
                         <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Total Length (km)</label>
-                        <input type="number" id="road_length" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" placeholder="e.g. 15.5" step="0.1">
-                        <div id="road_length-error" class="v-msg v-msg-err" style="display:none;"></div>
+                        <input type="number" id="road_length" class="form-input" data-vrules="required|min:0.1" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" placeholder="e.g. 15.5" step="0.1">
                     </div>
                     <div>
                         <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Avg Width (m)</label>
-                        <input type="number" id="road_width" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" value="7.0" step="0.5">
-                        <div id="road_width-error" class="v-msg v-msg-err" style="display:none;"></div>
+                        <input type="number" id="road_width" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; font-family: 'JetBrains Mono';" value="7.0" step="0.5">
                     </div>
                 </div>
 
@@ -988,14 +1150,12 @@ export const DrawerTemplates = {
 
                 <div style="margin-bottom: 12px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Geographical Zone / District</label>
-                    <input type="text" id="road_zone" class="form-input" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px;" placeholder="e.g. Northern Region - Mzimba">
-                    <div id="road_zone-error" class="v-msg v-msg-err" style="display:none;"></div>
+                    <input type="text" id="road_zone" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width:100%; padding:10px;" placeholder="e.g. Northern Region - Mzimba">
                 </div>
 
                 <div style="margin-bottom: 12px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Distance from Nearest Town (km)</label>
-                    <input type="number" id="road_town_dist" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px;" placeholder="e.g. 25" value="10">
-                    <div id="road_town_dist-error" class="v-msg v-msg-err" style="display:none;"></div>
+                    <input type="number" id="road_town_dist" class="form-input" data-vrules="required|min:0" oninput="window.V?.checkField(this)" style="width:100%; padding:10px;" placeholder="e.g. 25" value="10">
                     <div style="font-size:10px; color:var(--slate-500); margin-top:3px;">Affects accessibility / transport multipliers</div>
                 </div>
             </div>
@@ -1118,12 +1278,17 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    siteLogVerification: (project, log) => {
-        const escapeHTML = (str) => {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        };
-        return `
+  siteLogVerification: (project, log) => {
+    const escapeHTML = (str) => {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+    return `
         <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
           <div class="tabs" style="margin-bottom: 0;">
             <div class="tab active" style="border-bottom-color: var(--orange);">Verify Log</div>
@@ -1135,11 +1300,11 @@ export const DrawerTemplates = {
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <div>
                     <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Supervisor</div>
-                    <div style="font-weight:600;">${escapeHTML(project?.manager?.name || 'Site Supervisor')}</div>
+                    <div style="font-weight:600;">${escapeHTML(project?.manager?.name || "Site Supervisor")}</div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Date</div>
-                    <div style="font-weight:600;">${log ? new Date(log.createdAt || log.date).toLocaleDateString() : 'Today'}</div>
+                    <div style="font-weight:600;">${log ? new Date(log.createdAt || log.date).toLocaleDateString() : "Today"}</div>
                 </div>
             </div>
 
@@ -1148,15 +1313,15 @@ export const DrawerTemplates = {
             </div>
 
             <div class="evidence-photo" style="width: 100%; height: 200px; background: var(--slate-200); border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 16px; border: 1px solid var(--slate-300);">
-                <img src="${log?.photoUrl || 'public/images/hero-background.jpg'}" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover; background: var(--slate-100);" onerror="this.src='public/images/hero-background.jpg'">
+                <img src="${log?.photoUrl || "public/images/hero-background.jpg"}" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover; background: var(--slate-100);" onerror="this.src='public/images/hero-background.jpg'">
                 <div class="geo-tag" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; display: flex; align-items: center; gap: 6px;">
-                    <i class="fas fa-map-marker-alt"></i> ${log?.gpsCoords || project?.location || 'Sector 4'}
+                    <i class="fas fa-map-marker-alt"></i> ${log?.gpsCoords || project?.location || "Sector 4"}
                 </div>
             </div>
 
             <div style="font-size:13px; font-weight:700; color:var(--slate-900); margin-bottom:8px;">Narrative Report</div>
             <p style="font-size:13px; color:var(--slate-600); line-height:1.5; background:var(--slate-50); padding:12px; border-radius:6px;">
-                "${log?.narrative || 'No narrative provided for this log.'}"
+                "${log?.narrative || "No narrative provided for this log."}"
             </p>
         </div>
 
@@ -1165,7 +1330,7 @@ export const DrawerTemplates = {
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                 <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
                     <div style="font-size:11px; color:var(--slate-500);">Materials Used</div>
-                    <div style="font-weight:600;">${log?.materials || 'None reported'}</div>
+                    <div style="font-weight:600;">${log?.materials || "None reported"}</div>
                 </div>
                 <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
                     <div style="font-size:11px; color:var(--slate-500);">Attendance</div>
@@ -1178,9 +1343,10 @@ export const DrawerTemplates = {
           <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleRejectLog('${escapeHTML(log?.id)}', prompt('Reason for rejection:'))">Reject Log</button>
           <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleApproveLog('${escapeHTML(log?.id)}')">Approve & Update Gantt</button>
         </div>
-    `},
+    `;
+  },
 
-    dailyReport: `
+  dailyReport: `
         <div class="drawer-section">
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: 600; color: var(--slate-600); font-size: 12px;">GPS Location Verified</span>
@@ -1252,7 +1418,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    confirmArrival: `
+  confirmArrival: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--blue);">Incoming Asset Verification</div>
@@ -1290,7 +1456,7 @@ export const DrawerTemplates = {
          </div>
     `,
 
-    updateTask: `
+  updateTask: `
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                  <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Task Update</div>
@@ -1330,10 +1496,10 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    dailyProgressLog: (taskId = null) => `
+  dailyProgressLog: (taskId = null) => `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
-            <input type="hidden" id="daily-log-task-id" value="${taskId || ''}" />
+            <input type="hidden" id="daily-log-task-id" value="${taskId || ""}" />
             <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; justify-content:space-between; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining
@@ -1437,7 +1603,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    dailyProgressLogHistory: (logs = []) => `
+  dailyProgressLogHistory: (logs = []) => `
         <div class="drawer-section" style="padding-top: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800;">Log History</h3>
@@ -1445,14 +1611,18 @@ export const DrawerTemplates = {
             </div>
             
             <div id="history-content-area">
-                ${logs.length === 0 ? `
+                ${
+                  logs.length === 0
+                    ? `
                     <div style="text-align: center; padding: 40px 20px; color: var(--slate-400);">
                         <i class="fas fa-calendar-alt" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
                         <div>Select a date to view historical progress reports</div>
                     </div>
-                ` : `
+                `
+                    : `
                     <div style="text-align: center; padding: 20px; color: var(--slate-500);">Loading historical data...</div>
-                `}
+                `
+                }
             </div>
             
             <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
@@ -1461,7 +1631,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    logEquipmentUsage: `
+  logEquipmentUsage: `
          <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Task Description</label>
@@ -1475,7 +1645,7 @@ export const DrawerTemplates = {
          </div>
     `,
 
-    returnEquipment: `
+  returnEquipment: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--orange);">Return Asset to Yard</div>
@@ -1501,7 +1671,7 @@ export const DrawerTemplates = {
          </div>
     `,
 
-    attendanceLog: `
+  attendanceLog: `
         <div class="drawer-section">
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">General Labor</label><input type="number" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" value="12"></div>
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Skilled Labor</label><input type="number" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" value="2"></div>
@@ -1510,7 +1680,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    incidentReport: `
+  incidentReport: `
          <div class="drawer-section">
             <div style="background: #FEF2F2; color: #B91C1C; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 16px;">
                 <i class="fas fa-triangle-exclamation"></i> This will immediately alert the Project Manager and Safety Officer.
@@ -1526,8 +1696,8 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    // --- CONTRACT ADMIN TEMPLATES ---
-    contractDetails: `
+  // --- CONTRACT ADMIN TEMPLATES ---
+  contractDetails: `
         <div class="drawer-section">
             <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
                 <div><div class="stat-label">Start Date</div><div style="font-weight:600;">Jan 01, 2025</div></div>
@@ -1560,7 +1730,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    newContract: `
+  newContract: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Project</label><select class="form-input" style="width:100%; padding:10px;"><option>CEN-01 Unilia</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Vendor/Client</label><select class="form-input" style="width:100%; padding:10px;"><option>Mkaka Ltd</option></select></div>
@@ -1587,30 +1757,30 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    editContract: (contract) => {
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            return d.toISOString().split('T')[0];
-        };
+  editContract: (contract) => {
+    const formatDate = (dateStr) => {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      return d.toISOString().split("T")[0];
+    };
 
-        return `
+    return `
         <div class="drawer-section">
             <div id="edit-contract-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
             <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-100); border-radius: 8px; border-left: 4px solid var(--slate-400);">
                 <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Editing: ${contract.refCode}</div>
-                <div style="font-size: 11px; color: var(--slate-500);">${contract.project?.name || 'No Project'}</div>
+                <div style="font-size: 11px; color: var(--slate-500);">${contract.project?.name || "No Project"}</div>
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Contract Value (MWK)</label>
-                 <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" value="${contract.value || ''}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
+                 <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" value="${contract.value || ""}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Vendor Name</label>
-                 <input type="text" id="edit_contract_vendor" class="form-input" data-vrules="required|minLen:2" value="${contract.vendorName || ''}" style="width:100%; padding:10px;">
+                 <input type="text" id="edit_contract_vendor" class="form-input" data-vrules="required|minLen:2" value="${contract.vendorName || ""}" style="width:100%; padding:10px;">
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
@@ -1627,20 +1797,20 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom:24px;">
                 <label class="form-label">Contract Status</label>
                 <select id="edit_contract_status" class="form-input" style="width:100%; padding:10px;">
-                    <option value="draft" ${contract.status === 'draft' ? 'selected' : ''}>Draft</option>
-                    <option value="pending_approval" ${contract.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
-                    <option value="active" ${contract.status === 'active' ? 'selected' : ''}>Active</option>
-                    <option value="expired" ${contract.status === 'expired' ? 'selected' : ''}>Expired</option>
-                    <option value="cancelled" ${contract.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    <option value="draft" ${contract.status === "draft" ? "selected" : ""}>Draft</option>
+                    <option value="pending_approval" ${contract.status === "pending_approval" ? "selected" : ""}>Pending Approval</option>
+                    <option value="active" ${contract.status === "active" ? "selected" : ""}>Active</option>
+                    <option value="expired" ${contract.status === "expired" ? "selected" : ""}>Expired</option>
+                    <option value="cancelled" ${contract.status === "cancelled" ? "selected" : ""}>Cancelled</option>
                 </select>
             </div>
 
             <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUpdateContract(${contract.id})">Save Changes</button>
         </div>
         `;
-    },
+  },
 
-    uploadAmendment: `
+  uploadAmendment: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Amendment Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Variation Order</option><option>Addendum</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Change Description</label><textarea class="form-input" rows="3" style="width:100%; padding:10px;"></textarea></div>
@@ -1655,7 +1825,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    uploadDocument: (projects = []) => `
+  uploadDocument: (projects = []) => `
         <div class="drawer-section">
             <div id="upload-doc-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1679,7 +1849,7 @@ export const DrawerTemplates = {
                 <label class="form-label">Associated Project</label>
                 <select id="doc_project_id" class="form-input" style="width:100%; padding:10px;">
                     <option value="">Select Project...</option>
-                    ${projects.map(p => `<option value="${p.id}">${p.code} - ${p.name}</option>`).join('')}
+                    ${projects.map((p) => `<option value="${p.id}">${p.code} - ${p.name}</option>`).join("")}
                 </select>
             </div>
 
@@ -1706,7 +1876,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    documentVersionHistory: (document) => `
+  documentVersionHistory: (document) => `
         <div class="drawer-section">
             <div style="margin-bottom: 20px; padding: 12px; background: var(--blue-light); border-radius: 8px;">
                 <div style="font-weight: 700; color: var(--blue); font-size: 14px;">Version History: ${document.title}</div>
@@ -1721,11 +1891,13 @@ export const DrawerTemplates = {
                     </tr>
                 </thead>
                 <tbody>
-                    ${(document.versions || []).map(v => `
+                    ${(document.versions || [])
+                      .map(
+                        (v) => `
                         <tr style="border-bottom: 1px solid var(--slate-100);">
                             <td style="padding: 12px 8px; font-weight: 600;">v${v.versionNumber}</td>
                             <td style="padding: 12px 8px;">${new Date(v.createdAt).toLocaleDateString()}</td>
-                            <td style="padding: 12px 8px; color: var(--slate-600); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.changeNotes || '-'}</td>
+                            <td style="padding: 12px 8px; color: var(--slate-600); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.changeNotes || "-"}</td>
                             <td style="padding: 12px 8px;">
                                 <div style="display:flex; gap:4px;">
                                     <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.viewDocument('${v.fileUrl}', '${document.title}_V${v.versionNumber}')" title="View in Professional Viewer"><i class="fas fa-eye"></i> View</button>
@@ -1733,17 +1905,20 @@ export const DrawerTemplates = {
                                 </div>
                             </td>
                         </tr>
-                    `).join('')}
+                    `,
+                      )
+                      .join("")}
                 </tbody>
             </table>
         </div>
     `,
-    
-    contractViewer: (contract) => {
-        const versions = contract.versions || [];
-        const latestVersion = versions.length > 0 ? versions[versions.length - 1] : null;
-        
-        return `
+
+  contractViewer: (contract) => {
+    const versions = contract.versions || [];
+    const latestVersion =
+      versions.length > 0 ? versions[versions.length - 1] : null;
+
+    return `
         <div style="height: 100%; display: flex; flex-direction: column; background: white;">
             <!-- Header -->
             <div style="padding: 28px 24px; background: linear-gradient(135deg, var(--orange-dark), var(--orange)); color: white; position: relative; overflow: hidden;">
@@ -1754,13 +1929,13 @@ export const DrawerTemplates = {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${DrawerTemplates.escapeHTML(contract.type || 'Standard Agreement')}</span>
-                                <span style="font-size: 10px; opacity: 0.8; font-weight: 600;">v${contract.version || '1.0'}</span>
+                                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">${DrawerTemplates.escapeHTML(contract.type || "Standard Agreement")}</span>
+                                <span style="font-size: 10px; opacity: 0.8; font-weight: 600;">v${contract.version || "1.0"}</span>
                             </div>
-                            <div style="font-size: 22px; font-weight: 800; line-height: 1.2; max-width: 400px;">${DrawerTemplates.escapeHTML(contract.title || 'Untitled Document')}</div>
+                            <div style="font-size: 22px; font-weight: 800; line-height: 1.2; max-width: 400px;">${DrawerTemplates.escapeHTML(contract.title || "Untitled Document")}</div>
                             <div style="font-size: 13px; opacity: 0.9; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-fingerprint" style="font-size: 11px;"></i> 
-                                <span style="font-family: 'JetBrains Mono'; font-weight: 500;">${DrawerTemplates.escapeHTML(contract.code || 'CNT-' + contract.id)}</span>
+                                <span style="font-family: 'JetBrains Mono'; font-weight: 500;">${DrawerTemplates.escapeHTML(contract.code || "CNT-" + contract.id)}</span>
                             </div>
                         </div>
                         <div style="text-align: right;">
@@ -1769,7 +1944,7 @@ export const DrawerTemplates = {
                                 ACTIVE
                             </div>
                             <div style="margin-top: 12px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase;">Expires</div>
-                            <div style="font-size: 13px; font-weight: 600;">${contract.expiryDate ? new Date(contract.expiryDate).toLocaleDateString() : 'Lifetime'}</div>
+                            <div style="font-size: 13px; font-weight: 600;">${contract.expiryDate ? new Date(contract.expiryDate).toLocaleDateString() : "Lifetime"}</div>
                         </div>
                     </div>
                 </div>
@@ -1784,7 +1959,7 @@ export const DrawerTemplates = {
                 <div style="width: 1px; background: var(--slate-200);"></div>
                 <div>
                     <div style="font-size: 10px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Contractor / Party B</div>
-                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${DrawerTemplates.escapeHTML(contract.contractor || 'General Supplier')}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${DrawerTemplates.escapeHTML(contract.contractor || "General Supplier")}</div>
                 </div>
             </div>
 
@@ -1794,29 +1969,40 @@ export const DrawerTemplates = {
                 <div style="background: white; border-bottom: 1px solid var(--slate-200); padding: 16px 24px;">
                     <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; margin-top: 0;">Version History</h4>
                     <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
-                        ${versions.length > 0 ? versions.map((v, idx) => `
+                        ${
+                          versions.length > 0
+                            ? versions
+                                .map(
+                                  (v, idx) => `
                             <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber || (idx + 1)}</div>
+                                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber || idx + 1}</div>
                                     <div>
-                                        <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${DrawerTemplates.escapeHTML(v.fileName || 'Contract_Revision.pdf')}</div>
-                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || 'System')} • ${new Date(v.createdAt).toLocaleDateString()}</div>
+                                        <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${DrawerTemplates.escapeHTML(v.fileName || "Contract_Revision.pdf")}</div>
+                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || "System")} • ${new Date(v.createdAt).toLocaleDateString()}</div>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
-                                    <button class="btn btn-icon-sm" title="View" onclick="window.viewDocument('${v.fileUrl || v.documentUrl}', '${DrawerTemplates.escapeHTML(v.fileName || 'Contract_Revision.pdf')}')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-eye"></i> View</button>
-                                    <button class="btn btn-icon-sm" title="Download" onclick="window.downloadDocument('${v.fileUrl || v.documentUrl}', '${DrawerTemplates.escapeHTML(v.fileName || 'Contract_Revision.pdf')}')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-download"></i></button>
+                                    <button class="btn btn-icon-sm" title="View" onclick="window.viewDocument('${v.fileUrl || v.documentUrl}', '${DrawerTemplates.escapeHTML(v.fileName || "Contract_Revision.pdf")}')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-eye"></i> View</button>
+                                    <button class="btn btn-icon-sm" title="Download" onclick="window.downloadDocument('${v.fileUrl || v.documentUrl}', '${DrawerTemplates.escapeHTML(v.fileName || "Contract_Revision.pdf")}')" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-download"></i></button>
                                 </div>
                             </div>
-                        `).reverse().join('') : `
+                        `,
+                                )
+                                .reverse()
+                                .join("")
+                            : `
                             <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
                                 No prior versions tracked for this contract.
                             </div>
-                        `}
+                        `
+                        }
                     </div>
                 </div>
 
-                ${contract.fileUrl ? `
+                ${
+                  contract.fileUrl
+                    ? `
                     <div style="background: var(--slate-800); padding: 10px; display: flex; justify-content: center; gap: 20px;">
                         <div style="color: white; font-size: 11px; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-shield-alt" style="color: var(--emerald);"></i> Digitally Verified
@@ -1826,7 +2012,8 @@ export const DrawerTemplates = {
                         </div>
                     </div>
                     <iframe src="${contract.fileUrl}" style="flex: 1; width: 100%; border: none;"></iframe>
-                ` : `
+                `
+                    : `
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--slate-500); padding: 60px; text-align: center;">
                         <div style="position: relative; margin-bottom: 24px;">
                             <div style="width: 100px; height: 100px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-orange 2s infinite;">
@@ -1848,12 +2035,13 @@ export const DrawerTemplates = {
                             </button>
                         </div>
                     </div>
-                `}
+                `
+                }
             </div>
 
             <!-- Footer Actions -->
             <div style="padding: 20px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
-                <button class="btn btn-secondary" style="padding: 12px 20px;" onclick="window.downloadDocument('${contract.fileUrl}', '${DrawerTemplates.escapeHTML(contract.fileName || 'Contract_Latest.pdf')}')" ${!contract.fileUrl ? 'disabled' : ''}>
+                <button class="btn btn-secondary" style="padding: 12px 20px;" onclick="window.downloadDocument('${contract.fileUrl}', '${DrawerTemplates.escapeHTML(contract.fileName || "Contract_Latest.pdf")}')" ${!contract.fileUrl ? "disabled" : ""}>
                     <i class="fas fa-download"></i> Download PDF
                 </button>
                 <div style="flex: 1;"></div>
@@ -1872,9 +2060,10 @@ export const DrawerTemplates = {
             </style>
         </div>
         </div>
-    `},
+    `;
+  },
 
-    uploadDocumentVersion: (document) => `
+  uploadDocumentVersion: (document) => `
         <div class="drawer-section">
             <div id="upload-ver-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1901,7 +2090,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    editDocument: (doc) => `
+  editDocument: (doc) => `
         <div class="drawer-section">
             <div id="edit-doc-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1917,20 +2106,20 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Description</label>
-                <textarea id="edit_doc_description" class="form-input" rows="3" style="width:100%; padding:10px;">${doc.description || ''}</textarea>
+                <textarea id="edit_doc_description" class="form-input" rows="3" style="width:100%; padding:10px;">${doc.description || ""}</textarea>
             </div>
 
             <div class="form-group" style="margin-bottom:24px;">
                  <label class="form-label">Contract Value (MWK)</label>
-                 <input type="number" id="edit_doc_contract_value" class="form-input" value="${doc.contractValue || ''}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
+                 <input type="number" id="edit_doc_contract_value" class="form-input" value="${doc.contractValue || ""}" style="width:100%; padding:10px; font-family: 'JetBrains Mono'; font-weight: 700;">
             </div>
 
             <button class="btn btn-primary" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.caModule.handleUpdateDocumentDetails(${doc.id})">Save Changes</button>
         </div>
     `,
 
-    // --- EQUIPMENT COORDINATOR TEMPLATES ---
-    assignEquipment: `
+  // --- EQUIPMENT COORDINATOR TEMPLATES ---
+  assignEquipment: `
         <div class="drawer-section">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover);">
                 <i class="fas fa-key" style="color: var(--orange); font-size: 20px;"></i>
@@ -2023,22 +2212,27 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    assetDetails: (asset) => {
-        const escapeHTML = (str) => {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        };
-        return `
+  assetDetails: (asset) => {
+    const escapeHTML = (str) => {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+    return `
         <div class="drawer-section">
             <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center;">
                 <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--slate-600); border: 1px solid var(--slate-200);">
                     <i class="fas fa-truck-front"></i>
                 </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(asset.name) || 'Equipment Details'}</h3>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(asset.name) || "Equipment Details"}</h3>
                     <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center;">
                         <span class="project-id">${escapeHTML(asset.code || asset.id)}</span>
-                        <span class="status active" style="font-size: 10px; padding: 2px 8px;">${escapeHTML(asset.status) || 'Active'}</span>
+                        <span class="status active" style="font-size: 10px; padding: 2px 8px;">${escapeHTML(asset.status) || "Active"}</span>
                     </div>
                 </div>
             </div>
@@ -2046,15 +2240,15 @@ export const DrawerTemplates = {
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
                 <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
                     <div class="stat-label" style="font-size: 9px;">Engine Hours</div>
-                    <div style="font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono'; margin-top: 4px;">${asset.hours || '2,450'}h</div>
+                    <div style="font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono'; margin-top: 4px;">${asset.hours || "2,450"}h</div>
                 </div>
                 <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
                     <div class="stat-label" style="font-size: 9px;">Fuel Level</div>
-                    <div style="font-size: 14px; font-weight: 700; color: var(--emerald); margin-top: 4px;">${asset.fuel || '85'}%</div>
+                    <div style="font-size: 14px; font-weight: 700; color: var(--emerald); margin-top: 4px;">${asset.fuel || "85"}%</div>
                 </div>
                 <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
                     <div class="stat-label" style="font-size: 9px;">Utilization</div>
-                    <div style="font-size: 14px; font-weight: 700; color: var(--blue); margin-top: 4px;">${asset.utilization || '92'}%</div>
+                    <div style="font-size: 14px; font-weight: 700; color: var(--blue); margin-top: 4px;">${asset.utilization || "92"}%</div>
                 </div>
             </div>
             
@@ -2063,11 +2257,11 @@ export const DrawerTemplates = {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <div style="font-size: 11px; color: var(--slate-500);">Current Location</div>
-                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">${asset.location || 'HQ Storage'}</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">${asset.location || "HQ Storage"}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; color: var(--slate-500);">Assigned To</div>
-                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">${asset.assignedTo || 'Unassigned'}</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 4px;">${asset.assignedTo || "Unassigned"}</div>
                     </div>
                 </div>
             </div>
@@ -2078,7 +2272,7 @@ export const DrawerTemplates = {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                         <div>
                             <div style="font-size: 11px; color: var(--slate-500);">Last Maintenance</div>
-                            <div id="asset-last-maintenance" style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--emerald);">${asset.lastMaintenance || 'Dec 15, 2025'}</div>
+                            <div id="asset-last-maintenance" style="font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--emerald);">${asset.lastMaintenance || "Dec 15, 2025"}</div>
                         </div>
                         <div>
                             <div style="font-size: 11px; color: var(--slate-500);">Next Service Due</div>
@@ -2112,10 +2306,10 @@ export const DrawerTemplates = {
                 <button class="btn btn-secondary" style="flex:1; padding: 12px;">Full History</button>
             </div>
         </div>
-    `},
+    `;
+  },
 
-
-    scheduleMaintenance: `
+  scheduleMaintenance: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Equipment</label><select class="form-input" style="width:100%; padding:10px;"><option>EQP-045 Excavator</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Service Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Preventive (Scheduled)</option><option>Corrective (Repair)</option></select></div>
@@ -2125,10 +2319,10 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
+  // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
 
-    // --- PROJECT MANAGEMENT TEMPLATES ---
-    editProject: `
+  // --- PROJECT MANAGEMENT TEMPLATES ---
+  editProject: `
         <div class="drawer-section">
             <input type="hidden" id="edit_proj_id">
             <div class="form-group" style="margin-bottom:16px;">
@@ -2161,7 +2355,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    suspendProject: `
+  suspendProject: `
         <div class="drawer-section">
             <input type="hidden" id="suspend_project_id">
             <div class="form-group" style="margin-bottom:16px;">
@@ -2179,7 +2373,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    userForm: `
+  userForm: `
         <div class="drawer-section">
             <input type="hidden" id="user_form_id">
             <div class="form-group" style="margin-bottom:16px;">
@@ -2209,7 +2403,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    vendorProfile: `
+  vendorProfile: `
         <div class="drawer-section">
             <div style="display:flex; gap:16px; align-items:center; margin-bottom:16px;">
                 <div style="width:60px; height:60px; background:var(--slate-200); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:24px; color:var(--slate-600);">MC</div>
@@ -2254,7 +2448,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    onboardVendor: `
+  onboardVendor: `
         <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Company Name</label>
@@ -2283,7 +2477,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    certifyMilestone: `
+  certifyMilestone: `
         <div class="drawer-section" style="background:#F0FDF4; border-bottom:1px solid #BBF7D0;">
             <div style="font-size:12px; color:#166534; font-weight:700;">Milestone Details</div>
             <div style="font-size:16px; font-weight:700; color:#15803D; margin:4px 0;">Foundation Completion</div>
@@ -2311,7 +2505,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    viewPolicy: `
+  viewPolicy: `
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:18px;">Performance Bond</div>
@@ -2337,7 +2531,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    requestRenewal: `
+  requestRenewal: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--orange);">Insurance Renewal Required</div>
@@ -2364,7 +2558,7 @@ Contract Admin</textarea>
          </div>
     `,
 
-    flagBreach: `
+  flagBreach: `
          <div class="drawer-section">
             <div style="background:var(--red-light); padding:16px; border-radius:8px; display:flex; gap:12px; align-items:center; margin-bottom:24px;">
                 <i class="fas fa-gavel" style="color:var(--red); font-size:20px;"></i>
@@ -2399,7 +2593,7 @@ Contract Admin</textarea>
          </div>
     `,
 
-    sendReminders: `
+  sendReminders: `
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--blue);">Bulk Reminder Action</div>
@@ -2439,7 +2633,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    completeMaintenance: `
+  completeMaintenance: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Asset</label><input type="text" class="form-input" value="CAT 320D (EQP-045)" readonly style="width:100%; padding:10px; background:#f1f5f9;"></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Work Done</label><textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="Describe repairs..."></textarea></div>
@@ -2452,7 +2646,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    newUser: `
+  newUser: `
         <div class="drawer-section">
             <form id="newUserForm" onsubmit="event.preventDefault(); window.app.pmModule.handleCreateUser(new FormData(this))">
                 <div class="form-group" style="margin-bottom: 16px;">
@@ -2494,7 +2688,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editUser: `
+  editUser: `
         <div class="drawer-section">
             <form id="editUserForm" onsubmit="event.preventDefault(); window.app.pmModule.handleUpdateUser(new FormData(this))">
                 <input type="hidden" name="id">
@@ -2555,7 +2749,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editVAT: `
+  editVAT: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Standard VAT Rate (%)</label>
@@ -2566,7 +2760,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editCurrency: `
+  editCurrency: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">System Currency Symbol</label>
@@ -2581,7 +2775,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editCompany: `
+  editCompany: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">Legal Company Name</label>
@@ -2599,7 +2793,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editSMTP: `
+  editSMTP: `
         <div class="drawer-section">
              <div class="form-group" style="margin-bottom: 16px;">
                 <label class="form-label">SMTP Host</label>
@@ -2626,7 +2820,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    newAudit: `
+  newAudit: `
         <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Site</label>
@@ -2654,7 +2848,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    shiftPlan: `
+  shiftPlan: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Select Site</label>
@@ -2683,36 +2877,41 @@ Contract Admin</textarea>
         </div>
     `,
 
-    projectDetails: (project) => {
-        const escapeHTML = (str) => {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        };
-        return `
+  projectDetails: (project) => {
+    const escapeHTML = (str) => {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+    return `
         <div class="drawer-section">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
                 <div>
-                    <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(project.name) || 'Project Details'}</div>
-                    <div style="font-size: 13px; color: var(--slate-500); font-family: 'JetBrains Mono';">${escapeHTML(project.code) || 'PRJ-' + escapeHTML(project.id)}</div>
+                    <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(project.name) || "Project Details"}</div>
+                    <div style="font-size: 13px; color: var(--slate-500); font-family: 'JetBrains Mono';">${escapeHTML(project.code) || "PRJ-" + escapeHTML(project.id)}</div>
                 </div>
-                <span class="status active" style="padding: 6px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase;">${escapeHTML(project.status)?.toUpperCase() || 'ACTIVE'}</span>
+                <span class="status active" style="padding: 6px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase;">${escapeHTML(project.status)?.toUpperCase() || "ACTIVE"}</span>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                 <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-100);">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Client</div>
-                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.client) || 'Government of Malawi'}</div>
+                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.client) || "Government of Malawi"}</div>
                 </div>
                 <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-100);">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Manager</div>
-                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.manager?.name || project.managerName || 'Unassigned')}</div>
+                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.manager?.name || project.managerName || "Unassigned")}</div>
                 </div>
             </div>
 
             <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                 <div class="stat-card" style="margin: 0;">
                     <div class="stat-label">Budget</div>
-                    <div class="stat-value" style="font-size: 18px;">MWK ${project.budgetTotal ? (project.budgetTotal / 1000000).toFixed(1) + 'M' : '0'}</div>
+                    <div class="stat-value" style="font-size: 18px;">MWK ${project.budgetTotal ? (project.budgetTotal / 1000000).toFixed(1) + "M" : "0"}</div>
                 </div>
                 <div class="stat-card" style="margin: 0;">
                     <div class="stat-label">Progress</div>
@@ -2727,11 +2926,11 @@ Contract Admin</textarea>
                 <div style="padding: 16px; display: flex; justify-content: space-between;">
                     <div>
                         <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 2px;">Start Date</div>
-                        <div style="font-weight: 600;">${project.startDate || 'Jan 10, 2024'}</div>
+                        <div style="font-weight: 600;">${project.startDate || "Jan 10, 2024"}</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 2px;">End Date</div>
-                        <div style="font-weight: 600;">${project.endDate || 'Dec 15, 2024'}</div>
+                        <div style="font-weight: 600;">${project.endDate || "Dec 15, 2024"}</div>
                     </div>
                 </div>
             </div>
@@ -2739,9 +2938,9 @@ Contract Admin</textarea>
             <div style="margin-bottom: 24px;">
                 <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Health Metrics</div>
                 <div style="display: flex; gap: 12px;">
-                     <div style="flex: 1; padding: 12px; border-radius: 8px; background: ${project.budgetUtilization > 100 ? 'var(--red-light)' : 'var(--emerald-light)'}; border: 1px solid ${project.budgetUtilization > 100 ? 'var(--red-hover)' : 'var(--emerald-hover)'};">
-                        <div style="font-size: 10px; color: ${project.budgetUtilization > 100 ? 'var(--red)' : 'var(--emerald)'}; font-weight: 700;">BUDGET</div>
-                        <div style="font-weight: 600; font-size: 13px;">${project.budgetUtilization > 100 ? 'Overrun' : 'Within Budget'}</div>
+                     <div style="flex: 1; padding: 12px; border-radius: 8px; background: ${project.budgetUtilization > 100 ? "var(--red-light)" : "var(--emerald-light)"}; border: 1px solid ${project.budgetUtilization > 100 ? "var(--red-hover)" : "var(--emerald-hover)"};">
+                        <div style="font-size: 10px; color: ${project.budgetUtilization > 100 ? "var(--red)" : "var(--emerald)"}; font-weight: 700;">BUDGET</div>
+                        <div style="font-weight: 600; font-size: 13px;">${project.budgetUtilization > 100 ? "Overrun" : "Within Budget"}</div>
                      </div>
                      <div style="flex: 1; padding: 12px; border-radius: 8px; background: var(--blue-light); border: 1px solid var(--blue-hover);">
                         <div style="font-size: 10px; color: var(--blue); font-weight: 700;">SAFETY</div>
@@ -2772,9 +2971,10 @@ Contract Admin</textarea>
             <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).currentView='gantt'; (window.app.pmModule || window.app.fsModule || window.app.caModule).render();">View Schedule</button>
             <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).currentView='budget'; (window.app.pmModule || window.app.fsModule || window.app.caModule).render();">Financial Info</button>
         </div>
-    `},
+    `;
+  },
 
-    addTask: `
+  addTask: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Task Name</label>
@@ -2803,7 +3003,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    initiateBCR: `
+  initiateBCR: `
         <div class="drawer-section">
              <div class="stats-grid" style="grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
                 <div class="stat-card" style="padding:12px;">
@@ -2843,7 +3043,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    matchTransaction: `
+  matchTransaction: `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom:16px;">
                 <div style="font-size:11px; color:var(--slate-500); font-weight:700; text-transform:uppercase;">Bank Transaction</div>
@@ -2871,7 +3071,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    createJournalEntry: `
+  createJournalEntry: `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom:16px;">
                 <div style="font-size:11px; color:var(--slate-500); font-weight:700; text-transform:uppercase;">Source (Bank Stmt)</div>
@@ -2899,7 +3099,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    submitComplaint: `
+  submitComplaint: `
         <div class="drawer-section">
             <div style="background:var(--red-light); padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid var(--red-hover);">
                 <div style="display:flex; gap:12px; align-items:center;">
@@ -3073,14 +3273,14 @@ Contract Admin</textarea>
         </div>
     `,
 
-    complaintDetails: (issue) => `
+  complaintDetails: (issue) => `
         <div class="drawer-section">
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
                 <div>
                     <div style="font-size:18px; font-weight:800; color:var(--slate-900);">Issue #${issue.id}</div>
-                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by ${issue.reportedBy || 'Site Manager'}</div>
+                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by ${issue.reportedBy || "Site Manager"}</div>
                 </div>
-                <span class="status ${issue.status === 'open' ? 'pending' : 'active'}" id="drawer_complaint_status" style="font-weight:700;">${issue.status.toUpperCase()}</span>
+                <span class="status ${issue.status === "open" ? "pending" : "active"}" id="drawer_complaint_status" style="font-weight:700;">${issue.status.toUpperCase()}</span>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
@@ -3097,7 +3297,7 @@ Contract Admin</textarea>
             <div style="margin-bottom:24px;">
                 <label class="form-label" style="color:var(--slate-400);">Narrative</label>
                 <p style="font-size:13px; line-height:1.6; color:var(--slate-700); background:var(--white); border:1px solid var(--slate-200); padding:16px; border-radius:8px;">
-                    "${issue.description || 'No description provided.'}"
+                    "${issue.description || "No description provided."}"
                 </p>
             </div>
 
@@ -3126,8 +3326,8 @@ Contract Admin</textarea>
         </div>
     `,
 
-    // --- VEHICLE PROCUREMENT WORKFLOW ---
-    requestNewVehicle: `
+  // --- VEHICLE PROCUREMENT WORKFLOW ---
+  requestNewVehicle: `
         <div class="drawer-section">
             <div style="background:var(--blue-light); padding:16px; border-radius:8px; border:1px solid var(--blue); margin-bottom:24px; display:flex; gap:12px; align-items:center;">
                 <i class="fas fa-truck-pickup" style="color:var(--blue); font-size:20px;"></i>
@@ -3162,17 +3362,17 @@ Contract Admin</textarea>
         </div>
     `,
 
-    reviewVehicleRequest: (request) => `
+  reviewVehicleRequest: (request) => `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:20px;">
-                <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Procurement Request #${request.id || 'PROC-NEW'}</div>
-                <div style="font-size:18px; font-weight:800; color:var(--slate-900); margin-top:4px;">${request.name || request.vehicle || 'New Vehicle Request'}</div>
-                <div style="font-size:14px; color:var(--slate-600); font-weight:600; margin-top:2px;">Requested by: ${request.user || 'Supervisor'}</div>
+                <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Procurement Request #${request.id || "PROC-NEW"}</div>
+                <div style="font-size:18px; font-weight:800; color:var(--slate-900); margin-top:4px;">${request.name || request.vehicle || "New Vehicle Request"}</div>
+                <div style="font-size:14px; color:var(--slate-600); font-weight:600; margin-top:2px;">Requested by: ${request.user || "Supervisor"}</div>
             </div>
 
             <div style="margin-bottom:20px;">
                 <label class="form-label" style="color:var(--slate-400);">Purpose / Justification</label>
-                <p style="font-size:13px; color:var(--slate-700); line-height:1.5;">"${request.purpose || request.reason || 'No justification provided.'}"</p>
+                <p style="font-size:13px; color:var(--slate-700); line-height:1.5;">"${request.purpose || request.reason || "No justification provided."}"</p>
             </div>
 
             <div style="display:flex; gap:12px;">
@@ -3182,7 +3382,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    approveVehiclePurchase: `
+  approveVehiclePurchase: `
         <div class="drawer-section">
             <div style="background:var(--emerald-light); padding:16px; border-radius:8px; border:1px solid var(--emerald); margin-bottom:24px; display:flex; gap:12px; align-items:center;">
                 <i class="fas fa-check-circle" style="color:var(--emerald); font-size:20px;"></i>
@@ -3212,7 +3412,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    addNewVehicle: `
+  addNewVehicle: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Vehicle Name / Model</label>
@@ -3248,8 +3448,8 @@ Contract Admin</textarea>
         </div>
     `,
 
-    // --- SYSTEM TECHNICIAN / USER MANAGEMENT TEMPLATES ---
-    newUser: `
+  // --- SYSTEM TECHNICIAN / USER MANAGEMENT TEMPLATES ---
+  newUser: `
         <div class="drawer-section">
             <div id="create-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             <form id="newUserForm" onsubmit="event.preventDefault(); (window.techModule || window.app.pmModule)?.handleCreateUser(new FormData(this));">
@@ -3290,7 +3490,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editUser: `
+  editUser: `
         <div class="drawer-section">
             <div id="edit-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             <form id="editUserForm" onsubmit="event.preventDefault(); (window.techModule || window.app.pmModule)?.handleUpdateUser(new FormData(this));">
@@ -3340,7 +3540,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editVAT: `
+  editVAT: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:20px;">
                 <label class="form-label">Current VAT Rate (%)</label>
@@ -3351,7 +3551,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editCurrency: `
+  editCurrency: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:20px;">
                 <label class="form-label">System Primary Currency</label>
@@ -3365,7 +3565,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editCompany: `
+  editCompany: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Company Name</label>
@@ -3379,7 +3579,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editSMTP: `
+  editSMTP: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:12px;">
                 <label class="form-label">SMTP Host</label>
@@ -3397,7 +3597,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    suspendProject: `
+  suspendProject: `
         <div class="drawer-section">
             <input type="hidden" id="suspend_project_id">
             <div style="background:var(--orange-light); border:1px solid var(--orange); color:var(--orange-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;">
@@ -3415,7 +3615,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editProject: `
+  editProject: `
         <div class="drawer-section" style="padding: 24px;">
             <input type="hidden" id="edit_proj_id">
             <div class="form-group" style="margin-bottom: 20px;">
@@ -3474,8 +3674,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-
-    completeMaintenance: (assetId) => `
+  completeMaintenance: (assetId) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
             <div class="form-group" style="margin-bottom: 16px;">
@@ -3489,7 +3688,7 @@ Contract Admin</textarea>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `,
-    initiateBCR: `
+  initiateBCR: `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
@@ -3522,7 +3721,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    suspendProject: `
+  suspendProject: `
         <div class="drawer-section">
             <input type="hidden" id="suspend_project_id">
             <div style="background:var(--orange-light); border:1px solid var(--orange); color:var(--orange-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;">
@@ -3540,7 +3739,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editProject: `
+  editProject: `
         <div class="drawer-section" style="padding-bottom: 80px;">
             <input type="hidden" id="edit_proj_id">
             
@@ -3617,7 +3816,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    newContract: `
+  newContract: `
         <div style="padding: 24px;">
             <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
                 <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Create Vendor Contract</div>
@@ -3695,7 +3894,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    newProjectContract: `
+  newProjectContract: `
         <div style="padding: 24px;">
             <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-file-contract" style="color: var(--orange); font-size: 24px;"></i>
@@ -3707,20 +3906,20 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Linked Project *</label>
-                <select id="contract_project" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="(window.app.fmModule || window.app.pmModule)?.onProjectContractSelected(this.value)">
+                <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
+                    onchange="window.V?.checkField(this); (window.app.fmModule || window.app.pmModule)?.onProjectContractSelected(this.value)">
                     <option value="">Select Target Project...</option>
                 </select>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Master Contract Code *</label>
-                <input type="text" id="contract_ref" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono';" placeholder="e.g. MOW-PRJ-2024-001">
+                <input type="text" id="contract_ref" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono';" placeholder="e.g. MOW-PRJ-2024-001">
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
-                <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
+                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
             </div>
 
             <!-- Dates -->
@@ -3738,7 +3937,7 @@ Contract Admin</textarea>
             <!-- Justification -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
-                <textarea id="contract_justification" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Context for the master agreement (e.g., initial award, scope extension)..."></textarea>
+                <textarea id="contract_justification" class="form-input" data-vrules="required|minLen:10" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Context for the master agreement (e.g., initial award, scope extension)..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 32px;">
@@ -3752,13 +3951,63 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px; background: var(--orange); border-color: var(--orange);"
-                onclick="(window.app.fmModule || window.app.pmModule)?.submitProjectContract()">
-                <i class="fas fa-save" style="margin-right: 8px;"></i> Archive Master Agreement
+                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} window.app.pmModule?.submitProjectContract()">
+                <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Archive Master Agreement
             </button>
         </div>
     `,
 
-    completeMaintenance: (assetId) => `
+  newVendor: `
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-store" style="color: var(--slate-600); font-size: 24px;"></i>
+                <div>
+                    <div style="font-weight: 800; color: var(--slate-900); font-size: 15px;">Vendor Onboarding</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Register a new supplier or service provider</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Company Name *</label>
+                <input type="text" id="vendor_name" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. Acme Construction Ltd.">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Service Category *</label>
+                <select id="vendor_category" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <option value="">Select Category...</option>
+                    <option value="Materials">Materials & Supply</option>
+                    <option value="Equipment">Heavy Equipment Rental</option>
+                    <option value="Labor">Labor & Sub-contracting</option>
+                    <option value="Consultancy">Consultancy & Engineering</option>
+                    <option value="Logistics">Logistics & Transport</option>
+                    <option value="Fuel">Fuel & Energy</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Initial Risk Profile</label>
+                <select id="vendor_risk" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <option value="low">Low Risk (Trusted Partner)</option>
+                    <option value="medium">Medium Risk (New Vendor)</option>
+                    <option value="high">High Risk (Requires Monitoring)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Internal Rating (1-5)</label>
+                <input type="number" id="vendor_rating" class="form-input" min="1" max="5" step="0.5" value="5.0" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="5.0">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px;"
+                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} window.app.fmModule?.submitVendor()">
+                <i class="fas fa-plus" style="margin-right: 8px;"></i> Onboard Vendor
+            </button>
+        </div>
+    `,
+
+  completeMaintenance: (assetId) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
             <div class="form-group" style="margin-bottom: 16px;">
@@ -3772,7 +4021,7 @@ Contract Admin</textarea>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `,
-    initiateBCR: (projects = [], selectedId = '') => `
+  initiateBCR: (projects = [], selectedId = "") => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
@@ -3780,9 +4029,17 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project *</label>
                 <select id="bcr_project" class="form-input" style="width: 100%;">
-                    ${projects.length ? projects.map(p => `
-                        <option value="${p.id}" ${p.code === selectedId || String(p.id) === selectedId ? 'selected' : ''}>${p.code}: ${p.name}</option>
-                    `).join('') : '<option value="">No projects available</option>'}
+                    ${
+                      projects.length
+                        ? projects
+                            .map(
+                              (p) => `
+                        <option value="${p.id}" ${p.code === selectedId || String(p.id) === selectedId ? "selected" : ""}>${p.code}: ${p.name}</option>
+                    `,
+                            )
+                            .join("")
+                        : '<option value="">No projects available</option>'
+                    }
                 </select>
             </div>
             
@@ -3803,7 +4060,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    reportGenerator: `
+  reportGenerator: `
         <div class="drawer-section">
             <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--slate-900);">Generate System Report</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Select parameters to generate detailed project or financial intelligence.</p>
@@ -3860,7 +4117,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    materialDistribution: (item) => `
+  materialDistribution: (item) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Issue Material to Project</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming the "Burn" (distribution) of consumable resources from the central store.</p>
@@ -3894,7 +4151,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    forwardProcurement: (req) => `
+  forwardProcurement: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Forward to Finance (Stock-Out)</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">The current stock is insufficient. Forwarding this to the Finance Director (Stefan Mwale) for urgent procurement.</p>
@@ -3915,7 +4172,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    requestNewAsset: `
+  requestNewAsset: `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">New Asset Procurement Request</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Requesting additional fleet or specialized equipment from Finance.</p>
@@ -3951,7 +4208,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    requestResourceFS: (projectData = {}) => `
+  requestResourceFS: (projectData = {}) => `
         <div class="drawer-section" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
             <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <div style="width: 40px; height: 40px; background: rgba(255, 107, 0, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--orange); margin-right: 12px; font-size: 18px;">
@@ -3985,9 +4242,17 @@ Contract Admin</textarea>
                 <div id="fs_machinery_req_view">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Equipment Model</label>
                     <select id="fs_mac_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        ${(projectData?.recommendedMachines || []).length > 0 ? (projectData.recommendedMachines || []).map((m) => `
-                            <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.available ? '(Available)' : '(Waitlist)'} ${m.type}: ${m.model}</option>
-                        `).join('') : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || 'RT-5'}</option>`}
+                        ${
+                          (projectData?.recommendedMachines || []).length > 0
+                            ? (projectData.recommendedMachines || [])
+                                .map(
+                                  (m) => `
+                            <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.available ? "(Available)" : "(Waitlist)"} ${m.type}: ${m.model}</option>
+                        `,
+                                )
+                                .join("")
+                            : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
+                        }
                     </select>
                     
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
@@ -4004,9 +4269,17 @@ Contract Admin</textarea>
                 <div id="fs_material_req_view" style="display: none;">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Material Type</label>
                     <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        ${(projectData?.recommendedMaterials || []).length > 0 ? (projectData.recommendedMaterials || []).map((m) => `
+                        ${
+                          (projectData?.recommendedMaterials || []).length > 0
+                            ? (projectData.recommendedMaterials || [])
+                                .map(
+                                  (m) => `
                             <option value="${m.name}" data-unit="${m.unit}">${m.name} (${m.unit})</option>
-                        `).join('') : `<option value="" disabled>No materials mapped for ${projectData?.roadSpecification?.roadType || 'RT-5'}</option>`}
+                        `,
+                                )
+                                .join("")
+                            : `<option value="" disabled>No materials mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
+                        }
                     </select>
 
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
@@ -4043,14 +4316,14 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    dispatchResource: (req) => `
+  dispatchResource: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Dispatch Resources</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming stock availability and setting estimated delivery time.</p>
             
             <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
                 <div style="font-size: 12px; color: var(--slate-500); margin-bottom: 4px;">Items to Dispatch</div>
-                <div style="font-weight: 700;">${req.items.map(i => `${i.quantity} x ${i.itemName}`).join(', ')}</div>
+                <div style="font-weight: 700;">${req.items.map((i) => `${i.quantity} x ${i.itemName}`).join(", ")}</div>
             </div>
 
              <div class="form-group" id="eta_container" style="margin-bottom: 24px;">
@@ -4071,16 +4344,16 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    replenishRequest: (req) => `
+  replenishRequest: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Replenishment Request (FD)</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Stock is unavailable in yard. Requesting procurement approval from Finance Director.</p>
             
             <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
                 <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Original Request</div>
-                <div style="font-weight: 700; margin-bottom: 4px;">${req.reqCode || 'REQ-'+req.id}</div>
-                <div style="font-size: 13px; color: var(--slate-600);">${req.project?.name || 'Project'}</div>
-                <div style="font-size: 13px; margin-top: 8px; font-weight: 600;">${(req.items || []).map(i => i.quantity + ' x ' + i.itemName).join(', ')}</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">${req.reqCode || "REQ-" + req.id}</div>
+                <div style="font-size: 13px; color: var(--slate-600);">${req.project?.name || "Project"}</div>
+                <div style="font-size: 13px; margin-top: 8px; font-weight: 600;">${(req.items || []).map((i) => i.quantity + " x " + i.itemName).join(", ")}</div>
                 <div style="font-size: 12px; color: var(--blue); font-weight: 800; margin-top: 8px;">Value: MWK ${Number(req.totalAmount || 0).toLocaleString()}</div>
             </div>
 
@@ -4095,7 +4368,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    logMaterialBurn: (item) => `
+  logMaterialBurn: (item) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Log Material Consumption (Burn)</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Recording use of project-owned inventory on site.</p>
@@ -4136,7 +4409,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    extendProject: (project) => `
+  extendProject: (project) => `
         <div style="padding: 24px;">
             <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; border: 1px solid var(--orange); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-calendar-plus" style="color: var(--orange); font-size: 20px;"></i>
@@ -4146,17 +4419,17 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <input type="hidden" id="extend_project_id" value="${project?.id || ''}">
+            <input type="hidden" id="extend_project_id" value="${project?.id || ""}">
 
             <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Project</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${project?.name || '---'}</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${project?.name || "---"}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Code</div>
-                        <div style="font-weight: 600; color: var(--slate-600);">${project?.code || '---'}</div>
+                        <div style="font-weight: 600; color: var(--slate-600);">${project?.code || "---"}</div>
                     </div>
                 </div>
             </div>
@@ -4164,11 +4437,11 @@ Contract Admin</textarea>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Current End Date</label>
-                    <input type="date" id="extend_current_end" class="form-input" style="width: 100%; padding: 10px; background: var(--slate-50);" value="${project?.endDate ? project.endDate.split('T')[0] : ''}" readonly>
+                    <input type="date" id="extend_current_end" class="form-input" style="width: 100%; padding: 10px; background: var(--slate-50);" value="${project?.endDate ? project.endDate.split("T")[0] : ""}" readonly>
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="display:block; font-size: 11px; font-weight: 700; color: var(--orange); margin-bottom: 6px; text-transform: uppercase;">New End Date</label>
-                    <input type="date" id="extend_new_end" class="form-input" data-vrules="required|futureDate" style="width: 100%; padding: 10px; border-color: var(--orange);" min="${project?.endDate ? project.endDate.split('T')[0] : ''}">
+                    <input type="date" id="extend_new_end" class="form-input" data-vrules="required|futureDate" style="width: 100%; padding: 10px; border-color: var(--orange);" min="${project?.endDate ? project.endDate.split("T")[0] : ""}">
                 </div>
             </div>
 
@@ -4199,10 +4472,10 @@ Contract Admin</textarea>
         </div>
     `,
 
-    // ============================================================
-    // GANTT PHASE EDITOR  (PM opens from Gantt toolbar)
-    // ============================================================
-    ganttPhaseEditor: `
+  // ============================================================
+  // GANTT PHASE EDITOR  (PM opens from Gantt toolbar)
+  // ============================================================
+  ganttPhaseEditor: `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -4230,10 +4503,10 @@ Contract Admin</textarea>
         </div>
     `,
 
-    // ============================================================
-    // REQUEST TIMELINE EXTENSION  (any role submits to PM)
-    // ============================================================
-    requestTimelineExtension: (projects = []) => `
+  // ============================================================
+  // REQUEST TIMELINE EXTENSION  (any role submits to PM)
+  // ============================================================
+  requestTimelineExtension: (projects = []) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-bottom: 4px solid var(--orange);">
                 <div style="display: flex; align-items: center; gap: 14px;">
@@ -4250,9 +4523,9 @@ Contract Admin</textarea>
             <div style="padding: 24px;">
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase;">Select Project <span style="color: var(--red);">*</span></label>
-                    <select id="ext-req-project-id" class="form-input" style="width: 100%;" onchange="window.app.layout?.handleTimelineProjectChange(this.value, ${JSON.stringify(projects).replace(/"/g, '&quot;')})">
+                    <select id="ext-req-project-id" class="form-input" style="width: 100%;" onchange="window.app.layout?.handleTimelineProjectChange(this.value, ${JSON.stringify(projects).replace(/"/g, "&quot;")})">
                         <option value="">Select a project...</option>
-                        ${projects.map(p => `<option value="${p.id}">${p.code} ${p.name}</option>`).join('')}
+                        ${projects.map((p) => `<option value="${p.id}">${p.code} ${p.name}</option>`).join("")}
                     </select>
                 </div>
 
@@ -4303,12 +4576,12 @@ Contract Admin</textarea>
         </div>
     `,
 
-    timelineExtensionReview: (req) => `
+  timelineExtensionReview: (req) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Review Timeline Extension</div>
-                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.requestedBy?.name || req.requestedByName || 'Supervisor'}</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.requestedBy?.name || req.requestedByName || "Supervisor"}</div>
                 </div>
                 <div class="status-badge" style="background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">PENDING</div>
             </div>
@@ -4328,7 +4601,7 @@ Contract Admin</textarea>
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Justification / Reason</div>
                     <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
-                        "${req.justification || req.reason || 'No reason provided.'}"
+                        "${req.justification || req.reason || "No reason provided."}"
                     </div>
                 </div>
 
@@ -4345,16 +4618,16 @@ Contract Admin</textarea>
         </div>
     `,
 
-    dailyLogReview: (log, historicalLogs = []) => `
+  dailyLogReview: (log, historicalLogs = []) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Site Progress Review</div>
-                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Project: ${log.project?.name || 'Central'}</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Project: ${log.project?.name || "Central"}</div>
                 </div>
                 <div>
                     <select id="log-history-selector" class="form-input" style="font-size: 11px; padding: 4px 8px;" onchange="window.app.pmModule.switchReviewLog(this.value)">
-                        ${historicalLogs.map(h => `<option value="${h.id}" ${h.id === log.id ? 'selected' : ''}>${new Date(h.date || h.createdAt).toLocaleDateString()}</option>`).join('')}
+                        ${historicalLogs.map((h) => `<option value="${h.id}" ${h.id === log.id ? "selected" : ""}>${new Date(h.date || h.createdAt).toLocaleDateString()}</option>`).join("")}
                     </select>
                 </div>
             </div>
@@ -4371,34 +4644,42 @@ Contract Admin</textarea>
                     </div>
                     <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); text-align: center;">
                         <div style="font-size: 10px; color: var(--slate-500); font-weight: 700;">WEATHER</div>
-                        <div style="font-size: 13px; font-weight: 800; color: var(--slate-700); margin-top: 4px;">${log.weatherCondition?.toUpperCase() || 'CLEAR'}</div>
+                        <div style="font-size: 13px; font-weight: 800; color: var(--slate-700); margin-top: 4px;">${log.weatherCondition?.toUpperCase() || "CLEAR"}</div>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Completed Activities</div>
                     <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
-                        ${log.activitiesCompleted || 'No activities logged.'}
+                        ${log.activitiesCompleted || "No activities logged."}
                     </div>
                 </div>
 
-                ${log.expenseItems && log.expenseItems.length > 0 ? `
+                ${
+                  log.expenseItems && log.expenseItems.length > 0
+                    ? `
                     <div style="margin-bottom: 24px;">
                         <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Site Expenses (MWK)</div>
                         <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                            ${log.expenseItems.map(item => `
+                            ${log.expenseItems
+                              .map(
+                                (item) => `
                                 <tr>
                                     <td style="padding: 8px; border-bottom: 1px solid var(--slate-100);">${item.description}</td>
                                     <td style="padding: 8px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(item.amount).toLocaleString()}</td>
                                 </tr>
-                            `).join('')}
+                            `,
+                              )
+                              .join("")}
                             <tr>
                                 <td style="padding: 8px; font-weight: 700;">Total</td>
                                 <td style="padding: 8px; text-align: right; font-weight: 700; font-family: 'JetBrains Mono';">${log.expenseItems.reduce((s, i) => s + Number(i.amount), 0).toLocaleString()}</td>
                             </tr>
                         </table>
                     </div>
-                ` : ''}
+                `
+                    : ""
+                }
 
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label" style="font-size: 11px;">REJECTION REASON (ONLY IF REJECTING)</label>
@@ -4407,29 +4688,37 @@ Contract Admin</textarea>
 
                 <div style="display: flex; gap: 12px; margin-top: 32px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                    ${log.status === 'submitted' || log.status === 'pending' ? `
+                    ${
+                      log.status === "submitted" || log.status === "pending"
+                        ? `
                         <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectLog('${log.id}', document.getElementById('log-review-comment').value)">Reject</button>
                         <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveLog('${log.id}')">Approve & Update Schedule</button>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
             </div>
         </div>
     `,
 
-    requisitionReview: (req) => {
-        const isReplenishment = req.isReplenishment;
-        const items = req.items || [];
-        const reqCode = req.reqCode || 'REQ-' + req.id;
-        const submitterName = req.submitter?.name || req.user?.name || req.requester?.name || 'Supervisor';
+  requisitionReview: (req) => {
+    const isReplenishment = req.isReplenishment;
+    const items = req.items || [];
+    const reqCode = req.reqCode || "REQ-" + req.id;
+    const submitterName =
+      req.submitter?.name ||
+      req.user?.name ||
+      req.requester?.name ||
+      "Supervisor";
 
-        return `
+    return `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">${isReplenishment ? 'Stock Replenishment' : 'Material Requisition'} ${reqCode}</div>
+                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">${isReplenishment ? "Stock Replenishment" : "Material Requisition"} ${reqCode}</div>
                     <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${submitterName}</div>
                 </div>
-                ${isReplenishment ? '<span class="badge badge-primary" style="background: var(--blue-light); color: var(--blue); font-size: 10px;">STOCK</span>' : ''}
+                ${isReplenishment ? '<span class="badge badge-primary" style="background: var(--blue-light); color: var(--blue); font-size: 10px;">STOCK</span>' : ""}
             </div>
 
             <div style="padding: 24px;">
@@ -4442,11 +4731,17 @@ Contract Admin</textarea>
                         </tr>
                     </thead>
                     <tbody>
-                        ${items.map(item => {
-                            const name = item.itemName || item.materialName || 'Unknown Item';
-                            const qty = item.quantity || item.quantityNeeded || 0;
-                            const unit = item.unit || '';
-                            const cost = item.unitPrice || item.estimatedCost || 0;
+                        ${items
+                          .map((item) => {
+                            const name =
+                              item.itemName ||
+                              item.materialName ||
+                              "Unknown Item";
+                            const qty =
+                              item.quantity || item.quantityNeeded || 0;
+                            const unit = item.unit || "";
+                            const cost =
+                              item.unitPrice || item.estimatedCost || 0;
                             return `
                                 <tr>
                                     <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); font-weight: 600;">${name}</td>
@@ -4454,7 +4749,8 @@ Contract Admin</textarea>
                                     <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(cost * qty).toLocaleString()}</td>
                                 </tr>
                             `;
-                        }).join('')}
+                          })
+                          .join("")}
                     </tbody>
                 </table>
 
@@ -4473,9 +4769,10 @@ Contract Admin</textarea>
                 </div>
             </div>
         </div>
-    `},
+    `;
+  },
 
-    userForm: `
+  userForm: `
         <div style="padding: 24px;">
             <input type="hidden" id="edit_user_id" name="id">
             <div class="form-group" style="margin-bottom: 16px;">
@@ -4507,7 +4804,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    editProject: `
+  editProject: `
         <div style="padding: 24px;">
             <input type="hidden" id="edit_proj_id">
             <div class="form-group" style="margin-bottom: 16px;">
@@ -4566,7 +4863,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    suspendProject: `
+  suspendProject: `
         <div style="padding: 24px;">
             <input type="hidden" id="suspend_project_id">
             <div class="form-group" style="margin-bottom: 16px;">
@@ -4584,14 +4881,14 @@ Contract Admin</textarea>
         </div>
     `,
 
-    projectDetails: (p) => `
+  projectDetails: (p) => `
         <div style="padding: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
                 <div>
                     <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${p.name}</div>
                     <div style="font-size: 13px; color: var(--slate-500); margin-top: 4px;">${p.code} | ${p.client}</div>
                 </div>
-                <span class="status ${p.status === 'active' ? 'active' : 'pending'}">${p.status.toUpperCase()}</span>
+                <span class="status ${p.status === "active" ? "active" : "pending"}">${p.status.toUpperCase()}</span>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
@@ -4608,9 +4905,9 @@ Contract Admin</textarea>
             <div style="margin-bottom: 24px;">
                 <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Project Manager / Supervisor</div>
                 <div style="display: flex; align-items: center; gap: 12px; background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
-                    <div style="width: 32px; height: 32px; background: var(--blue-light); color: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${(p.managerName || 'S').charAt(0)}</div>
+                    <div style="width: 32px; height: 32px; background: var(--blue-light); color: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${(p.managerName || "S").charAt(0)}</div>
                     <div>
-                        <div style="font-size: 13px; font-weight: 700;">${p.managerName || 'Assigned Supervisor'}</div>
+                        <div style="font-size: 13px; font-weight: 700;">${p.managerName || "Assigned Supervisor"}</div>
                         <div style="font-size: 11px; color: var(--slate-500);">Field Lead</div>
                     </div>
                 </div>
@@ -4623,7 +4920,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    assignResource: (projects) => `
+  assignResource: (projects) => `
         <div style="padding: 24px;">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Strategic Asset Dispatch</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Allocate materials and machinery to active project sites.</p>
@@ -4632,7 +4929,7 @@ Contract Admin</textarea>
                 <label class="form-label">Project / Site</label>
                 <select id="assign_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule.handleTimelineProjectChange(this.value)">
                     <option value="">Select Project...</option>
-                    ${projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                    ${projects.map((p) => `<option value="${p.id}">${p.name}</option>`).join("")}
                 </select>
             </div>
             
@@ -4703,7 +5000,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    receiveProcurement: (item) => `
+  receiveProcurement: (item) => `
         <div style="padding: 24px;">
             <div style="background: var(--blue-light); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
                 <div style="font-weight: 700; color: var(--blue); font-size: 16px;">${item.name}</div>
@@ -4723,11 +5020,11 @@ Contract Admin</textarea>
                 <i class="fas fa-triangle-exclamation"></i> <strong>Verification Note:</strong> By clicking receive, you confirm that the physical goods match the quantity entered and quality standards are met.
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleProcurementReceipt(${JSON.stringify(item).replace(/"/g, '&quot;')})">Confirm Physical Receipt</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleProcurementReceipt(${JSON.stringify(item).replace(/"/g, "&quot;")})">Confirm Physical Receipt</button>
         </div>
     `,
 
-    inventoryDetails: (data) => `
+  inventoryDetails: (data) => `
         <div style="padding: 20px; background: #fff;">
             <div style="background: var(--orange-light); padding: 16px; border-radius: 12px; border: 1px solid rgba(249, 115, 22, 0.2); margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
                 <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--orange); box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
@@ -4747,16 +5044,21 @@ Contract Admin</textarea>
             </div>
             
             <div style="display: grid; gap: 8px; margin-bottom: 20px;">
-                ${data.allocations.length === 0 ? `
+                ${
+                  data.allocations.length === 0
+                    ? `
                     <div style="padding: 24px; text-align: center; background: var(--slate-50); border: 1px dashed var(--slate-200); border-radius: 12px; color: var(--slate-400); font-size: 12px;">
                         No project-specific stock found.
                     </div>
-                ` : data.allocations.map(a => `
+                `
+                    : data.allocations
+                        .map(
+                          (a) => `
                     <div style="background: #fff; border: 1px solid var(--slate-100); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fas fa-location-dot" style="font-size: 12px; color: var(--orange);"></i>
                             <div>
-                                <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.projectName || 'Central Silo'}</div>
+                                <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.projectName || "Central Silo"}</div>
                                 <div style="font-size: 10px; color: var(--slate-500);">${a.sectorName}</div>
                             </div>
                         </div>
@@ -4764,7 +5066,10 @@ Contract Admin</textarea>
                             <div style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 15px; color: var(--slate-900);">${Number(a.quantity).toLocaleString()}</div>
                         </div>
                     </div>
-                `).join('')}
+                `,
+                        )
+                        .join("")
+                }
             </div>
 
             <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px; display: flex; gap: 12px; align-items: flex-start;">
@@ -4785,40 +5090,50 @@ Contract Admin</textarea>
         </div>
     `,
 
-    assetHistory: (asset) => `
+  assetHistory: (asset) => `
         <div style="padding: 24px;">
             <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 24px; border-radius: 16px; color: white; margin-bottom: 24px;">
                 <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 8px;">Asset Chain of Custody</div>
                 <h3 style="font-size: 20px; font-weight: 900;">${asset.name}</h3>
-                <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Code: ${asset.assetCode || 'EQP-' + asset.id} | Status: ${asset.status}</div>
+                <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Code: ${asset.assetCode || "EQP-" + asset.id} | Status: ${asset.status}</div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 20px;">
                 <div style="position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--slate-200);"></div>
                 
-                ${asset.assetLogs.length === 0 
+                ${
+                  asset.assetLogs.length === 0
                     ? '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No history logs found for this asset.</div>'
-                    : asset.assetLogs.map((log, i) => {
-                        const isIssue = log.action === 'flagged_issue';
-                        const isResolve = log.action === 'issue_resolved';
-                        const isCheckOut = log.action === 'check_out';
-                        const color = isIssue ? 'var(--red)' : isResolve ? 'var(--emerald)' : isCheckOut ? 'var(--blue)' : 'var(--slate-400)';
-                        
-                        return `
+                    : asset.assetLogs
+                        .map((log, i) => {
+                          const isIssue = log.action === "flagged_issue";
+                          const isResolve = log.action === "issue_resolved";
+                          const isCheckOut = log.action === "check_out";
+                          const color = isIssue
+                            ? "var(--red)"
+                            : isResolve
+                              ? "var(--emerald)"
+                              : isCheckOut
+                                ? "var(--blue)"
+                                : "var(--slate-400)";
+
+                          return `
                         <div style="position: relative; margin-bottom: 24px;">
                             <div style="position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: ${color}; border: 3px solid white; box-shadow: 0 0 0 2px ${color}20;"></div>
-                            <div style="background: ${isIssue ? '#fef2f2' : 'white'}; border: 1px solid ${isIssue ? '#fecaca' : 'var(--slate-200)'}; border-radius: 12px; padding: 16px; margin-left: 10px;">
+                            <div style="background: ${isIssue ? "#fef2f2" : "white"}; border: 1px solid ${isIssue ? "#fecaca" : "var(--slate-200)"}; border-radius: 12px; padding: 16px; margin-left: 10px;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                    <span style="font-weight: 800; font-size: 13px; color: ${color}; text-transform: uppercase;">${log.action.replace(/_/g, ' ')}</span>
-                                    <span style="font-size: 11px; color: var(--slate-400);">${new Date(log.timestamp).toLocaleString('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span style="font-weight: 800; font-size: 13px; color: ${color}; text-transform: uppercase;">${log.action.replace(/_/g, " ")}</span>
+                                    <span style="font-size: 11px; color: var(--slate-400);">${new Date(log.timestamp).toLocaleString("en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                                 </div>
-                                <div style="font-size: 14px; font-weight: 700; color: var(--slate-900);">${log.user?.name || 'System'}</div>
-                                ${log.projectId ? `<div style="font-size: 12px; color: var(--slate-600); margin-top: 4px;"><i class="fas fa-location-dot"></i> Assigned to Project Site</div>` : ''}
-                                ${isIssue ? `<div style="margin-top: 8px; padding: 8px; background: #fee2e2; border-radius: 6px; font-size: 12px; color: #b91c1c; font-weight: 600;"><i class="fas fa-triangle-exclamation"></i> Fault/Problem Reported</div>` : ''}
+                                <div style="font-size: 14px; font-weight: 700; color: var(--slate-900);">${log.user?.name || "System"}</div>
+                                ${log.projectId ? `<div style="font-size: 12px; color: var(--slate-600); margin-top: 4px;"><i class="fas fa-location-dot"></i> Assigned to Project Site</div>` : ""}
+                                ${isIssue ? `<div style="margin-top: 8px; padding: 8px; background: #fee2e2; border-radius: 6px; font-size: 12px; color: #b91c1c; font-weight: 600;"><i class="fas fa-triangle-exclamation"></i> Fault/Problem Reported</div>` : ""}
                             </div>
                         </div>
                         `;
-                    }).join('')}
+                        })
+                        .join("")
+                }
             </div>
 
             <div style="margin-top: 32px; border-top: 1px solid var(--slate-200); padding-top: 24px;">
@@ -4827,7 +5142,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-    safetyIncidentTable: (incidents = []) => `
+  safetyIncidentTable: (incidents = []) => `
         <div class="drawer-section" style="padding: 0;">
             <div style="padding: 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -4840,12 +5155,15 @@ Contract Admin</textarea>
             </div>
             
             <div style="padding: 24px;">
-                ${incidents.length === 0 ? `
+                ${
+                  incidents.length === 0
+                    ? `
                     <div style="padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
                         <i class="fas fa-shield-check" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i>
                         <div>No safety incidents reported.</div>
                     </div>
-                ` : `
+                `
+                    : `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--slate-200); text-align: left;">
@@ -4856,18 +5174,20 @@ Contract Admin</textarea>
                             </tr>
                         </thead>
                         <tbody>
-                            ${incidents.map(inc => `
+                            ${incidents
+                              .map(
+                                (inc) => `
                                 <tr style="border-bottom: 1px solid var(--slate-100); background: white; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
                                     <td style="padding: 16px 8px;">
-                                        <div style="font-weight: 700; font-size: 13px;">${inc.id || 'N/A'}</div>
+                                        <div style="font-weight: 700; font-size: 13px;">${inc.id || "N/A"}</div>
                                         <div style="font-size: 11px; color: var(--slate-500);">${new Date(inc.createdAt || Date.now()).toLocaleDateString()}</div>
                                     </td>
                                     <td style="padding: 16px 8px;">
-                                        <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${inc.type || 'General'}</div>
-                                        <div style="font-size: 11px; color: ${inc.priority === 'High' ? 'var(--red)' : 'var(--amber)'}; font-weight: 700;">${inc.priority || 'Medium'} Priority</div>
+                                        <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${inc.type || "General"}</div>
+                                        <div style="font-size: 11px; color: ${inc.priority === "High" ? "var(--red)" : "var(--amber)"}; font-weight: 700;">${inc.priority || "Medium"} Priority</div>
                                     </td>
                                     <td style="padding: 16px 8px;">
-                                        <span class="badge ${inc.status === 'resolved' ? 'badge-success' : 'badge-warning'}">${(inc.status || 'PENDING').toUpperCase()}</span>
+                                        <span class="badge ${inc.status === "resolved" ? "badge-success" : "badge-warning"}">${(inc.status || "PENDING").toUpperCase()}</span>
                                     </td>
                                     <td style="padding: 16px 8px; text-align: right;">
                                         <button class="btn btn-secondary btn-sm" onclick='window.drawer.open("Incident Details", window.DrawerTemplates.safetyIncident(${JSON.stringify(inc).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
@@ -4875,15 +5195,18 @@ Contract Admin</textarea>
                                         </button>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `,
+                              )
+                              .join("")}
                         </tbody>
                     </table>
-                `}
+                `
+                }
             </div>
         </div>
     `,
 
-    issueTable: (issues = []) => `
+  issueTable: (issues = []) => `
         <div class="drawer-section" style="padding: 0;">
             <div style="padding: 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -4896,12 +5219,15 @@ Contract Admin</textarea>
             </div>
             
             <div style="padding: 24px;">
-                ${issues.length === 0 ? `
+                ${
+                  issues.length === 0
+                    ? `
                     <div style="padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
                         <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i>
                         <div>No open issues reported.</div>
                     </div>
-                ` : `
+                `
+                    : `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--slate-200); text-align: left;">
@@ -4912,18 +5238,20 @@ Contract Admin</textarea>
                             </tr>
                         </thead>
                         <tbody>
-                            ${issues.map(iss => `
+                            ${issues
+                              .map(
+                                (iss) => `
                                 <tr style="border-bottom: 1px solid var(--slate-100); background: white; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
                                     <td style="padding: 16px 8px;">
-                                        <div style="font-weight: 700; font-size: 13px;">${iss.id || 'N/A'}</div>
+                                        <div style="font-weight: 700; font-size: 13px;">${iss.id || "N/A"}</div>
                                         <div style="font-size: 11px; color: var(--slate-500);">${new Date(iss.createdAt || Date.now()).toLocaleDateString()}</div>
                                     </td>
                                     <td style="padding: 16px 8px;">
-                                        <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${iss.category || 'General'}</div>
-                                        <div style="font-size: 11px; color: var(--slate-500);">${iss.severity || 'Medium'} Severity</div>
+                                        <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${iss.category || "General"}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">${iss.severity || "Medium"} Severity</div>
                                     </td>
                                     <td style="padding: 16px 8px;">
-                                        <span class="badge ${iss.status === 'resolved' ? 'badge-success' : 'badge-warning'}">${(iss.status || 'PENDING').toUpperCase()}</span>
+                                        <span class="badge ${iss.status === "resolved" ? "badge-success" : "badge-warning"}">${(iss.status || "PENDING").toUpperCase()}</span>
                                     </td>
                                     <td style="padding: 16px 8px; text-align: right;">
                                         <button class="btn btn-secondary btn-sm" onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(iss).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
@@ -4931,133 +5259,156 @@ Contract Admin</textarea>
                                         </button>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `,
+                              )
+                              .join("")}
                         </tbody>
                     </table>
-                `}
+                `
+                }
             </div>
         </div>
     `,
 
-    auditDetails: (log) => {
-        const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-        
-        const getAuditSummaryHTML = () => {
-            if (!details) return '';
-            
-            let summary = '';
-            const action = log.action;
-            
-            if (action === 'UPDATE_USER' || action === 'CREATE_USER') {
-                summary = `
+  auditDetails: (log) => {
+    const details =
+      typeof log.details === "string" ? JSON.parse(log.details) : log.details;
+
+    const getAuditSummaryHTML = () => {
+      if (!details) return "";
+
+      let summary = "";
+      const action = log.action;
+
+      if (action === "UPDATE_USER" || action === "CREATE_USER") {
+        summary = `
                     <div style="background: #fdf2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #991b1b; font-weight: 700; margin-bottom: 4px;">User Profile Event</div>
                         <div style="font-size: 13px; color: #7f1d1d;">
-                            ${action === 'CREATE_USER' ? 'New user account provisioned for' : 'Account details updated for'} 
-                            <strong>${details.name || details.email || log.targetCode || 'Unknown User'}</strong>.
-                            ${details.role ? `<br>Assigned Role: <span class="badge active" style="font-size:10px; margin-top:4px;">${details.role}</span>` : ''}
-                            ${details.changes && details.changes.length > 0 ? `<div style="margin-top:8px; font-size:11px; color:#991b1b;">Fields modified: ${details.changes.join(', ')}</div>` : ''}
+                            ${action === "CREATE_USER" ? "New user account provisioned for" : "Account details updated for"} 
+                            <strong>${details.name || details.email || log.targetCode || "Unknown User"}</strong>.
+                            ${details.role ? `<br>Assigned Role: <span class="badge active" style="font-size:10px; margin-top:4px;">${details.role}</span>` : ""}
+                            ${details.changes && details.changes.length > 0 ? `<div style="margin-top:8px; font-size:11px; color:#991b1b;">Fields modified: ${details.changes.join(", ")}</div>` : ""}
                         </div>
                     </div>
                 `;
-            } else if (action.includes('EXTENSION') || action.includes('TIMELINE')) {
-                summary = `
+      } else if (action.includes("EXTENSION") || action.includes("TIMELINE")) {
+        summary = `
                     <div style="background: #fefce8; border: 1px solid #fef08a; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #854d0e; font-weight: 700; margin-bottom: 4px;">Timeline Variance Event</div>
                         <div style="font-size: 13px; color: #713f12;">
-                            Project: <strong>${details.projectName || log.targetCode || 'N/A'}</strong><br>
-                            Requested End Date: <span style="font-weight:700;">${details.requestedEndDate || 'N/A'}</span><br>
+                            Project: <strong>${details.projectName || log.targetCode || "N/A"}</strong><br>
+                            Requested End Date: <span style="font-weight:700;">${details.requestedEndDate || "N/A"}</span><br>
                             Extension: <span style="color:#ca8a04; font-weight:700;">+${details.extensionDays || 0} days</span><br>
-                            Reason: <span style="font-style:italic;">"${details.justification || 'No justification provided'}"</span>
+                            Reason: <span style="font-style:italic;">"${details.justification || "No justification provided"}"</span>
                         </div>
                     </div>
                 `;
-            } else if (action.includes('MONETARY') || action.includes('BUDGET') || action.includes('FINANCE') || action.includes('REQUISITION') || action.includes('PAYMENT')) {
-                 const amount = details.amount || details.totalAmount || details.cost || 0;
-                 summary = `
+      } else if (
+        action.includes("MONETARY") ||
+        action.includes("BUDGET") ||
+        action.includes("FINANCE") ||
+        action.includes("REQUISITION") ||
+        action.includes("PAYMENT")
+      ) {
+        const amount =
+          details.amount || details.totalAmount || details.cost || 0;
+        summary = `
                     <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #065f46; font-weight: 700; margin-bottom: 4px;">Financial Transaction Event</div>
                         <div style="font-size: 13px; color: #064e3b;">
                             Impact: <strong style="font-size: 15px; color: #059669;">MWK ${Number(amount).toLocaleString()}</strong><br>
-                            Resource: ${log.targetType} (${log.targetCode || 'N/A'})<br>
-                            Status Flow: <span style="font-weight:600;">${details.oldStatus || 'INITIATED'} &rarr; ${details.newStatus || log.status || 'FINALIZED'}</span>
-                            ${details.remainingBudget ? `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #a7f3d0;">Project Balance after action: <strong>MWK ${Number(details.remainingBudget).toLocaleString()}</strong></div>` : ''}
+                            Resource: ${log.targetType} (${log.targetCode || "N/A"})<br>
+                            Status Flow: <span style="font-weight:600;">${details.oldStatus || "INITIATED"} &rarr; ${details.newStatus || log.status || "FINALIZED"}</span>
+                            ${details.remainingBudget ? `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #a7f3d0;">Project Balance after action: <strong>MWK ${Number(details.remainingBudget).toLocaleString()}</strong></div>` : ""}
                         </div>
                     </div>
                 `;
-            } else if (action.includes('VENDOR') || action.includes('PROCUREMENT') || action.includes('CONTRACT')) {
-                summary = `
+      } else if (
+        action.includes("VENDOR") ||
+        action.includes("PROCUREMENT") ||
+        action.includes("CONTRACT")
+      ) {
+        summary = `
                     <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #1e40af; font-weight: 700; margin-bottom: 4px;">Supply Chain & Logistics Event</div>
                         <div style="font-size: 13px; color: #1e3a8a;">
-                            Entity/Contract: <strong>${details.vendorName || details.supplierName || details.contractName || log.targetCode || 'N/A'}</strong><br>
-                            ${details.amount ? `Transaction Value: <strong style="color:#2563eb;">MWK ${Number(details.amount).toLocaleString()}</strong><br>` : ''}
-                            ${details.remainingProjectBudget ? `Project Ledger Balance: <strong>MWK ${Number(details.remainingProjectBudget).toLocaleString()}</strong>` : ''}
+                            Entity/Contract: <strong>${details.vendorName || details.supplierName || details.contractName || log.targetCode || "N/A"}</strong><br>
+                            ${details.amount ? `Transaction Value: <strong style="color:#2563eb;">MWK ${Number(details.amount).toLocaleString()}</strong><br>` : ""}
+                            ${details.remainingProjectBudget ? `Project Ledger Balance: <strong>MWK ${Number(details.remainingProjectBudget).toLocaleString()}</strong>` : ""}
                         </div>
                     </div>
                 `;
-            } else if (action.includes('ASSET') || action.includes('EQUIPMENT')) {
-                summary = `
+      } else if (action.includes("ASSET") || action.includes("EQUIPMENT")) {
+        summary = `
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 4px;">Asset Allocation Event</div>
                         <div style="font-size: 13px; color: #1e293b;">
-                            Asset: <strong>${details.assetName || log.targetCode || 'N/A'}</strong><br>
-                            Assigned to: <span style="font-weight:600;">${details.assignedTo || 'Unassigned'}</span><br>
-                            Action: <span style="color:var(--orange); font-weight:700;">${log.action.replace(/_/g, ' ')}</span>
+                            Asset: <strong>${details.assetName || log.targetCode || "N/A"}</strong><br>
+                            Assigned to: <span style="font-weight:600;">${details.assignedTo || "Unassigned"}</span><br>
+                            Action: <span style="color:var(--orange); font-weight:700;">${log.action.replace(/_/g, " ")}</span>
                         </div>
                     </div>
                 `;
-            } else if (action.includes('REQUISITION')) {
-                summary = `
+      } else if (action.includes("REQUISITION")) {
+        summary = `
                     <div style="background: #fff7ed; border: 1px solid #ffedd5; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #9a3412; font-weight: 700; margin-bottom: 4px;">Resource Requisition Event</div>
                         <div style="font-size: 13px; color: #7c2d12;">
-                            ID: <strong>${log.targetCode || 'N/A'}</strong><br>
-                            Action: <span style="font-weight:600;">${action.replace(/_/g, ' ')}</span><br>
-                            Items: <span style="font-style:italic;">${details.itemsCount || details.items?.length || 'Multiple resources'}</span>
-                            ${details.totalCost ? `<br>Estimated Value: <strong>MWK ${Number(details.totalCost).toLocaleString()}</strong>` : ''}
+                            ID: <strong>${log.targetCode || "N/A"}</strong><br>
+                            Action: <span style="font-weight:600;">${action.replace(/_/g, " ")}</span><br>
+                            Items: <span style="font-style:italic;">${details.itemsCount || details.items?.length || "Multiple resources"}</span>
+                            ${details.totalCost ? `<br>Estimated Value: <strong>MWK ${Number(details.totalCost).toLocaleString()}</strong>` : ""}
                         </div>
                     </div>
                 `;
-            } else if (action.includes('ISSUE') || action.includes('COMPLAINT') || action.includes('INCIDENT')) {
-                summary = `
+      } else if (
+        action.includes("ISSUE") ||
+        action.includes("COMPLAINT") ||
+        action.includes("INCIDENT")
+      ) {
+        summary = `
                     <div style="background: #fff1f2; border: 1px solid #ffe4e6; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #be123c; font-weight: 700; margin-bottom: 4px;">Governance & Safety Event</div>
                         <div style="font-size: 13px; color: #881337;">
-                            Category: <strong>${details.category || 'Site Issue'}</strong><br>
-                            Priority: <span class="status ${details.priority === 'high' ? 'rejected' : 'active'}" style="font-size:9px; padding: 2px 6px;">${(details.priority || 'NORMAL').toUpperCase()}</span><br>
-                            Description: <span style="font-size:12px; display:block; margin-top:4px; line-height:1.4;">${details.description || 'No description provided.'}</span>
+                            Category: <strong>${details.category || "Site Issue"}</strong><br>
+                            Priority: <span class="status ${details.priority === "high" ? "rejected" : "active"}" style="font-size:9px; padding: 2px 6px;">${(details.priority || "NORMAL").toUpperCase()}</span><br>
+                            Description: <span style="font-size:12px; display:block; margin-top:4px; line-height:1.4;">${details.description || "No description provided."}</span>
                         </div>
                     </div>
                 `;
-            } else if (action.includes('REPORT') || action.includes('ANALYTICS')) {
-                summary = `
+      } else if (action.includes("REPORT") || action.includes("ANALYTICS")) {
+        summary = `
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 4px;">Data & Insights Event</div>
                         <div style="font-size: 13px; color: #1e293b;">
-                            Action: <span style="font-weight:600;">${action.replace(/_/g, ' ')}</span><br>
-                            Resource: <strong>${log.targetType || 'System Report'}</strong><br>
-                            Scope: <span style="font-size:11px;">${details.scope || details.projectName || 'Full System'}</span>
+                            Action: <span style="font-weight:600;">${action.replace(/_/g, " ")}</span><br>
+                            Resource: <strong>${log.targetType || "System Report"}</strong><br>
+                            Scope: <span style="font-size:11px;">${details.scope || details.projectName || "Full System"}</span>
                         </div>
                     </div>
                 `;
-            } else if (action === 'APPROVE' || action === 'REJECT' || action.includes('REVIEW')) {
-                const isApprove = action === 'APPROVE' || action.includes('APPROVE');
-                summary = `
-                    <div style="background: ${isApprove ? '#ecfdf5' : '#fff1f2'}; border: 1px solid ${isApprove ? '#a7f3d0' : '#fecaca'}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: ${isApprove ? '#065f46' : '#991b1b'}; font-weight: 700; margin-bottom: 4px;">Governance Approval Workflow</div>
-                        <div style="font-size: 13px; color: ${isApprove ? '#064e3b' : '#7f1d1d'};">
-                            Result: <strong style="color:${isApprove ? '#059669' : '#dc2626'};">${action.replace(/_/g, ' ')}</strong><br>
+      } else if (
+        action === "APPROVE" ||
+        action === "REJECT" ||
+        action.includes("REVIEW")
+      ) {
+        const isApprove = action === "APPROVE" || action.includes("APPROVE");
+        summary = `
+                    <div style="background: ${isApprove ? "#ecfdf5" : "#fff1f2"}; border: 1px solid ${isApprove ? "#a7f3d0" : "#fecaca"}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: ${isApprove ? "#065f46" : "#991b1b"}; font-weight: 700; margin-bottom: 4px;">Governance Approval Workflow</div>
+                        <div style="font-size: 13px; color: ${isApprove ? "#064e3b" : "#7f1d1d"};">
+                            Result: <strong style="color:${isApprove ? "#059669" : "#dc2626"};">${action.replace(/_/g, " ")}</strong><br>
                             Target: <strong>${log.targetType} (${log.targetCode})</strong><br>
-                            Comment: <span style="font-style:italic;">"${details.comment || details.reason || 'No comment provided'}"</span>
+                            Comment: <span style="font-style:italic;">"${details.comment || details.reason || "No comment provided"}"</span>
                         </div>
                     </div>
                 `;
-            }
-            return summary;
-        };
-        
-        return `
+      }
+      return summary;
+    };
+
+    return `
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px;">
                     <div>
@@ -5065,19 +5416,19 @@ Contract Admin</textarea>
                         <div style="font-size:18px; font-weight:800; color:var(--slate-900);">${log.action}</div>
                     </div>
                     <div style="text-align:right;">
-                        <span class="status ${log.status === 'failure' ? 'rejected' : 'active'}" style="font-size:10px; padding: 4px 8px; border-radius: 4px;">${(log.status || 'Success').toUpperCase()}</span>
+                        <span class="status ${log.status === "failure" ? "rejected" : "active"}" style="font-size:10px; padding: 4px 8px; border-radius: 4px;">${(log.status || "Success").toUpperCase()}</span>
                     </div>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">Actor</div>
-                        <div style="font-size:13px; font-weight:600;">${log.userName || 'System'}</div>
-                        <div style="font-size:11px; color:var(--slate-400);">${log.userRole || 'Automated Service'}</div>
+                        <div style="font-size:13px; font-weight:600;">${log.userName || "System"}</div>
+                        <div style="font-size:11px; color:var(--slate-400);">${log.userRole || "Automated Service"}</div>
                     </div>
                     <div style="text-align:right;">
                         <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">IP Address</div>
-                        <div style="font-size:12px; font-family:'JetBrains Mono';">${log.ipAddress || 'Internal'}</div>
+                        <div style="font-size:12px; font-family:'JetBrains Mono';">${log.ipAddress || "Internal"}</div>
                     </div>
                 </div>
             </div>
@@ -5098,11 +5449,11 @@ Contract Admin</textarea>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div style="border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
                         <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase; margin-bottom: 4px;">Target Type</div>
-                        <div style="font-size:12px; font-weight:600;">${log.targetType || 'N/A'}</div>
+                        <div style="font-size:12px; font-weight:600;">${log.targetType || "N/A"}</div>
                     </div>
                     <div style="border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
                         <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase; margin-bottom: 4px;">Resource ID</div>
-                        <div style="font-size:12px; font-weight:600; font-family:'JetBrains Mono';">${log.targetId || log.targetCode || 'None'}</div>
+                        <div style="font-size:12px; font-weight:600; font-family:'JetBrains Mono';">${log.targetId || log.targetCode || "None"}</div>
                     </div>
                 </div>
 
@@ -5121,5 +5472,5 @@ Contract Admin</textarea>
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Close Log</button>
             </div>
         `;
-    }
+  },
 };

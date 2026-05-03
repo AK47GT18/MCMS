@@ -38,11 +38,19 @@ const getById = asyncHandler(async (req, res, id) => {
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  if (!hasMinimumRole(req, res, 'Project_Manager')) return;
+  // const user = { id: 1 }; // Mock user
   
-  const body = await parseBody(req);
+  const isMultipart = req.headers['content-type']?.includes('multipart/form-data');
+  const body = isMultipart ? req.body : await parseBody(req);
+  
   const data = validateBody(body, createContractSchema, res);
   if (!data) return;
+  
+  if (req.file) {
+    data.documentUrl = `/uploads/documents/${req.file.filename}`;
+    data.fileName = req.file.originalname;
+  }
   
   const result = await contractsService.create(data, user.id);
   response.created(res, result);

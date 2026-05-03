@@ -18,23 +18,28 @@ export const PM_Portfolio = {
         return `
             ${this.getStatsGridHTML()}
             <div class="data-card">
-              <div class="data-card-header">
-                <div class="tabs" style="margin-bottom: 0;">
-                  <div class="tab active" data-status="active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('active')">Active Projects</div>
-                  <div class="tab" data-status="hold" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('on_hold')">On Hold</div>
-                  <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('completed')">Completed</div>
+                <div class="data-card-header" style="flex-wrap: wrap; gap: 16px;">
+                    <div class="tabs" style="margin-bottom: 0; flex-grow: 1;">
+                      <div class="tab active" data-status="active" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('active')">Active Projects</div>
+                      <div class="tab" data-status="hold" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('on_hold')">On Hold</div>
+                      <div class="tab" data-status="completed" onclick="this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active'); (window.app?.pmModule || window.app?.fmModule)?.filterProjectsByStatus('completed')">Completed</div>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <div class="filter-group">
+                            <select class="form-select" onchange="(window.app.pmModule || window.app.fmModule).filterProjectsByStatus(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-size: 14px; cursor: pointer;">
+                                <option value="all">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="on_hold">On Hold</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="delayed">Delayed</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectDrawer()" style="background: var(--slate-900); border-color: var(--slate-900);">
+                            <i class="fas fa-plus"></i> Initialize Project
+                        </button>
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <select class="form-select" onchange="(window.app.pmModule || window.app.fmModule).filterProjectsByStatus(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-size: 14px; cursor: pointer;">
-                        <option value="all">All Statuses</option>
-                        <option value="active">Active</option>
-                        <option value="completed">Completed</option>
-                        <option value="on_hold">On Hold</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="delayed">Delayed</option>
-                    </select>
-                </div>
-              </div>
               <div id="projects-table-container">
 				${this.renderLoadingState()}
 			  </div>

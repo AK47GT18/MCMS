@@ -188,15 +188,18 @@ const server = (sslOptions ? https : http).createServer(sslOptions || {}, async 
     // STATIC FILES (for frontend if served from same origin)
     // ============================================
     
-    // Serve static files from project root or public directory
-    let staticPath = path.join(__dirname, url);
+    // Serve static files from public directory or root
+    // Ensure url doesn't have leading slash for path.join to avoid issues on some systems
+    const relativePath = url.startsWith('/') ? url.substring(1) : url;
+    let staticPath = path.join(__dirname, 'public', relativePath);
+    
     if (!fs.existsSync(staticPath) || !fs.statSync(staticPath).isFile()) {
-      // Try public directory fallback
-      staticPath = path.join(__dirname, 'public', url);
+      // Try root directory fallback
+      staticPath = path.join(__dirname, relativePath);
     }
 
     if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
-      const ext = path.extname(url);
+      const ext = path.extname(url).toLowerCase();
       const mimeTypes = {
         '.html': 'text/html',
         '.js': 'application/javascript',
@@ -204,21 +207,38 @@ const server = (sslOptions ? https : http).createServer(sslOptions || {}, async 
         '.json': 'application/json',
         '.png': 'image/png',
         '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
         '.svg': 'image/svg+xml',
         '.ico': 'image/x-icon',
         '.pdf': 'application/pdf',
         '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.txt': 'text/plain',
       };
       
       const contentType = mimeTypes[ext] || 'application/octet-stream';
       const content = fs.readFileSync(staticPath);
       
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, { 
+        'Content-Type': contentType,
+        'Content-Length': content.length,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'public, max-age=3600'
+      });
       res.end(content);
       return;
     }
     
     // Default: serve index.html for SPA routing
+    // BUT only if it's not a request for a static asset with an extension
+    const ext = path.extname(url).toLowerCase();
+    const isAsset = ext && ext !== '.html';
+    
+    if (isAsset) {
+      return notFoundHandler(req, res);
+    }
+
     const indexPath = path.join(__dirname, 'index.html');
     if (fs.existsSync(indexPath)) {
       const content = fs.readFileSync(indexPath);

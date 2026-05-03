@@ -38,7 +38,17 @@ async function getById(id) {
   const contract = await prisma.contract.findUnique({
     where: { id },
     include: {
-      project: { select: { id: true, code: true, name: true } },
+      project: { 
+        include: { 
+          manager: { select: { name: true, email: true } },
+          roadSpecification: {
+            include: {
+              layers: true,
+              accessories: true
+            }
+          }
+        } 
+      },
       milestones: { orderBy: { dueDate: 'asc' } },
       items: true,
       versions: { 
@@ -48,6 +58,39 @@ async function getById(id) {
     },
   });
   if (!contract) throw new AppError('Contract not found', 404);
+  
+  // If it's a project master agreement, we might want to map project materials to items
+  if (contract.contractType === 'project' && contract.project?.roadSpecification) {
+    const spec = contract.project.roadSpecification;
+    const projectItems = [];
+    
+    spec.layers?.forEach(l => {
+      projectItems.push({
+        materialName: `${l.phaseName}: ${l.materialType}`,
+        quantity: l.totalQuantity,
+        unit: l.unit,
+        unitPrice: l.unitCostHigh,
+        totalCost: l.totalCostHigh || 0,
+        isBaseline: true
+      });
+    });
+    
+    spec.accessories?.forEach(a => {
+      projectItems.push({
+        materialName: a.type,
+        quantity: a.quantity,
+        unit: a.unit || 'units',
+        unitPrice: a.estimatedUnitCost,
+        totalCost: a.totalValue || 0,
+        isBaseline: true
+      });
+    });
+    
+    if (contract.items.length === 0) {
+      contract.items = projectItems;
+    }
+  }
+
   return contract;
 }
 
@@ -74,7 +117,16 @@ async function create(data, userId) {
   }
 
   const contractData = {
-    ...data,
+    refCode: data.refCode,
+    title: data.title || 'Untitled Contract',
+    value: data.value ? Number(data.value) : null,
+    startDate: data.startDate ? new Date(data.startDate) : null,
+    endDate: data.endDate ? new Date(data.endDate) : null,
+    contractType: data.contractType,
+    vendorName: data.vendorName,
+    projectId: data.projectId ? Number(data.projectId) : null,
+    documentUrl: data.documentUrl,
+    fileName: data.fileName,
     vendorId,
     items: materials.length > 0 ? {
       create: materials.map(m => ({
@@ -120,7 +172,9 @@ async function create(data, userId) {
       title: contract.title,
       value: contract.value,
       status: contract.status,
-      changeNotes: 'Initial contract creation',
+      documentUrl: contract.documentUrl,
+      fileName: contract.fileName,
+      changeNotes: data.justification || 'Initial contract creation',
       createdById: userId
     }
   });
@@ -134,12 +188,28 @@ async function create(data, userId) {
     );
   }
   
-  if (contract.project && contract.project.manager && contract.project.manager.email) {
-    await emailService.sendNotification(
-      contract.project.manager.email,
-      'New Contract Created',
-      `Contract ${contract.refCode} for project ${contract.project.name} has been created.`
-    ).catch(e => logger.error('PM Email failed', e));
+  // Role-based Notifications (PM <-> FD)
+  const creator = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, name: true } });
+  
+  if (creator?.role === 'Project_Manager') {
+    // Notify all Finance Directors
+    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { email: true } });
+    for (const fd of fds) {
+      await emailService.sendNotification(
+        fd.email,
+        'Contract Created by Project Manager',
+        `A new project contract ${contract.refCode} has been archived by PM ${creator.name}. \nJustification: ${data.justification || 'N/A'}`
+      ).catch(e => logger.error('FD Notification failed', e));
+    }
+  } else if (creator?.role === 'Finance_Director') {
+    // Notify the Project Manager
+    if (contract.project && contract.project.manager && contract.project.manager.email) {
+      await emailService.sendNotification(
+        contract.project.manager.email,
+        'Contract Created by Finance Director',
+        `A new vendor contract ${contract.refCode} has been established by FD ${creator.name}. \nProject: ${contract.project.name}`
+      ).catch(e => logger.error('PM Notification failed', e));
+    }
   }
   
   return contract;
@@ -189,12 +259,28 @@ async function update(id, data, userId) {
     await auditService.log(userId, 'UPDATE_CONTRACT', 'Contract', id, { ...data, isLocked });
   }
   
-  if (existing.project && existing.project.manager && existing.project.manager.email) {
-    await emailService.sendNotification(
-      existing.project.manager.email,
-      'Contract Updated',
-      `Contract ${contract.refCode} for project ${existing.project.name} has been updated ${isLocked ? '(Formal Variation)' : ''}.`
-    ).catch(e => logger.error('PM Email failed', e));
+  // Role-based Notifications (PM <-> FD)
+  const creator = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, name: true } });
+  
+  if (creator?.role === 'Project_Manager') {
+    // Notify all Finance Directors
+    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { email: true } });
+    for (const fd of fds) {
+      await emailService.sendNotification(
+        fd.email,
+        'Contract Updated by Project Manager',
+        `Contract ${contract.refCode} has been modified by PM ${creator.name}. \nChange Version: V${nextVersionNum}`
+      ).catch(e => logger.error('FD Update Notification failed', e));
+    }
+  } else if (creator?.role === 'Finance_Director') {
+    // Notify the Project Manager
+    if (existing.project && existing.project.manager && existing.project.manager.email) {
+      await emailService.sendNotification(
+        existing.project.manager.email,
+        'Contract Updated by Finance Director',
+        `Contract ${contract.refCode} has been updated by FD ${creator.name}. \nPlease review the latest version (V${nextVersionNum}).`
+      ).catch(e => logger.error('PM Update Notification failed', e));
+    }
   }
   
   return contract;

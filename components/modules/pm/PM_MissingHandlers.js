@@ -491,14 +491,12 @@ export const PM_MissingHandlers = {
     },
 
     async handleWizardNav(direction) {
-        // Validate Step 1 before leaving
-        if (this.wizardState.currentStep === 1 && direction > 0) {
-            if (!this.validateProjectForm()) return;
-        }
-
-        // Validate Step 2 before leaving
-        if (this.wizardState.currentStep === 2 && direction > 0) {
-            if (!this.validateRoadSpecForm()) return;
+        // Validate current pane before leaving
+        if (direction > 0) {
+            const currentPane = document.getElementById(`wizard-pane-${this.wizardState.currentStep}`);
+            if (currentPane && window.V && !window.V.validateForm(currentPane)) {
+                return;
+            }
         }
 
         const newStep = this.wizardState.currentStep + direction;

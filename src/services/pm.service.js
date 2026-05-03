@@ -40,7 +40,6 @@ class PMService {
     const updateData = {
       unit: data.unit,
       basePrice: data.basePrice,
-      costPerKm: data.costPerKm ? parseFloat(data.costPerKm) : null,
       phase: data.phase,
       category: data.category,
       updatedById: userId,

@@ -13,7 +13,7 @@ const securityHeaders = {
   'X-Content-Type-Options': 'nosniff',
 
   // Prevent clickjacking
-  'X-Frame-Options': 'DENY',
+  'X-Frame-Options': 'SAMEORIGIN',
 
   // XSS protection (legacy, but still useful)
   'X-XSS-Protection': '1; mode=block',
@@ -38,7 +38,7 @@ const cspDirectives = {
   'font-src': ["'self'", "data:"],
   'img-src': ["'self'", "data:", "blob:"],
   'connect-src': ["'self'", "ws:", "wss:"],
-  'frame-ancestors': ["'none'"],
+  'frame-ancestors': ["'self'"],
   'form-action': ["'self'"],
   'base-uri': ["'self'"],
   'object-src': ["'none'"],
