@@ -33,11 +33,25 @@ const getAll = asyncHandler(async (req, res) => {
     userId: query.userId ? parseInt(query.userId) : undefined,
     action: query.action,
     targetType: query.targetType,
+    severity: query.severity,
+    search: query.search,
     startDate: query.startDate,
     endDate: query.endDate,
   });
   
   response.success(res, result);
+});
+
+/**
+ * GET /api/v1/audit-logs/actions
+ * Get unique action types
+ */
+const getUniqueActions = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const actions = await auditService.getUniqueActions();
+  response.success(res, actions);
 });
 
 /**
@@ -55,4 +69,4 @@ const getRecent = asyncHandler(async (req, res) => {
   response.success(res, logs);
 });
 
-module.exports = { getAll, getRecent };
+module.exports = { getAll, getRecent, getUniqueActions };

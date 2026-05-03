@@ -6,14 +6,31 @@ export const PM_Config = {
 
         return `
             <div class="data-card" style="margin-top: 0;">
-                <div class="data-card-header">
-                    <div>
+                <div class="data-card-header" style="flex-wrap: wrap; gap: 16px;">
+                    <div style="flex-grow: 1;">
                         <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-bottom: 4px;">Material Price Configuration</h3>
                         <p style="font-size: 13px; color: var(--slate-500);">Set baseline unit prices for materials to be used in procurement calculations.</p>
                     </div>
-                    <button class="btn btn-primary" onclick="window.app.pmModule.openAddPriceDrawer()">
-                        <i class="fas fa-plus" style="margin-right: 8px;"></i> Add Material
-                    </button>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <div style="position: relative;">
+                            <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--slate-400); font-size: 13px;"></i>
+                            <input type="text" id="price-search-filter" class="form-input" placeholder="Search materials or phases..." style="width: 220px; padding-left: 32px;" onkeyup="if(event.key === 'Enter') window.app.pmModule.loadMaterialPrices()">
+                        </div>
+                        <select id="price-category-filter" class="form-input" style="width: 150px;" onchange="window.app.pmModule.loadMaterialPrices()">
+                            <option value="">All Categories</option>
+                            <option value="Aggregates">Aggregates</option>
+                            <option value="Bitumen">Bitumen</option>
+                            <option value="Cement">Cement</option>
+                            <option value="Fuel">Fuel</option>
+                            <option value="Earthworks">Earthworks</option>
+                            <option value="Drainage">Drainage</option>
+                            <option value="Road Furniture">Road Furniture</option>
+                            <option value="Others">Others</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="window.app.pmModule.openAddPriceDrawer()">
+                            <i class="fas fa-plus" style="margin-right: 8px;"></i> Add Material
+                        </button>
+                    </div>
                 </div>
                 <div id="price-config-container">
                     <div style="padding: 40px; text-align: center; color: var(--slate-400);">
@@ -25,13 +42,19 @@ export const PM_Config = {
         `;
     },
 
-    async loadMaterialPrices() {
+    async loadMaterialPrices(page = 1) {
         const container = document.getElementById('price-config-container');
         if (!container) return;
 
         try {
-            const response = await client.get('/pm/material-prices');
-            const configs = Array.isArray(response) ? response : (response.data || []);
+            const search = document.getElementById('price-search-filter')?.value || '';
+            const category = document.getElementById('price-category-filter')?.value || '';
+            
+            const response = await client.get(`/pm/material-prices?page=${page}&limit=15&search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}`);
+            const data = response.data || response;
+            const configs = data.configs || (Array.isArray(data) ? data : []);
+            const total = data.total || configs.length;
+            const totalPages = Math.ceil(total / 15);
             
             if (!configs || configs.length === 0) {
                 container.innerHTML = `
@@ -39,9 +62,9 @@ export const PM_Config = {
                         <div style="width: 64px; height: 64px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: var(--shadow-sm);">
                             <i class="fas fa-tags" style="font-size: 24px; color: var(--slate-300);"></i>
                         </div>
-                        <h4 style="font-weight: 700; color: var(--slate-700); margin-bottom: 8px;">No Material Prices Set</h4>
-                        <p style="font-size: 13px; color: var(--slate-500); max-width: 300px; margin: 0 auto 20px;">Baseline prices help the Finance team auto-calculate contract values accurately.</p>
-                        <button class="btn btn-primary" onclick="window.app.pmModule.openAddPriceDrawer()">Define First Price</button>
+                        <h4 style="font-weight: 700; color: var(--slate-700); margin-bottom: 8px;">No Material Prices Found</h4>
+                        <p style="font-size: 13px; color: var(--slate-500); max-width: 300px; margin: 0 auto 20px;">Adjust your filters or add a new material price definition.</p>
+                        <button class="btn btn-primary" onclick="window.app.pmModule.openAddPriceDrawer()">Define New Price</button>
                     </div>
                 `;
                 return;
@@ -52,9 +75,11 @@ export const PM_Config = {
                     <thead>
                         <tr>
                             <th>Material Name</th>
+                            <th>Category</th>
+                            <th>Phase</th>
                             <th>Unit</th>
-                            <th>Baseline Price (MWK)</th>
-                            <th>Last Updated</th>
+                            <th>Baseline Price</th>
+                            <th>Rate/Km</th>
                             <th style="width: 80px;">Actions</th>
                         </tr>
                     </thead>
@@ -62,19 +87,38 @@ export const PM_Config = {
                         ${configs.map(c => `
                             <tr>
                                 <td style="font-weight: 700; color: var(--slate-800);">${c.materialName}</td>
-                                <td><span style="font-size: 11px; background: var(--slate-100); padding: 2px 8px; border-radius: 4px; font-weight: 600;">${c.unit}</span></td>
+                                <td><span style="font-size: 11px; background: var(--slate-100); padding: 2px 8px; border-radius: 4px; font-weight: 600;">${c.category || 'N/A'}</span></td>
+                                <td style="font-size: 12px; color: var(--slate-600);">${c.phase || 'General'}</td>
+                                <td style="font-size: 12px;">${c.unit}</td>
                                 <td style="font-family: 'JetBrains Mono'; font-weight: 700; color: var(--slate-900);">MWK ${Number(c.basePrice).toLocaleString()}</td>
-                                <td style="font-size: 12px; color: var(--slate-500);">${new Date(c.updatedAt).toLocaleDateString()}</td>
+                                <td style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--slate-500);">${c.costPerKm ? 'MWK ' + Number(c.costPerKm).toLocaleString() : '—'}</td>
                                 <td>
                                     <div style="display: flex; gap: 8px;">
-                                        <button class="btn-icon" title="Edit" onclick="window.app.pmModule.openEditPriceDrawer('${c.id}')"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="Delete" style="color: var(--red);" onclick="window.app.pmModule.deleteMaterialPrice('${c.id}')"><i class="fas fa-trash"></i></button>
+                                        <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 600;" onclick="window.app.pmModule.openEditPriceDrawer('${c.id}')">
+                                            Edit Price
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--slate-50); border-top: 1px solid var(--slate-200); border-radius: 0 0 12px 12px;">
+                    <div style="font-size: 13px; color: var(--slate-500);">
+                        Showing ${(page - 1) * 15 + 1} - ${Math.min(page * 15, total)} of ${total} materials
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" ${page === 1 ? 'disabled' : ''} onclick="window.app.pmModule.loadMaterialPrices(${page - 1})">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--slate-700);">
+                            Page ${page} of ${totalPages || 1}
+                        </div>
+                        <button class="btn btn-secondary btn-sm" ${page >= totalPages ? 'disabled' : ''} onclick="window.app.pmModule.loadMaterialPrices(${page + 1})">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             `;
         } catch (err) {
             console.error(err);
@@ -88,8 +132,9 @@ export const PM_Config = {
 
     async openEditPriceDrawer(id) {
         try {
-            const response = await client.get('/pm/material-prices');
-            const configs = Array.isArray(response) ? response : (response.data || []);
+            const response = await client.get('/pm/material-prices?limit=100'); // Get enough to find it
+            const data = response.data || response;
+            const configs = data.configs || (Array.isArray(data) ? data : []);
             const config = configs.find(c => c.id == id);
             if (config) {
                 window.drawer.open('Edit Material Price', window.DrawerTemplates.materialPriceForm(config));
@@ -101,8 +146,11 @@ export const PM_Config = {
 
     async handlePriceConfigSubmit(id) {
         const materialName = document.getElementById('price-material-name').value;
+        const category = document.getElementById('price-category').value;
+        const phase = document.getElementById('price-phase').value;
         const basePrice = parseFloat(document.getElementById('price-base-amount').value);
         const unit = document.getElementById('price-unit').value;
+        const costPerKm = parseFloat(document.getElementById('price-cost-per-km').value || 0);
 
         if (!materialName || isNaN(basePrice)) {
             window.toast.show('Please fill in all required fields.', 'error');
@@ -110,7 +158,7 @@ export const PM_Config = {
         }
 
         try {
-            await client.post('/pm/material-prices', { materialName, basePrice, unit });
+            await client.post('/pm/material-prices', { materialName, category, phase, basePrice, unit, costPerKm });
             window.toast.show('Price configuration saved successfully.', 'success');
             window.drawer.close();
             this.loadMaterialPrices();

@@ -123,8 +123,82 @@ async function main() {
     await prisma.safetyIncident.deleteMany();
     await prisma.issue.deleteMany();
     await prisma.task.deleteMany();
+    await prisma.materialPriceConfig.deleteMany();
 
-    // 1. Create Users
+    // 1. Create Material Price Configs (Baseline)
+    console.log('--- Seeding Material Price Configurations ---');
+    const MATERIAL_PRICES = [
+        // Phase 1: Clearing & Grubbing
+        { materialName: 'Survey Pegs & Paint', category: 'General', unit: 'Set', basePrice: 45000, phase: 'Phase 1: Clearing & Grubbing' },
+        { materialName: 'Chainsaw Fuel', category: 'Fuel', unit: 'Litre', basePrice: 6687, phase: 'Phase 1: Clearing & Grubbing' },
+        { materialName: 'Dust Suppressant', category: 'Chemicals', unit: 'Drum', basePrice: 450000, phase: 'Phase 1: Clearing & Grubbing' },
+        
+        // Phase 2: Earthworks
+        { materialName: 'Borrow Fill (laterite)', category: 'Earthworks', unit: 'm3', basePrice: 15000, phase: 'Phase 2: Earthworks / Subgrade' },
+        { materialName: 'Geogrid (stabilization)', category: 'Geosynthetics', unit: 'Roll', basePrice: 155000, phase: 'Phase 2: Earthworks / Subgrade' },
+        { materialName: 'Geotextile Fabric', category: 'Geosynthetics', unit: 'Roll', basePrice: 45000, phase: 'Phase 2: Earthworks / Subgrade' },
+        { materialName: 'Explosives (rock blasting)', category: 'Others', unit: 'kg', basePrice: 65000, phase: 'Phase 2: Earthworks / Subgrade' },
+        { materialName: 'Earthworks Mobilization', category: 'Logistics', unit: 'Km', basePrice: 0, costPerKm: 5500000, phase: 'Phase 2: Earthworks / Subgrade' },
+        
+        // Phase 3: Sub-base
+        { materialName: 'Gravel/Crushed Stone', category: 'Aggregates', unit: 'Tonne', basePrice: 28000, phase: 'Phase 3: Sub-base Construction' },
+        { materialName: 'Soil Stabilizer (Liquid)', category: 'Chemicals', unit: 'Drum', basePrice: 1500000, phase: 'Phase 3: Sub-base Construction' },
+        
+        // Phase 4: Base Course
+        { materialName: 'Aggregate Base', category: 'Aggregates', unit: 'Tonne', basePrice: 55000, phase: 'Phase 4: Base Course Construction' },
+        { materialName: 'Crushed Stone (G1)', category: 'Aggregates', unit: 'Tonne', basePrice: 75000, phase: 'Phase 4: Base Course Construction' },
+        { materialName: 'Crushed Stone (G2)', category: 'Aggregates', unit: 'Tonne', basePrice: 65000, phase: 'Phase 4: Base Course Construction' },
+        { materialName: 'Bitumen Emulsion (Prime)', category: 'Bitumen', unit: 'Tonne', basePrice: 1200000, phase: 'Phase 4: Base Course Construction' },
+        
+        // Phase 5: Surfacing
+        { materialName: 'Bitumen 60/70', category: 'Bitumen', unit: 'Tonne', basePrice: 1150000, phase: 'Phase 5: Surfacing' },
+        { materialName: 'Bitumen 80/100', category: 'Bitumen', unit: 'Tonne', basePrice: 1250000, phase: 'Phase 5: Surfacing' },
+        { materialName: 'Bitumen Emulsion (Tack)', category: 'Bitumen', unit: 'Tonne', basePrice: 1200000, phase: 'Phase 5: Surfacing' },
+        { materialName: 'Aggregate Chippings 10/14mm', category: 'Aggregates', unit: 'm3', basePrice: 450000, phase: 'Phase 5: Surfacing' },
+        { materialName: 'Aggregate Chippings 6/10mm', category: 'Aggregates', unit: 'm3', basePrice: 480000, phase: 'Phase 5: Surfacing' },
+        { materialName: 'Ready-mix Concrete C30', category: 'Concrete', unit: 'm3', basePrice: 450000, phase: 'Phase 5: Surfacing' },
+        { materialName: 'Stone Dust (filler)', category: 'Aggregates', unit: 'Tonne', basePrice: 45000, phase: 'Phase 5: Surfacing' },
+        
+        // Phase 6: Drainage
+        { materialName: 'Cement OPC', category: 'Cement', unit: 'Bag', basePrice: 18500, phase: 'Phase 6: Drainage' },
+        { materialName: 'Gabion Boxes (2x1x1m)', category: 'Drainage', unit: 'Unit', basePrice: 95000, phase: 'Phase 6: Drainage' },
+        { materialName: 'Reno Mattresses', category: 'Drainage', unit: 'Unit', basePrice: 85000, phase: 'Phase 6: Drainage' },
+        { materialName: 'Precast U-drain Sections', category: 'Drainage', unit: 'm', basePrice: 155000, phase: 'Phase 6: Drainage' },
+        { materialName: 'PVC Culvert Pipes (450mm)', category: 'Drainage', unit: 'Length', basePrice: 65000, phase: 'Phase 6: Drainage' },
+        { materialName: 'Concrete Pipes (900mm)', category: 'Drainage', unit: 'Piece', basePrice: 85000, phase: 'Phase 6: Drainage' },
+        { materialName: 'Standard Culvert Construction', category: 'Drainage', unit: 'Km', basePrice: 0, costPerKm: 18500000, phase: 'Phase 6: Drainage' },
+        
+        // Phase 7: Furniture
+        { materialName: 'Road Marking Paint (White)', category: 'Road Furniture', unit: 'Bucket', basePrice: 75000, phase: 'Phase 7: Road Furniture & Accessories' },
+        { materialName: 'Road Marking Paint (Yellow)', category: 'Road Furniture', unit: 'Bucket', basePrice: 75000, phase: 'Phase 7: Road Furniture & Accessories' },
+        { materialName: 'Solar Street Light Set', category: 'Road Furniture', unit: 'Unit', basePrice: 450000, phase: 'Phase 7: Road Furniture & Accessories' },
+        { materialName: 'Road Signs (Regulatory)', category: 'Road Furniture', unit: 'Unit', basePrice: 145000, phase: 'Phase 7: Road Furniture & Accessories' },
+        { materialName: 'Cat Eyes/Studs (Glass)', category: 'Road Furniture', unit: 'Unit', basePrice: 15500, phase: 'Phase 7: Road Furniture & Accessories' },
+        { materialName: 'Delineator Posts', category: 'Road Furniture', unit: 'Unit', basePrice: 22000, phase: 'Phase 7: Road Furniture & Accessories' },
+        
+        // Phase 8: Bridge
+        { materialName: 'Structural Steel (Y32)', category: 'Metal', unit: 'Tonne', basePrice: 3200000, phase: 'Phase 8: Bridge Construction' },
+        { materialName: 'Elastomeric Bearing Pads', category: 'Bridge Spec', unit: 'Each', basePrice: 255000, phase: 'Phase 8: Bridge Construction' },
+        { materialName: 'Bridge Expansion Joint', category: 'Bridge Spec', unit: 'm', basePrice: 455000, phase: 'Phase 8: Bridge Construction' },
+        
+        // Phase 9: Site
+        { materialName: 'Temporary Site Offices', category: 'Establishment', unit: 'Unit', basePrice: 25000000, phase: 'Phase 9: Site Establishment' },
+        { materialName: 'Security Guards (Armed)', category: 'Services', unit: 'Man/Month', basePrice: 355000, phase: 'Phase 9: Site Establishment' },
+        { materialName: 'Fuel Storage Tank (10kL)', category: 'Establishment', unit: 'Unit', basePrice: 12500000, phase: 'Phase 9: Site Establishment' },
+
+        // Machinery & Labor Overrides (Optional but good for Everything)
+        { materialName: 'Excavator Rental', category: 'Plant Hire', unit: 'Day', basePrice: 650000, phase: 'General' },
+        { materialName: 'Grader Rental', category: 'Plant Hire', unit: 'Day', basePrice: 750000, phase: 'General' },
+        { materialName: 'Site Engineer', category: 'Labor', unit: 'Month', basePrice: 2500000, phase: 'General' },
+        { materialName: 'Skilled Artisan', category: 'Labor', unit: 'Day', basePrice: 45000, phase: 'General' }
+    ];
+
+    for (const mp of MATERIAL_PRICES) {
+        await prisma.materialPriceConfig.create({
+            data: mp
+        });
+    }
+    console.log(` > Seeded ${MATERIAL_PRICES.length} material price definitions`);
     console.log('--- Seeding Users ---');
     const hashedPassword = await bcrypt.hash('Password@1', 10);
     const userMap = {}; // Map email to DB User object

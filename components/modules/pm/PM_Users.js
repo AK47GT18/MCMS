@@ -47,9 +47,9 @@ export const PM_Users = {
                 </div>
             </div>
         `;
-    },
+    },
 
-    async loadUsers() {
+    async loadUsers(page = 1) {
         const container = document.getElementById('users-table-container');
         if (!container) return;
 
@@ -58,21 +58,43 @@ export const PM_Users = {
             const role = document.getElementById('user-role-filter')?.value;
             const status = document.getElementById('user-status-filter')?.value;
 
-            const params = { limit: 100 };
+            const params = { limit: 15, page: page };
             if (search) params.search = search;
             if (role) params.role = role;
-            if (status !== "" && status !== undefined) params.isLocked = status;
+            
+            if (status === 'true') params.isLocked = true;
+            else if (status === 'false') params.isLocked = false;
 
             const response = await users.getAll(params);
             const data = response.data || response; 
             const usersList = Array.isArray(data) ? data : data.users || [];
+            const total = data.total || usersList.length;
+            const totalPages = Math.ceil(total / 15);
             
             if (usersList.length === 0) {
                 container.innerHTML = this.renderEmptyState('No users found matching your criteria.');
                 return;
             }
 
-            container.innerHTML = this.renderUsersTable(usersList);
+            container.innerHTML = `
+                ${this.renderUsersTable(usersList)}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--slate-50); border-top: 1px solid var(--slate-200);">
+                    <div style="font-size: 13px; color: var(--slate-500);">
+                        Showing ${(page - 1) * 15 + 1} - ${Math.min(page * 15, total)} of ${total} users
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" ${page === 1 ? 'disabled' : ''} onclick="window.app.pmModule.loadUsers(${page - 1})">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--slate-700);">
+                            Page ${page} of ${totalPages || 1}
+                        </div>
+                        <button class="btn btn-secondary btn-sm" ${page >= totalPages ? 'disabled' : ''} onclick="window.app.pmModule.loadUsers(${page + 1})">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
         } catch (error) {
             console.error('Failed to load users:', error);
             container.innerHTML = `
@@ -83,11 +105,17 @@ export const PM_Users = {
                 </div>
             `;
         }
-    },
+    },
 
     renderUsersTable(usersList) {
-        const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
-        const formatRole = (role) => role.replace(/_/g, ' ');
+        const getInitials = (name) => {
+            if (!name) return '?';
+            return name.toString().split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase();
+        };
+        const formatRole = (role) => {
+            if (!role) return 'User';
+            return role.toString().replace(/_/g, ' ');
+        };
         
         const rows = usersList.map(user => {
             const isLocked = user.isLocked;

@@ -487,6 +487,7 @@ model AuditLog {
   targetCode String?  @map("target_code") @db.VarChar(50)
   ipAddress  String?  @map("ip_address") @db.Inet
   details    Json?
+  severity   String   @default("info") @db.VarChar(20)
   timestamp  DateTime @default(now()) @db.Timestamptz(6)
   user       User?    @relation(fields: [userId], references: [id])
 
@@ -950,8 +951,13 @@ model PushSubscription {
 model MaterialPriceConfig {
   id           Int      @id @default(autoincrement())
   materialName String   @unique @map("material_name") @db.VarChar(255)
+  category     String?  @db.VarChar(100)
   unit         String   @db.VarChar(50)
   basePrice    Decimal  @map("base_price") @db.Decimal(18, 2)
+  costPerKm    Decimal? @map("cost_per_km") @db.Decimal(18, 2)
+  phase        String?  @db.VarChar(100)
+  isDeleted    Boolean  @default(false) @map("is_deleted")
+  isActive     Boolean  @default(true) @map("is_active")
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   updatedById  Int?     @map("updated_by_id")
   updatedBy    User?    @relation(fields: [updatedById], references: [id])

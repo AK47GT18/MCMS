@@ -100,8 +100,8 @@ export const PM_Portfolio = {
         const filtered = status === 'all' 
             ? this.allProjects 
             : (status === 'active' 
-                ? this.allProjects.filter(p => p.status === 'active' || p.status === 'in_progress')
-                : this.allProjects.filter(p => p.status === status));
+                ? this.allProjects.filter(p => (p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'in_progress')
+                : this.allProjects.filter(p => (p.status || '').toLowerCase() === status.toLowerCase()));
         
         if (filtered.length > 0) {
             container.innerHTML = this.renderProjectsTable(filtered);

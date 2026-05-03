@@ -3,39 +3,65 @@
  * Handles price configuration and Variation Orders
  */
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../config/database');
 
 class PMService {
   /**
    * Material Price Configuration
    */
-  async getMaterialPrices() {
-    return await prisma.materialPriceConfig.findMany({
-      orderBy: { materialName: 'asc' }
-    });
+  async getMaterialPrices(page = 1, limit = 15, search = '', category = '') {
+    const skip = (page - 1) * limit;
+    const where = { isDeleted: false };
+    
+    if (search) {
+      where.OR = [
+        { materialName: { contains: search, mode: 'insensitive' } },
+        { phase: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    if (category) {
+      where.category = category;
+    }
+
+    const [configs, total] = await Promise.all([
+      prisma.materialPriceConfig.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { materialName: 'asc' }
+      }),
+      prisma.materialPriceConfig.count({ where })
+    ]);
+    return { configs, total, page, limit };
   }
 
   async upsertMaterialPrice(data, userId) {
+    const updateData = {
+      unit: data.unit,
+      basePrice: data.basePrice,
+      costPerKm: data.costPerKm ? parseFloat(data.costPerKm) : null,
+      phase: data.phase,
+      category: data.category,
+      updatedById: userId,
+      isDeleted: false // Re-activate if it was deleted
+    };
+
     return await prisma.materialPriceConfig.upsert({
       where: { materialName: data.materialName },
-      update: {
-        unit: data.unit,
-        basePrice: data.basePrice,
-        updatedById: userId
-      },
+      update: updateData,
       create: {
-        materialName: data.materialName,
-        unit: data.unit,
-        basePrice: data.basePrice,
-        updatedById: userId
+        ...updateData,
+        materialName: data.materialName
       }
     });
   }
 
   async deleteMaterialPrice(id) {
-    return await prisma.materialPriceConfig.delete({
-      where: { id: parseInt(id) }
+    // Perform soft delete
+    return await prisma.materialPriceConfig.update({
+      where: { id: parseInt(id) },
+      data: { isDeleted: true }
     });
   }
 

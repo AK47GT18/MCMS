@@ -23,7 +23,7 @@ export const PM_Issues = {
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.loadIssuesFromAPI()"><i class="fas fa-sync"></i> Refresh</button>
-                            <button class="btn btn-action btn-sm" onclick="window.app.openIssueDrawer(${this.selectedProjectId || 'null'}, 'Log Issue')"><i class="fas fa-plus"></i> Log Issue</button>
+                            <button class="btn btn-action btn-sm" onclick="window.app.openIssueDrawer(${this.selectedProjectId || 'null'}, 'Report Issue')"><i class="fas fa-plus"></i> Report Issue</button>
                         </div>
                     </div>
                     

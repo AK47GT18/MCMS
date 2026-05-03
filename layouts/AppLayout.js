@@ -81,15 +81,17 @@ export class AppLayout {
             const result = await notificationsApi.getAll({ limit: 15 });
             const data = result.data || result;
 
-            this.notifications = (data.notifications || []).map(n => ({
-                id: n.id,
-                type: n.type || 'info',
-                icon: n.icon || 'fa-bell',
-                title: n.title,
-                desc: n.message,
-                time: this._formatTime(n.createdAt),
-                isRead: n.isRead
-            }));
+            this.notifications = (data.notifications || [])
+                .filter(n => !n.isRead) // Filter out read ones so they "disappear" as requested
+                .map(n => ({
+                    id: n.id,
+                    type: n.type || 'info',
+                    icon: n.icon || 'fa-bell',
+                    title: n.title || 'Notification', // Fallback for undefined
+                    desc: n.message || 'New update available', // Fallback for undefined
+                    time: this._formatTime(n.createdAt),
+                    isRead: n.isRead
+                }));
             this.unreadCount = data.unreadCount || 0;
 
             this._renderNotificationBadge();
@@ -117,8 +119,8 @@ export class AppLayout {
                         id: data.id,
                         type: data.type || 'info',
                         icon: data.icon || 'fa-bell',
-                        title: data.title,
-                        desc: data.message,
+                        title: data.title || 'Notification',
+                        desc: data.message || 'New update available',
                         time: this._formatTime(data.createdAt || new Date()),
                         isRead: false
                     });

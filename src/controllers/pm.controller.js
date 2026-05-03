@@ -4,7 +4,7 @@
  */
 
 const pmService = require('../services/pm.service');
-const { parseBody, parseId } = require('../middlewares/validate.middleware');
+const { parseBody, parseId, parseQuery } = require('../middlewares/validate.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
 const response = require('../utils/response');
 const { asyncHandler } = require('../middlewares/error.middleware');
@@ -13,7 +13,13 @@ const getMaterialPrices = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
   
-  const result = await pmService.getMaterialPrices();
+  const query = parseQuery(req.url);
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 15;
+  const search = query.search || '';
+  const category = query.category || '';
+  
+  const result = await pmService.getMaterialPrices(page, limit, search, category);
   response.success(res, result);
 });
 

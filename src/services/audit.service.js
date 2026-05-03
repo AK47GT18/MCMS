@@ -10,7 +10,7 @@ const logger = require('../utils/logger');
  * Create an audit log entry
  * @param {Object} params - Audit log parameters
  */
-async function log({ userId, userName, userRole, action, targetType, targetId, targetCode, ipAddress, details }) {
+async function log({ userId, userName, userRole, action, targetType, targetId, targetCode, ipAddress, details, severity = 'info' }) {
   try {
     await prisma.auditLog.create({
       data: {
@@ -22,7 +22,8 @@ async function log({ userId, userName, userRole, action, targetType, targetId, t
         targetId,
         targetCode,
         ipAddress,
-        details: details ? JSON.stringify(details) : null,
+        severity,
+        details: details ? (typeof details === 'string' ? details : JSON.stringify(details)) : null,
       },
     });
   } catch (error) {
@@ -34,7 +35,7 @@ async function log({ userId, userName, userRole, action, targetType, targetId, t
 /**
  * Create audit log from request context
  */
-async function logFromRequest(req, action, targetType, targetId, targetCode, details) {
+async function logFromRequest(req, action, targetType, targetId, targetCode, details, severity = 'info') {
   const user = req.user;
   const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress;
   
@@ -48,19 +49,30 @@ async function logFromRequest(req, action, targetType, targetId, targetCode, det
     targetCode,
     ipAddress,
     details,
+    severity
   });
 }
 
 /**
- * Get audit logs with pagination
+ * Get audit logs with pagination and filters
  */
-async function getAll({ page = 1, limit = 50, userId, action, targetType, startDate, endDate }) {
+async function getAll({ page = 1, limit = 50, userId, action, targetType, startDate, endDate, severity, search }) {
   const skip = (page - 1) * limit;
   const where = {};
   
   if (userId) where.userId = userId;
-  if (action) where.action = action;
+  if (action && action !== 'all') where.action = action;
   if (targetType) where.targetType = targetType;
+  if (severity && severity !== 'all') where.severity = severity;
+  
+  if (search) {
+    where.OR = [
+      { userName: { contains: search, mode: 'insensitive' } },
+      { action: { contains: search, mode: 'insensitive' } },
+      { details: { contains: search, mode: 'insensitive' } }
+    ];
+  }
+
   if (startDate || endDate) {
     where.timestamp = {};
     if (startDate) where.timestamp.gte = new Date(startDate);
@@ -100,4 +112,15 @@ async function getRecentActivity(limit = 20) {
   });
 }
 
-module.exports = { log, logFromRequest, getAll, getRecentActivity };
+/**
+ * Get all unique action types for filtering
+ */
+async function getUniqueActions() {
+  const actions = await prisma.auditLog.groupBy({
+    by: ['action'],
+    _count: { action: true }
+  });
+  return actions.map(a => a.action).sort();
+}
+
+module.exports = { log, logFromRequest, getAll, getRecentActivity, getUniqueActions };

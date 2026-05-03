@@ -369,9 +369,17 @@ const paginationSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   // User Filters
   role: z.string().optional(),
-  isLocked: z.coerce.boolean().optional(),
+  isLocked: z.preprocess((val) => {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    return val;
+  }, z.boolean().optional()),
   search: z.string().optional(),
-  unassigned: z.coerce.boolean().optional(),
+  unassigned: z.preprocess((val) => {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    return val;
+  }, z.boolean().optional()),
 });
 
 // ============================================

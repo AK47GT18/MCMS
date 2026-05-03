@@ -72,26 +72,73 @@ export const DrawerTemplates = {
                 <input type="text" id="price-material-name" class="form-input" data-vrules="required" value="${data.materialName || ''}" placeholder="e.g. Cement (42.5R)" style="width: 100%;">
             </div>
 
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Base Price (MWK)</label>
-                <input type="number" id="price-base-amount" class="form-input" data-vrules="required|min:1" value="${data.basePrice || ''}" placeholder="0.00" style="width: 100%; font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--slate-900);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Category</label>
+                    <select id="price-category" class="form-input" style="width: 100%;">
+                        <option value="Aggregates" ${data.category === 'Aggregates' ? 'selected' : ''}>Aggregates</option>
+                        <option value="Bitumen" ${data.category === 'Bitumen' ? 'selected' : ''}>Bitumen</option>
+                        <option value="Cement" ${data.category === 'Cement' ? 'selected' : ''}>Cement</option>
+                        <option value="Fuel" ${data.category === 'Fuel' ? 'selected' : ''}>Fuel</option>
+                        <option value="Earthworks" ${data.category === 'Earthworks' ? 'selected' : ''}>Earthworks</option>
+                        <option value="Drainage" ${data.category === 'Drainage' ? 'selected' : ''}>Drainage</option>
+                        <option value="Road Furniture" ${data.category === 'Road Furniture' ? 'selected' : ''}>Road Furniture</option>
+                        <option value="Others" ${data.category === 'Others' ? 'selected' : ''}>Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project Phase</label>
+                    <select id="price-phase" class="form-input" style="width: 100%;">
+                        <option value="General" ${data.phase === 'General' ? 'selected' : ''}>General / Unassigned</option>
+                        <option value="Phase 1: Clearing & Grubbing" ${data.phase === 'Phase 1: Clearing & Grubbing' ? 'selected' : ''}>Phase 1: Clearing & Grubbing</option>
+                        <option value="Phase 2: Earthworks / Subgrade" ${data.phase === 'Phase 2: Earthworks / Subgrade' ? 'selected' : ''}>Phase 2: Earthworks / Subgrade</option>
+                        <option value="Phase 3: Sub-base Construction" ${data.phase === 'Phase 3: Sub-base Construction' ? 'selected' : ''}>Phase 3: Sub-base Construction</option>
+                        <option value="Phase 4: Base Course Construction" ${data.phase === 'Phase 4: Base Course Construction' ? 'selected' : ''}>Phase 4: Base Course Construction</option>
+                        <option value="Phase 5: Surfacing" ${data.phase === 'Phase 5: Surfacing' ? 'selected' : ''}>Phase 5: Surfacing</option>
+                        <option value="Phase 6: Drainage" ${data.phase === 'Phase 6: Drainage' ? 'selected' : ''}>Phase 6: Drainage</option>
+                        <option value="Phase 7: Road Furniture & Accessories" ${data.phase === 'Phase 7: Road Furniture & Accessories' ? 'selected' : ''}>Phase 7: Road Furniture & Accessories</option>
+                        <option value="Phase 8: Bridge Construction" ${data.phase === 'Phase 8: Bridge Construction' ? 'selected' : ''}>Phase 8: Bridge Construction</option>
+                        <option value="Phase 9: Site Establishment" ${data.phase === 'Phase 9: Site Establishment' ? 'selected' : ''}>Phase 9: Site Establishment</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Base Price (MWK)</label>
+                    <input type="number" id="price-base-amount" class="form-input" data-vrules="required|min:0" value="${data.basePrice || ''}" placeholder="0.00" style="width: 100%; font-weight: 700; font-family: 'JetBrains Mono';">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Unit</label>
+                    <select id="price-unit" class="form-input" style="width: 100%;">
+                        <option value="Bag" ${data.unit === 'Bag' ? 'selected' : ''}>Bag</option>
+                        <option value="m3" ${data.unit === 'm3' ? 'selected' : ''}>m³</option>
+                        <option value="ton" ${data.unit === 'ton' ? 'selected' : ''}>Tonne</option>
+                        <option value="litres" ${data.unit === 'litres' ? 'selected' : ''}>Litres</option>
+                        <option value="m" ${data.unit === 'm' ? 'selected' : ''}>Meter (m)</option>
+                        <option value="unit" ${data.unit === 'unit' ? 'selected' : ''}>Unit</option>
+                        <option value="drum" ${data.unit === 'drum' ? 'selected' : ''}>Drum</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Unit of Measure</label>
-                <select id="price-unit" class="form-input" style="width: 100%;">
-                    <option value="Bag" ${data.unit === 'Bag' ? 'selected' : ''}>Bag</option>
-                    <option value="m3" ${data.unit === 'm3' ? 'selected' : ''}>Cubic Meter (m3)</option>
-                    <option value="ton" ${data.unit === 'ton' ? 'selected' : ''}>Tonne (ton)</option>
-                    <option value="liter" ${data.unit === 'liter' ? 'selected' : ''}>Liter</option>
-                    <option value="meter" ${data.unit === 'meter' ? 'selected' : ''}>Meter</option>
-                    <option value="unit" ${data.unit === 'unit' ? 'selected' : ''}>Individual Unit</option>
-                </select>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Rate per Kilometer (MWK/Km)</label>
+                <input type="number" id="price-cost-per-km" class="form-input" value="${data.costPerKm || ''}" placeholder="Optional estimation rate" style="width: 100%; font-family: 'JetBrains Mono';">
+                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Used for distance-based procurement forecasting.</div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handlePriceConfigSubmit(${data.id || 'null'})">
-                ${data.id ? 'Update Configuration' : 'Save Configuration'}
-            </button>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.app.pmModule.handlePriceConfigSubmit(${data.id || 'null'})">
+                    <i class="fas fa-save" style="margin-right: 8px;"></i> ${data.id ? 'Update Configuration' : 'Save Configuration'}
+                </button>
+                
+                ${data.id ? `
+                    <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red-light); background: transparent;" onclick="window.app.pmModule.deleteMaterialPrice('${data.id}')">
+                        <i class="fas fa-trash-can" style="margin-right: 8px;"></i> Delete Configuration
+                    </button>
+                ` : ''}
+            </div>
         </div>
     `,
     variationOrderForm: (contractId) => `
@@ -834,7 +881,7 @@ export const DrawerTemplates = {
 
                 <div style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                    <input type="number" id="proj_budget" class="form-input" min="0" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
+                    <input type="number" id="proj_budget" class="form-input" min="1" required oninput="const m = (window.app.pmModule || window.app.fsModule); if(m && m.validateInline) m.validateInline(this.id)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;" placeholder="0.00">
                     <div id="proj_budget-error" class="v-msg v-msg-err" style="display:none;"></div>
                     <span style="font-size:11px; color:var(--slate-500); margin-top:4px; display:inline-block;"><i class="fas fa-info-circle"></i> For road works, the estimate must fit within this envelope.</span>
                 </div>
@@ -871,8 +918,10 @@ export const DrawerTemplates = {
                     <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">Site reporting is only allowed within this radius.</div>
                 </div>
                 <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Click map to set)</label>
-                    <div id="project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Loading Map...</div>
+                    <div id="project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); position: relative; overflow: hidden; z-index: 1;">
+                        <div class="map-loader" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: var(--slate-400); font-size: 12px; z-index: 0;">
+                            <i class="fas fa-map-marked-alt"></i> Loading Map...
+                        </div>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="proj_lat">-13.9626</span></div>
@@ -4888,5 +4937,189 @@ Contract Admin</textarea>
                 `}
             </div>
         </div>
-    `
+    `,
+
+    auditDetails: (log) => {
+        const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+        
+        const getAuditSummaryHTML = () => {
+            if (!details) return '';
+            
+            let summary = '';
+            const action = log.action;
+            
+            if (action === 'UPDATE_USER' || action === 'CREATE_USER') {
+                summary = `
+                    <div style="background: #fdf2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #991b1b; font-weight: 700; margin-bottom: 4px;">User Profile Event</div>
+                        <div style="font-size: 13px; color: #7f1d1d;">
+                            ${action === 'CREATE_USER' ? 'New user account provisioned for' : 'Account details updated for'} 
+                            <strong>${details.name || details.email || log.targetCode || 'Unknown User'}</strong>.
+                            ${details.role ? `<br>Assigned Role: <span class="badge active" style="font-size:10px; margin-top:4px;">${details.role}</span>` : ''}
+                            ${details.changes && details.changes.length > 0 ? `<div style="margin-top:8px; font-size:11px; color:#991b1b;">Fields modified: ${details.changes.join(', ')}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('EXTENSION') || action.includes('TIMELINE')) {
+                summary = `
+                    <div style="background: #fefce8; border: 1px solid #fef08a; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #854d0e; font-weight: 700; margin-bottom: 4px;">Timeline Variance Event</div>
+                        <div style="font-size: 13px; color: #713f12;">
+                            Project: <strong>${details.projectName || log.targetCode || 'N/A'}</strong><br>
+                            Requested End Date: <span style="font-weight:700;">${details.requestedEndDate || 'N/A'}</span><br>
+                            Extension: <span style="color:#ca8a04; font-weight:700;">+${details.extensionDays || 0} days</span><br>
+                            Reason: <span style="font-style:italic;">"${details.justification || 'No justification provided'}"</span>
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('MONETARY') || action.includes('BUDGET') || action.includes('FINANCE') || action.includes('REQUISITION') || action.includes('PAYMENT')) {
+                 const amount = details.amount || details.totalAmount || details.cost || 0;
+                 summary = `
+                    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #065f46; font-weight: 700; margin-bottom: 4px;">Financial Transaction Event</div>
+                        <div style="font-size: 13px; color: #064e3b;">
+                            Impact: <strong style="font-size: 15px; color: #059669;">MWK ${Number(amount).toLocaleString()}</strong><br>
+                            Resource: ${log.targetType} (${log.targetCode || 'N/A'})<br>
+                            Status Flow: <span style="font-weight:600;">${details.oldStatus || 'INITIATED'} &rarr; ${details.newStatus || log.status || 'FINALIZED'}</span>
+                            ${details.remainingBudget ? `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #a7f3d0;">Project Balance after action: <strong>MWK ${Number(details.remainingBudget).toLocaleString()}</strong></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('VENDOR') || action.includes('PROCUREMENT') || action.includes('CONTRACT')) {
+                summary = `
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #1e40af; font-weight: 700; margin-bottom: 4px;">Supply Chain & Logistics Event</div>
+                        <div style="font-size: 13px; color: #1e3a8a;">
+                            Entity/Contract: <strong>${details.vendorName || details.supplierName || details.contractName || log.targetCode || 'N/A'}</strong><br>
+                            ${details.amount ? `Transaction Value: <strong style="color:#2563eb;">MWK ${Number(details.amount).toLocaleString()}</strong><br>` : ''}
+                            ${details.remainingProjectBudget ? `Project Ledger Balance: <strong>MWK ${Number(details.remainingProjectBudget).toLocaleString()}</strong>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('ASSET') || action.includes('EQUIPMENT')) {
+                summary = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 4px;">Asset Allocation Event</div>
+                        <div style="font-size: 13px; color: #1e293b;">
+                            Asset: <strong>${details.assetName || log.targetCode || 'N/A'}</strong><br>
+                            Assigned to: <span style="font-weight:600;">${details.assignedTo || 'Unassigned'}</span><br>
+                            Action: <span style="color:var(--orange); font-weight:700;">${log.action.replace(/_/g, ' ')}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('REQUISITION')) {
+                summary = `
+                    <div style="background: #fff7ed; border: 1px solid #ffedd5; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #9a3412; font-weight: 700; margin-bottom: 4px;">Resource Requisition Event</div>
+                        <div style="font-size: 13px; color: #7c2d12;">
+                            ID: <strong>${log.targetCode || 'N/A'}</strong><br>
+                            Action: <span style="font-weight:600;">${action.replace(/_/g, ' ')}</span><br>
+                            Items: <span style="font-style:italic;">${details.itemsCount || details.items?.length || 'Multiple resources'}</span>
+                            ${details.totalCost ? `<br>Estimated Value: <strong>MWK ${Number(details.totalCost).toLocaleString()}</strong>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('ISSUE') || action.includes('COMPLAINT') || action.includes('INCIDENT')) {
+                summary = `
+                    <div style="background: #fff1f2; border: 1px solid #ffe4e6; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #be123c; font-weight: 700; margin-bottom: 4px;">Governance & Safety Event</div>
+                        <div style="font-size: 13px; color: #881337;">
+                            Category: <strong>${details.category || 'Site Issue'}</strong><br>
+                            Priority: <span class="status ${details.priority === 'high' ? 'rejected' : 'active'}" style="font-size:9px; padding: 2px 6px;">${(details.priority || 'NORMAL').toUpperCase()}</span><br>
+                            Description: <span style="font-size:12px; display:block; margin-top:4px; line-height:1.4;">${details.description || 'No description provided.'}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (action.includes('REPORT') || action.includes('ANALYTICS')) {
+                summary = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 4px;">Data & Insights Event</div>
+                        <div style="font-size: 13px; color: #1e293b;">
+                            Action: <span style="font-weight:600;">${action.replace(/_/g, ' ')}</span><br>
+                            Resource: <strong>${log.targetType || 'System Report'}</strong><br>
+                            Scope: <span style="font-size:11px;">${details.scope || details.projectName || 'Full System'}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (action === 'APPROVE' || action === 'REJECT' || action.includes('REVIEW')) {
+                const isApprove = action === 'APPROVE' || action.includes('APPROVE');
+                summary = `
+                    <div style="background: ${isApprove ? '#ecfdf5' : '#fff1f2'}; border: 1px solid ${isApprove ? '#a7f3d0' : '#fecaca'}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: ${isApprove ? '#065f46' : '#991b1b'}; font-weight: 700; margin-bottom: 4px;">Governance Approval Workflow</div>
+                        <div style="font-size: 13px; color: ${isApprove ? '#064e3b' : '#7f1d1d'};">
+                            Result: <strong style="color:${isApprove ? '#059669' : '#dc2626'};">${action.replace(/_/g, ' ')}</strong><br>
+                            Target: <strong>${log.targetType} (${log.targetCode})</strong><br>
+                            Comment: <span style="font-style:italic;">"${details.comment || details.reason || 'No comment provided'}"</span>
+                        </div>
+                    </div>
+                `;
+            }
+            return summary;
+        };
+        
+        return `
+            <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Action Type</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--slate-900);">${log.action}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span class="status ${log.status === 'failure' ? 'rejected' : 'active'}" style="font-size:10px; padding: 4px 8px; border-radius: 4px;">${(log.status || 'Success').toUpperCase()}</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">Actor</div>
+                        <div style="font-size:13px; font-weight:600;">${log.userName || 'System'}</div>
+                        <div style="font-size:11px; color:var(--slate-400);">${log.userRole || 'Automated Service'}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase;">IP Address</div>
+                        <div style="font-size:12px; font-family:'JetBrains Mono';">${log.ipAddress || 'Internal'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="drawer-section">
+                ${getAuditSummaryHTML()}
+                
+                <div style="margin-bottom: 24px;">
+                    <h4 style="font-size: 13px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-microchip" style="color: var(--orange);"></i> Technical Trace Data
+                    </h4>
+                    
+                    <div style="background: var(--slate-900); border-radius: 8px; padding: 16px; color: #a5d6ff; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.5; overflow-x: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                        <pre style="margin: 0;">${JSON.stringify(details, null, 2)}</pre>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
+                        <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase; margin-bottom: 4px;">Target Type</div>
+                        <div style="font-size:12px; font-weight:600;">${log.targetType || 'N/A'}</div>
+                    </div>
+                    <div style="border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
+                        <div style="font-size:10px; color:var(--slate-500); text-transform:uppercase; margin-bottom: 4px;">Resource ID</div>
+                        <div style="font-size:12px; font-weight:600; font-family:'JetBrains Mono';">${log.targetId || log.targetCode || 'None'}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px; padding: 16px; background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 8px;">
+                    <div style="display: flex; gap: 12px;">
+                        <i class="fas fa-shield-halved" style="color: #3b82f6; font-size: 18px;"></i>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #1e40af;">Audit Integrity Verified</div>
+                            <div style="font-size: 11px; color: #1e40af; margin-top: 2px;">This log entry is immutable and cryptographically timestamped in the system records.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Close Log</button>
+            </div>
+        `;
+    }
 };

@@ -447,6 +447,9 @@ async function router(req, res) {
   // AUDIT LOGS ROUTES
   // ============================================
   if (resource === 'audit-logs') {
+    if (id === 'actions' && method === 'GET') {
+      return auditController.getUniqueActions(req, res);
+    }
     if (id === 'recent' && method === 'GET') {
       return auditController.getRecent(req, res);
     }

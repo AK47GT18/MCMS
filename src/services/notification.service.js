@@ -8,6 +8,7 @@ const websocket = require('../realtime/websocket');
 const pushService = require('./push.service');
 const emailService = require('../emails/email.service');
 const logger = require('../utils/logger');
+const auditService = require('./audit.service');
 
 /**
  * Create a notification for a specific user
@@ -60,6 +61,17 @@ async function create(data) {
       }
     });
 
+
+  
+  // Add to Audit Logs
+  auditService.log({
+    userId,
+    action: 'NOTIFICATION_SENT',
+    targetType: 'NOTIFICATION',
+    targetId: notification.id,
+    details: { title, message }
+  }).catch(err => logger.error('Error logging notification to audit:', err));
+  
   logger.info(`Notification created for user ${userId}: ${title}`);
   return notification;
 }

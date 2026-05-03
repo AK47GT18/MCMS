@@ -24,7 +24,11 @@ export const PM_MissingHandlers = {
             } else if (num < 0) {
                 errorMsg = 'Negative values are not allowed';
                 input.value = 0;
-                input.classList.add('v-shake'); // Use v-shake from CSS
+                input.classList.add('v-shake'); 
+                setTimeout(() => input.classList.remove('v-shake'), 400);
+            } else if (id === 'proj_budget' && num === 0) {
+                errorMsg = 'Allocated budget cannot be zero';
+                input.classList.add('v-shake');
                 setTimeout(() => input.classList.remove('v-shake'), 400);
             }
         } else if (input.type === 'date') {
@@ -36,6 +40,14 @@ export const PM_MissingHandlers = {
                 if (start && value < start) {
                     errorMsg = 'End date cannot be before start date';
                 }
+            }
+        } else if (input.type === 'text' && value.trim()) {
+            // Check if input is just numbers (for name-like fields)
+            const nameFields = ['proj_name', 'proj_client', 'road_zone', 'road_town_dist_text']; 
+            if ((nameFields.includes(id) || id.includes('name')) && /^\d+$/.test(value.trim())) {
+                errorMsg = 'This field cannot be composed solely of numbers';
+                input.classList.add('v-shake');
+                setTimeout(() => input.classList.remove('v-shake'), 400);
             }
         } else if (!value.trim() && input.hasAttribute('required')) {
             errorMsg = 'This field is required';
@@ -343,6 +355,9 @@ export const PM_MissingHandlers = {
                 this.geofenceCircle = circle;
                 this.locationMarker = marker;
 
+                // Force refresh
+                setTimeout(() => map.invalidateSize(), 100);
+
                 // Add CSS overrides for Geocoder within the map container
                 const geocoderStyle = document.createElement('style');
                 geocoderStyle.innerHTML = `
@@ -504,7 +519,13 @@ export const PM_MissingHandlers = {
         document.querySelectorAll('.wizard-pane').forEach(p => p.style.display = 'none');
         // Show target pane
         const targetPane = document.getElementById(`wizard-pane-${stepNum}`);
-        if(targetPane) targetPane.style.display = 'block';
+        if(targetPane) {
+            targetPane.style.display = 'block';
+            // Force map refresh if Step 1 is re-entered
+            if (stepNum === 1 && this.projectMap) {
+                setTimeout(() => this.projectMap.invalidateSize(), 50);
+            }
+        }
 
         // Update progress bar
         const totalSteps = 5; 

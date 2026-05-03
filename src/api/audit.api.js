@@ -42,6 +42,13 @@ const audit = {
   async getBySeverity(severity) {
     return await client.get(`/audit-logs?severity=${severity}`);
   },
+  
+  /**
+   * Get unique action types
+   */
+  async getActions() {
+    return await client.get('/audit-logs/actions');
+  }
 };
 
 export default audit;
