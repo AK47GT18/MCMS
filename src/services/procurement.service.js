@@ -119,7 +119,12 @@ async function getProjectStatus(projectId) {
   });
 
   if (!roadSpec) {
-    throw new AppError('No road specification found for this project. Cannot calculate procurement needs.', 404);
+    return {
+      projectId: parseInt(projectId),
+      missingSpec: true,
+      materials: [],
+      totalContracts: 0
+    };
   }
 
   // Aggregate required items

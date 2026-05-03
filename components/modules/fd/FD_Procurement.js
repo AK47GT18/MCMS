@@ -49,6 +49,29 @@ export const FD_Procurement = {
             const res = await client.get(`/procurement/project-status/${projectId}`);
             const data = res.data;
             
+            if (data.missingSpec) {
+                container.innerHTML = `
+                    <div style="padding: 60px 40px; text-align: center;">
+                        <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--slate-400);">
+                            <i class="fas fa-drafting-compass" style="font-size: 32px;"></i>
+                        </div>
+                        <h3 style="font-size: 18px; font-weight: 700; color: var(--slate-900); margin-bottom: 12px;">Project Specification Required</h3>
+                        <p style="max-width: 450px; margin: 0 auto 24px; color: var(--slate-500); line-height: 1.6;">
+                            This project has not been initialized with a technical road specification. Material procurement needs cannot be calculated until the Project Manager saves an approved technical estimate.
+                        </p>
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="btn btn-secondary" onclick="window.app.fmModule.loadProcurementData()">
+                                <i class="fas fa-sync"></i> Check Again
+                            </button>
+                            <button class="btn btn-primary" style="background: var(--slate-800); border: none;" onclick="window.toast.show('Notification sent to PM', 'info')">
+                                <i class="fas fa-bell"></i> Notify PM
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             if (!data.materials || data.materials.length === 0) {
                 container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);">No materials required for this project's current phase.</div>`;
                 return;

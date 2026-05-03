@@ -371,14 +371,22 @@ class App {
             'finance': ['Finance_Director', 'Managing_Director', 'Finance Director', 'Managing Director'],
             'accounting': ['Finance_Director', 'Finance Director'],
             'requisitions': ['Finance_Director', 'Project_Manager', 'Finance Director', 'Project Manager'],
-            'transactions': ['Finance_Director', 'Finance Director']
+            'transactions': ['Finance_Director', 'Finance Director'],
+            'issues': ['Project_Manager', 'Project Manager'],
+            'portfolio': ['Project_Manager', 'Project Manager', 'Managing_Director', 'Managing Director'],
+            'complaints': ['Operations_Manager', 'Operations Manager']
         };
 
         // Check access
         const allowedRoles = ROUTE_PERMISSIONS[pageId];
         if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(this.currentUser.role)) {
-            window.toast?.show('Access denied: insufficient permissions', 'error');
+            window.toast?.show('Access denied: Restricted to Project Managers', 'warning');
             console.warn(`Access denied to ${pageId} for role ${this.currentUser.role}`);
+            
+            // Redirect to dashboard if trying to access restricted page
+            if (pageId !== 'dashboard') {
+                this.loadPage('dashboard');
+            }
             return;
         }
 
