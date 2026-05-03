@@ -1040,12 +1040,12 @@ export const DrawerTemplates = {
 
                 <div style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                    <input type="text" id="proj_name" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
+                    <input type="text" id="proj_name" class="form-input" data-vrules="required|minLen:5|hasLetters" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. M1 Karonga-Songwe Rehabilitation">
                 </div>
                 
                 <div style="margin-bottom: 16px;">
                     <label class="form-label v-req" style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                    <input type="text" id="proj_client" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
+                    <input type="text" id="proj_client" class="form-input" data-vrules="required|minLen:3|hasLetters" oninput="window.V?.checkField(this)" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" placeholder="e.g. Roads Authority (Malawi)">
                 </div>
 
                 <div style="margin-bottom: 16px;">

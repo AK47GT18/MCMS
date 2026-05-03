@@ -24,6 +24,7 @@ const RX = {
     noSpecial:/^[A-Za-z0-9\s]+$/,
     url:      /^https?:\/\/.+/,
     mwkCode:  /^[A-Z]{2,4}-\d{2,4}$/,            // e.g. CEN-01
+    hasLetters: /[a-zA-Z]/,
 };
 
 // ────────────────────────────────────────────
@@ -51,6 +52,7 @@ const MSGS = {
     select:    'Please select an option',
     minWords:  (n) => `Enter at least ${n} words`,
     futureDate:'Date must be in the future',
+    hasLetters:'Must contain at least one letter',
 };
 
 // ────────────────────────────────────────────

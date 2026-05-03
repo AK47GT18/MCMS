@@ -173,79 +173,70 @@ export const PM_ProjectHandlers = {
 
     openEditProjectDrawer(id) {
         if(!id) return;
-        window.drawer.open('Edit Project Details', window.DrawerTemplates.editProject);
-         projects.getById(id).then(response => {
-             const project = response.data || response;
-             
-             const setVal = (id, val) => {
-                 const el = document.getElementById(id);
-                 if (el) el.value = val !== undefined && val !== null ? val : '';
-             };
-
-             setVal('edit_proj_id', project.id);
-             setVal('edit_proj_name', project.name);
-             setVal('edit_proj_client', project.client);
-             setVal('edit_proj_status', project.status);
-             setVal('edit_proj_budget', project.budgetTotal || project.budget);
-             setVal('edit_proj_start', project.startDate ? project.startDate.split('T')[0] : '');
-             setVal('edit_proj_end', project.endDate ? project.endDate.split('T')[0] : '');
-             
-             const latEl = document.getElementById('edit_proj_lat');
-             const lngEl = document.getElementById('edit_proj_lng');
-             if (latEl) latEl.textContent = Number(project.lat || -13.9626).toFixed(6);
-             if (lngEl) lngEl.textContent = Number(project.lng || 33.7741).toFixed(6);
-
-             this.fetchSupervisors('edit_proj_supervisor').then(() => {
-                 setVal('edit_proj_supervisor', project.managerId || project.manager_id);
-             });
-
-             this.initializeProjectMap(0, 'edit-project-map', {
-                 lat: project.lat || -13.9626,
-                 lng: project.lng || 33.7741,
-                 radius: project.radius || 500
-             });
-
-             const radiusVal = project.radius || 500;
-             const radEl = document.getElementById('edit_proj_radius_input');
-             if (radEl) {
-                 radEl.value = radiusVal;
-                 const radValEl = document.getElementById('edit_proj_radius_val');
-                 if (radValEl) radValEl.innerText = radiusVal + 'm';
-             }
-         });
-    },
-
-    async handleUpdateProject() {
-        const id = document.getElementById('edit_proj_id').value;
-        const projectType = document.getElementById('edit_proj_type')?.value || 'road_works';
-
-        const data = {
-            name: document.getElementById('edit_proj_name').value,
-            client: document.getElementById('edit_proj_client').value,
-            status: document.getElementById('edit_proj_status').value,
-            budgetTotal: parseFloat(document.getElementById('edit_proj_budget').value),
-            startDate: new Date(document.getElementById('edit_proj_start').value).toISOString(),
-            endDate: new Date(document.getElementById('edit_proj_end').value).toISOString(),
-            managerId: parseInt(document.getElementById('edit_proj_supervisor').value),
-            projectType: projectType,
-            lat: parseFloat(document.getElementById('edit_proj_lat').textContent),
-            lng: parseFloat(document.getElementById('edit_proj_lng').textContent),
-            radius: parseInt(document.getElementById('edit_proj_radius_input')?.value || 500)
+        
+        this.wizardState = {
+            isEditMode: true,
+            projectId: id,
+            currentStep: 1,
+            isRoad: true,
+            roadEstimatePreview: null,
+            formData: {}
         };
+        
+        window.drawer.open('Edit Project Details', window.DrawerTemplates.newProject);
+        
+        // Let the drawer render first
+        setTimeout(() => {
+            // Change title in the drawer
+            const titleEl = document.querySelector('.drawer-header h3');
+            if (titleEl) titleEl.innerText = 'Edit Project Details';
+            
+            projects.getById(id).then(response => {
+                const project = response.data || response;
+                
+                const setVal = (fid, val) => {
+                    const el = document.getElementById(fid);
+                    if (el) el.value = val !== undefined && val !== null ? val : '';
+                };
 
-        if (!data.name || !data.managerId) {
-            window.toast.show('Project name and supervisor are mandatory', 'error');
-            return;
-        }
+                // Populate Step 1
+                setVal('proj_name', project.name);
+                setVal('proj_client', project.client);
+                setVal('proj_budget', project.budgetTotal || project.budget);
+                setVal('proj_start', project.startDate ? project.startDate.split('T')[0] : '');
+                setVal('proj_end', project.endDate ? project.endDate.split('T')[0] : '');
+                
+                const latEl = document.getElementById('proj_lat');
+                const lngEl = document.getElementById('proj_lng');
+                if (latEl) latEl.textContent = Number(project.lat || -13.9626).toFixed(6);
+                if (lngEl) lngEl.textContent = Number(project.lng || 33.7741).toFixed(6);
 
-        try {
-            await projects.update(id, data);
-            window.toast.show('Project master updated successfully', 'success');
-            window.drawer.close();
-            this.loadProjectsFromAPI(); // Refresh table and stats
-        } catch (error) {
-            window.toast.show(error.message, 'error');
-        }
+                this.fetchSupervisors('proj_supervisor').then(() => {
+                    setVal('proj_supervisor', project.managerId || project.manager_id);
+                });
+
+                this.initializeProjectMap(0, 'project-location-map', {
+                    lat: project.lat || -13.9626,
+                    lng: project.lng || 33.7741,
+                    radius: project.radius || 500
+                });
+
+                const radiusVal = project.radius || 500;
+                const radEl = document.getElementById('proj_radius_input');
+                if (radEl) {
+                    radEl.value = radiusVal;
+                    const radValEl = document.getElementById('proj_radius_val');
+                    if (radValEl) radValEl.innerText = radiusVal + 'm';
+                }
+                
+                // Attempt to populate Step 2 & 3 if road details are found (usually in estimations)
+                // For now, we save what we have to cache
+                setTimeout(() => {
+                    this.saveWizardCache();
+                    this.updateFinalSummary();
+                }, 500);
+            });
+        }, 100);
     },
 
     openSuspendProjectDrawer(id) {

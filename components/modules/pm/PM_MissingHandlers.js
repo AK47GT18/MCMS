@@ -860,14 +860,24 @@ export const PM_MissingHandlers = {
             managerId: parseInt(document.getElementById('proj_supervisor').value),
             lat: parseFloat(document.getElementById('proj_lat').textContent),
             lng: parseFloat(document.getElementById('proj_lng').textContent),
-            radius: parseInt(document.getElementById('proj_radius_input')?.value || 500),
-            status: 'planning',
-            code: 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase()
+            radius: parseInt(document.getElementById('proj_radius_input')?.value || 500)
         };
 
+        if (!this.wizardState?.isEditMode) {
+            data.status = 'planning';
+            data.code = 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
         try {
-            const response = await client.post('/projects', data);
-            const projectId = response.data?.id || response.id;
+            let projectId;
+            if (this.wizardState?.isEditMode && this.wizardState.projectId) {
+                await projects.update(this.wizardState.projectId, data);
+                projectId = this.wizardState.projectId;
+            } else {
+                const response = await client.post('/projects', data);
+                projectId = response.data?.id || response.id;
+            }
+
             
             if (this.wizardState?.isRoad && this.wizardState?.roadEstimatePreview && projectId) {
                 const accBoxes = document.querySelectorAll('input[name="road_acc"]:checked');
@@ -893,7 +903,7 @@ export const PM_MissingHandlers = {
                 await client.post('/road-estimation/save', estPayload);
             }
 
-            window.toast.show('Project initialized successfully', 'success');
+            window.toast.show(this.wizardState?.isEditMode ? 'Project updated successfully' : 'Project initialized successfully', 'success');
             this.clearWizardCache(); // Clear cache on success
             window.drawer.close();
             this.loadProjectsFromAPI(); // Refresh the list

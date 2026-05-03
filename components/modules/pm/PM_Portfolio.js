@@ -162,6 +162,7 @@ export const PM_Portfolio = {
                         <button class="btn-icon dropdown-trigger" onclick="event.stopPropagation(); (window.app.pmModule || window.app.fmModule).toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-content" style="display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: var(--shadow-md); z-index: 100; border-radius: 4px; border: 1px solid var(--slate-200);">
                             <a href="#" onclick="event.preventDefault(); (window.app.pmModule || window.app.fmModule).openProjectDetailsDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-eye" style="width: 20px;"></i> View Details</a>
+                            <a href="#" onclick="event.preventDefault(); window.app.pmModule?.openEditProjectDrawer('${project.id}');" style="color: var(--slate-700); padding: 12px 16px; text-decoration: none; display: block; font-size: 13px;"><i class="fas fa-edit" style="width: 20px;"></i> Edit Project</a>
                         </div>
                     </div>
                 </td>
