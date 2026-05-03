@@ -814,10 +814,13 @@
                 <div class="form-group">
                     <label for="login-pass">Password</label>
                     <div class="password-wrapper">
-                        <input type="password" id="login-pass" name="password" placeholder="••••••••" required>
+                        <input type="password" id="login-pass" name="password" placeholder="••••••••" required data-validate="password">
                         <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
                             <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
                         </button>
+                    </div>
+                    <div class="field-hint" style="font-size: 10px; color: var(--slate-400); margin-top: 6px; font-weight: 500;">
+                        <i class="fas fa-shield-alt"></i> Min. 8 chars, uppercase, lowercase & number
                     </div>
                 </div>
                 <div style="text-align: right; margin-bottom: 20px;">
@@ -876,19 +879,25 @@
                 <div class="form-group">
                     <label for="reset-pass">New Password</label>
                     <div class="password-wrapper">
-                        <input type="password" id="reset-pass" name="password" placeholder="••••••••" required data-validate="strong-password" data-strength-meter="true">
+                        <input type="password" id="reset-pass" name="password" placeholder="••••••••" required data-validate="password" data-strength-meter="true">
                         <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
                             <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
                         </button>
+                    </div>
+                    <div class="field-hint" style="font-size: 10px; color: var(--slate-400); margin-top: 6px; font-weight: 500;">
+                        <i class="fas fa-shield-alt"></i> Min. 8 chars, uppercase, lowercase & number
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="reset-confirm">Confirm Password</label>
                     <div class="password-wrapper">
-                        <input type="password" id="reset-confirm" name="confirmPassword" placeholder="••••••••" required data-match="reset-pass">
+                        <input type="password" id="reset-confirm" name="confirmPassword" placeholder="••••••••" required data-match="reset-pass" data-validate="password">
                         <button type="button" class="password-toggle" onclick="togglePassword(this)" aria-label="Toggle password visibility">
                             <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
                         </button>
+                    </div>
+                    <div class="field-hint" style="font-size: 10px; color: var(--slate-400); margin-top: 6px; font-weight: 500;">
+                        <i class="fas fa-shield-alt"></i> Min. 8 chars, uppercase, lowercase & number
                     </div>
                 </div>
                 <button class="btn btn-primary" style="width: 100%; justify-content: center;">Update Password</button>

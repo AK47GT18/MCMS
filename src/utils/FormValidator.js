@@ -126,19 +126,29 @@ export class FormValidator {
         input.setAttribute('aria-invalid', 'true');
         
         // Find or create error message element
-        let errorEl = input.nextElementSibling;
-        if (!errorEl || !errorEl.classList.contains(this.options.messageClass)) {
+        let errorEl = input.dataset.errorId ? document.getElementById(input.dataset.errorId) : null;
+        
+        if (!errorEl) {
             errorEl = document.createElement('span');
             errorEl.className = this.options.messageClass;
-            // A11y: Link error to input
-            const errorId = `${input.id || input.name}-error`;
+            const errorId = `${input.id || input.name || Math.random().toString(36).substr(2, 9)}-error`;
             errorEl.id = errorId;
+            input.dataset.errorId = errorId;
             input.setAttribute('aria-describedby', errorId);
-            input.parentNode.insertBefore(errorEl, input.nextSibling);
+            
+            // Positioning Logic: If inside a wrapper, put error after the wrapper
+            const wrapper = input.closest('.password-wrapper, .input-group');
+            if (wrapper) {
+                wrapper.parentNode.insertBefore(errorEl, wrapper.nextSibling);
+            } else {
+                input.parentNode.insertBefore(errorEl, input.nextSibling);
+            }
         }
         
         errorEl.textContent = message;
         errorEl.style.display = 'block';
+        errorEl.style.width = '100%'; // Ensure it takes full width to stay below
+        errorEl.style.marginTop = '4px';
     }
 
     clearError(input) {

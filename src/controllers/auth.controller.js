@@ -8,6 +8,7 @@ const { validateBody, parseBody } = require('../middlewares/validate.middleware'
 const { authenticate } = require('../middlewares/auth.middleware');
 const { loginSchema, registerSchema } = require('../utils/validators');
 const response = require('../utils/response');
+const auditService = require('../services/audit.service');
 const { asyncHandler } = require('../middlewares/error.middleware');
 
 /**
@@ -20,6 +21,20 @@ const login = asyncHandler(async (req, res) => {
   if (!data) return;
   
   const result = await authService.login(data.email, data.password);
+  
+  // Log successful login (passing details directly as req.user is null)
+  await auditService.log({
+    userId: result.user.id,
+    userName: result.user.name,
+    userRole: result.user.role,
+    action: 'LOGIN_SUCCESS',
+    targetType: 'User',
+    targetId: result.user.id,
+    targetCode: result.user.email,
+    ipAddress: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    details: { message: 'User logged in successfully' }
+  });
+
   response.success(res, result);
 });
 
@@ -64,6 +79,12 @@ const changePassword = asyncHandler(async (req, res) => {
   }
   
   await authService.changePassword(user.id, currentPassword, newPassword);
+  
+  // Log password change
+  await auditService.logFromRequest(req, 'PASSWORD_CHANGE', 'User', user.id, user.email, {
+    message: 'User changed their password'
+  });
+
   response.success(res, { message: 'Password changed successfully' });
 });
 
@@ -122,6 +143,20 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
   
   const result = await authService.resetPassword(token, newPassword);
+  
+  // Log successful password reset
+  await auditService.log({
+    userId: result.user.id,
+    userName: result.user.name,
+    userRole: 'User', // Role might not be in the minimal return, 'User' is safe fallback
+    action: 'PASSWORD_RESET',
+    targetType: 'User',
+    targetId: result.user.id,
+    targetCode: result.user.email,
+    ipAddress: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    details: { message: 'Password reset successful via recovery token' }
+  });
+
   response.success(res, result);
 });
 

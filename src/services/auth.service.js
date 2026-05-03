@@ -249,7 +249,10 @@ async function resetPassword(token, newPassword) {
     logger.error('Failed to send password reset confirmation', { userId: user.id, error: err.message });
   });
   
-  return { message: 'Password reset successfully. You can now login.' };
+  return { 
+    message: 'Password reset successfully. You can now login.',
+    user: { id: user.id, name: user.name, email: user.email }
+  };
 }
 
 /**
