@@ -511,6 +511,7 @@ export const PM_Contracts = {
           submitBtn.disabled = false;
         }
       }
+      }
     }
   },
 
@@ -743,6 +744,11 @@ export const PM_Contracts = {
       guaranteeExpiry:
         document.getElementById("contract_guarantee_expiry")?.value || null,
     };
+
+    if (window.app && typeof window.app.validateForm === 'function') {
+      const formContainer = document.getElementById('drawer-content') || document.body;
+      if (!window.app.validateForm(formContainer)) return;
+    }
 
     if (
       !data.projectId ||
