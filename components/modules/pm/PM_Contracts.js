@@ -22,11 +22,10 @@ export const PM_Contracts = {
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Contract Registry & Legal Repository</div>
-                    ${
-                      this.currentContractTab === "project"
-                        ? `<button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
-                        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.pmModule?.loadContractProjects(); window.app.pmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
-                    }
+                    ${this.currentContractTab === "project"
+        ? `<button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
+        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.pmModule?.loadContractProjects(); window.app.pmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
+      }
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
@@ -39,16 +38,15 @@ export const PM_Contracts = {
                         <option value="">All Projects</option>
                         <!-- Projects loaded dynamically -->
                     </select>
-                    ${
-                      this.currentContractTab === "vendor"
-                        ? `
+                    ${this.currentContractTab === "vendor"
+        ? `
                     <select id="contract-vendor-filter" class="form-input" style="max-width: 250px;" onchange="window.app.pmModule.handleContractFilterChange()">
                         <option value="">All Vendors</option>
                         <!-- Vendors loaded dynamically -->
                     </select>
                     `
-                        : ""
-                    }
+        : ""
+      }
                 </div>
 
                 <div id="contracts-table-container">
@@ -390,12 +388,12 @@ export const PM_Contracts = {
                     <div style="flex: 1.2; text-align: right;">New Qty</div>
                 </div>
                 ${materials
-                  .map((m, i) => {
-                    const remainingNeeded = Math.max(
-                      0,
-                      m.quantity - m.contractedQuantity,
-                    );
-                    return `
+          .map((m, i) => {
+            const remainingNeeded = Math.max(
+              0,
+              m.quantity - m.contractedQuantity,
+            );
+            return `
                         <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
@@ -419,8 +417,8 @@ export const PM_Contracts = {
                             </div>
                         </div>
                     `;
-                  })
-                  .join("")}
+          })
+          .join("")}
             `;
       this.calculateContractValue();
     } catch (err) {
@@ -439,78 +437,78 @@ export const PM_Contracts = {
       total = parseFloat(document.getElementById("contract_value")?.value || 0);
     } else {
       const valueInput = document.getElementById("contract_value");
-    const marketEl = document.getElementById("total-market-value");
-    const negotiatedEl = document.getElementById("total-negotiated-value");
-    const performanceEl = document.getElementById("performance-status");
-    const performanceBadge = document.getElementById("procurement-performance-badge");
+      const marketEl = document.getElementById("total-market-value");
+      const negotiatedEl = document.getElementById("total-negotiated-value");
+      const performanceEl = document.getElementById("performance-status");
+      const performanceBadge = document.getElementById("procurement-performance-badge");
 
-    let totalMarket = 0;
-    checkboxes.forEach((cb) => {
-      const index = cb.value;
-      const marketPrice = parseFloat(cb.dataset.market || 0);
-      const qtyInput = document.getElementById(`m_qty_${index}`);
-      const qty = parseFloat(qtyInput?.value || 0);
-      totalMarket += marketPrice * qty;
-    });
+      let totalMarket = 0;
+      checkboxes.forEach((cb) => {
+        const index = cb.value;
+        const marketPrice = parseFloat(cb.dataset.market || 0);
+        const qtyInput = document.getElementById(`m_qty_${index}`);
+        const qty = parseFloat(qtyInput?.value || 0);
+        totalMarket += marketPrice * qty;
+      });
 
-    if (marketEl) marketEl.textContent = `MWK ${totalMarket.toLocaleString()}`;
+      if (marketEl) marketEl.textContent = `MWK ${totalMarket.toLocaleString()}`;
 
-    if (valueInput) {
-      const total = parseFloat(valueInput.value || 0);
-      const negotiatedSum = total;
-      if (negotiatedEl) negotiatedEl.textContent = `MWK ${negotiatedSum.toLocaleString()}`;
-      
-      if (performanceEl && negotiatedSum > 0) {
+      if (valueInput) {
+        const total = parseFloat(valueInput.value || 0);
+        const negotiatedSum = total;
+        if (negotiatedEl) negotiatedEl.textContent = `MWK ${negotiatedSum.toLocaleString()}`;
+
+        if (performanceEl && negotiatedSum > 0) {
           const diff = totalMarket - negotiatedSum;
           if (diff > 0) {
-              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">SURPLUS</div><div style="font-size: 13px; font-weight: 900;">MWK ${diff.toLocaleString()}</div>`;
-              performanceEl.style.color = "var(--emerald)";
-              if (performanceBadge) {
-                  performanceBadge.style.background = "var(--emerald-light)";
-                  performanceBadge.style.borderColor = "var(--emerald-hover)";
-              }
+            performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">SURPLUS</div><div style="font-size: 13px; font-weight: 900;">MWK ${diff.toLocaleString()}</div>`;
+            performanceEl.style.color = "var(--emerald)";
+            if (performanceBadge) {
+              performanceBadge.style.background = "var(--emerald-light)";
+              performanceBadge.style.borderColor = "var(--emerald-hover)";
+            }
           } else if (diff < 0) {
-              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">DEFICIT</div><div style="font-size: 13px; font-weight: 900;">MWK ${Math.abs(diff).toLocaleString()}</div>`;
-              performanceEl.style.color = "var(--red)";
-              if (performanceBadge) {
-                  performanceBadge.style.background = "var(--red-light)";
-                  performanceBadge.style.borderColor = "var(--red-hover)";
-              }
+            performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">DEFICIT</div><div style="font-size: 13px; font-weight: 900;">MWK ${Math.abs(diff).toLocaleString()}</div>`;
+            performanceEl.style.color = "var(--red)";
+            if (performanceBadge) {
+              performanceBadge.style.background = "var(--red-light)";
+              performanceBadge.style.borderColor = "var(--red-hover)";
+            }
           } else {
-              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">MATCHED</div><div style="font-size: 13px; font-weight: 900;">MWK 0</div>`;
-              performanceEl.style.color = "var(--slate-500)";
-              if (performanceBadge) {
-                  performanceBadge.style.background = "var(--slate-50)";
-                  performanceBadge.style.borderColor = "var(--slate-200)";
-              }
-          }
-      } else if (performanceEl) {
-          performanceEl.textContent = "-";
-          if (performanceBadge) {
+            performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">MATCHED</div><div style="font-size: 13px; font-weight: 900;">MWK 0</div>`;
+            performanceEl.style.color = "var(--slate-500)";
+            if (performanceBadge) {
               performanceBadge.style.background = "var(--slate-50)";
               performanceBadge.style.borderColor = "var(--slate-200)";
+            }
           }
-      }
-
-      // Real-time Budget Validation
-      const remainingBudget = this.currentProjectBudget?.remaining || 0;
-      const submitBtn = document.querySelector(
-        'button[onclick*="submitContract"]',
-      );
-
-      if (total > remainingBudget) {
-        valueInput.style.color = "var(--red)";
-        if (submitBtn) {
-          submitBtn.style.opacity = "0.7";
-          submitBtn.disabled = true;
+        } else if (performanceEl) {
+          performanceEl.textContent = "-";
+          if (performanceBadge) {
+            performanceBadge.style.background = "var(--slate-50)";
+            performanceBadge.style.borderColor = "var(--slate-200)";
+          }
         }
-      } else {
-        valueInput.style.color = "var(--slate-900)";
-        if (submitBtn) {
-          submitBtn.style.opacity = "1";
-          submitBtn.disabled = false;
+
+        // Real-time Budget Validation
+        const remainingBudget = this.currentProjectBudget?.remaining || 0;
+        const submitBtn = document.querySelector(
+          'button[onclick*="submitContract"]',
+        );
+
+        if (total > remainingBudget) {
+          valueInput.style.color = "var(--red)";
+          if (submitBtn) {
+            submitBtn.style.opacity = "0.7";
+            submitBtn.disabled = true;
+          }
+        } else {
+          valueInput.style.color = "var(--slate-900)";
+          if (submitBtn) {
+            submitBtn.style.opacity = "1";
+            submitBtn.disabled = false;
+          }
         }
-      }
       }
     }
   },
@@ -778,11 +776,11 @@ export const PM_Contracts = {
           ...data,
           contractType: "vendor",
           materialsList: JSON.stringify(Array.from(document.querySelectorAll('input[name="contract_material"]:checked')).map(cb => {
-              const idx = cb.value;
-              const q = parseFloat(document.getElementById(`m_qty_${idx}`)?.value || 0);
-              const p = parseFloat(document.getElementById(`m_price_${idx}`)?.value || 0);
-              const m = parseFloat(cb.dataset.market || 0);
-              return { name: cb.dataset.name, quantity: q, unit: cb.dataset.unit, unitPrice: p, marketPrice: m, variance: m - p, totalCost: p * q };
+            const idx = cb.value;
+            const q = parseFloat(document.getElementById(`m_qty_${idx}`)?.value || 0);
+            const p = parseFloat(document.getElementById(`m_price_${idx}`)?.value || 0);
+            const m = parseFloat(cb.dataset.market || 0);
+            return { name: cb.dataset.name, quantity: q, unit: cb.dataset.unit, unitPrice: p, marketPrice: m, variance: m - p, totalCost: p * q };
           })),
           refCode: "CON-" + Date.now().toString(36).toUpperCase(),
         }),
@@ -862,14 +860,14 @@ export const PM_Contracts = {
       formData.append("startDate", document.getElementById("edit_contract_start").value || "");
       formData.append("endDate", document.getElementById("edit_contract_end").value || "");
       formData.append("changeNotes", notes);
-      
+
       if (file) {
         formData.append("document", file);
       }
 
       window.toast.show("Committing revision & version...", "info");
       const token = localStorage.getItem("mcms_auth_token");
-      
+
       const res = await fetch(`/api/v1/contracts/${contractId}/versions`, {
         method: "POST",
         headers: {
@@ -885,10 +883,10 @@ export const PM_Contracts = {
 
       window.toast.show("Contract revised and new version committed", "success");
       window.drawer.close();
-      
+
       // Refresh the table first
       await this.loadContractsData();
-      
+
       // Then re-open the viewer with fresh data if needed
       setTimeout(() => this.viewContract(contractId), 300);
     } catch (err) {

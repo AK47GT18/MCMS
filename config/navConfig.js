@@ -133,7 +133,7 @@ export const NAV_ITEMS = {
         {
             section: 'Strategic',
             items: [
-                { label: 'Logistics Command', icon: ICONS.dashboard, id: 'dashboard', active: true },
+                { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
                 { label: 'Logistics Hub', icon: '<i class="fas fa-truck-ramp-box"></i>', id: 'requests', badge: 5 }
             ]
         },

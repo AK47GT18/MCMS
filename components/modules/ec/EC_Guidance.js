@@ -13,7 +13,7 @@ export const EC_Guidance = {
                     <div style="display: flex; gap: 16px; align-items: flex-start; padding: 16px; background: var(--slate-50); border-radius: 12px;">
                         <div style="font-size: 20px; color: var(--indigo-600);"><i class="fas fa-chart-line"></i></div>
                         <div>
-                            <div style="font-weight: 700; margin-bottom: 4px;">Logistics Command (Dashboard)</div>
+                            <div style="font-weight: 700; margin-bottom: 4px;">Dashboard</div>
                             <div style="font-size: 13px; color: var(--slate-500);">Monitor real-time "Burn Rates" and fleet readiness. Keep an eye on the **Conflict Monitor** for asset double-bookings.</div>
                         </div>
                     </div>

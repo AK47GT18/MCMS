@@ -93,7 +93,7 @@ export class EquipmentCoordinatorDashboard {
 
     getHeaderHTML() {
         const headers = {
-            'dashboard': { title: 'Logistics Command', context: 'Fleet Operations & Silo Stock' },
+            'dashboard': { title: 'Dashboard', context: 'Fleet Operations & Silo Stock' },
             'requests': { title: 'Logistics Hub', context: 'FS Request Intake & FM Receipts' },
             'inventory': { title: 'Material Inventory', context: 'Consumable Resource Silo' },
             'registry': { title: 'Asset Registry', context: 'Master Equipment List' },
@@ -103,7 +103,7 @@ export class EquipmentCoordinatorDashboard {
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
             'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
         };
-        const current = headers[this.currentView] || { title: 'Logistics Command', context: '' };
+        const current = headers[this.currentView] || { title: 'Dashboard', context: '' };
 
         return `
             <div class="page-header">

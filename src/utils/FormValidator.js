@@ -155,8 +155,10 @@ export class FormValidator {
         input.classList.remove(this.options.errorClass);
         input.setAttribute('aria-invalid', 'false');
         
-        const errorEl = input.nextElementSibling;
-        if (errorEl && errorEl.classList.contains(this.options.messageClass)) {
+        const errorId = input.dataset.errorId;
+        const errorEl = errorId ? document.getElementById(errorId) : null;
+        
+        if (errorEl) {
             errorEl.textContent = '';
             errorEl.style.display = 'none';
         }

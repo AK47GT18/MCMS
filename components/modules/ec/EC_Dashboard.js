@@ -8,7 +8,7 @@ export const EC_Dashboard = {
         return `
             <div class="stats-grid">
                 ${StatCard({ title: 'Awaiting Receipt', value: this.pendingReceipts.length.toString(), subtext: 'From FM Procurement', alertColor: 'blue' })}
-                ${StatCard({ title: 'Critical Stock', value: lowStockCount.toString().padStart(2,'0'), subtext: 'Materials < Buffers', alertColor: 'red' })}
+                ${StatCard({ title: 'Critical Stock', value: lowStockCount.toString().padStart(2, '0'), subtext: 'Materials < Buffers', alertColor: 'red' })}
                 ${StatCard({ title: 'Fleet Health', value: this.assetRegistry.length ? (this.assetRegistry.filter(a => a.status === 'available').length / this.assetRegistry.length * 100).toFixed(0) + '%' : '--', subtext: 'Readiness Rate', alertColor: 'emerald' })}
                 ${StatCard({ title: 'Daily Burn', value: this.dispatchLogs.length.toString(), subtext: 'Fulfillment today', alertColor: 'orange' })}
             </div>
@@ -37,16 +37,16 @@ export const EC_Dashboard = {
                     </div>
                     <div id="ec-burn-chart" style="padding: 24px;">
                         ${this.isLoadingInventory && inventoryEntries.length === 0
-                            ? '<div style="text-align:center; color: var(--slate-400); padding: 40px;"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:8px;"></i><div>Loading inventory…</div></div>'
-                            : inventoryEntries.length === 0 
-                                ? `
+                ? '<div style="text-align:center; color: var(--slate-400); padding: 40px;"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:8px;"></i><div>Loading inventory…</div></div>'
+                : inventoryEntries.length === 0
+                    ? `
                                 <div style="text-align:center; color: var(--slate-400); padding: 40px;">
                                     <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.2;"><i class="fas fa-box-open"></i></div>
                                     <div style="font-weight: 700; color: var(--slate-600);">No Active Material Data</div>
                                     <div style="font-size: 12px; max-width: 200px; margin: 8px auto;">Distribution logs will appear here once materials are dispatched to sites.</div>
                                 </div>`
-                                : this._renderBurnChart(inventoryEntries)
-                        }
+                    : this._renderBurnChart(inventoryEntries)
+            }
                     </div>
                 </div>
 
@@ -61,18 +61,18 @@ export const EC_Dashboard = {
                     </div>
                     <div style="padding: 16px;" id="ec-logistics-status">
                         ${this.isLoadingInventory && inventoryEntries.length === 0
-                            ? '<div style="text-align:center; color: var(--slate-400); padding: 20px;"><i class="fas fa-circle-notch fa-spin"></i></div>'
-                            : inventoryEntries.length === 0
-                                ? `
+                ? '<div style="text-align:center; color: var(--slate-400); padding: 20px;"><i class="fas fa-circle-notch fa-spin"></i></div>'
+                : inventoryEntries.length === 0
+                    ? `
                                 <div style="text-align:center; color: var(--slate-400); padding: 20px;">
                                     <i class="fas fa-warehouse" style="font-size: 32px; opacity: 0.2; margin-bottom: 12px;"></i>
                                     <div style="font-size: 12px; font-weight: 600;">Silo is empty</div>
                                 </div>`
-                                : inventoryEntries.map(([name, data], i) => {
-                                     const pct = Math.min(100, (data.qty / Math.max(data.thresh * 5, 1)) * 100);
-                                     const isLow = data.qty <= data.thresh;
-                                     const color = this._getMaterialColor(name, i);
-                                     return `
+                    : inventoryEntries.map(([name, data], i) => {
+                        const pct = Math.min(100, (data.qty / Math.max(data.thresh * 5, 1)) * 100);
+                        const isLow = data.qty <= data.thresh;
+                        const color = this._getMaterialColor(name, i);
+                        return `
                                      <div style="margin-bottom: 24px; padding: 16px; background: white; border-radius: 16px; border: 1px solid var(--slate-100); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                                          <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-end;">
                                              <div>
@@ -88,8 +88,9 @@ export const EC_Dashboard = {
                                              <div style="width: ${pct}%; background: ${isLow ? 'linear-gradient(90deg, #ef4444, #f87171)' : color.grad}; height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 10px ${isLow ? 'rgba(239, 68, 68, 0.2)' : color.glow};"></div>
                                          </div>
                                      </div>
-                                `;}).join('')
-                        }
+                                `;
+                    }).join('')
+            }
                     </div>
                 </div>
 
@@ -110,9 +111,9 @@ export const EC_Dashboard = {
                     </div>
                     <div style="padding: 32px;">
                         ${this.isLoadingConflicts && this.conflicts.length === 0
-                            ? '<div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 13px;"><i class="fas fa-circle-notch fa-spin"></i><div>Detecting conflicts…</div></div>'
-                            : this.conflicts.length === 0
-                                ? `
+                ? '<div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 13px;"><i class="fas fa-circle-notch fa-spin"></i><div>Detecting conflicts…</div></div>'
+                : this.conflicts.length === 0
+                    ? `
                                 <div style="background: var(--slate-50); border: 1px dashed var(--slate-200); border-radius: 20px; padding: 60px 40px; text-align: center; position: relative; overflow: hidden;">
                                     <!-- Subtle Radar Animation -->
                                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
@@ -130,7 +131,7 @@ export const EC_Dashboard = {
                                             <span style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase; letter-spacing: 0.5px;">System Scan Complete</span>
                                         </div>
 
-                                        <h3 style="font-size: 24px; font-weight: 900; color: var(--slate-900); margin: 0; letter-spacing: -0.02em;">Fleet Schedule is Clear</h3>
+                                        <h3 style="font-size: 24px; font-weight: 900; color: var(--slate-900); margin: 0; letter-spacing: -0.02em;">Dashboard is Clear</h3>
                                         <p style="font-size: 15px; color: var(--slate-500); margin: 12px auto 0; font-weight: 500; max-width: 450px; line-height: 1.6;">Intelligence systems report zero concurrent asset requests or logistical bottlenecks across current project timelines.</p>
 
                                         <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; border-top: 1px solid var(--slate-200); padding-top: 32px;">
@@ -149,7 +150,7 @@ export const EC_Dashboard = {
                                         </div>
                                     </div>
                                 </div>`
-                                : `
+                    : `
                                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
                                     ${this.conflicts.map(c => `
                                         <div style="background: white; border: 1px solid #fde68a; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -171,7 +172,7 @@ export const EC_Dashboard = {
                                     `).join('')}
                                 </div>
                                 `
-                        }
+            }
                     </div>
                 </div>
             </div>
@@ -189,7 +190,7 @@ export const EC_Dashboard = {
 
     initCharts() {
         if (this.currentView !== 'dashboard') return;
-        
+
         // Wait for Chart.js if not yet loaded
         if (typeof Chart === 'undefined') {
             console.warn('Chart.js not yet loaded, retrying in 100ms...');
@@ -277,7 +278,7 @@ export const EC_Dashboard = {
         }
 
         container.innerHTML = '<div style="height: 300px; position: relative;"><canvas id="ec-health-chart-canvas"></canvas></div>';
-        
+
         const ctx = document.getElementById('ec-health-chart-canvas');
         if (!ctx) {
             console.error('Health chart canvas not found');

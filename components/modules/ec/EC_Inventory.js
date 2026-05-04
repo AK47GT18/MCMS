@@ -8,7 +8,7 @@ export const EC_Inventory = {
             <div class="data-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
                 <div class="data-card-header">
                     <div class="card-title">Consolidated Material Inventory</div>
-                    <button class="btn btn-secondary" onclick="window.app.ecModule._loadInventory()">
+                    <button id="btn-inventory-refresh" class="btn btn-secondary" onclick="window.app.ecModule._loadInventory()">
                         <i class="fas fa-sync"></i> Refresh Stock
                     </button>
                 </div>

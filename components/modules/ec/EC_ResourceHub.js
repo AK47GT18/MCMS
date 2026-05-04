@@ -27,7 +27,7 @@ export const EC_ResourceHub = {
         } else {
             this._loadRequisitions();
         }
-        window.app.loadPage(this.currentView);
+        this._refreshCurrentView();
     },
 
     _renderFMReceiptsTable() {
@@ -144,7 +144,7 @@ export const EC_ResourceHub = {
         if (this.isLoadingProc) return;
         this.isLoadingProc = true;
         try {
-            const result = await inventoryApi.getIncomingShipments();
+            const result = await inventoryApi.getIncomingShipments({ skipCache: true });
             const items = Array.isArray(result) ? result : (result.data || []);
             this.pendingReceipts = items.map(p => ({
                 id: p.id, // ContractItem ID

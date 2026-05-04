@@ -163,10 +163,10 @@ export const EC_Handlers = {
             body: `Greetings. A dispatch of ${isMachinery ? 'Assets' : 'Construction Materials'} has been authorized for Site ${project}.`
         });
 
-        setTimeout(() => {
+        setTimeout(async () => {
             window.drawer.close();
-            this._loadInventory();
-            window.app.loadPage(this.currentView);
+            await this._loadInventory();
+            this._refreshCurrentView();
             window.toast.show('Dispatch completed successfully.', 'success');
         }, 800);
     },
@@ -234,7 +234,7 @@ export const EC_Handlers = {
 
             setTimeout(() => {
                 window.drawer.close();
-                window.app.loadPage(this.currentView);
+                this._refreshCurrentView();
                 window.toast.show('Physical stock verified and added to silo.', 'success');
             }, 800);
         } catch (error) {
@@ -320,7 +320,8 @@ export const EC_Handlers = {
         
         try {
             await this._loadProcurementReceipts();
-            window.app.loadPage(this.currentView);
+            await this._loadInventory();
+            this._refreshCurrentView();
             window.toast.show(`Sync complete: ${this.pendingReceipts.length} pending receipt(s).`, 'success');
         } catch (error) {
             window.toast.show('Sync failed: ' + (error.message || 'Server error'), 'error');
@@ -487,8 +488,12 @@ export const EC_Handlers = {
     async _loadInventory() {
         if (this.isLoadingInventory) return;
         this.isLoadingInventory = true;
+        
+        const refreshBtn = document.getElementById('btn-inventory-refresh');
+        if (refreshBtn) refreshBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Refreshing...';
+
         try {
-            const data = await inventoryApi.getAll();
+            const data = await inventoryApi.getAll({ skipCache: true });
             const items = Array.isArray(data) ? data : (data.data || []);
             
             const invMap = {};
@@ -519,6 +524,15 @@ export const EC_Handlers = {
             this.inventory = invMap;
             this.inventoryByProject = projectMap;
             
+            // Visual feedback for manual refresh button
+            const refreshBtn = document.getElementById('btn-inventory-refresh');
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-check"></i> Stock Updated';
+                setTimeout(() => {
+                    refreshBtn.innerHTML = '<i class="fas fa-sync"></i> Refresh Stock';
+                }, 2000);
+            }
+
             if (this.currentView === 'inventory' || this.currentView === 'dashboard') {
                 this._refreshCurrentView();
             }
