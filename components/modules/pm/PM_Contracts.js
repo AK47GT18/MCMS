@@ -360,17 +360,17 @@ export const PM_Contracts = {
         const remaining = Number(budget.remaining || 0);
         const percent = Number(budget.percentUsed || 0);
         budgetDisplay.innerHTML = `
-                    <div style="background: ${remaining < 1000000 ? "#fef2f2" : "var(--slate-50)"}; border: 1px solid ${remaining < 1000000 ? "#fee2e2" : "var(--slate-200)"}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Project Funds</span>
-                            <span style="font-size: 14px; font-weight: 800; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"};">MWK ${remaining.toLocaleString()}</span>
+                    <div style="background: ${remaining < 1000000 ? "#fef2f2" : "var(--slate-50)"}; border: 1px solid ${remaining < 1000000 ? "#fee2e2" : "var(--slate-200)"}; padding: 10px; border-radius: 8px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Funds</span>
+                            <span style="font-size: 13px; font-weight: 800; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"}; font-family: 'JetBrains Mono';">MWK ${remaining.toLocaleString()}</span>
                         </div>
-                        <div style="height: 6px; background: var(--slate-200); border-radius: 3px; overflow: hidden;">
+                        <div style="height: 5px; background: var(--slate-200); border-radius: 3px; overflow: hidden;">
                             <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? "var(--red)" : "var(--emerald)"};"></div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 6px;">
-                            <span style="font-size: 10px; color: var(--slate-400);">${percent}% Budget Utilized</span>
-                            ${remaining < 1000000 ? '<span style="font-size: 10px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> CRITICAL BALANCE</span>' : ""}
+                        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                            <span style="font-size: 9px; color: var(--slate-400);">${percent}% Utilized</span>
+                            ${remaining < 1000000 ? '<span style="font-size: 9px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> LOW</span>' : ""}
                         </div>
                     </div>
                 `;
@@ -463,21 +463,21 @@ export const PM_Contracts = {
       if (performanceEl && negotiatedSum > 0) {
           const diff = totalMarket - negotiatedSum;
           if (diff > 0) {
-              performanceEl.textContent = "SURPLUS";
+              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">SURPLUS</div><div style="font-size: 13px; font-weight: 900;">MWK ${diff.toLocaleString()}</div>`;
               performanceEl.style.color = "var(--emerald)";
               if (performanceBadge) {
                   performanceBadge.style.background = "var(--emerald-light)";
                   performanceBadge.style.borderColor = "var(--emerald-hover)";
               }
           } else if (diff < 0) {
-              performanceEl.textContent = "DEFICIT";
+              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">DEFICIT</div><div style="font-size: 13px; font-weight: 900;">MWK ${Math.abs(diff).toLocaleString()}</div>`;
               performanceEl.style.color = "var(--red)";
               if (performanceBadge) {
                   performanceBadge.style.background = "var(--red-light)";
                   performanceBadge.style.borderColor = "var(--red-hover)";
               }
           } else {
-              performanceEl.textContent = "MATCHED";
+              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">MATCHED</div><div style="font-size: 13px; font-weight: 900;">MWK 0</div>`;
               performanceEl.style.color = "var(--slate-500)";
               if (performanceBadge) {
                   performanceBadge.style.background = "var(--slate-50)";

@@ -582,34 +582,32 @@ export const FD_Contracts = {
         const percent = Number(budget.percentUsed || 0);
         
         budgetDisplay.innerHTML = `
-                    <div style="background: ${remaining < 1000000 ? "#FFF5F5" : "white"}; border: 2px solid ${remaining < 1000000 ? "var(--red)" : "var(--slate-200)"}; padding: 16px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px;">
+                    <div style="background: ${remaining < 1000000 ? "#FFF5F5" : "white"}; border: 2px solid ${remaining < 1000000 ? "var(--red)" : "var(--slate-200)"}; padding: 12px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
                             <div>
-                                <div style="font-size: 10px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Available Funds</div>
-                                <div style="font-size: 20px; font-weight: 900; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"}; font-family: 'JetBrains Mono';">MWK ${remaining.toLocaleString()}</div>
+                                <div style="font-size: 9px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Available Funds</div>
+                                <div style="font-size: 16px; font-weight: 900; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"}; font-family: 'JetBrains Mono';">MWK ${remaining.toLocaleString()}</div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 10px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Utilization</div>
-                                <div style="font-size: 18px; font-weight: 900; color: ${percent > 90 ? "var(--red)" : "var(--orange)"};">${percent}%</div>
+                                <div style="font-size: 9px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Utilization</div>
+                                <div style="font-size: 15px; font-weight: 900; color: ${percent > 90 ? "var(--red)" : "var(--orange)"};">${percent}%</div>
                             </div>
                         </div>
                         
                         <!-- Visual Budget Bar (Dual Layer) -->
-                        <div style="height: 14px; background: #E2E8F0; border-radius: 7px; overflow: hidden; display: flex; border: 1px solid rgba(0,0,0,0.05); position: relative;">
+                        <div style="height: 10px; background: #E2E8F0; border-radius: 5px; overflow: hidden; display: flex; border: 1px solid rgba(0,0,0,0.05); position: relative;">
                             <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? "var(--red)" : "var(--orange)"}; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
                             <div style="flex: 1; height: 100%; background: var(--emerald-light); opacity: 0.5;"></div>
-                            
-                            <!-- Middle Marker -->
                             <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.1); z-index: 2;"></div>
                         </div>
                         
-                        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                            <div style="font-size: 11px; font-weight: 600; color: var(--slate-500);">
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <div style="font-size: 10px; font-weight: 600; color: var(--slate-500);">
                                 <i class="fas fa-arrow-up" style="color: var(--orange); margin-right: 4px;"></i> Spent: MWK ${spent.toLocaleString()}
                             </div>
                             ${remaining < 1000000 
-                                ? '<div style="font-size: 11px; font-weight: 800; color: var(--red); display: flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-circle"></i> LOW FUNDS</div>' 
-                                : `<div style="font-size: 11px; font-weight: 700; color: var(--emerald-dark);">
+                                ? '<div style="font-size: 10px; font-weight: 800; color: var(--red); display: flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-circle"></i> LOW FUNDS</div>' 
+                                : `<div style="font-size: 10px; font-weight: 700; color: var(--emerald-dark);">
                                      <i class="fas fa-check-circle" style="margin-right: 4px;"></i> ${(100-percent).toFixed(1)}% Safe
                                    </div>`}
                         </div>
@@ -718,21 +716,21 @@ export const FD_Contracts = {
       if (performanceEl && negotiatedSum > 0) {
           const diff = totalMarket - negotiatedSum;
           if (diff > 0) {
-              performanceEl.textContent = "SURPLUS";
+              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">SURPLUS</div><div style="font-size: 13px; font-weight: 900;">MWK ${diff.toLocaleString()}</div>`;
               performanceEl.style.color = "var(--emerald)";
               if (performanceBadge) {
                   performanceBadge.style.background = "var(--emerald-light)";
                   performanceBadge.style.borderColor = "var(--emerald-hover)";
               }
           } else if (diff < 0) {
-              performanceEl.textContent = "DEFICIT";
+              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">DEFICIT</div><div style="font-size: 13px; font-weight: 900;">MWK ${Math.abs(diff).toLocaleString()}</div>`;
               performanceEl.style.color = "var(--red)";
               if (performanceBadge) {
                   performanceBadge.style.background = "var(--red-light)";
                   performanceBadge.style.borderColor = "var(--red-hover)";
               }
           } else {
-              performanceEl.textContent = "MATCHED";
+              performanceEl.innerHTML = `<div style="font-size: 9px; opacity: 0.8;">MATCHED</div><div style="font-size: 13px; font-weight: 900;">MWK 0</div>`;
               performanceEl.style.color = "var(--slate-500)";
               if (performanceBadge) {
                   performanceBadge.style.background = "var(--slate-50)";
