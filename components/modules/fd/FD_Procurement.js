@@ -187,7 +187,7 @@ export const FD_Procurement = {
                             const isCritical = isOverBudget || (remaining < (projBudget * 0.1));
                             
                             return `
-                                <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}', ${req.isReplenishment ? 'true' : 'false'})">
+                                <tr onclick="window.app?.fmModule?.openRequisitionReview('${req.id}', ${req.isReplenishment ? 'true' : 'false'})">
                                     <td>
                                         <span class="project-id">${req.reqCode || 'REQ-' + req.id}</span>
                                         ${req.isReplenishment ? '<span class="badge badge-primary" style="font-size: 9px; margin-left: 4px; background: var(--blue-light); color: var(--blue);">Stock</span>' : ''}

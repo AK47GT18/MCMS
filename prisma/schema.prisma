@@ -158,6 +158,11 @@ model Contract {
   advancePaymentAmount  Decimal?           @default(0) @map("advance_payment_amount") @db.Decimal(18, 2)
   guaranteeExpiry       DateTime?          @map("guarantee_expiry") @db.Date
 
+  // Vendor Performance Rating (per-contract)
+  vendorRating          Int?               @map("vendor_rating")
+  ratingComment         String?            @map("rating_comment")
+  ratedAt               DateTime?          @map("rated_at") @db.Timestamptz(6)
+
   versions      ContractVersion[]
   project       Project?           @relation(fields: [projectId], references: [id])
   vendor        Vendor?            @relation(fields: [vendorId], references: [id])
@@ -170,15 +175,17 @@ model Contract {
 }
 
 model Vendor {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique @db.VarChar(255)
-  category  String?    @db.VarChar(100)
-  riskLevel String     @default("low") @map("risk_level") @db.VarChar(20)
-  rating    Decimal?   @db.Decimal(3, 2)
-  isActive  Boolean    @default(true) @map("is_active")
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  contracts Contract[]
+  id             Int        @id @default(autoincrement())
+  name           String     @unique @db.VarChar(255)
+  normalizedName String?    @unique @map("normalized_name") @db.VarChar(255)
+  phone          String?    @db.VarChar(20)
+  category       String?    @db.VarChar(100)
+  riskLevel      String     @default("low") @map("risk_level") @db.VarChar(20)
+  rating         Decimal?   @db.Decimal(3, 2)
+  isActive       Boolean    @default(true) @map("is_active")
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contracts      Contract[]
 
   @@map("vendors")
 }

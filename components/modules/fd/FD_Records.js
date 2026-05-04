@@ -24,9 +24,9 @@ export const FD_Records = {
         setTimeout(() => this.loadVendorsData(), 0);
         return `
             <div class="data-card">
-                <div class="data-card-header">
-                    <div class="card-title">Vendor Registry & Risk Analysis</div>
-                    <button class="btn btn-primary" onclick="window.app.fmModule?.openVendorDrawer()"><i class="fas fa-plus"></i> Add Vendor</button>
+                <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-title">Vendor Performance Scorecard</div>
+                    <div style="font-size: 11px; color: var(--slate-500);"><i class="fas fa-info-circle"></i> Vendors are auto-registered upon contract creation</div>
                 </div>
                 <div id="fm-vendors-table-container">
                     <div style="padding: 40px; text-align: center; color: var(--slate-400);">
@@ -59,22 +59,33 @@ export const FD_Records = {
             container.innerHTML = `
                 <table>
                     <thead>
-                        <tr><th>Vendor Name</th><th>Category</th><th>Risk Profile</th><th>Active Contracts</th><th>Performance Rating</th></tr>
+                        <tr><th>Vendor Details</th><th>Contact Info</th><th>Risk Profile</th><th>Contract Volume</th><th>Aggregate Performance</th></tr>
                     </thead>
                     <tbody>
                         ${vendors.map(v => {
                             const risk = this._calculateRisk(v);
                             return `
                                 <tr>
-                                    <td style="font-weight: 600;">${v.name}</td>
-                                    <td>${v.category || 'General'}</td>
                                     <td>
-                                        <span class="status ${risk.class}" style="background: ${risk.bg}; color: ${risk.color};">
+                                        <div style="font-weight: 700; color: var(--slate-800);">${v.name}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">${v.category || 'General'}</div>
+                                    </td>
+                                    <td style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--slate-600);">${v.phone || '-'}</td>
+                                    <td>
+                                        <span class="status ${risk.class}" style="background: ${risk.bg}; color: ${risk.color}; font-weight: 700;">
                                             ${risk.label}
                                         </span>
                                     </td>
-                                    <td style="text-align: center; font-weight: 700;">${v._count?.contracts || v.activeContracts || 0}</td>
-                                    <td style="color: #FBBF24;">${this._renderStars(v.rating || 5.0)}</td>
+                                    <td style="text-align: center;">
+                                        <div style="font-weight: 800; font-size: 14px; color: var(--slate-800);">${v._count?.contracts || v.contractCount || 0}</div>
+                                        <div style="font-size: 10px; color: var(--slate-500); text-transform: uppercase;">Total Awards</div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="color: var(--orange); font-size: 14px;">${this._renderStars(v.avgRating || 0)}</div>
+                                            <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${v.avgRating ? v.avgRating.toFixed(1) : 'N/A'}</div>
+                                        </div>
+                                    </td>
                                 </tr>
                             `;
                         }).join('')}
@@ -94,6 +105,7 @@ export const FD_Records = {
     },
 
     _renderStars(rating) {
+        if (!rating || rating === 0) return '<span style="color: var(--slate-300); font-size: 11px;">No Ratings Yet</span>';
         const r = parseFloat(rating) || 0;
         const full = Math.floor(r);
         const half = r % 1 >= 0.5;
@@ -101,44 +113,7 @@ export const FD_Records = {
         for (let i = 0; i < full; i++) html += '<i class="fas fa-star"></i>';
         if (half) html += '<i class="fas fa-star-half-alt"></i>';
         const empty = Math.max(0, 5 - full - (half ? 1 : 0));
-        for (let i = 0; i < empty; i++) html += '<i class="far fa-star"></i>';
+        for (let i = 0; i < empty; i++) html += '<i class="fas fa-star" style="color: var(--slate-200);"></i>';
         return html;
-    },
-
-    openVendorDrawer() {
-        window.drawer.open('Onboard New Vendor', window.DrawerTemplates.newVendor);
-    },
-
-    async submitVendor() {
-        try {
-            const data = {
-                name: document.getElementById('vendor_name').value,
-                category: document.getElementById('vendor_category').value,
-                riskLevel: document.getElementById('vendor_risk').value,
-                rating: parseFloat(document.getElementById('vendor_rating').value)
-            };
-
-            window.toast.show('Onboarding vendor...', 'info');
-            const token = localStorage.getItem('mcms_auth_token');
-            const res = await fetch('/api/v1/vendors', {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.message || 'Onboarding failed');
-            }
-
-            window.toast.show('Vendor registered successfully', 'success');
-            window.drawer.close();
-            this.loadVendorsData();
-        } catch (err) {
-            window.toast.show(err.message, 'error');
-        }
     }
 };

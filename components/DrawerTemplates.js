@@ -821,6 +821,47 @@ export const DrawerTemplates = {
                     </div>
                 </div>
 
+                ${(contract.status === 'expired' || contract.status === 'cancelled') && !contract.vendorRating && contract.vendorId ? `
+                <div style="margin-bottom: 32px; padding: 20px; background: #fffaf5; border-radius: 12px; border: 1px solid var(--orange); box-shadow: var(--shadow-sm);">
+                    <h4 style="font-size: 14px; font-weight: 800; color: var(--orange-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-star-half-alt"></i> Rate Vendor Performance
+                    </h4>
+                    <div style="font-size: 12px; color: var(--slate-600); margin-bottom: 16px;">This contract has concluded. Please rate ${contract.vendorName || 'the vendor'}'s performance to update their overall scorecard.</div>
+                    
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px; font-size: 24px; color: var(--slate-300); cursor: pointer;" id="vendor-rating-stars">
+                        ${[1, 2, 3, 4, 5].map(i => `
+                            <label style="cursor: pointer; position: relative;">
+                                <input type="radio" name="vendor_rating" value="${i}" style="opacity: 0; position: absolute;" 
+                                    onchange="document.querySelectorAll('#vendor-rating-stars i').forEach((el, idx) => el.style.color = idx < ${i} ? 'var(--orange)' : 'var(--slate-300)')">
+                                <i class="fas fa-star transition-colors duration-200"></i>
+                            </label>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label" style="font-size: 11px;">Performance Comments (Optional)</label>
+                        <textarea id="vendor_rating_comment" class="form-input" rows="2" style="width: 100%; border-color: var(--orange-light);" placeholder="Did they deliver on time? How was the quality?"></textarea>
+                    </div>
+                    
+                    <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.submitVendorRating(${contract.id})">
+                        Submit Scorecard Rating
+                    </button>
+                </div>
+                ` : ''}
+                
+                ${contract.vendorRating ? `
+                <div style="margin-bottom: 32px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Final Vendor Rating</h4>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="color: var(--orange); font-size: 18px;">
+                            ${Array(5).fill(0).map((_, i) => `<i class="fas fa-star" style="color: ${i < contract.vendorRating ? 'var(--orange)' : 'var(--slate-300)'};"></i>`).join('')}
+                        </div>
+                        <div style="font-size: 14px; font-weight: 800; color: var(--slate-900);">${contract.vendorRating}.0 / 5.0</div>
+                    </div>
+                    ${contract.ratingComment ? `<div style="margin-top: 8px; font-size: 12px; color: var(--slate-600); font-style: italic;">"${contract.ratingComment}"</div>` : ''}
+                </div>
+                ` : ''}
+
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="(window.app.fmModule || window.app.pmModule)?.openEditContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
                         <i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Details
@@ -3818,10 +3859,25 @@ Contract Admin</textarea>
                 <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">Check the materials this vendor will supply</div>
             </div>
 
-            <!-- Vendor -->
-            <div class="form-group" style="margin-bottom: 20px;">
+            <!-- Vendor Selection (Combobox) -->
+            <div class="form-group" style="margin-bottom: 20px; position: relative;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name *</label>
-                <input type="text" id="contract_vendor" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Malawi Cement Ltd">
+                <div style="position: relative;">
+                    <input type="text" id="contract_vendor" class="form-input" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="Search or type new vendor name..." oninput="(window.app.fmModule || window.app.pmModule)?.searchVendors(this.value)" onfocus="(window.app.fmModule || window.app.pmModule)?.searchVendors(this.value)">
+                    <input type="hidden" id="contract_vendor_id" value="">
+                    
+                    <!-- Dropdown Results -->
+                    <div id="vendor_autocomplete_results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-300); border-radius: 6px; margin-top: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Select existing or type to create a new vendor.</div>
+            </div>
+
+            <!-- Vendor Phone (for new or updating existing) -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
+                <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. +265 99 123 4567">
             </div>
 
             <!-- Contract Title -->

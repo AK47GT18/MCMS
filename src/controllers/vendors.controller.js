@@ -6,7 +6,7 @@ const vendorService = require('../services/vendors.service');
 const response = require('../utils/response');
 
 async function getAll(req, res) {
-  const { page, limit, search, category } = req.query;
+  const { page, limit, search, category } = req.query || {};
   const result = await vendorService.getAll({
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 20,
@@ -14,6 +14,12 @@ async function getAll(req, res) {
     category
   });
   response.success(res, result);
+}
+
+async function search(req, res) {
+  const { q } = req.query || {};
+  const results = await vendorService.search(q || '');
+  response.success(res, results);
 }
 
 async function getById(req, res) {
@@ -38,6 +44,7 @@ async function remove(req, res) {
 
 module.exports = {
   getAll,
+  search,
   getById,
   create,
   update,

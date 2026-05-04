@@ -98,6 +98,7 @@ export const FD_Budget = {
     },
 
     requestPMUplift(projectId) {
+        window.toast?.show(`Opening uplift request for ${projectId}...`, 'info');
         window.drawer.open(`Request Budget Uplift: ${projectId}`, window.DrawerTemplates.initiateBCR(this.data.projects, projectId));
     }
 };

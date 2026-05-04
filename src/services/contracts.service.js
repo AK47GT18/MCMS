@@ -104,15 +104,15 @@ async function create(data, userId) {
     }
   }
 
-  // Find or Create Vendor
+  // Find or Create Vendor (normalized matching)
   let vendorId = null;
   if (data.vendorName) {
-    let vendor = await prisma.vendor.findUnique({ where: { name: data.vendorName } });
-    if (!vendor) {
-      vendor = await prisma.vendor.create({
-        data: { name: data.vendorName, category: 'General', riskLevel: 'low', isActive: true }
-      });
-    }
+    const vendorService = require('./vendors.service');
+    const { vendor } = await vendorService.findOrCreate(
+      data.vendorName,
+      data.vendorPhone || null,
+      data.vendorCategory || 'General'
+    );
     vendorId = vendor.id;
   }
 
@@ -354,6 +354,50 @@ async function isContractLocked(id) {
   return contract.items.some(item => Number(item.receivedQty) > 0);
 }
 
+/**
+ * Rate a vendor's performance on a specific contract
+ * Only allowed when the contract is expired or cancelled
+ */
+async function rateVendor(contractId, { rating, comment }, userId) {
+  const contract = await prisma.contract.findUnique({
+    where: { id: contractId },
+    include: { vendor: { select: { id: true, name: true } } }
+  });
+
+  if (!contract) throw new AppError('Contract not found', 404);
+  if (!contract.vendorId) throw new AppError('This contract has no linked vendor', 400);
+  if (!['expired', 'cancelled'].includes(contract.status)) {
+    throw new AppError('Vendor can only be rated after contract expires or is completed', 400);
+  }
+  if (contract.vendorRating) {
+    throw new AppError('This contract has already been rated', 400);
+  }
+  if (!rating || rating < 1 || rating > 5) {
+    throw new AppError('Rating must be between 1 and 5', 400);
+  }
+
+  const updated = await prisma.contract.update({
+    where: { id: contractId },
+    data: {
+      vendorRating: parseInt(rating),
+      ratingComment: comment || null,
+      ratedAt: new Date()
+    }
+  });
+
+  if (userId) {
+    await auditService.log(userId, 'RATE_VENDOR', 'Contract', contractId, {
+      vendorId: contract.vendorId,
+      vendorName: contract.vendor?.name,
+      rating,
+      comment
+    });
+  }
+
+  logger.info('Vendor rated on contract', { contractId, vendorId: contract.vendorId, rating });
+  return updated;
+}
+
 module.exports = { 
   getAll, 
   getById, 
@@ -362,5 +406,6 @@ module.exports = {
   remove, 
   approve, 
   getByProject,
-  isContractLocked
+  isContractLocked,
+  rateVendor
 };

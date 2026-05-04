@@ -96,4 +96,21 @@ const approve = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, approve };
+const rateVendor = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  
+  const contractId = validateId(id, res);
+  if (!contractId) return;
+  
+  const body = await parseBody(req);
+  if (!body.rating) {
+    return response.badRequest(res, 'Rating is required (1-5)');
+  }
+
+  const result = await contractsService.rateVendor(contractId, body, user.id);
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, update, remove, approve, rateVendor };

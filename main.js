@@ -238,6 +238,7 @@ window.requestNotificationPermission = async () => {
 
 class App {
     constructor() {
+        window.app = this;
         this.layout = new AppLayout();
         this.moduleLoader = new ModuleLoaderStrategy();
         this.currentRoute = 'dashboard';

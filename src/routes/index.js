@@ -35,7 +35,7 @@ const vendorsController = require('../controllers/vendors.controller');
 const uploadController = require('../controllers/upload.controller');
 const response = require('../utils/response');
 const { methodNotAllowed } = require('../middlewares/error.middleware');
-const { parseBody } = require('../middlewares/validate.middleware');
+const { parseBody, parseQuery } = require('../middlewares/validate.middleware');
 const { loginLimiter, registerLimiter, passwordResetLimiter } = require('../middlewares/rateLimit.middleware');
 const multer = require('multer');
 const path = require('path');
@@ -87,6 +87,11 @@ function parseUrl(url) {
 async function router(req, res) {
   const { method } = req;
   const { resource, id, action } = parseUrl(req.url);
+
+  // Ensure req.query is always populated for all controllers
+  if (!req.query) {
+    req.query = parseQuery(req.url);
+  }
   
   // ============================================
   // AUTH ROUTES (with rate limiting)
@@ -222,6 +227,9 @@ async function router(req, res) {
   // VENDORS ROUTES
   // ============================================
   if (resource === 'vendors') {
+    if (id === 'search' && method === 'GET') {
+      return vendorsController.search(req, res);
+    }
     if (!id) {
       if (method === 'GET') return vendorsController.getAll(req, res);
       if (method === 'POST') return vendorsController.create(req, res);
@@ -236,6 +244,9 @@ async function router(req, res) {
   // CONTRACTS ROUTES
   // ============================================
   if (resource === 'contracts') {
+    if (action === 'rate' && method === 'POST') {
+      return contractsController.rateVendor(req, res, id);
+    }
     if (action === 'versions') {
       if (method === 'GET') return contractVersionsController.getByContract(req, res, id);
       if (method === 'POST') {

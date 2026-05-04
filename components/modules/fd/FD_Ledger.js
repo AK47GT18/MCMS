@@ -14,22 +14,33 @@ export const FD_Ledger = {
                         <button class="btn btn-secondary"><i class="fas fa-download"></i> Export</button>
                     </div>
                 </div>
-                <div style="padding: 16px; background: var(--slate-50); border-bottom: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                <div style="padding: 24px; background: white; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 20px;">
                     <div>
-                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Total Commitments</div>
-                        <div id="ledger-total-value" style="font-size: 20px; font-weight: 800; color: var(--slate-900);">Loading...</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-weight: 800; color: var(--slate-800); font-size: 14px; text-transform: uppercase;">Portfolio Budget Exposure</span>
+                            <span id="ledger-total-value" style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; color: var(--slate-900);">Calculating...</span>
+                        </div>
+                        <div id="ledger-exposure-bar" style="height: 12px; background: var(--slate-100); border-radius: 6px; overflow: hidden; display: flex;">
+                            <!-- Segments will be injected here -->
+                        </div>
+                        <div id="ledger-legend" style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px; font-weight: 600;">
+                            <!-- Legend will be injected here -->
+                        </div>
                     </div>
-                    <div>
-                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Active Contracts</div>
-                        <div id="ledger-active-contracts" style="font-size: 20px; font-weight: 800; color: var(--blue);">--</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Pending Approvals</div>
-                        <div id="ledger-pending-approvals" style="font-size: 20px; font-weight: 800; color: var(--orange);">--</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Approved Uplifts</div>
-                        <div id="ledger-approved-uplifts" style="font-size: 20px; font-weight: 800; color: var(--emerald);">--</div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div style="padding: 16px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px;">
+                            <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Active Contracts</div>
+                            <div id="ledger-active-contracts" style="font-size: 20px; font-weight: 800; color: var(--emerald);">--</div>
+                        </div>
+                        <div style="padding: 16px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px;">
+                            <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Pending Req. Volume</div>
+                            <div id="ledger-pending-approvals" style="font-size: 20px; font-weight: 800; color: var(--orange);">--</div>
+                        </div>
+                        <div style="padding: 16px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px;">
+                            <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Approved Uplifts</div>
+                            <div id="ledger-approved-uplifts" style="font-size: 20px; font-weight: 800; color: var(--blue);">--</div>
+                        </div>
                     </div>
                 </div>
                 <div id="fm-ledger-table-container">
@@ -90,11 +101,41 @@ export const FD_Ledger = {
 
             const totalVal = commitments.reduce((sum, c) => sum + c.value, 0);
             
+            const contractsTotal = commitments.filter(c => c.type === 'Contract').reduce((sum, c) => sum + c.value, 0);
+            const reqsTotal = commitments.filter(c => c.type === 'Requisition').reduce((sum, c) => sum + c.value, 0);
+            const bcrsTotal = commitments.filter(c => c.type === 'Budget Uplift').reduce((sum, c) => sum + c.value, 0);
+
+            const pContracts = totalVal > 0 ? (contractsTotal / totalVal) * 100 : 0;
+            const pReqs = totalVal > 0 ? (reqsTotal / totalVal) * 100 : 0;
+            const pBcrs = totalVal > 0 ? (bcrsTotal / totalVal) * 100 : 0;
+            
+            // Format currency helper
+            const formatCurrency = (val) => Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 });
+
             // Update summary cards
-            document.getElementById('ledger-total-value').textContent = this.formatCurrency(totalVal) + ' MWK';
-            document.getElementById('ledger-active-contracts').textContent = allContracts.filter(c => c.status === 'Active').length;
-            document.getElementById('ledger-pending-approvals').textContent = allReqs.length;
-            document.getElementById('ledger-approved-uplifts').textContent = allBcrs.filter(b => b.status === 'Approved').length;
+            document.getElementById('ledger-total-value').textContent = formatCurrency(totalVal) + ' MWK';
+            document.getElementById('ledger-active-contracts').textContent = allContracts.filter(c => c.status === 'Active' || c.status === 'active').length;
+            document.getElementById('ledger-pending-approvals').textContent = formatCurrency(reqsTotal) + ' MWK';
+            document.getElementById('ledger-approved-uplifts').textContent = formatCurrency(bcrsTotal) + ' MWK';
+
+            // Visual Budget Exposure Bar
+            const bar = document.getElementById('ledger-exposure-bar');
+            if (bar) {
+                bar.innerHTML = `
+                    <div style="width: ${pContracts}%; background: var(--emerald); height: 100%; transition: width 0.5s;"></div>
+                    <div style="width: ${pReqs}%; background: var(--orange); height: 100%; transition: width 0.5s;"></div>
+                    <div style="width: ${pBcrs}%; background: var(--blue); height: 100%; transition: width 0.5s;"></div>
+                `;
+            }
+
+            const legend = document.getElementById('ledger-legend');
+            if (legend) {
+                legend.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 4px; color: var(--emerald);"><i class="fas fa-circle" style="font-size: 8px;"></i> Executed Contracts (${pContracts.toFixed(1)}%)</div>
+                    <div style="display: flex; align-items: center; gap: 4px; color: var(--orange);"><i class="fas fa-circle" style="font-size: 8px;"></i> Pending Requisitions (${pReqs.toFixed(1)}%)</div>
+                    <div style="display: flex; align-items: center; gap: 4px; color: var(--blue);"><i class="fas fa-circle" style="font-size: 8px;"></i> Approved Uplifts (${pBcrs.toFixed(1)}%)</div>
+                `;
+            }
 
             container.innerHTML = `
                 <table>

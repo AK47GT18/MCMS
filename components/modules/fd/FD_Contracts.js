@@ -776,6 +776,8 @@ export const FD_Contracts = {
         10,
       ),
       vendorName: document.getElementById("contract_vendor")?.value,
+      vendorPhone: document.getElementById("contract_vendor_phone")?.value,
+      vendorId: document.getElementById("contract_vendor_id")?.value ? parseInt(document.getElementById("contract_vendor_id").value, 10) : null,
       title: document.getElementById("contract_title")?.value,
       value: parseFloat(document.getElementById("contract_value")?.value),
       startDate: startDateRaw
@@ -1084,4 +1086,110 @@ export const FD_Contracts = {
     this.currentView = "contracts";
     this.switchView("contracts");
   },
+
+  // ============================================
+  // Vendor Autocomplete & Rating
+  // ============================================
+  
+  async searchVendors(query) {
+    const resultsContainer = document.getElementById("vendor_autocomplete_results");
+    if (!resultsContainer) return;
+
+    if (!query || query.length < 2) {
+      resultsContainer.style.display = "none";
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/vendors/search?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const result = await res.json();
+      const vendors = result.data || result;
+
+      if (vendors.length === 0) {
+        resultsContainer.innerHTML = `
+          <div style="padding: 12px; text-align: center; color: var(--slate-500); font-size: 12px;">
+            <i class="fas fa-plus-circle" style="color: var(--orange); margin-bottom: 4px;"></i><br>
+            No matches found.<br>
+            <strong>"${query}"</strong> will be created as a new vendor.
+          </div>
+        `;
+        resultsContainer.style.display = "block";
+        document.getElementById("contract_vendor_id").value = "";
+        return;
+      }
+
+      resultsContainer.innerHTML = vendors.map(v => `
+        <div style="padding: 12px; border-bottom: 1px solid var(--slate-100); cursor: pointer; transition: background 0.2s;" 
+             onmouseover="this.style.backgroundColor='var(--slate-50)'" 
+             onmouseout="this.style.backgroundColor='transparent'"
+             onclick="window.app.fmModule.selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}', '${v.phone || ''}')">
+          <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${v.name}</div>
+          <div style="display: flex; gap: 12px; font-size: 11px; color: var(--slate-500); margin-top: 4px;">
+            ${v.phone ? `<span><i class="fas fa-phone"></i> ${v.phone}</span>` : ''}
+            <span><i class="fas fa-file-contract"></i> ${v.contractCount || 0} contracts</span>
+            ${v.avgRating ? `<span style="color: var(--orange);"><i class="fas fa-star"></i> ${v.avgRating}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+      
+      resultsContainer.style.display = "block";
+    } catch (e) {
+      console.error('Vendor search error', e);
+    }
+  },
+
+  selectVendorAutocomplete(id, name, phone) {
+    document.getElementById("contract_vendor").value = name;
+    document.getElementById("contract_vendor_id").value = id;
+    if (phone) {
+      document.getElementById("contract_vendor_phone").value = phone;
+    }
+    document.getElementById("vendor_autocomplete_results").style.display = "none";
+  },
+
+  async submitVendorRating(contractId) {
+    const ratingInput = document.querySelector('input[name="vendor_rating"]:checked');
+    const commentInput = document.getElementById("vendor_rating_comment");
+    
+    if (!ratingInput) {
+      window.toast.show("Please select a star rating.", "error");
+      return;
+    }
+
+    const data = {
+      rating: parseInt(ratingInput.value, 10),
+      comment: commentInput?.value || ""
+    };
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/contracts/${contractId}/rate`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to submit rating");
+      }
+
+      window.toast.show("Vendor performance rating saved successfully", "success");
+      window.drawer.close();
+      this.loadContractsData();
+      
+      // If we're coming from the Records module, reload that too
+      if (window.app.currentModule === "records" && window.app.recordsModule) {
+        window.app.recordsModule.loadVendorsData();
+      }
+    } catch (e) {
+      window.toast.show(e.message, "error");
+    }
+  }
 };

@@ -32,7 +32,7 @@ export const FD_Dashboard = {
             <div class="data-card" style="margin-top: 24px;">
                 <div class="data-card-header">
                     <div class="card-title">Pending Resource Requisitions (EC Forwarded)</div>
-                    <button class="btn btn-secondary" onclick="(window.fmModule || window.app?.fmModule)?.switchView('approvals')">Process All</button>
+                    <button class="btn btn-secondary" onclick="window.toast?.show('Opening Approvals...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('approvals')">Process All</button>
                 </div>
                 <div id="fm-pending-reqs-table">
                     <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div>
@@ -143,8 +143,8 @@ export const FD_Dashboard = {
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="(window.fmModule || window.app?.fmModule)?.loadContractsView()">Contracts</button>
-                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="(window.fmModule || window.app?.fmModule)?.requestPMUplift('${project.code}')">Request Uplift</button>
+                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.toast?.show('Opening Contracts...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('contracts')">Contracts</button>
+                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.toast?.show('Opening Uplift Request...', 'info'); (window.fmModule || window.app?.fmModule)?.requestPMUplift('${project.id}')">Request Uplift</button>
                         </div>
                     </div>
                 </div>
@@ -172,7 +172,7 @@ export const FD_Dashboard = {
                         const items = req.items || [];
                         const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
                         return `
-                            <tr onclick="(window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}', ${req.isReplenishment ? 'true' : 'false'})">
+                            <tr onclick="window.toast?.show('Opening Review...', 'info'); (window.fmModule || window.app?.fmModule)?.openRequisitionReview('${req.id}', ${req.isReplenishment ? 'true' : 'false'})">
                                 <td>
                                     <span class="project-id">${req.reqCode || 'REQ-' + req.id}</span>
                                     ${req.isReplenishment ? '<span class="badge badge-primary" style="font-size: 9px; margin-left: 4px; background: var(--blue-light); color: var(--blue);">Stock</span>' : ''}

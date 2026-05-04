@@ -26,9 +26,9 @@ export class FinanceDashboard {
         };
         
         // Register this module globally
-        window.app = window.app || {};
+        console.log('[DEBUG] FinanceDashboard initialized', this);
         window.app.fmModule = this;
-        window.fmModule = this; // Legacy/Direct access
+        window.fmModule = this; // Restore legacy reference
     }
 
     render() {
@@ -107,6 +107,7 @@ export class FinanceDashboard {
     }
 
     switchView(view) {
+        window.toast?.show(`Switching to ${view} view...`, 'info');
         this.currentView = view;
         // Use the global app page loader for proper DOM re-injection
         if (window.app && typeof window.app.loadPage === 'function') {
