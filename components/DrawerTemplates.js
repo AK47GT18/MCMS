@@ -682,6 +682,12 @@ export const DrawerTemplates = {
                                 </div>
                                 <div style="flex: 1.2; text-align: right;">
                                     <div style="font-size: 13px; font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono';">MWK ${Number(item.totalCost || 0).toLocaleString()}</div>
+                                    ${item.variance !== undefined ? `
+                                        <div style="font-size: 9px; font-weight: 800; margin-top: 4px; color: ${Number(item.variance) >= 0 ? "var(--emerald)" : "var(--red)"};">
+                                            <i class="fas ${Number(item.variance) >= 0 ? "fa-caret-down" : "fa-caret-up"}"></i> 
+                                            ${Number(item.variance) >= 0 ? "SAVED" : "OVER"} MWK ${Math.abs(Number(item.variance) * Number(item.quantity)).toLocaleString()}
+                                        </div>
+                                    ` : ""}
                                 </div>
                             </div>
                         `,
@@ -2950,16 +2956,20 @@ Contract Admin</textarea>
 
             <div style="margin-bottom: 24px;">
                 <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Health Metrics</div>
-                <div style="display: flex; gap: 12px;">
-                     <div style="flex: 1; padding: 12px; border-radius: 8px; background: ${project.budgetUtilization > 100 ? "var(--red-light)" : "var(--emerald-light)"}; border: 1px solid ${project.budgetUtilization > 100 ? "var(--red-hover)" : "var(--emerald-hover)"};">
-                        <div style="font-size: 10px; color: ${project.budgetUtilization > 100 ? "var(--red)" : "var(--emerald)"}; font-weight: 700;">BUDGET</div>
-                        <div style="font-weight: 600; font-size: 13px;">${project.budgetUtilization > 100 ? "Overrun" : "Within Budget"}</div>
-                     </div>
-                     <div style="flex: 1; padding: 12px; border-radius: 8px; background: var(--blue-light); border: 1px solid var(--blue-hover);">
-                        <div style="font-size: 10px; color: var(--blue); font-weight: 700;">SAFETY</div>
-                        <div style="font-weight: 600; font-size: 13px;">100% Score</div>
-                     </div>
-                </div>
+                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                      <div style="flex: 1; min-width: 100px; padding: 12px; border-radius: 8px; background: ${project.budgetUtilization > 100 ? "var(--red-light)" : "var(--emerald-light)"}; border: 1px solid ${project.budgetUtilization > 100 ? "var(--red-hover)" : "var(--emerald-hover)"};">
+                         <div style="font-size: 10px; color: ${project.budgetUtilization > 100 ? "var(--red)" : "var(--emerald)"}; font-weight: 700;">BUDGET</div>
+                         <div style="font-weight: 600; font-size: 13px;">${project.budgetUtilization > 100 ? "Overrun" : "Within Budget"}</div>
+                      </div>
+                      <div style="flex: 1; min-width: 100px; padding: 12px; border-radius: 8px; background: ${Number(project.procurementVariance || 0) >= 0 ? "var(--emerald-light)" : "var(--red-light)"}; border: 1px solid ${Number(project.procurementVariance || 0) >= 0 ? "var(--emerald-hover)" : "var(--red-hover)"};">
+                         <div style="font-size: 10px; color: ${Number(project.procurementVariance || 0) >= 0 ? "var(--emerald)" : "var(--red)"}; font-weight: 700;">EFFICIENCY</div>
+                         <div style="font-weight: 600; font-size: 13px;">${Number(project.procurementVariance || 0) >= 0 ? "Saving" : "Loss"}: MWK ${Math.abs(Number(project.procurementVariance || 0)).toLocaleString()}</div>
+                      </div>
+                      <div style="flex: 1; min-width: 100px; padding: 12px; border-radius: 8px; background: var(--blue-light); border: 1px solid var(--blue-hover);">
+                         <div style="font-size: 10px; color: var(--blue); font-weight: 700;">SAFETY</div>
+                         <div style="font-weight: 600; font-size: 13px;">100% Score</div>
+                      </div>
+                 </div>
             </div>
 
              <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Recent Updates</div>
@@ -3901,15 +3911,29 @@ Contract Admin</textarea>
                     oninput="window.V?.checkField(this)"
                     class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
             </div>
+            <div id="contract-performance-row" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div style="padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 10px; text-align: center;">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Market Price</div>
+                    <div id="total-market-value" style="font-size: 14px; font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono'; margin-top: 4px;">MWK 0</div>
+                </div>
+                <div style="padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 10px; text-align: center;">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Negotiated Price</div>
+                    <div id="total-negotiated-value" style="font-size: 14px; font-weight: 800; color: var(--orange); font-family: 'JetBrains Mono'; margin-top: 4px;">MWK 0</div>
+                </div>
+                <div id="procurement-performance-badge" style="padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Performance</div>
+                    <div id="performance-status" style="font-size: 12px; font-weight: 800; margin-top: 4px;">-</div>
+                </div>
+            </div>
+
             <div id="contract-budget-status"></div>
 
-            <!-- Agreed Contract Sum -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
                 <input type="number" id="contract_value" required 
                     data-vrules="required|numeric|min:1000" 
-                    oninput="window.V?.checkField(this)"
-                    class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
+                    oninput="window.V?.checkField(this); (window.app.fmModule || window.app.pmModule)?.calculateContractValue(true)"
+                    class="form-input" style="width: 100%; padding: 12px; border: 2px solid var(--orange-light); border-radius: 8px; font-family: 'JetBrains Mono'; font-size: 15px; font-weight: 800; color: var(--orange);" placeholder="0">
             </div>
 
             <!-- Dates -->

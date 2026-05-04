@@ -112,6 +112,26 @@ async function getById(id) {
   if (!project) {
     throw new AppError('Project not found', 404);
   }
+
+  // Calculate aggregate procurement variance from all vendor contracts
+  let totalVariance = 0;
+  if (project.contracts && project.contracts.length > 0) {
+    project.contracts.forEach(contract => {
+      try {
+        if (contract.materialsList) {
+          const items = JSON.parse(contract.materialsList);
+          if (Array.isArray(items)) {
+            items.forEach(item => {
+              totalVariance += (Number(item.variance) || 0);
+            });
+          }
+        }
+      } catch (e) {
+        // Silently skip malformed JSON
+      }
+    });
+  }
+  project.procurementVariance = totalVariance;
   
   return project;
 }

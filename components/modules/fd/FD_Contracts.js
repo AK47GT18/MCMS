@@ -201,7 +201,20 @@ export const FD_Contracts = {
                     </td>
                     <td>${item.project?.name || "Multi-Project"}</td>
                     <td style="font-family:'JetBrains Mono'; font-weight: 700;">${formatValue(item.value)}</td>
-                    <td style="font-weight: 700; color: var(--orange);">v${item.versions && item.versions.length > 0 ? item.versions[0].versionNumber : "1.0"}</td>
+                    <td>
+                        ${(() => {
+                            try {
+                                const materials = JSON.parse(item.materialsList || '[]');
+                                const variance = materials.reduce((acc, m) => acc + (Number(m.variance) || 0), 0);
+                                if (variance > 0) {
+                                    return `<span style="color: var(--emerald); font-weight: 800; font-size: 12px;"><i class="fas fa-caret-down"></i> Saved MWK ${(variance/1000).toFixed(0)}k</span>`;
+                                } else if (variance < 0) {
+                                    return `<span style="color: var(--red); font-weight: 800; font-size: 12px;"><i class="fas fa-caret-up"></i> Over MWK ${(Math.abs(variance)/1000).toFixed(0)}k</span>`;
+                                }
+                                return `<span style="color: var(--slate-400); font-size: 11px;">On Market</span>`;
+                            } catch (e) { return '-'; }
+                        })()}
+                    </td>
                     <td>
                         <span class="status ${statusClass}">${isExpired ? "EXPIRED" : (item.status || "Draft").toUpperCase()}</span>
                         ${isExpiringSoon ? `<div style="font-size: 10px; color: var(--orange); font-weight: 600; margin-top: 4px;">Expires in ${daysLeft} days</div>` : ""}
@@ -223,7 +236,7 @@ export const FD_Contracts = {
                         <th>Title</th>
                         ${this.currentContractTab === "vendor" ? "<th>Vendor</th>" : ""}
                         <th>Value</th>
-                        <th>Ver</th>
+                        <th>Procurement Performance</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -645,8 +658,8 @@ export const FD_Contracts = {
                         <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100); ${isFullyContracted ? 'opacity: 0.5; background: #f8fafc;' : ''}">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
-                                    data-name="${m.name}" data-unit="${m.unit}" data-price="${m.unitCostHigh || 0}"
-                                    onchange="window.app.fmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked"
+                                    data-name="${m.name}" data-unit="${m.unit}" data-market="${m.unitCostHigh || 0}"
+                                    onchange="window.app.fmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked;"
                                     ${isFullyContracted ? 'disabled' : ''}>
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800); ${isFullyContracted ? 'text-decoration: line-through;' : ''}">${m.name}</div>
@@ -662,7 +675,7 @@ export const FD_Contracts = {
                             <div style="flex: 1.2; text-align: right;">
                                 <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
                                     min="1" oninput="window.app.fmModule?.calculateContractValue()"
-                                    style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
+                                    style="width: 100%; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
                             </div>
                         </div>
                     `;
@@ -680,30 +693,65 @@ export const FD_Contracts = {
     const checkboxes = document.querySelectorAll(
       'input[name="contract_material"]:checked',
     );
-    let total = 0;
-
-    if (fromManualInput) {
-      total = parseFloat(document.getElementById("contract_value")?.value || 0);
-    } else {
-      checkboxes.forEach((cb) => {
-        const index = cb.value;
-        const price = parseFloat(cb.dataset.price || 0);
-        const qtyInput = document.getElementById(`m_qty_${index}`);
-        const qty = parseFloat(qtyInput?.value || 0);
-        total += price * qty;
-      });
-    }
-
     const valueInput = document.getElementById("contract_value");
+    const marketEl = document.getElementById("total-market-value");
+    const negotiatedEl = document.getElementById("total-negotiated-value");
+    const performanceEl = document.getElementById("performance-status");
+    const performanceBadge = document.getElementById("procurement-performance-badge");
+
+    let totalMarket = 0;
+    checkboxes.forEach((cb) => {
+      const index = cb.value;
+      const marketPrice = parseFloat(cb.dataset.market || 0);
+      const qtyInput = document.getElementById(`m_qty_${index}`);
+      const qty = parseFloat(qtyInput?.value || 0);
+      totalMarket += marketPrice * qty;
+    });
+
+    if (marketEl) marketEl.textContent = `MWK ${totalMarket.toLocaleString()}`;
+
     if (valueInput) {
-      if (!fromManualInput) {
-        valueInput.value = total;
+      const total = parseFloat(valueInput.value || 0);
+      const negotiatedSum = total;
+      if (negotiatedEl) negotiatedEl.textContent = `MWK ${negotiatedSum.toLocaleString()}`;
+      
+      if (performanceEl && negotiatedSum > 0) {
+          const diff = totalMarket - negotiatedSum;
+          if (diff > 0) {
+              performanceEl.textContent = "SURPLUS";
+              performanceEl.style.color = "var(--emerald)";
+              if (performanceBadge) {
+                  performanceBadge.style.background = "var(--emerald-light)";
+                  performanceBadge.style.borderColor = "var(--emerald-hover)";
+              }
+          } else if (diff < 0) {
+              performanceEl.textContent = "DEFICIT";
+              performanceEl.style.color = "var(--red)";
+              if (performanceBadge) {
+                  performanceBadge.style.background = "var(--red-light)";
+                  performanceBadge.style.borderColor = "var(--red-hover)";
+              }
+          } else {
+              performanceEl.textContent = "MATCHED";
+              performanceEl.style.color = "var(--slate-500)";
+              if (performanceBadge) {
+                  performanceBadge.style.background = "var(--slate-50)";
+                  performanceBadge.style.borderColor = "var(--slate-200)";
+              }
+          }
+      } else if (performanceEl) {
+          performanceEl.textContent = "-";
+          if (performanceBadge) {
+              performanceBadge.style.background = "var(--slate-50)";
+              performanceBadge.style.borderColor = "var(--slate-200)";
+          }
+      }
+
         // Visual feedback that it auto-calculated
         valueInput.style.backgroundColor = "#fff7ed";
         setTimeout(() => {
           valueInput.style.backgroundColor = "";
         }, 500);
-      }
 
       // Real-time Budget Validation
       const remainingBudget = this.currentProjectBudget?.remaining || 0;
@@ -874,11 +922,17 @@ export const FD_Contracts = {
     const materials = Array.from(checkboxes).map((cb) => {
       const index = cb.value;
       const qtyInput = document.getElementById(`m_qty_${index}`);
+      const priceInput = document.getElementById(`m_price_${index}`);
+      const marketPrice = parseFloat(cb.dataset.market || 0);
+      const negotiatedPrice = parseFloat(priceInput?.value || 0);
       return {
         name: cb.dataset.name,
         quantity: parseFloat(qtyInput?.value || 0),
         unit: cb.dataset.unit,
-        unitPrice: parseFloat(cb.dataset.price || 0),
+        unitPrice: negotiatedPrice,
+        marketPrice: marketPrice,
+        variance: marketPrice - negotiatedPrice,
+        totalCost: negotiatedPrice * parseFloat(qtyInput?.value || 0)
       };
     });
 

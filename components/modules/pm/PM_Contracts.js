@@ -399,8 +399,8 @@ export const PM_Contracts = {
                         <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
-                                    data-name="${m.name}" data-unit="${m.unit}" data-price="${m.unitCostHigh || 0}"
-                                    onchange="window.app.pmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked">
+                                    data-name="${m.name}" data-unit="${m.unit}" data-market="${m.unitCostHigh || 0}"
+                                    onchange="window.app.pmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked;">
                                 <div>
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.name}</div>
                                     <div style="font-size: 11px; color: var(--slate-500);">${m.unit} • Est. MWK ${Number(m.unitCostHigh || 0).toLocaleString()}/unit</div>
@@ -415,7 +415,7 @@ export const PM_Contracts = {
                             <div style="flex: 1.2; text-align: right;">
                                 <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
                                     min="1" oninput="window.app.pmModule?.calculateContractValue()"
-                                    style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
+                                    style="width: 100%; padding: 4px 8px; font-size: 12px; text-align: right; border-radius: 6px;">
                             </div>
                         </div>
                     `;
@@ -438,19 +438,58 @@ export const PM_Contracts = {
     if (fromManualInput) {
       total = parseFloat(document.getElementById("contract_value")?.value || 0);
     } else {
-      checkboxes.forEach((cb) => {
-        const index = cb.value;
-        const price = parseFloat(cb.dataset.price || 0);
-        const qtyInput = document.getElementById(`m_qty_${index}`);
-        const qty = parseFloat(qtyInput?.value || 0);
-        total += price * qty;
-      });
-    }
+      const valueInput = document.getElementById("contract_value");
+    const marketEl = document.getElementById("total-market-value");
+    const negotiatedEl = document.getElementById("total-negotiated-value");
+    const performanceEl = document.getElementById("performance-status");
+    const performanceBadge = document.getElementById("procurement-performance-badge");
 
-    const valueInput = document.getElementById("contract_value");
+    let totalMarket = 0;
+    checkboxes.forEach((cb) => {
+      const index = cb.value;
+      const marketPrice = parseFloat(cb.dataset.market || 0);
+      const qtyInput = document.getElementById(`m_qty_${index}`);
+      const qty = parseFloat(qtyInput?.value || 0);
+      totalMarket += marketPrice * qty;
+    });
+
+    if (marketEl) marketEl.textContent = `MWK ${totalMarket.toLocaleString()}`;
+
     if (valueInput) {
-      if (!fromManualInput) {
-        valueInput.value = total;
+      const total = parseFloat(valueInput.value || 0);
+      const negotiatedSum = total;
+      if (negotiatedEl) negotiatedEl.textContent = `MWK ${negotiatedSum.toLocaleString()}`;
+      
+      if (performanceEl && negotiatedSum > 0) {
+          const diff = totalMarket - negotiatedSum;
+          if (diff > 0) {
+              performanceEl.textContent = "SURPLUS";
+              performanceEl.style.color = "var(--emerald)";
+              if (performanceBadge) {
+                  performanceBadge.style.background = "var(--emerald-light)";
+                  performanceBadge.style.borderColor = "var(--emerald-hover)";
+              }
+          } else if (diff < 0) {
+              performanceEl.textContent = "DEFICIT";
+              performanceEl.style.color = "var(--red)";
+              if (performanceBadge) {
+                  performanceBadge.style.background = "var(--red-light)";
+                  performanceBadge.style.borderColor = "var(--red-hover)";
+              }
+          } else {
+              performanceEl.textContent = "MATCHED";
+              performanceEl.style.color = "var(--slate-500)";
+              if (performanceBadge) {
+                  performanceBadge.style.background = "var(--slate-50)";
+                  performanceBadge.style.borderColor = "var(--slate-200)";
+              }
+          }
+      } else if (performanceEl) {
+          performanceEl.textContent = "-";
+          if (performanceBadge) {
+              performanceBadge.style.background = "var(--slate-50)";
+              performanceBadge.style.borderColor = "var(--slate-200)";
+          }
       }
 
       // Real-time Budget Validation
@@ -732,6 +771,13 @@ export const PM_Contracts = {
         body: JSON.stringify({
           ...data,
           contractType: "vendor",
+          materialsList: JSON.stringify(Array.from(document.querySelectorAll('input[name="contract_material"]:checked')).map(cb => {
+              const idx = cb.value;
+              const q = parseFloat(document.getElementById(`m_qty_${idx}`)?.value || 0);
+              const p = parseFloat(document.getElementById(`m_price_${idx}`)?.value || 0);
+              const m = parseFloat(cb.dataset.market || 0);
+              return { name: cb.dataset.name, quantity: q, unit: cb.dataset.unit, unitPrice: p, marketPrice: m, variance: m - p, totalCost: p * q };
+          })),
           refCode: "CON-" + Date.now().toString(36).toUpperCase(),
         }),
       });
