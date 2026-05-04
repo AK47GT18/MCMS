@@ -29,13 +29,13 @@ export const EC_Dashboard = {
                 </button>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
                 <div class="data-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
                     <div class="data-card-header">
                         <div class="card-title">Live Material "Burn" Status</div>
                         <span class="status active" style="background: var(--emerald-light); color: var(--emerald); border: none;">Real-time</span>
                     </div>
-                    <div id="ec-burn-chart" style="padding: 24px;">
+                    <div id="ec-burn-chart" style="padding: 24px; min-height: 450px;">
                         ${this.isLoadingInventory && inventoryEntries.length === 0
                 ? '<div style="text-align:center; color: var(--slate-400); padding: 40px;"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:8px;"></i><div>Loading inventory…</div></div>'
                 : inventoryEntries.length === 0
@@ -46,50 +46,6 @@ export const EC_Dashboard = {
                                     <div style="font-size: 12px; max-width: 200px; margin: 8px auto;">Distribution logs will appear here once materials are dispatched to sites.</div>
                                 </div>`
                     : this._renderBurnChart(inventoryEntries)
-            }
-                    </div>
-                </div>
-
-                <div class="data-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);">
-                    <div class="data-card-header">
-                        <div class="card-title">Inventory Health</div>
-                        ${lowStockCount > 0 ? `
-                            <button class="btn btn-red btn-xs" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.ecModule.reorderAllCritical()">
-                                <i class="fas fa-shopping-cart"></i> Reorder All
-                            </button>
-                        ` : ''}
-                    </div>
-                    <div style="padding: 16px;" id="ec-logistics-status">
-                        ${this.isLoadingInventory && inventoryEntries.length === 0
-                ? '<div style="text-align:center; color: var(--slate-400); padding: 20px;"><i class="fas fa-circle-notch fa-spin"></i></div>'
-                : inventoryEntries.length === 0
-                    ? `
-                                <div style="text-align:center; color: var(--slate-400); padding: 20px;">
-                                    <i class="fas fa-warehouse" style="font-size: 32px; opacity: 0.2; margin-bottom: 12px;"></i>
-                                    <div style="font-size: 12px; font-weight: 600;">Silo is empty</div>
-                                </div>`
-                    : inventoryEntries.map(([name, data], i) => {
-                        const pct = Math.min(100, (data.qty / Math.max(data.thresh * 5, 1)) * 100);
-                        const isLow = data.qty <= data.thresh;
-                        const color = this._getMaterialColor(name, i);
-                        return `
-                                     <div style="margin-bottom: 24px; padding: 16px; background: white; border-radius: 16px; border: 1px solid var(--slate-100); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-end;">
-                                             <div>
-                                                 <div style="font-weight: 800; color: var(--slate-900); font-size: 14px;">${name}</div>
-                                                 <div style="font-size: 11px; color: var(--slate-400); font-weight: 700; text-transform: uppercase;">Stock Integrity Scan</div>
-                                             </div>
-                                             <div style="text-align: right;">
-                                                 <div style="color: ${isLow ? '#ef4444' : color.main}; font-weight: 900; font-family: 'JetBrains Mono'; font-size: 15px;">${data.qty.toLocaleString()}</div>
-                                                 <div style="font-size: 10px; color: var(--slate-400); font-weight: 700; text-transform: uppercase;">${data.unit} Available</div>
-                                             </div>
-                                         </div>
-                                         <div style="height: 10px; background: var(--slate-50); border-radius: 5px; overflow: hidden; border: 1px solid var(--slate-100);">
-                                             <div style="width: ${pct}%; background: ${isLow ? 'linear-gradient(90deg, #ef4444, #f87171)' : color.grad}; height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 10px ${isLow ? 'rgba(239, 68, 68, 0.2)' : color.glow};"></div>
-                                         </div>
-                                     </div>
-                                `;
-                    }).join('')
             }
                     </div>
                 </div>
@@ -206,16 +162,12 @@ export const EC_Dashboard = {
 
         requestAnimationFrame(() => {
             this._initBurnChart(entries);
-            this._initHealthChart(entries);
         });
     },
 
     _initBurnChart(entries) {
         const ctx = document.getElementById('ec-burn-chart-canvas');
-        if (!ctx) {
-            console.error('Burn chart canvas not found');
-            return;
-        }
+        if (!ctx) return;
 
         if (this.burnChartInstance) this.burnChartInstance.destroy();
 
@@ -229,38 +181,53 @@ export const EC_Dashboard = {
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Material Qty',
                         data: data,
                         backgroundColor: colors,
-                        borderRadius: 8,
+                        borderRadius: 12,
                         borderSkipped: false,
-                        barPercentage: 0.6
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 1000 },
+                    animation: { 
+                        duration: 2000, 
+                        easing: 'easeOutElastic',
+                        delay: (context) => context.dataIndex * 150
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#1e293b',
-                            titleFont: { size: 14, weight: '800' },
-                            bodyFont: { size: 13 },
-                            padding: 12,
-                            cornerRadius: 10,
-                            displayColors: false
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleFont: { size: 15, weight: '800', family: "'Inter', sans-serif" },
+                            bodyFont: { size: 13, weight: '600', family: "'Inter', sans-serif" },
+                            padding: 16,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: (context) => `Qty: ${context.raw.toLocaleString()} Units`
+                            }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { display: true, color: 'rgba(0,0,0,0.03)', drawBorder: false },
-                            ticks: { font: { size: 11, weight: '600' }, color: '#64748b' }
+                            grid: { display: true, color: 'rgba(0,0,0,0.04)', drawBorder: false },
+                            ticks: { 
+                                font: { size: 11, weight: '700' }, 
+                                color: '#94a3b8',
+                                padding: 12
+                            }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { font: { size: 11, weight: '700' }, color: '#475569' }
+                            ticks: { 
+                                font: { size: 12, weight: '800' }, 
+                                color: '#475569',
+                                padding: 12
+                            }
                         }
                     }
                 }
@@ -270,88 +237,22 @@ export const EC_Dashboard = {
         }
     },
 
-    _initHealthChart(entries) {
-        const container = document.getElementById('ec-logistics-status');
-        if (!container) {
-            console.error('Health chart container not found');
-            return;
-        }
-
-        container.innerHTML = '<div style="height: 300px; position: relative;"><canvas id="ec-health-chart-canvas"></canvas></div>';
-
-        const ctx = document.getElementById('ec-health-chart-canvas');
-        if (!ctx) {
-            console.error('Health chart canvas not found');
-            return;
-        }
-
-        if (this.healthChartInstance) this.healthChartInstance.destroy();
-
-        const labels = entries.map(([name]) => name);
-        const data = entries.map(([, d]) => d.qty);
-        const colors = entries.map(([name], i) => {
-            const isLow = this.inventory[name]?.qty <= this.inventory[name]?.thresh;
-            return isLow ? '#ef4444' : this._getMaterialColor(name, i).main;
-        });
-
-        try {
-            this.healthChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 1000 },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#1e293b',
-                            padding: 12,
-                            cornerRadius: 10
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: { display: true, color: 'rgba(0,0,0,0.03)' },
-                            ticks: { font: { size: 10, weight: '600' } }
-                        },
-                        y: {
-                            grid: { display: false },
-                            ticks: { font: { size: 10, weight: '700' }, color: '#475569' }
-                        }
-                    }
-                }
-            });
-        } catch (e) {
-            console.error('Failed to init health chart:', e);
-        }
-    },
-
     _getMaterialColor(name, i) {
         const materialColors = {
-            'Bitumen': { main: '#1e293b' },
-            'Portland': { main: '#0369a1' },
-            'Sand': { main: '#b45309' },
-            'Steel': { main: '#475569' }
+            'Bitumen': { main: '#f97316' }, // Strategic Orange
+            'Portland': { main: '#64748b' }, // Professional Slate
+            'Sand': { main: '#fbbf24' },   // Amber
+            'Steel': { main: '#1e293b' },  // Deep Navy
+            'Gravel': { main: '#94a3b8' }  // Silver Slate
         };
 
         const key = Object.keys(materialColors).find(k => name.includes(k));
         if (key) return materialColors[key];
 
         const fallbacks = [
-            { main: '#15803d' },
-            { main: '#0e7490' },
-            { main: '#4338ca' }
+            { main: '#f97316' },
+            { main: '#334155' },
+            { main: '#0f172a' }
         ];
         return fallbacks[i % fallbacks.length];
     }

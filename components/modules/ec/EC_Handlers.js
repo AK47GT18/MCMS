@@ -17,6 +17,361 @@ export const EC_Handlers = {
         });
     },
 
+    async openMaterialDispatch(materialName) {
+        const material = this.inventory[materialName];
+        if (!material) return;
+
+        try {
+            const projects = await client.get('/projects');
+            const projectList = Array.isArray(projects) ? projects : (projects.data || []);
+            
+            window.drawer.open(`Dispatch: ${materialName}`, `
+                <div style="padding: 24px;">
+                    <!-- Dual Metrics: Global vs Local -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                        <div style="background: var(--orange-light); padding: 16px; border-radius: 12px; border: 1px solid rgba(249, 115, 22, 0.2);">
+                            <div style="font-size: 10px; font-weight: 800; color: var(--orange); text-transform: uppercase; margin-bottom: 4px;">Global Silo</div>
+                            <div style="font-size: 18px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono';">
+                                <span id="display_available">${material.qty.toLocaleString()}</span>
+                            </div>
+                            <div id="project_allocation_info" style="font-size: 10px; color: var(--slate-500); font-weight: 700;">Global Available</div>
+                        </div>
+                        <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-200);">
+                            <div style="font-size: 10px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Site Stock</div>
+                            <div style="font-size: 18px; font-weight: 900; color: var(--slate-900); font-family: 'JetBrains Mono';">
+                                <span id="site_current_stock">0</span>
+                            </div>
+                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 700;">At Selected Site</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Target Project / Site</label>
+                        <select id="dispatch_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule._loadProjectContext('${materialName}', this.value)">
+                            <option value="">Select Target Site...</option>
+                            ${projectList.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Project Phase</label>
+                        <select id="dispatch_phase" class="form-input" style="width: 100%;" onchange="window.app.ecModule._loadPhaseResources(this.value)">
+                            <option value="">Select Site first...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Amount to Dispatch (${material.unit})</label>
+                        <div style="position: relative;">
+                            <input type="number" id="dispatch_amount" class="form-input" placeholder="0.00" 
+                                style="width: 100%; font-weight: 700; font-size: 16px;"
+                                oninput="window.app.ecModule._updateLiveDeduction(this.value, ${material.qty})">
+                            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--slate-400); font-size: 12px;">${material.unit}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                            <div id="remaining_balance" style="font-size: 10px; color: var(--slate-400); font-weight: 600;">Silo After: ${material.qty.toLocaleString()}</div>
+                            <div id="site_impact" style="font-size: 10px; color: var(--orange); font-weight: 800; display: none;">New Site Total: 0</div>
+                        </div>
+                        <div id="dispatch_error" style="color: var(--red); font-size: 11px; display: none; margin-top: 4px; font-weight: 600;">⚠ Insufficient stock or invalid amount.</div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Justification / Remarks</label>
+                        <textarea id="dispatch_justification" class="form-input" placeholder="Scheduled fulfillment for site works..." style="width: 100%; height: 60px; resize: none; font-size: 12px;"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Recipient Name (To Who)</label>
+                        <input type="text" id="dispatch_recipient" class="form-input" placeholder="Site supervisor / manager" style="width: 100%;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label class="form-label">Dispatch Date & Time</label>
+                        <input type="datetime-local" id="dispatch_date" class="form-input" style="width: 100%;" 
+                            min="${new Date().toISOString().slice(0, 16)}"
+                            value="${new Date().toISOString().slice(0, 16)}">
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 14px;" 
+                        onclick="window.app.ecModule.handleMaterialDistribution('${materialName}')">
+                        <i class="fas fa-truck-loading" style="margin-right: 8px;"></i> Authorize & Execute Dispatch
+                    </button>
+                </div>
+            `);
+        } catch (err) {
+            window.toast?.show('Failed to load project data.', 'error');
+        }
+    },
+
+    async handleMaterialDistribution(materialName) {
+        const amount = Number(document.getElementById('dispatch_amount')?.value || 0);
+        const projectId = document.getElementById('dispatch_project')?.value;
+        const phaseId = document.getElementById('dispatch_phase')?.value;
+        const recipient = document.getElementById('dispatch_recipient')?.value;
+        const date = document.getElementById('dispatch_date')?.value;
+        const justification = document.getElementById('dispatch_justification')?.value;
+        
+        // Allocation Validation
+        const displayEl = document.getElementById('display_available');
+        const allocation = Number(displayEl?.dataset.allocated || 0);
+
+        if (allocation <= 0) {
+            window.toast?.show('Error: Cannot dispatch to a project with zero allocation.', 'error');
+            return;
+        }
+        
+        const material = this.inventory[materialName];
+        const errorEl = document.getElementById('dispatch_error');
+
+        if (!amount || amount <= 0 || amount > material.qty) {
+            if (errorEl) errorEl.style.display = 'block';
+            return;
+        }
+        if (!projectId || !recipient || !justification) {
+            window.toast?.show('Project site, recipient, and justification are required.', 'warning');
+            return;
+        }
+
+        try {
+            window.toast?.show('Processing distribution...', 'info');
+            
+            // Perform deduction API call
+            await client.post('/inventory/dispatch', {
+                materialName,
+                quantity: amount,
+                projectId,
+                phaseId,
+                recipient,
+                date,
+                justification
+            });
+
+            // Update local state
+            this.inventory[materialName].qty -= amount;
+            
+            // Send Notification Email
+            try {
+                const notificationsApi = await import('../../../src/api/notifications.api.js');
+                await notificationsApi.default.sendEmail({
+                    to: 'Site Management',
+                    subject: `Material Dispatch: ${materialName}`,
+                    body: `Authorized dispatch of ${amount} ${material.unit} to Project ${projectId}.\n\nJustification: ${justification}\nRecipient: ${recipient}`,
+                    description: `Automated logistics fulfillment for ${materialName}.`
+                });
+            } catch (e) { console.error('Email notify failed', e); }
+
+            window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
+            window.drawer?.close();
+            
+            // Refresh view
+            if (this.currentView === 'inventory') this._refreshCurrentView();
+            if (this.currentView === 'dashboard') this._refreshCurrentView();
+            
+        } catch (err) {
+            window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');
+        }
+    },
+
+    _updateLiveDeduction(val, max) {
+        const amount = Number(val || 0);
+        const remainingEl = document.getElementById('remaining_balance');
+        const displayAvailable = document.getElementById('display_available');
+        const errorEl = document.getElementById('dispatch_error');
+        const siteCurrentStockEl = document.getElementById('site_current_stock');
+        const siteImpactEl = document.getElementById('site_impact');
+        const confirmBtn = document.querySelector('[onclick*="handleMaterialDistribution"]');
+
+        const allocation = Number(displayAvailable?.dataset.allocated || 0);
+
+        if (allocation <= 0) {
+            if (confirmBtn) confirmBtn.disabled = true;
+            if (errorEl) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = '⚠ Project has 0 allocation for this material.';
+            }
+            return;
+        }
+
+        if (amount > max || amount < 0) {
+            if (errorEl) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = '⚠ Insufficient stock or invalid amount.';
+            }
+            if (confirmBtn) confirmBtn.disabled = true;
+            return;
+        }
+
+        if (errorEl) errorEl.style.display = 'none';
+        if (confirmBtn) confirmBtn.disabled = false;
+
+        const remaining = max - amount;
+        if (remainingEl) remainingEl.textContent = `Silo After: ${remaining.toLocaleString()}`;
+        if (displayAvailable) displayAvailable.textContent = (allocation - amount).toLocaleString();
+
+        // Site Impact Calculation
+        const currentSiteStock = Number(siteCurrentStockEl?.textContent.replace(/,/g, '') || 0);
+        if (siteImpactEl) {
+            if (amount > 0) {
+                siteImpactEl.style.display = 'block';
+                siteImpactEl.textContent = `New Site Total: ${(currentSiteStock + amount).toLocaleString()}`;
+            } else {
+                siteImpactEl.style.display = 'none';
+            }
+        }
+    },
+
+    async _loadProjectContext(materialName, projectId) {
+        if (!projectId) return;
+        
+        // Reset metrics to avoid stale data leakage
+        const displayAvailableEl = document.getElementById('display_available');
+        const allocationInfoEl = document.getElementById('project_allocation_info');
+        const siteStockEl = document.getElementById('site_current_stock');
+        const siteImpactEl = document.getElementById('site_impact');
+        
+        if (displayAvailableEl) {
+            displayAvailableEl.textContent = '0';
+            displayAvailableEl.dataset.allocated = '0'; // CRITICAL RESET
+        }
+        if (siteStockEl) siteStockEl.textContent = '...';
+        if (siteImpactEl) siteImpactEl.style.display = 'none';
+        if (allocationInfoEl) allocationInfoEl.textContent = 'Global Available';
+
+        // 1. Load Phases
+        await this._loadProjectPhases(projectId);
+
+        // 2. Load Project Allocation (Primary focus from local state)
+        if (allocationInfoEl && displayAvailableEl) {
+            const material = this.inventory[materialName];
+            if (material && material.allocations) {
+                // Find matching allocation for this project
+                const match = material.allocations.find(a => String(a.projectId) === String(projectId));
+                const allocated = match ? (Number(match.quantity) || 0) : 0;
+                
+                displayAvailableEl.textContent = allocated.toLocaleString();
+                displayAvailableEl.dataset.allocated = allocated; 
+                
+                allocationInfoEl.innerHTML = `Project Allocation <span style="margin-left: 8px; color: var(--slate-400); font-weight: 500;">(Global: ${material.qty.toLocaleString()})</span>`;
+                
+                if (allocated === 0) {
+                    window.toast?.show('Notice: No allocation for this project. Dispatch blocked.', 'warning');
+                }
+            } else {
+                // Fallback to API if not in local cache (defensive)
+                try {
+                    const result = await client.get(`/projects/${projectId}/material-sheet`);
+                    let requirements = [];
+                    if (Array.isArray(result)) requirements = result;
+                    else if (result && Array.isArray(result.data)) requirements = result.data;
+                    
+                    const match = requirements.find(r => r.name === materialName || r.materialName === materialName);
+                    const allocated = match ? (match.requiredQuantity || match.quantity || 0) : 0;
+                    
+                    displayAvailableEl.textContent = allocated.toLocaleString();
+                    displayAvailableEl.dataset.allocated = allocated;
+                } catch (e) {
+                    displayAvailableEl.dataset.allocated = 0;
+                }
+            }
+        }
+
+        // 3. Load Site Stock
+        if (siteStockEl) {
+            try {
+                const result = await client.get(`/inventory/project/${projectId}`);
+                const inventoryList = Array.isArray(result) ? result : (result.data || []);
+                const siteMaterial = inventoryList.find(m => m.name === materialName || m.materialName === materialName);
+                const siteQty = siteMaterial ? (siteMaterial.quantity || siteMaterial.qty || 0) : 0;
+                siteStockEl.textContent = siteQty.toLocaleString();
+            } catch (e) {
+                siteStockEl.textContent = '0';
+            }
+        }
+    },
+
+    async _loadProjectPhases(projectId) {
+        if (!projectId) return;
+        const phaseSelect = document.getElementById('dispatch_phase');
+        const recipientInput = document.getElementById('dispatch_recipient');
+        if (!phaseSelect) return;
+
+        phaseSelect.innerHTML = '<option value="">Loading...</option>';
+        try {
+            // 1. Load Phases (Top-level tasks)
+            const result = await client.get(`/projects/${projectId}/tasks`);
+            const tasks = Array.isArray(result) ? result : (result.data || []);
+            const phases = tasks.filter(t => !t.parentId);
+            
+            if (phases.length === 0) {
+                phaseSelect.innerHTML = '<option value="general">General Operations</option>';
+            } else {
+                phaseSelect.innerHTML = '<option value="">Select Phase...</option>' + 
+                    phases.map(ph => `<option value="${ph.id}">${ph.name}</option>`).join('');
+            }
+
+            // 2. Load Project Details for Supervisor
+            const project = await client.get(`/projects/${projectId}`);
+            if (project && recipientInput) {
+                recipientInput.value = project.supervisorName || project.managerName || '';
+            }
+            
+            // Clear resource list on project change
+            const resSummary = document.getElementById('phase_resources_summary');
+            if (resSummary) resSummary.style.display = 'none';
+
+        } catch (err) {
+            console.error('Failed to load project context:', err);
+            phaseSelect.innerHTML = '<option value="general">General Operations (Fallback)</option>';
+        }
+    },
+
+    async handleMaterialDistribution(materialName) {
+        const amount = Number(document.getElementById('dispatch_amount')?.value || 0);
+        const projectId = document.getElementById('dispatch_project')?.value;
+        const phaseId = document.getElementById('dispatch_phase')?.value;
+        const recipient = document.getElementById('dispatch_recipient')?.value;
+        const date = document.getElementById('dispatch_date')?.value;
+        
+        const material = this.inventory[materialName];
+        const errorEl = document.getElementById('dispatch_error');
+
+        if (!amount || amount <= 0 || amount > material.qty) {
+            if (errorEl) errorEl.style.display = 'block';
+            return;
+        }
+        if (!projectId || !recipient) {
+            window.toast?.show('Project site and recipient are required.', 'warning');
+            return;
+        }
+
+        try {
+            window.toast?.show('Processing distribution...', 'info');
+            
+            // Perform deduction API call
+            await client.post('/inventory/dispatch', {
+                materialName,
+                quantity: amount,
+                projectId,
+                phaseId,
+                recipient,
+                date
+            });
+
+            // Update local state
+            this.inventory[materialName].qty -= amount;
+            
+            window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
+            window.drawer?.close();
+            
+            // Refresh view
+            if (this.currentView === 'inventory') this._refreshCurrentView();
+            if (this.currentView === 'dashboard') this._refreshCurrentView();
+            
+        } catch (err) {
+            window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');
+        }
+    },
+
     toggleResourceType(type, btn) {
         const machineryView = document.getElementById('machinery_view');
         const materialsView = document.getElementById('material_sheet_view');
@@ -844,6 +1199,39 @@ export const EC_Handlers = {
         } catch (error) {
             console.error('[EC] Batch reorder failed:', error);
             window.toast.show('Batch reorder failed.', 'error');
+        }
+    },
+
+    async _loadPhaseResources(phaseId) {
+        const summary = document.getElementById('phase_resources_summary');
+        const list = document.getElementById('phase_resources_list');
+        if (!summary || !list) return;
+
+        if (!phaseId || phaseId === '' || phaseId === 'general') {
+            summary.style.display = 'none';
+            return;
+        }
+
+        summary.style.display = 'block';
+        list.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Checking allocations...';
+
+        try {
+            // Fetch material sheet/allocations for this phase
+            const result = await client.get(`/tasks/${phaseId}/materials`);
+            const materials = Array.isArray(result) ? result : (result.data || []);
+            
+            if (materials.length === 0) {
+                list.innerHTML = 'No specific material allocations found for this phase.';
+            } else {
+                list.innerHTML = materials.map(m => `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="font-weight: 700;">${m.name}</span>
+                        <span style="color: var(--orange); font-weight: 800;">${m.quantity} ${m.unit}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (err) {
+            list.innerHTML = 'General Project usage (No specific phase constraint).';
         }
     }
 };

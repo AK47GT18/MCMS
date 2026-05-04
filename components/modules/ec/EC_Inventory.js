@@ -49,9 +49,12 @@ export const EC_Inventory = {
                                                 ${isLow ? 'CRITICAL' : 'STABLE'}
                                             </span>
                                         </td>
-                                        <td style="text-align: right;">
+                                        <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
                                             <button class="btn btn-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="window.app.ecModule.openInventoryDetails('${name}')">
                                                 <i class="fas fa-eye"></i> View Allocations
+                                            </button>
+                                            <button class="btn btn-primary" style="font-size: 11px; padding: 6px 12px;" onclick="window.app.ecModule.openMaterialDispatch('${name}')">
+                                                <i class="fas fa-truck"></i> Dispatch
                                             </button>
                                         </td>
                                     </tr>
