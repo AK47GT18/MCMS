@@ -235,9 +235,9 @@ async function router(req, res) {
       if (method === 'POST') return vendorsController.create(req, res);
       return methodNotAllowed(res, ['GET', 'POST']);
     }
-    if (method === 'GET') return vendorsController.getById(req, res);
-    if (method === 'PUT' || method === 'PATCH') return vendorsController.update(req, res);
-    if (method === 'DELETE') return vendorsController.remove(req, res);
+    if (method === 'GET') return vendorsController.getById(req, res, id);
+    if (method === 'PUT' || method === 'PATCH') return vendorsController.update(req, res, id);
+    if (method === 'DELETE') return vendorsController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
   // ============================================
@@ -246,6 +246,9 @@ async function router(req, res) {
   if (resource === 'contracts') {
     if (action === 'rate' && method === 'POST') {
       return contractsController.rateVendor(req, res, id);
+    }
+    if (action === 'terminate' && method === 'POST') {
+      return contractsController.terminateContract(req, res, id);
     }
     if (action === 'versions') {
       if (method === 'GET') return contractVersionsController.getByContract(req, res, id);

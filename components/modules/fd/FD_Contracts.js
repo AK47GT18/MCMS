@@ -565,19 +565,40 @@ export const FD_Contracts = {
       const budgetDisplay = document.getElementById("contract-budget-status");
       if (budgetDisplay) {
         const remaining = Number(budget.remaining || 0);
+        const spent = Number(budget.spent || 0);
         const percent = Number(budget.percentUsed || 0);
+        
         budgetDisplay.innerHTML = `
-                    <div style="background: ${remaining < 1000000 ? "#fef2f2" : "var(--slate-50)"}; border: 1px solid ${remaining < 1000000 ? "#fee2e2" : "var(--slate-200)"}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Project Funds</span>
-                            <span style="font-size: 14px; font-weight: 800; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"};">MWK ${remaining.toLocaleString()}</span>
+                    <div style="background: ${remaining < 1000000 ? "#FFF5F5" : "white"}; border: 2px solid ${remaining < 1000000 ? "var(--red)" : "var(--slate-200)"}; padding: 16px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px;">
+                            <div>
+                                <div style="font-size: 10px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Available Funds</div>
+                                <div style="font-size: 20px; font-weight: 900; color: ${remaining < 1000000 ? "var(--red)" : "var(--slate-900)"}; font-family: 'JetBrains Mono';">MWK ${remaining.toLocaleString()}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 10px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Utilization</div>
+                                <div style="font-size: 18px; font-weight: 900; color: ${percent > 90 ? "var(--red)" : "var(--orange)"};">${percent}%</div>
+                            </div>
                         </div>
-                        <div style="height: 6px; background: var(--slate-200); border-radius: 3px; overflow: hidden;">
-                            <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? "var(--red)" : "var(--emerald) track"};"></div>
+                        
+                        <!-- Visual Budget Bar (Dual Layer) -->
+                        <div style="height: 14px; background: #E2E8F0; border-radius: 7px; overflow: hidden; display: flex; border: 1px solid rgba(0,0,0,0.05); position: relative;">
+                            <div style="width: ${percent}%; height: 100%; background: ${percent > 90 ? "var(--red)" : "var(--orange)"}; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
+                            <div style="flex: 1; height: 100%; background: var(--emerald-light); opacity: 0.5;"></div>
+                            
+                            <!-- Middle Marker -->
+                            <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.1); z-index: 2;"></div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 6px;">
-                            <span style="font-size: 10px; color: var(--slate-400);">${percent}% Budget Utilized</span>
-                            ${remaining < 1000000 ? '<span style="font-size: 10px; color: var(--red); font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> CRITICAL BALANCE</span>' : ""}
+                        
+                        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                            <div style="font-size: 11px; font-weight: 600; color: var(--slate-500);">
+                                <i class="fas fa-arrow-up" style="color: var(--orange); margin-right: 4px;"></i> Spent: MWK ${spent.toLocaleString()}
+                            </div>
+                            ${remaining < 1000000 
+                                ? '<div style="font-size: 11px; font-weight: 800; color: var(--red); display: flex; align-items: center; gap: 4px;"><i class="fas fa-exclamation-circle"></i> LOW FUNDS</div>' 
+                                : `<div style="font-size: 11px; font-weight: 700; color: var(--emerald-dark);">
+                                     <i class="fas fa-check-circle" style="margin-right: 4px;"></i> ${(100-percent).toFixed(1)}% Safe
+                                   </div>`}
                         </div>
                     </div>
                 `;
@@ -619,14 +640,16 @@ export const FD_Contracts = {
                       0,
                       m.quantity - m.contractedQuantity,
                     );
+                    const isFullyContracted = remainingNeeded === 0;
                     return `
-                        <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100);">
+                        <div style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--slate-100); ${isFullyContracted ? 'opacity: 0.5; background: #f8fafc;' : ''}">
                             <div style="flex: 2; display: flex; align-items: center; gap: 10px;">
                                 <input type="checkbox" name="contract_material" id="m_cb_${i}" value="${i}" 
                                     data-name="${m.name}" data-unit="${m.unit}" data-price="${m.unitCostHigh || 0}"
-                                    onchange="window.app.fmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked">
+                                    onchange="window.app.fmModule?.calculateContractValue(); document.getElementById('m_qty_${i}').disabled = !this.checked"
+                                    ${isFullyContracted ? 'disabled' : ''}>
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.name}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: var(--slate-800); ${isFullyContracted ? 'text-decoration: line-through;' : ''}">${m.name}</div>
                                     <div style="font-size: 11px; color: var(--slate-500);">${m.unit} • Est. MWK ${Number(m.unitCostHigh || 0).toLocaleString()}/unit</div>
                                 </div>
                             </div>
@@ -634,7 +657,7 @@ export const FD_Contracts = {
                                 <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${m.quantity}</div>
                             </div>
                             <div style="flex: 1; text-align: right;">
-                                <div style="font-size: 12px; font-weight: 600; color: ${m.contractedQuantity > 0 ? "var(--orange)" : "var(--slate-400)"};">${m.contractedQuantity}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: ${m.contractedQuantity > 0 ? (isFullyContracted ? "var(--emerald)" : "var(--orange)") : "var(--slate-400)"};">${m.contractedQuantity}</div>
                             </div>
                             <div style="flex: 1.2; text-align: right;">
                                 <input type="number" id="m_qty_${i}" class="form-input" disabled value="${remainingNeeded > 0 ? remainingNeeded : 0}" 
@@ -747,6 +770,12 @@ export const FD_Contracts = {
   },
 
   async submitContract() {
+    if (window.app && typeof window.app.validateForm === 'function') {
+      const formContainer = document.getElementById('drawer-content') || document.body;
+      if (!window.app.validateForm(formContainer)) {
+        return;
+      }
+    }
     // Document upload validation - require a file before submission
     const fileInput = document.getElementById("contract_document");
     if (!fileInput || !fileInput.files || !fileInput.files[0]) {
@@ -754,7 +783,7 @@ export const FD_Contracts = {
         "Please upload a signed contract document before submitting.",
         "error",
       );
-      const dropZone = document.getElementById("contract-upload-zone");
+      const dropZone = document.getElementById("contract-upload-zone") || document.getElementById("contract-drop-zone");
       if (dropZone) {
         dropZone.style.borderColor = "var(--red)";
         dropZone.style.background = "#fef2f2";
@@ -767,8 +796,26 @@ export const FD_Contracts = {
       return;
     }
 
+    const file = fileInput.files[0];
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      window.toast.show("Contract document exceeds the 10MB limit. Please upload a smaller file.", "error");
+      return;
+    }
+
     const startDateRaw = document.getElementById("contract_start")?.value;
     const endDateRaw = document.getElementById("contract_end")?.value;
+
+    if (startDateRaw && endDateRaw) {
+      if (new Date(endDateRaw) < new Date(startDateRaw)) {
+        window.toast.show("Contract end date cannot be earlier than the start date.", "error");
+        const endInput = document.getElementById("contract_end");
+        if (endInput) {
+            endInput.style.borderColor = "var(--red)";
+            endInput.focus();
+        }
+        return;
+      }
+    }
 
     const data = {
       projectId: parseInt(
@@ -794,6 +841,7 @@ export const FD_Contracts = {
       ),
       guaranteeExpiry:
         document.getElementById("contract_guarantee_expiry")?.value || null,
+      contractType: "vendor", // Categorize correctly for registry tabs
     };
 
     // Basic field validation
@@ -938,7 +986,20 @@ export const FD_Contracts = {
       }
 
       window.drawer.close();
-      if (this.currentView === "contracts") this.loadContractsData();
+      
+      // Auto-refresh the appropriate view with tab awareness
+      if (this.currentView === "contracts") {
+        if (this.currentContractTab === "vendor") {
+            // Force a re-fetch of the vendor contracts
+            await this.loadContractsData();
+        } else {
+            this.loadContractsData();
+        }
+      }
+      else if (this.currentView === "procurement") this.loadProcurementData();
+      else if (this.currentView === "ledger") this.loadLedgerData();
+      else if (this.switchView) this.switchView(this.currentView);
+      
     } catch (err) {
       window.toast.show(err.message, "error");
     }
@@ -1125,7 +1186,7 @@ export const FD_Contracts = {
         <div style="padding: 12px; border-bottom: 1px solid var(--slate-100); cursor: pointer; transition: background 0.2s;" 
              onmouseover="this.style.backgroundColor='var(--slate-50)'" 
              onmouseout="this.style.backgroundColor='transparent'"
-             onclick="window.app.fmModule.selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}', '${v.phone || ''}')">
+             onmousedown="(window.app.fmModule || window.app.pmModule).selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}', '${v.phone || ''}')">
           <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${v.name}</div>
           <div style="display: flex; gap: 12px; font-size: 11px; color: var(--slate-500); margin-top: 4px;">
             ${v.phone ? `<span><i class="fas fa-phone"></i> ${v.phone}</span>` : ''}
@@ -1142,12 +1203,32 @@ export const FD_Contracts = {
   },
 
   selectVendorAutocomplete(id, name, phone) {
-    document.getElementById("contract_vendor").value = name;
-    document.getElementById("contract_vendor_id").value = id;
-    if (phone) {
-      document.getElementById("contract_vendor_phone").value = phone;
+    const nameInput = document.getElementById("contract_vendor");
+    const idInput = document.getElementById("contract_vendor_id");
+    const phoneInput = document.getElementById("contract_vendor_phone");
+    const resultsContainer = document.getElementById("vendor_autocomplete_results");
+
+    if (nameInput) {
+      nameInput.value = name;
+      // Manually trigger events so validator and listeners see the change
+      nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      nameInput.dispatchEvent(new Event('change', { bubbles: true }));
+      if (window.V) window.V.checkField(nameInput);
     }
-    document.getElementById("vendor_autocomplete_results").style.display = "none";
+
+    if (idInput) {
+      idInput.value = id;
+    }
+
+    if (phoneInput) {
+      phoneInput.value = phone || "";
+      phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+      if (window.V && phone) window.V.checkField(phoneInput);
+    }
+
+    if (resultsContainer) {
+      resultsContainer.style.display = "none";
+    }
   },
 
   async submitVendorRating(contractId) {
@@ -1187,6 +1268,69 @@ export const FD_Contracts = {
       // If we're coming from the Records module, reload that too
       if (window.app.currentModule === "records" && window.app.recordsModule) {
         window.app.recordsModule.loadVendorsData();
+      }
+    } catch (e) {
+      window.toast.show(e.message, "error");
+    }
+  },
+
+  openTerminateContractDrawer(contract) {
+    window.drawer.open(
+      `Terminate: ${contract.refCode}`,
+      window.DrawerTemplates.terminateContract(contract)
+    );
+  },
+
+  async submitTermination(contractId) {
+    if (window.app && typeof window.app.validateForm === 'function') {
+      const formContainer = document.getElementById('drawer-content') || document.body;
+      if (!window.app.validateForm(formContainer)) {
+        return;
+      }
+    }
+
+    const reasonInput = document.getElementById("term_reason");
+    const reason = reasonInput?.value;
+    
+    if (!reason) {
+      window.toast.show("Please provide a reason for termination.", "error");
+      return;
+    }
+
+    // Collect received quantities
+    const receivedItems = [];
+    const qtyInputs = document.querySelectorAll('.term-qty-input');
+    qtyInputs.forEach(input => {
+      receivedItems.push({
+        id: parseInt(input.dataset.itemId, 10),
+        receivedQty: parseFloat(input.value || 0)
+      });
+    });
+
+    try {
+      window.toast.show("Finalizing contract termination...", "info");
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/contracts/${contractId}/terminate`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ reason, receivedItems })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to terminate contract");
+      }
+
+      window.toast.show("Contract terminated. Remaining funds and materials returned to project.", "success");
+      window.drawer.close();
+      await this.loadContractsData();
+      
+      // If we're in the Ledger, reload to reflect budget changes
+      if (window.app.currentModule === "ledger" && window.app.fmModule) {
+        window.app.fmModule.loadLedgerData();
       }
     } catch (e) {
       window.toast.show(e.message, "error");

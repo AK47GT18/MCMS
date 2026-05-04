@@ -59,7 +59,7 @@ export const FD_Records = {
             container.innerHTML = `
                 <table>
                     <thead>
-                        <tr><th>Vendor Details</th><th>Contact Info</th><th>Risk Profile</th><th>Contract Volume</th><th>Aggregate Performance</th></tr>
+                        <tr><th>Vendor Details</th><th>Contact Info</th><th>Risk Profile</th><th>Contract Volume</th><th>Aggregate Performance</th><th></th></tr>
                     </thead>
                     <tbody>
                         ${vendors.map(v => {
@@ -85,6 +85,11 @@ export const FD_Records = {
                                             <div style="color: var(--orange); font-size: 14px;">${this._renderStars(v.avgRating || 0)}</div>
                                             <div style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${v.avgRating ? v.avgRating.toFixed(1) : 'N/A'}</div>
                                         </div>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; font-weight: 700;" onclick="window.app.fmModule?.viewVendor(${v.id})">
+                                            View Details <i class="fas fa-chevron-right" style="margin-left: 4px;"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             `;
@@ -115,5 +120,31 @@ export const FD_Records = {
         const empty = Math.max(0, 5 - full - (half ? 1 : 0));
         for (let i = 0; i < empty; i++) html += '<i class="fas fa-star" style="color: var(--slate-200);"></i>';
         return html;
+    },
+
+    async viewVendor(id) {
+        try {
+            window.toast.show('Loading vendor details...', 'info');
+            const token = localStorage.getItem('mcms_auth_token');
+            const response = await fetch(`/api/v1/vendors/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch vendor details');
+            const result = await response.json();
+            const vendor = result.data || result.vendor || result;
+            
+            // Add avgRating explicitly if API returns stats
+            if (vendor._count && vendor.contracts) {
+                const rated = vendor.contracts.filter(c => c.vendorRating > 0);
+                if (rated.length > 0) {
+                    vendor.avgRating = rated.reduce((sum, c) => sum + c.vendorRating, 0) / rated.length;
+                }
+            }
+
+            window.drawer.open(`Vendor Details: ${vendor.name}`, window.DrawerTemplates.vendorView(vendor));
+        } catch (error) {
+            console.error('Vendor details error:', error);
+            window.toast.show(error.message || 'Failed to load vendor details', 'error');
+        }
     }
 };

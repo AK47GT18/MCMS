@@ -113,4 +113,21 @@ const rateVendor = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, approve, rateVendor };
+const terminateContract = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  
+  const contractId = validateId(id, res);
+  if (!contractId) return;
+  
+  const body = await parseBody(req);
+  if (!body.reason) {
+    return response.badRequest(res, 'Termination reason is required');
+  }
+
+  const result = await contractsService.terminate(contractId, body, user);
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, update, remove, approve, rateVendor, terminateContract };

@@ -105,8 +105,8 @@ async function create(data, userId) {
   }
 
   // Find or Create Vendor (normalized matching)
-  let vendorId = null;
-  if (data.vendorName) {
+  let vendorId = data.vendorId || null;
+  if (!vendorId && data.vendorName) {
     const vendorService = require('./vendors.service');
     const { vendor } = await vendorService.findOrCreate(
       data.vendorName,
@@ -114,6 +114,10 @@ async function create(data, userId) {
       data.vendorCategory || 'General'
     );
     vendorId = vendor.id;
+  } else if (vendorId && data.vendorPhone) {
+    // If ID exists but phone was updated/provided in the form, update it
+    const vendorService = require('./vendors.service');
+    await vendorService.update(vendorId, { phone: data.vendorPhone });
   }
 
   const contractData = {
@@ -136,7 +140,9 @@ async function create(data, userId) {
         unitPrice: m.unitPrice || 0,
         totalCost: (m.quantity || 0) * (m.unitPrice || 0)
       }))
-    } : undefined
+    } : undefined,
+    materialsList: materials.length > 0 ? JSON.stringify(materials) : '[]',
+    status: 'active'
   };
   
   const contract = await prisma.contract.create({
@@ -161,7 +167,14 @@ async function create(data, userId) {
       }
     }
   });
+
+  // Deduct the contract value from the project budget (by adding to spent)
+  if (contract.value && contract.projectId) {
+    const projectService = require('./projects.service');
+    await projectService.addToSpent(contract.projectId, Number(contract.value));
+  }
   
+
   // Create Initial Version
   const nextVersionNum = 1;
   await prisma.contractVersion.create({
@@ -398,6 +411,109 @@ async function rateVendor(contractId, { rating, comment }, userId) {
   return updated;
 }
 
+/**
+ * Terminate a contract, releasing undelivered materials and budget back to the project.
+ */
+async function terminate(contractId, { reason, receivedItems }, user) {
+  const contract = await prisma.contract.findUnique({
+    where: { id: contractId },
+    include: { items: true, project: { select: { id: true, code: true, name: true } } }
+  });
+
+  if (!contract) throw new AppError('Contract not found', 404);
+  if (['cancelled', 'expired'].includes(contract.status)) {
+    throw new AppError(`Contract is already ${contract.status}`, 400);
+  }
+
+  let newTotalValue = 0;
+  const txOps = [];
+  const receivedMap = {};
+  
+  if (receivedItems && Array.isArray(receivedItems)) {
+    for (const r of receivedItems) {
+      receivedMap[r.id] = Number(r.receivedQty);
+    }
+  }
+
+  const updatedItemsList = [];
+  
+  if (contract.items.length > 0) {
+    for (const item of contract.items) {
+      const received = receivedMap[item.id] || 0;
+      if (received > Number(item.quantity)) {
+        throw new AppError(`Received quantity for ${item.materialName} cannot exceed contracted quantity.`, 400);
+      }
+      
+      const newCost = Number(item.unitPrice) * received;
+      newTotalValue += newCost;
+
+      txOps.push(prisma.contractItem.update({
+        where: { id: item.id },
+        data: { quantity: received, totalCost: newCost, receivedQty: received }
+      }));
+      
+      updatedItemsList.push({
+        name: item.materialName,
+        quantity: received,
+        unit: item.unit,
+        unitPrice: Number(item.unitPrice)
+      });
+    }
+  } else {
+      // For general contracts without items, calculate a proportional value or assume 0
+      newTotalValue = contract.value ? Number(contract.value) : 0;
+  }
+
+  const finalValue = contract.items.length > 0 ? newTotalValue : 0; // If there are items, we strictly use item total. Else, 0.
+  const isCancelled = finalValue === 0;
+  const newStatus = isCancelled ? 'cancelled' : 'terminated';
+
+  txOps.push(prisma.contract.update({
+    where: { id: contractId },
+    data: {
+      status: newStatus,
+      value: finalValue,
+      endDate: new Date(), 
+      materialsList: updatedItemsList.length > 0 ? JSON.stringify(updatedItemsList) : '[]'
+    }
+  }));
+
+  // Return the remaining unused budget to the project
+  const budgetDifference = Number(contract.value || 0) - finalValue;
+  if (budgetDifference > 0 && contract.projectId) {
+    const projectService = require('./projects.service');
+    await projectService.addToSpent(contract.projectId, -budgetDifference);
+  }
+
+  const nextVersionNum = (await prisma.contractVersion.count({ where: { contractId } })) + 1;
+  txOps.push(prisma.contractVersion.create({
+    data: {
+      contractId: contract.id,
+      versionNumber: nextVersionNum,
+      refCode: contract.refCode,
+      title: contract.title,
+      value: finalValue,
+      status: newStatus,
+      changeNotes: `[TERMINATION] ${reason}`,
+      createdById: user?.id
+    }
+  }));
+
+  await prisma.$transaction(txOps);
+
+  if (user?.id) {
+    await auditService.log(user.id, 'TERMINATE_CONTRACT', 'Contract', contractId, {
+      refCode: contract.refCode,
+      reason,
+      oldValue: Number(contract.value),
+      newValue: finalValue,
+      newStatus
+    });
+  }
+
+  return { success: true, newStatus, finalValue };
+}
+
 module.exports = { 
   getAll, 
   getById, 
@@ -407,5 +523,6 @@ module.exports = {
   approve, 
   getByProject,
   isContractLocked,
-  rateVendor
+  rateVendor,
+  terminate
 };

@@ -862,15 +862,20 @@ export const DrawerTemplates = {
                 </div>
                 ` : ''}
 
-                <div style="display: flex; gap: 12px;">
+                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="(window.app.fmModule || window.app.pmModule)?.openEditContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
                         <i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Details
                     </button>
-                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
-                    <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.downloadDocument('${contract.documentUrl || ""}', '${contract.fileName || "Contract_Latest.pdf"}')">
-                        <i class="fas fa-download" style="margin-right: 8px;"></i> Download Latest PDF
+                    ${(contract.status === 'active' || contract.status === 'Active') ? `
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700; color: var(--red); border-color: #fecaca; background: #fef2f2;" onclick="(window.app.fmModule || window.app.pmModule)?.openTerminateContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
+                        <i class="fas fa-ban" style="margin-right: 8px;"></i> Terminate
                     </button>
+                    ` : ''}
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
                 </div>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.downloadDocument('${contract.documentUrl || ""}', '${contract.fileName || "Contract_Latest.pdf"}')">
+                    <i class="fas fa-download" style="margin-right: 8px;"></i> Download Latest PDF
+                </button>
             </div>
         </div>
     `;
@@ -3846,7 +3851,7 @@ Contract Admin</textarea>
             <!-- Step 1: Select Project -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
-                <select id="contract_project" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;"
+                <select id="contract_project" required class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;"
                     onchange="(window.app.fmModule || window.app.pmModule)?.onContractProjectSelected(this.value)">
                     <option value="">Loading projects...</option>
                 </select>
@@ -3863,7 +3868,12 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px; position: relative;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name *</label>
                 <div style="position: relative;">
-                    <input type="text" id="contract_vendor" class="form-input" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="Search or type new vendor name..." oninput="(window.app.fmModule || window.app.pmModule)?.searchVendors(this.value)" onfocus="(window.app.fmModule || window.app.pmModule)?.searchVendors(this.value)">
+                    <input type="text" id="contract_vendor" required 
+                        data-vrules="required|minLen:3|alphaNum|hasLetters" 
+                        oninput="window.V?.checkField(this); (window.app.fmModule || window.app.pmModule)?.searchVendors(this.value)" 
+                        onfocus="(window.app.fmModule || window.app.pmModule)?.searchVendors(this.value)" 
+                        onblur="window.V?.checkField(this); setTimeout(() => { const el = document.getElementById('vendor_autocomplete_results'); if(el) el.style.display='none'; }, 200)"
+                        class="form-input" autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="Search or type new vendor name...">
                     <input type="hidden" id="contract_vendor_id" value="">
                     
                     <!-- Dropdown Results -->
@@ -3877,38 +3887,58 @@ Contract Admin</textarea>
             <!-- Vendor Phone (for new or updating existing) -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
-                <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. +265 99 123 4567">
+                <input type="text" id="contract_vendor_phone" 
+                    data-vrules="phone" 
+                    oninput="window.V?.checkField(this)"
+                    class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. +265 99 123 4567">
             </div>
 
             <!-- Contract Title -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
-                <input type="text" id="contract_title" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
+                <input type="text" id="contract_title" required 
+                    data-vrules="required|minLen:5|hasLetters" 
+                    oninput="window.V?.checkField(this)"
+                    class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" placeholder="e.g. Bitumen Supply Agreement">
             </div>
             <div id="contract-budget-status"></div>
 
             <!-- Agreed Contract Sum -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
-                <input type="number" id="contract_value" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
+                <input type="number" id="contract_value" required 
+                    data-vrules="required|numeric|min:1000" 
+                    oninput="window.V?.checkField(this)"
+                    class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700;" placeholder="0">
             </div>
 
             <!-- Dates -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                 <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
-                    <input type="date" id="contract_start" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date *</label>
+                    <input type="date" id="contract_start" required 
+                        min="${new Date().toISOString().split('T')[0]}"
+                        data-vrules="required|date" 
+                        onchange="window.V?.checkField(this)"
+                        class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
                 </div>
                 <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
-                    <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date *</label>
+                    <input type="date" id="contract_end" required 
+                        min="${new Date().toISOString().split('T')[0]}"
+                        data-vrules="required|date" 
+                        onchange="window.V?.checkField(this)"
+                        class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;">
                 </div>
             </div>
 
             <!-- Justification -->
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
-                <textarea id="contract_justification" class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" rows="2" placeholder="Explain why this contract is being established or modified..."></textarea>
+                <textarea id="contract_justification" required 
+                    data-vrules="required|minWords:5" 
+                    oninput="window.V?.checkField(this)"
+                    class="form-input" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: inherit; font-size: 13px;" rows="2" placeholder="Explain why this contract is being established or modified..."></textarea>
             </div>
             
             <!-- Contract Document -->
@@ -3924,7 +3954,7 @@ Contract Admin</textarea>
 
             <!-- Submit -->
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px; font-weight: 700; background-color: var(--orange); border-color: var(--orange);"
-                onclick="(window.app.fmModule || window.app.pmModule)?.submitContract()">
+                onclick="if(!window.V?.validateForm(this.closest('.drawer-section')||this.parentElement)){return} (window.app.fmModule || window.app.pmModule)?.submitContract()">
                 <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Create Contract
             </button>
         </div>
@@ -5518,4 +5548,116 @@ Contract Admin</textarea>
             </div>
         `;
   },
+
+  terminateContract: (contract) => {
+        return `
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 20px; padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                <div style="font-weight: 800; color: #dc2626; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-exclamation-triangle"></i> Terminate Contract
+                </div>
+                <div style="font-size: 12px; color: #991b1b; margin-top: 4px;">
+                    You are terminating <strong>${contract.refCode}</strong>. Please reconcile any received materials so the remaining budget can be returned to the project.
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Reason for Termination *</label>
+                <textarea id="term_reason" required class="form-input" rows="2" style="width: 100%; border-color: var(--slate-300);" placeholder="e.g., Vendor default, project descoped, mutual agreement..."></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 12px; text-transform: uppercase;">Material Reconciliation</label>
+                <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 12px; line-height: 1.5;">
+                    Specify exactly how much material was <strong>actually received</strong> before termination. The difference will be returned to the project budget. If no materials were delivered, leave as 0.
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${contract.items && contract.items.length > 0 ? contract.items.map((item, idx) => `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 13px; color: var(--slate-800);">${item.materialName}</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">Originally Contracted: <strong>${Number(item.quantity)} ${item.unit}</strong></div>
+                            </div>
+                            <div style="width: 120px;">
+                                <label style="font-size: 10px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px; display: block; text-transform: uppercase;">Qty Received</label>
+                                <input type="number" class="form-input term-qty-input" data-item-id="${item.id}" data-max="${item.quantity}" min="0" max="${item.quantity}" step="any" value="${item.receivedQty || 0}" style="width: 100%; padding: 6px 8px; font-size: 13px;">
+                            </div>
+                        </div>
+                    `).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 32px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: #dc2626; border-color: #dc2626;" onclick="(window.app.fmModule || window.app.pmModule)?.submitTermination(${contract.id})">
+                    <i class="fas fa-ban" style="margin-right: 8px;"></i> Finalize Termination
+                </button>
+            </div>
+        </div>
+        `;
+    },
+
+    vendorView: (vendor) => {
+        const rating = vendor.avgRating || 0;
+        const full = Math.floor(rating);
+        const half = rating % 1 >= 0.5;
+        let starsHtml = '';
+        for (let i = 0; i < full; i++) starsHtml += '<i class="fas fa-star"></i>';
+        if (half) starsHtml += '<i class="fas fa-star-half-alt"></i>';
+        const empty = Math.max(0, 5 - full - (half ? 1 : 0));
+        for (let i = 0; i < empty; i++) starsHtml += '<i class="fas fa-star" style="color: var(--slate-200);"></i>';
+
+        return `
+        <div style="padding: 24px;">
+            <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--orange-light); color: var(--orange); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div style="flex: 1;">
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin: 0 0 4px 0;">${vendor.name}</h2>
+                    <div style="font-size: 13px; color: var(--slate-500); display: flex; gap: 12px;">
+                        <span><i class="fas fa-tag"></i> ${vendor.category || 'General Supplier'}</span>
+                        <span><i class="fas fa-phone"></i> ${vendor.phone || 'No phone'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 16px; border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Total Contracts</div>
+                    <div style="font-size: 24px; font-weight: 800; color: var(--slate-900);">${vendor._count?.contracts || vendor.contractCount || 0}</div>
+                </div>
+                <div style="background: #fffaf5; border: 1px solid var(--orange-light); padding: 16px; border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--orange); text-transform: uppercase; margin-bottom: 8px;">Scorecard Rating</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--slate-900);">${rating > 0 ? rating.toFixed(1) : 'N/A'}</div>
+                        <div style="color: var(--orange); font-size: 14px;">${starsHtml}</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 14px; font-weight: 800; color: var(--slate-800); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--slate-200);">Contract History</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
+                ${vendor.contracts && vendor.contracts.length > 0 ? vendor.contracts.map(c => `
+                    <div style="padding: 16px; background: white; border: 1px solid var(--slate-200); border-radius: 8px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="font-weight: 700; font-size: 13px; color: var(--slate-800);">${c.title}</div>
+                            <span class="status ${c.status}" style="font-size: 10px;">${c.status.toUpperCase()}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; color: var(--slate-500);">
+                            <div><strong>Ref:</strong> ${c.refCode}</div>
+                            <div><strong>Value:</strong> MWK ${Number(c.value).toLocaleString()}</div>
+                            ${c.vendorRating ? `<div style="grid-column: 1 / -1; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--slate-200); color: var(--orange);"><strong>Rating:</strong> ${c.vendorRating}/5 - <i>"${c.ratingComment || 'No comment'}"</i></div>` : ''}
+                        </div>
+                    </div>
+                `).join('') : '<div style="font-size: 12px; color: var(--slate-400); text-align: center; padding: 20px;">No contract history found.</div>'}
+            </div>
+
+            <div style="position: sticky; bottom: 0; background: white; padding-top: 16px; border-top: 1px solid var(--slate-200); display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
+            </div>
+        </div>
+        `;
+    }
 };

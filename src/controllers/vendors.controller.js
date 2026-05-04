@@ -4,6 +4,7 @@
 
 const vendorService = require('../services/vendors.service');
 const response = require('../utils/response');
+const { parseBody } = require('../middlewares/validate.middleware');
 
 async function getAll(req, res) {
   const { page, limit, search, category } = req.query || {};
@@ -22,23 +23,25 @@ async function search(req, res) {
   response.success(res, results);
 }
 
-async function getById(req, res) {
-  const result = await vendorService.getById(req.params.id);
+async function getById(req, res, id) {
+  const result = await vendorService.getById(id);
   response.success(res, result);
 }
 
 async function create(req, res) {
-  const result = await vendorService.create(req.body, req.user?.id);
+  const body = await parseBody(req);
+  const result = await vendorService.create(body, req.user?.id);
   response.success(res, result, 201);
 }
 
-async function update(req, res) {
-  const result = await vendorService.update(req.params.id, req.body, req.user?.id);
+async function update(req, res, id) {
+  const body = await parseBody(req);
+  const result = await vendorService.update(id, body, req.user?.id);
   response.success(res, result);
 }
 
-async function remove(req, res) {
-  await vendorService.remove(req.params.id, req.user?.id);
+async function remove(req, res, id) {
+  await vendorService.remove(id, req.user?.id);
   response.success(res, null, 204);
 }
 
