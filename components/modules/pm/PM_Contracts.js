@@ -514,19 +514,52 @@ export const PM_Contracts = {
   },
 
   async submitContract() {
+    // 1. Full Form Validation (Zod-like check via window.V)
+    if (window.V && typeof window.V.validateForm === 'function') {
+      const formContainer = document.getElementById('drawer-content') || document.body;
+      if (!window.V.validateForm(formContainer)) {
+        window.toast.show("Please correct the highlighted errors before submitting.", "warning");
+        return;
+      }
+    }
+
+    // 2. Document Size Check
+    const fileInput = document.getElementById("contract_document");
+    const file = fileInput?.files?.[0];
+    if (file) {
+      const MAX_SIZE = 25 * 1024 * 1024; // 25MB limit
+      if (file.size > MAX_SIZE) {
+        window.toast.show("Document exceeds the 25MB limit. Please compress and re-upload.", "error");
+        return;
+      }
+    }
+
+    // 3. Extract Data
+    const startDateRaw = document.getElementById("contract_start")?.value;
+    const endDateRaw = document.getElementById("contract_end")?.value;
+    const contractValue = parseFloat(document.getElementById("contract_value")?.value || 0);
+    const vendorName = document.getElementById("contract_vendor")?.value || "";
+
+    // 4. Date Logic Validation
+    if (startDateRaw && endDateRaw && new Date(endDateRaw) < new Date(startDateRaw)) {
+      window.toast.show("Completion deadline must be after the commencement date.", "error");
+      return;
+    }
+
     const data = {
       projectId: document.getElementById("contract_project")?.value,
-      vendorName: document.getElementById("contract_vendor")?.value,
+      vendorName: vendorName,
       vendorPhone: document.getElementById("contract_vendor_phone")?.value,
       vendorId: document.getElementById("contract_vendor_id")?.value,
       title: document.getElementById("contract_title")?.value,
-      value: parseFloat(document.getElementById("contract_value")?.value),
-      startDate: document.getElementById("contract_start")?.value,
-      endDate: document.getElementById("contract_end")?.value,
+      value: contractValue,
+      startDate: startDateRaw,
+      endDate: endDateRaw,
       justification: document.getElementById("contract_justification")?.value,
+      contractType: vendorName ? "vendor" : "project", // AUTO-DETECT
     };
 
-    if (!data.projectId || !data.vendorName || !data.title || !data.value) {
+    if (!data.projectId || !data.title || !data.value) {
       window.toast.show("Please fill all required fields.", "warning");
       return;
     }
@@ -535,32 +568,45 @@ export const PM_Contracts = {
 
     try {
       const token = localStorage.getItem("mcms_auth_token");
-      const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
-      const materials = Array.from(checkboxes).map(cb => {
-        const index = cb.value;
-        const qtyInput = document.getElementById(`m_qty_${index}`);
-        return {
-          materialName: cb.dataset.name,
-          quantity: parseFloat(qtyInput?.value || 0),
-          unit: cb.dataset.unit,
-          unitPrice: parseFloat(cb.dataset.market || 0) // Default to market price if not overridden
-        };
+      const formData = new FormData();
+      
+      // Append core fields
+      Object.entries(data).forEach(([key, val]) => {
+          if (val !== null && val !== undefined) formData.append(key, val);
       });
+
+      // Handle materials if this is a vendor supply contract
+      if (data.contractType === "vendor") {
+          const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+          const materials = Array.from(checkboxes).map(cb => {
+              const index = cb.value;
+              const qtyInput = document.getElementById(`m_qty_${index}`);
+              return {
+                  materialName: cb.dataset.name,
+                  quantity: parseFloat(qtyInput?.value || 0),
+                  unit: cb.dataset.unit,
+                  unitPrice: parseFloat(cb.dataset.market || 0)
+              };
+          });
+          formData.append('materialsList', JSON.stringify(materials));
+      }
+
+      if (file) {
+        formData.append('document', file);
+      }
 
       const res = await fetch("/api/v1/contracts", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({
-          ...data,
-          materialsList: JSON.stringify(materials),
-          contractType: "vendor",
-          refCode: "CON-" + Date.now().toString(36).toUpperCase(),
-        }),
+        body: formData
       });
-      if (!res.ok) throw new Error("System error creating contract");
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "System error creating contract");
+      }
 
       window.toast.show("Contract established successfully", "success");
       window.drawer.close();
@@ -616,9 +662,9 @@ export const PM_Contracts = {
   },
 
   initMasterContractUpload() {
-    const dropZone = document.getElementById("v-drop-zone");
-    const fileInput = document.getElementById("v-file-input");
-    const status = document.getElementById("v-file-status");
+    const dropZone = document.getElementById("contract-drop-zone");
+    const fileInput = document.getElementById("contract_document");
+    const status = document.getElementById("contract-file-status");
     if (!dropZone || !fileInput) return;
 
     dropZone.onclick = () => fileInput.click();
@@ -674,24 +720,39 @@ export const PM_Contracts = {
   },
 
   async submitProjectContract() {
-    const projectId = document.getElementById("contract_project")?.value;
-    const refCode = document.getElementById("contract_ref")?.value;
+    console.log("[DEBUG] PM_Contracts: submitProjectContract started");
+
+    // Validation
+    if (window.V && !window.V.validateForm(document.getElementById('drawer-content') || document.body)) {
+      console.warn("[DEBUG] PM_Contracts: Validation failed");
+      return;
+    }
+
+    const projectSelect = document.getElementById("contract_project");
+    const projectId = projectSelect?.value;
+    const projectLabel = projectSelect?.options[projectSelect.selectedIndex]?.textContent || "";
+    const projectCode = projectLabel.split("–")[0]?.trim() || "PRJ";
+    
+    // Auto-generate refCode since template has no contract_ref field
+    const refCode = `MOW-${projectCode}-${Math.floor(1000 + Math.random() * 9000)}`;
+    
+    const title = document.getElementById("contract_title")?.value?.trim();
     const value = parseFloat(document.getElementById("contract_value")?.value);
     const startDate = document.getElementById("contract_start")?.value;
     const endDate = document.getElementById("contract_end")?.value;
-    const justification = document.getElementById(
-      "contract_justification",
-    )?.value;
+    const justification = document.getElementById("contract_justification")?.value?.trim();
+    const fileInput = document.getElementById("contract_document");
+    const file = fileInput?.files?.[0];
 
-    if (!projectId || !refCode || isNaN(value) || !justification) {
+    if (!projectId || isNaN(value) || !justification || !title) {
       window.toast.show(
-        "Please fill all required fields, including justification.",
+        "Please fill all required fields, including title and justification.",
         "warning",
       );
       return;
     }
 
-    if (!this.selectedMasterFile) {
+    if (!file) {
       window.toast.show("Please upload the signed master document.", "warning");
       return;
     }
@@ -706,11 +767,23 @@ export const PM_Contracts = {
       formData.append("startDate", startDate);
       formData.append("endDate", endDate);
       formData.append("justification", justification);
-      formData.append("title", "Project Master Agreement");
+      formData.append("title", title);
       formData.append("contractType", "project");
-      formData.append("document", this.selectedMasterFile);
+      formData.append("document", file);
 
-      const result = await contracts.create(formData);
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch("/api/v1/contracts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Failed to archive contract");
+      }
 
       // Send Notifications
       this.sendContractNotification(

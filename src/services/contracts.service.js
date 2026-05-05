@@ -242,11 +242,63 @@ async function create(data, userId) {
 
   logger.info('Contract created and version 1 stored', { contractId: contract.id, refCode: contract.refCode });
   
+  // 5. Enhanced Audit Logging & Cross-Module Notifications
   if (userId) {
-    await auditService.log(
-      userId, 'CREATE_CONTRACT', 'Contract', contract.id,
-      { refCode: contract.refCode }
-    );
+    try {
+      const creator = await prisma.user.findUnique({ 
+        where: { id: userId },
+        select: { id: true, name: true, role: true }
+      });
+
+      // Audit Trail
+      await auditService.log(
+        userId, 
+        'CONTRACT_CREATED', 
+        'Contract', 
+        contract.id,
+        { 
+          refCode: contract.refCode,
+          title: contract.title,
+          value: Number(contract.value || 0),
+          justification: data.justification,
+          creatorRole: creator?.role
+        }
+      );
+
+      // Email Notifications
+      if (creator) {
+        const dashboardUrl = `${env.FRONTEND_URL}/contracts`;
+        
+        if (creator.role === 'Project_Manager') {
+          // Notify Finance Directors
+          const fds = await prisma.user.findMany({ 
+            where: { role: 'Finance_Director', isActive: true },
+            select: { id: true, name: true, email: true }
+          });
+          
+          for (const fd of fds) {
+            await emailService.sendNotification(
+              fd,
+              'New Project Master Contract Archived',
+              `Project Manager ${creator.name} has archived a new master agreement: "${contract.title}" for project "${contract.project?.name || 'N/A'}".`,
+              dashboardUrl
+            );
+          }
+        } else if (creator.role === 'Finance_Director') {
+          // Notify Project Manager
+          if (contract.project?.manager) {
+            await emailService.sendNotification(
+              contract.project.manager,
+              'Contract Registered for Your Project',
+              `Finance Director ${creator.name} has registered a new contract: "${contract.title}" for your project "${contract.project.name}".`,
+              dashboardUrl
+            );
+          }
+        }
+      }
+    } catch (notifyErr) {
+      logger.error('Contract post-creation tasks failed', notifyErr);
+    }
   }
   
   // Role-based Notifications (PM <-> FD)

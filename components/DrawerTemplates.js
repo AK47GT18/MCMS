@@ -630,12 +630,12 @@ export const DrawerTemplates = {
                         <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Market Value</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number(contract.marketValue || contract.project?.approvedTotal || contract.value || 0).toLocaleString()}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Market Value (Baseline)</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number(contract.marketValue || contract.project?.budgetTotal || contract.value || 0).toLocaleString()}</div>
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Actual Contract Value</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number(contract.value || 0).toLocaleString()}</div>
+                        <div style="font-weight: 800; color: var(--emerald-dark); font-size: 14px; font-family: 'JetBrains Mono';">MWK ${Number(contract.value || 0).toLocaleString()}</div>
                     </div>
                 </div>
                 
@@ -1240,9 +1240,18 @@ export const DrawerTemplates = {
                         <span style="font-size:12px; color:var(--slate-500);">Type</span>
                         <span id="summary_type" style="font-size:13px; font-weight:600; color:var(--slate-800); text-transform:capitalize;">---</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
                         <span style="font-size:12px; color:var(--slate-500);">Locked Budget</span>
                         <span id="summary_budget" style="font-size:14px; font-weight:700; color:var(--slate-900); font-family:'JetBrains Mono';">MWK 0.00</span>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--slate-200); padding-top: 12px; margin-top: 4px;">
+                        <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Attach Initial Document (Optional)</label>
+                        <div id="project-drop-zone" onclick="document.getElementById('proj_document').click()" style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 16px; text-align: center; background: white; cursor: pointer;">
+                             <i class="fas fa-file-upload" style="color: var(--slate-400); margin-bottom: 4px;"></i>
+                             <div id="project-file-status" style="font-size: 11px; color: var(--slate-600); font-weight: 600;">Click to upload project charter/PDF</div>
+                             <input type="file" id="proj_document" accept=".pdf" style="display: none;" onchange="if(this.files[0]) document.getElementById('project-file-status').innerHTML = '<span style=\'color:var(--emerald)\'>' + this.files[0].name + '</span>'">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4004,53 +4013,53 @@ Contract Admin</textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Linked Project *</label>
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Linked Project *</label>
                 <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="window.V?.checkField(this); (window.app.fmModule || window.app.pmModule)?.onProjectContractSelected(this.value)">
+                    onchange="window.V?.checkField(this); console.log('[DEBUG] Project selected:', this.value); (window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.onProjectContractSelected(this.value)">
                     <option value="">Select Target Project...</option>
                 </select>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Master Contract Code *</label>
-                <input type="text" id="contract_ref" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono';" placeholder="e.g. MOW-PRJ-2024-001">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Master Contract Title *</label>
+                <input type="text" id="contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. M1 Karonga-Songwe Main Works Agreement">
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
-                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
+                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1000" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
             </div>
 
             <!-- Dates -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
                 <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Commencement Date</label>
-                    <input type="date" id="contract_start" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Commencement Date</label>
+                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
                 <div>
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Completion Deadline</label>
-                    <input type="date" id="contract_end" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Completion Deadline</label>
+                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
             </div>
 
             <!-- Justification -->
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
-                <textarea id="contract_justification" class="form-input" data-vrules="required|minLen:10" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Context for the master agreement (e.g., initial award, scope extension)..."></textarea>
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
+                <textarea id="contract_justification" class="form-input" data-vrules="required|minWords:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Context for the master agreement..."></textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 32px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Signed Master Document *</label>
-                <div id="v-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Signed Master Document *</label>
+                <div id="contract-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
                     <i class="fas fa-file-signature" style="font-size: 32px; color: var(--orange); margin-bottom: 12px;"></i>
-                    <div id="v-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Click to upload signed legal PDF</div>
-                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB • Version 1.0</div>
-                    <input type="file" id="v-file-input" accept=".pdf" style="display: none;">
+                    <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Click to upload signed legal PDF</div>
+                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB • Secure Pipeline</div>
+                    <input type="file" id="contract_document" accept=".pdf" style="display: none;">
                 </div>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px; background: var(--orange); border-color: var(--orange);"
-                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} window.app.pmModule?.submitProjectContract()">
+                onclick="console.log('[DEBUG] Archive button clicked'); const mod = (window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule); console.log('[DEBUG] Handler Module:', mod ? 'Found' : 'NOT FOUND'); if(mod) { mod.submitProjectContract(); } else { window.toast.show('System Error: Contract handler not found', 'error'); }">
                 <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Archive Master Agreement
             </button>
         </div>

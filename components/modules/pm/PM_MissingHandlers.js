@@ -947,32 +947,52 @@ export const PM_MissingHandlers = {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
         }
 
-        const data = {
-            name: document.getElementById('proj_name').value,
-            client: document.getElementById('proj_client').value,
-            projectType: 'road_works',
-            budgetTotal: parseFloat(document.getElementById('proj_budget').value) || 0,
-            startDate: new Date(document.getElementById('proj_start').value).toISOString(),
-            endDate: new Date(document.getElementById('proj_end').value).toISOString(),
-            managerId: parseInt(document.getElementById('proj_supervisor').value),
-            lat: lat,
-            lng: lng,
-            radius: parseInt(document.getElementById('proj_radius_input')?.value || 500)
-        };
+        const formData = new FormData();
+        formData.append('name', document.getElementById('proj_name').value);
+        formData.append('client', document.getElementById('proj_client').value);
+        formData.append('projectType', 'road_works');
+        formData.append('budgetTotal', parseFloat(document.getElementById('proj_budget').value) || 0);
+        formData.append('startDate', new Date(document.getElementById('proj_start').value).toISOString());
+        formData.append('endDate', new Date(document.getElementById('proj_end').value).toISOString());
+        formData.append('managerId', parseInt(document.getElementById('proj_supervisor').value));
+        formData.append('lat', lat);
+        formData.append('lng', lng);
+        formData.append('radius', parseInt(document.getElementById('proj_radius_input')?.value || 500));
 
         if (!this.wizardState?.isEditMode) {
-            data.status = 'planning';
-            data.code = 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            formData.append('status', 'planning');
+            formData.append('code', 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase());
+        }
+
+        const fileInput = document.getElementById('proj_document');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            formData.append('document', fileInput.files[0]);
         }
 
         try {
             let projectId;
+            const token = localStorage.getItem('mcms_auth_token');
+            
             if (this.wizardState?.isEditMode && this.wizardState.projectId) {
-                await projects.update(this.wizardState.projectId, data);
+                const response = await fetch(`/api/v1/projects/${this.wizardState.projectId}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (!response.ok) throw new Error('Failed to update project');
                 projectId = this.wizardState.projectId;
             } else {
-                const response = await client.post('/projects', data);
-                projectId = response.data?.id || response.id;
+                const response = await fetch('/api/v1/projects', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || 'Failed to create project');
+                }
+                const result = await response.json();
+                projectId = result.data?.id || result.id;
             }
 
             
