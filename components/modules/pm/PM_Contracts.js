@@ -517,20 +517,13 @@ export const PM_Contracts = {
     const data = {
       projectId: document.getElementById("contract_project")?.value,
       vendorName: document.getElementById("contract_vendor")?.value,
+      vendorPhone: document.getElementById("contract_vendor_phone")?.value,
+      vendorId: document.getElementById("contract_vendor_id")?.value,
       title: document.getElementById("contract_title")?.value,
       value: parseFloat(document.getElementById("contract_value")?.value),
       startDate: document.getElementById("contract_start")?.value,
       endDate: document.getElementById("contract_end")?.value,
-      retentionPercentage: parseFloat(
-        document.getElementById("contract_retention")?.value || 0,
-      ),
-      isTaxInclusive:
-        document.getElementById("contract_tax_inclusive")?.checked || false,
-      advancePaymentAmount: parseFloat(
-        document.getElementById("contract_advance")?.value || 0,
-      ),
-      guaranteeExpiry:
-        document.getElementById("contract_guarantee_expiry")?.value || null,
+      justification: document.getElementById("contract_justification")?.value,
     };
 
     if (!data.projectId || !data.vendorName || !data.title || !data.value) {
@@ -542,6 +535,18 @@ export const PM_Contracts = {
 
     try {
       const token = localStorage.getItem("mcms_auth_token");
+      const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+      const materials = Array.from(checkboxes).map(cb => {
+        const index = cb.value;
+        const qtyInput = document.getElementById(`m_qty_${index}`);
+        return {
+          materialName: cb.dataset.name,
+          quantity: parseFloat(qtyInput?.value || 0),
+          unit: cb.dataset.unit,
+          unitPrice: parseFloat(cb.dataset.market || 0) // Default to market price if not overridden
+        };
+      });
+
       const res = await fetch("/api/v1/contracts", {
         method: "POST",
         headers: {
@@ -550,6 +555,7 @@ export const PM_Contracts = {
         },
         body: JSON.stringify({
           ...data,
+          materialsList: JSON.stringify(materials),
           contractType: "vendor",
           refCode: "CON-" + Date.now().toString(36).toUpperCase(),
         }),
@@ -901,6 +907,46 @@ export const PM_Contracts = {
                 <div>Loading contracts...</div>
             </div>
         `;
+  },
+
+  async searchVendors(query) {
+    const resultsContainer = document.getElementById("vendor_autocomplete_results");
+    if (!resultsContainer) return;
+    if (!query || query.length < 2) {
+      resultsContainer.style.display = "none";
+      return;
+    }
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/vendors/search?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const result = await res.json();
+      const vendors = result.data || result;
+      if (vendors.length === 0) {
+        resultsContainer.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--slate-500); font-size: 12px;">No matches found.</div>`;
+        resultsContainer.style.display = "block";
+        return;
+      }
+      resultsContainer.innerHTML = vendors.map(v => `
+        <div style="padding: 12px; border-bottom: 1px solid var(--slate-100); cursor: pointer;" 
+             onmousedown="window.app.pmModule.selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}', '${v.phone || ''}')">
+          <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${v.name}</div>
+          <div style="font-size: 11px; color: var(--slate-500);">${v.phone || 'No phone'}</div>
+        </div>
+      `).join('');
+      resultsContainer.style.display = "block";
+    } catch (e) { console.error(e); }
+  },
+
+  selectVendorAutocomplete(id, name, phone) {
+    const nameInput = document.getElementById("contract_vendor");
+    const idInput = document.getElementById("contract_vendor_id");
+    const phoneInput = document.getElementById("contract_vendor_phone");
+    if (nameInput) nameInput.value = name;
+    if (idInput) idInput.value = id;
+    if (phoneInput) phoneInput.value = phone || "";
+    document.getElementById("vendor_autocomplete_results").style.display = "none";
   },
 
   renderEmptyState(message) {

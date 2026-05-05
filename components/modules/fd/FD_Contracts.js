@@ -887,6 +887,7 @@ export const FD_Contracts = {
       ),
       guaranteeExpiry:
         document.getElementById("contract_guarantee_expiry")?.value || null,
+      justification: document.getElementById("contract_justification")?.value,
       contractType: "vendor", // Categorize correctly for registry tabs
     };
 
