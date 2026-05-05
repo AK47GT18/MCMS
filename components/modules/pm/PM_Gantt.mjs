@@ -528,3 +528,7 @@ export const PM_Gantt = {
         });
     }
 };
+            }[m];
+        });
+    }
+};
