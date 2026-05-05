@@ -25,9 +25,9 @@ export class FinanceDashboard {
             budgetChanges: []
         };
         
-        // Register this module globally
+        // Register this module globally with safety checks
         console.log('[DEBUG] FinanceDashboard initialized', this);
-        window.app.fmModule = this;
+        if (window.app) window.app.fmModule = this;
         window.fmModule = this; // Restore legacy reference
     }
 
@@ -106,14 +106,21 @@ export class FinanceDashboard {
         }
     }
 
-    switchView(view) {
-        window.toast?.show(`Switching to ${view} view...`, 'info');
+    switchView(view, projectId = null) {
+        console.log('[DEBUG] Switching finance view to:', view, 'with project context:', projectId);
         this.currentView = view;
-        // Use the global app page loader for proper DOM re-injection
-        if (window.app && typeof window.app.loadPage === 'function') {
-            window.app.loadPage(view);
-        } else {
-            this._refreshCurrentView();
+        
+        // Apply project filter context if provided
+        if (projectId) {
+            this.projectFilter = projectId;
+        }
+
+        // Always refresh internally first
+        this._refreshCurrentView();
+
+        // Optionally notify global app of the state change
+        if (window.app && typeof window.app.syncSidebar === 'function') {
+            window.app.syncSidebar(view);
         }
     }
 

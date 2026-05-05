@@ -143,8 +143,8 @@ export const FD_Dashboard = {
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.toast?.show('Opening Contracts...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('contracts')">Contracts</button>
-                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.toast?.show('Opening Uplift Request...', 'info'); (window.fmModule || window.app?.fmModule)?.requestPMUplift('${project.id}')">Request Uplift</button>
+                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.toast?.show('Opening Contracts Registry...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('contracts', '${project.id}')">Contracts</button>
+                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.toast?.show('Opening Uplift Section...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('bcr', '${project.id}')">Request Uplift</button>
                         </div>
                     </div>
                 </div>

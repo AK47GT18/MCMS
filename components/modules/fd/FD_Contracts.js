@@ -5,8 +5,9 @@ import contracts from "../../../src/api/contracts.api.js";
 export const FD_Contracts = {
   getContractsView() {
     this.currentContractTab = this.currentContractTab || "project";
-    this.projectFilter = "";
-    this.vendorFilter = "";
+    // Keep existing filter if switching from dashboard
+    this.projectFilter = this.projectFilter || "";
+    this.vendorFilter = this.vendorFilter || "";
 
     setTimeout(() => this.loadContractsData(), 0);
 
@@ -524,7 +525,7 @@ export const FD_Contracts = {
       select.innerHTML =
         '<option value="">Select a project...</option>' +
         projects
-          .map((p) => `<option value="${p.id}">${p.code} – ${p.name}</option>`)
+          .map((p) => `<option value="${p.id}" ${this.projectFilter == p.id ? 'selected' : ''}>${p.code} – ${p.name}</option>`)
           .join("");
     } catch (err) {
       console.error(err);

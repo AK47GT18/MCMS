@@ -28,7 +28,12 @@ export const FD_Budget = {
             });
             if (!response.ok) throw new Error('Failed to load budget changes');
             const result = await response.json();
-            const bcrList = Array.isArray(result.data) ? result.data : (result.items || result || []);
+            let bcrList = Array.isArray(result.data) ? result.data : (result.items || result || []);
+
+            // Apply project filter if context exists
+            if (this.projectFilter) {
+                bcrList = bcrList.filter(b => b.projectId == this.projectFilter || b.project?.id == this.projectFilter);
+            }
 
             if (bcrList.length === 0) {
                 container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i><div style="font-weight: 600;">No uplift requests</div></div>`;
