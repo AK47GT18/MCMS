@@ -165,18 +165,11 @@ async function getByCode(code) {
  */
 async function create(data, user) {
   // Validate dates
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  
   const start = new Date(data.startDate);
   start.setHours(0, 0, 0, 0);
   
   const end = new Date(data.endDate);
   end.setHours(0, 0, 0, 0);
-
-  if (start < now) {
-    throw new AppError('Start date cannot be in the past', 400);
-  }
 
   if (end <= start) {
     throw new AppError('End date must be after start date', 400);

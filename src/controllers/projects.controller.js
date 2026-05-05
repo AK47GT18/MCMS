@@ -24,7 +24,7 @@ const getAll = asyncHandler(async (req, res) => {
   
   if (userRole === 'Field_Supervisor') {
     filters.fieldSupervisorId = user.id;
-  } else if (userRole === 'Project_Manager') {
+  } else if (userRole === 'Project_Manager' && !user.permissions?.includes('read_all')) {
     filters.managerId = user.id;
   } else if (query.fieldSupervisorId) {
     filters.fieldSupervisorId = query.fieldSupervisorId;

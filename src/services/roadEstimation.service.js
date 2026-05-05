@@ -224,6 +224,23 @@ async function loadAllConfigs() {
   }
 }
 
+/**
+ * Helper to apply DB overrides to a material item
+ */
+function applyPriceOverride(item, configs) {
+  const match = configs.find(c => c.materialName === item.name);
+  if (!match) return item;
+
+  return {
+    ...item,
+    unit: match.unit || item.unit,
+    costHigh: Number(match.basePrice) || item.costHigh,
+    // costLow is usually 70% of high if not specified in DB
+    costLow: (Number(match.basePrice) || item.costHigh) * 0.7,
+    dbCostPerKm: Number(match.costPerKm) || 0
+  };
+}
+
 // ==========================================
 // ESTIMATION ENGINE
 // ==========================================
@@ -320,6 +337,12 @@ async function calculateEstimate(input) {
         tCostHigh = totalQty * unitCostHigh * tMult * aMult;
       }
 
+      // CLEANUP: Skip items that have no quantity and no DB cost override
+      // This prevents "Phase 5" materials from Asphalt/Surface dressing showing up in Concrete estimates with 0 values
+      if ((!totalQty || totalQty <= 0) && (!item.dbCostPerKm || item.dbCostPerKm <= 0)) {
+        return;
+      }
+
       generatedLayers.push({
         phaseNumber: Math.floor(phaseKey),
         phaseName: phaseName,
@@ -352,11 +375,16 @@ async function calculateEstimate(input) {
 
     ACCESSORY_PRICING[accKey].forEach(rawItem => {
       // Apply MaterialPriceConfig overrides
-      const item = applyPriceOverride(rawItem, priceOverrides);
+      const item = applyPriceOverride(rawItem, dbConfigs);
 
       const totalQty = item.qtyPerKm * lengthKm;
       const tCostLow = totalQty * item.costLow * accMult * aMult;
       const tCostHigh = totalQty * item.costHigh * accMult * aMult;
+
+      // CLEANUP: Skip accessories with no quantity/cost
+      if ((!totalQty || totalQty <= 0) && (!item.dbCostPerKm || item.dbCostPerKm <= 0)) {
+        return;
+      }
 
       generatedAccessories.push({
         category: accKey,
@@ -438,7 +466,6 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
         data: estimateData.accessories.map(a => ({ ...a, specId: spec.id }))
       });
     }
-
     // Crucially: update the project budget with the locked approvedTotal
     await tx.project.update({
       where: { id: projectId },
@@ -493,7 +520,7 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
     recipients
   ).catch(err => logger.error(`Failed to send road budget approved emails:`, err));
 
-  return result;
+  return getEstimateByProject(projectId);
 }
 
 /**
@@ -504,11 +531,22 @@ async function getEstimateByProject(projectId) {
     where: { projectId },
     include: {
       layers: { orderBy: { phaseNumber: 'asc' } },
-      accessories: { orderBy: { category: 'asc' } }
+      accessories: { orderBy: { category: 'asc' } },
+      project: {
+        include: {
+          fieldSupervisor: { select: { id: true, name: true, email: true } },
+          manager: { select: { id: true, name: true } }
+        }
+      }
     }
   });
 
   if (!spec) throw new AppError('No road specification found for this project', 404);
+
+  // Attach descriptive road type label (e.g. "RT-5: Concrete Pavement")
+  const roadTypeDef = ROAD_TYPES[spec.roadType];
+  spec.roadTypeLabel = roadTypeDef ? `${spec.roadType}: ${roadTypeDef.name}` : spec.roadType;
+
   return spec;
 }
 
