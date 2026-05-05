@@ -877,18 +877,17 @@ export const PM_MissingHandlers = {
     },
 
     updateFinalSummary() {
-        const name = document.getElementById('proj_name').value;
-        const typeStr = 'Road Works';
-        const budget = this.wizardState.currentlyApprovedHigh || this.wizardState.formData?.budget;
-
+        const name = document.getElementById('proj_name')?.value || '---';
+        const type = document.getElementById('road_type')?.value || '---';
+        const budget = parseFloat(document.getElementById('proj_budget')?.value) || 0;
+        
         const summaryName = document.getElementById('summary_name');
-        if (summaryName) summaryName.textContent = name;
-        
         const summaryType = document.getElementById('summary_type');
-        if (summaryType) summaryType.textContent = typeStr;
-        
         const summaryBudget = document.getElementById('summary_budget');
-        if (summaryBudget) summaryBudget.textContent = `MWK ${new Intl.NumberFormat().format(budget || 0)}`;
+
+        if (summaryName) summaryName.textContent = name;
+        if (summaryType) summaryType.textContent = type;
+        if (summaryBudget) summaryBudget.textContent = this.formatMWKFull(budget);
 
         // Smart Visibility for Edit Mode
         const btnSubmit = document.getElementById('wizard-submit');
@@ -930,6 +929,17 @@ export const PM_MissingHandlers = {
     async handleCreateProject() {
         if (!this.validateProjectForm()) return;
 
+        // Validate location - robust check
+        const latEl = document.getElementById('proj_lat');
+        const lngEl = document.getElementById('proj_lng');
+        const lat = parseFloat(latEl?.innerText || latEl?.textContent || "");
+        const lng = parseFloat(lngEl?.innerText || lngEl?.textContent || "");
+        
+        if (isNaN(lat) || isNaN(lng)) {
+            window.toast.show('Please click on the map to set the site location and geofence center', 'warning');
+            return;
+        }
+
         const btn = document.getElementById('wizard-submit') || document.getElementById('btn-create-project');
         const originalContent = btn ? btn.innerHTML : 'Submit';
         if(btn) {
@@ -941,12 +951,12 @@ export const PM_MissingHandlers = {
             name: document.getElementById('proj_name').value,
             client: document.getElementById('proj_client').value,
             projectType: 'road_works',
-            budgetTotal: this.wizardState?.currentlyApprovedHigh || parseFloat(document.getElementById('proj_budget').value),
+            budgetTotal: parseFloat(document.getElementById('proj_budget').value) || 0,
             startDate: new Date(document.getElementById('proj_start').value).toISOString(),
             endDate: new Date(document.getElementById('proj_end').value).toISOString(),
             managerId: parseInt(document.getElementById('proj_supervisor').value),
-            lat: parseFloat(document.getElementById('proj_lat').textContent),
-            lng: parseFloat(document.getElementById('proj_lng').textContent),
+            lat: lat,
+            lng: lng,
             radius: parseInt(document.getElementById('proj_radius_input')?.value || 500)
         };
 
@@ -975,7 +985,7 @@ export const PM_MissingHandlers = {
 
                 const estPayload = {
                     projectId,
-                    approvedTotal: this.wizardState.currentlyApprovedHigh,
+                    approvedTotal: parseFloat(document.getElementById('proj_budget').value) || 0,
                     roadType: document.getElementById('road_type').value,
                     lengthKm: parseFloat(document.getElementById('road_length').value),
                     widthM: parseFloat(document.getElementById('road_width').value),

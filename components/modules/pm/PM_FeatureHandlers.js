@@ -322,7 +322,11 @@ export const PM_FeatureHandlers = {
             return false;
         }
 
-        if (!this.wizardState?.locationSet) {
+        const lat = parseFloat(document.getElementById('proj_lat')?.innerText || "");
+        const lng = parseFloat(document.getElementById('proj_lng')?.innerText || "");
+        const locationAlreadySet = !isNaN(lat) && !isNaN(lng);
+
+        if (!this.wizardState?.locationSet && !locationAlreadySet) {
             window.toast.show('Please click on the map to set the site location and geofence center', 'warning');
             const mapPrompt = document.getElementById('map-prompt');
             if (mapPrompt) {

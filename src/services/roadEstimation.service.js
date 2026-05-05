@@ -465,13 +465,19 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
 
     if (estimateData.layers.length > 0) {
       await tx.roadLayer.createMany({
-        data: estimateData.layers.map(l => ({ ...l, specId: spec.id }))
+        data: estimateData.layers.map(l => {
+          const { isManualOverride, ...cleanLayer } = l;
+          return { ...cleanLayer, specId: spec.id };
+        })
       });
     }
 
     if (estimateData.accessories.length > 0) {
       await tx.roadAccessory.createMany({
-        data: estimateData.accessories.map(a => ({ ...a, specId: spec.id }))
+        data: estimateData.accessories.map(a => {
+          const { isManualOverride, phaseNumber, phaseName, ...cleanAccessory } = a;
+          return { ...cleanAccessory, specId: spec.id };
+        })
       });
     }
     // Crucially: update the project budget with the locked approvedTotal

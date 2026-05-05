@@ -430,6 +430,43 @@ async function update(id, data, user) {
     });
   }
 
+  // Calculate diff for generic auditing
+  const diff = {};
+  const auditedFields = ['name', 'budgetTotal', 'startDate', 'endDate', 'managerId', 'fieldSupervisorId', 'radius', 'status', 'client'];
+  
+  auditedFields.forEach(field => {
+    const newVal = processedData[field];
+    const oldVal = existingProject[field];
+    
+    // Simple comparison for strings, numbers, and booleans
+    // For dates, we compare ISO strings
+    let isChanged = false;
+    if (newVal instanceof Date || oldVal instanceof Date) {
+        isChanged = newVal?.toString() !== oldVal?.toString();
+    } else if (newVal !== undefined) {
+        isChanged = newVal !== oldVal;
+    }
+
+    if (isChanged) {
+      diff[field] = { old: oldVal, new: newVal };
+    }
+  });
+
+  if (Object.keys(diff).length > 0) {
+    await prisma.auditLog.create({
+      data: {
+        userId: user?.id,
+        userName: user?.name,
+        userRole: user?.role,
+        action: 'EDIT_PROJECT',
+        targetType: 'Project',
+        targetId: id,
+        targetCode: existingProject.code,
+        details: { changes: diff }
+      }
+    });
+  }
+
   const project = await prisma.project.update({
     where: { id },
     data: processedData,
@@ -440,7 +477,7 @@ async function update(id, data, user) {
     },
   });
   
-  logger.info('Project updated', { projectId: id, userId: user?.id });
+  logger.info('Project updated', { projectId: id, userId: user?.id, changes: Object.keys(diff) });
   
   return project;
 }

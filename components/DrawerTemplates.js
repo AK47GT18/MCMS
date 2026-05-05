@@ -5695,5 +5695,39 @@ Contract Admin</textarea>
             </div>
         </div>
         `;
-    }
+    },
+
+    suspendProject: () => `
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 24px; text-align: center;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: #fffaf0; color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px;">
+                    <i class="fas fa-pause-circle"></i>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-bottom: 8px;">Suspend Project</h3>
+                <p style="font-size: 13px; color: var(--slate-500); line-height: 1.5;">Are you sure you want to put this project on hold? This will pause all activity and alert the team.</p>
+            </div>
+
+            <input type="hidden" id="suspend_project_id">
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Project Name</label>
+                <input type="text" id="suspend_project_name" readonly 
+                    style="width: 100%; padding: 12px; border: 1px solid var(--slate-200); border-radius: 8px; background: var(--slate-50); color: var(--slate-600); font-size: 14px; font-weight: 600;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Reason for Suspension <span style="color: var(--red);">*</span></label>
+                <textarea id="suspend_project_reason" placeholder="Explain why the project is being suspended (e.g. Budget issues, Site access, Weather)..."
+                    style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-size: 14px; min-height: 120px; outline: none; transition: border-color 0.2s;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                <button class="btn btn-warning" style="flex: 1; justify-content: center; background: #f59e0b; color: white;" 
+                    onclick="window.app.pmModule?.handleSuspendProject()">
+                    Suspend Project
+                </button>
+            </div>
+        </div>
+    `,
 };
