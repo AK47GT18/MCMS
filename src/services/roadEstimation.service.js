@@ -541,7 +541,18 @@ async function getEstimateByProject(projectId) {
     }
   });
 
-  if (!spec) throw new AppError('No road specification found for this project', 404);
+  if (!spec) {
+    return {
+      projectId,
+      roadType: 'RT-4',
+      lengthKm: 0,
+      widthM: 7.0,
+      terrain: 'Flat',
+      layers: [],
+      accessories: [],
+      project: await prisma.project.findUnique({ where: { id: projectId } })
+    };
+  }
 
   // Attach descriptive road type label (e.g. "RT-5: Concrete Pavement")
   const roadTypeDef = ROAD_TYPES[spec.roadType];

@@ -808,12 +808,28 @@ export const PM_MissingHandlers = {
     updateFinalSummary() {
         const name = document.getElementById('proj_name').value;
         const typeStr = 'Road Works';
-        
-        const budget = this.wizardState.currentlyApprovedHigh;
+        const budget = this.wizardState.currentlyApprovedHigh || this.wizardState.formData?.budget;
 
-        document.getElementById('summary_name').textContent = name;
-        document.getElementById('summary_type').textContent = typeStr;
-        document.getElementById('summary_budget').textContent = `MWK ${new Intl.NumberFormat().format(budget || 0)}`;
+        const summaryName = document.getElementById('summary_name');
+        if (summaryName) summaryName.textContent = name;
+        
+        const summaryType = document.getElementById('summary_type');
+        if (summaryType) summaryType.textContent = typeStr;
+        
+        const summaryBudget = document.getElementById('summary_budget');
+        if (summaryBudget) summaryBudget.textContent = `MWK ${new Intl.NumberFormat().format(budget || 0)}`;
+
+        // Smart Visibility for Edit Mode
+        const btnSubmit = document.getElementById('wizard-submit');
+        if (btnSubmit && this.wizardState.isEditMode) {
+            btnSubmit.innerHTML = '<span>Save Changes</span> <i class="fas fa-save"></i>';
+            
+            // Check if anything actually changed
+            const currentSnapshot = JSON.stringify(this.wizardState.formData);
+            const hasChanges = currentSnapshot !== this.wizardState.originalSnapshot;
+            
+            btnSubmit.style.display = hasChanges ? 'flex' : 'none';
+        }
     },
 
     async fetchSupervisors(selectId = 'proj_supervisor') {

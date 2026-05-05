@@ -98,6 +98,12 @@ async function getById(id) {
       tasks: {
         orderBy: { startDate: 'asc' },
       },
+      roadSpecification: {
+        include: {
+          layers: { orderBy: { phaseNumber: 'asc' } },
+          accessories: { orderBy: { category: 'asc' } }
+        }
+      },
       contracts: true,
       _count: {
         select: {

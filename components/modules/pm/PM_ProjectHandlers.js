@@ -228,11 +228,38 @@ export const PM_ProjectHandlers = {
                     const radValEl = document.getElementById('proj_radius_val');
                     if (radValEl) radValEl.innerText = radiusVal + 'm';
                 }
+
+                // Populate Road Specification (Step 2 & 3)
+                if (project.roadSpecification) {
+                    const rs = project.roadSpecification;
+                    setVal('road_type', rs.roadType);
+                    setVal('road_length', rs.lengthKm);
+                    setVal('road_width', rs.widthM);
+                    setVal('road_lanes', rs.lanes || 2);
+                    setVal('road_terrain', rs.terrain);
+                    setVal('road_zone', rs.geographicZone);
+                    setVal('road_town_dist', rs.nearestTownKm);
+
+                    // Accessories & Lighting
+                    if (rs.accessories && Array.isArray(rs.accessories)) {
+                        rs.accessories.forEach(acc => {
+                            // Check if it's a standard accessory (checkbox)
+                            const cb = document.querySelector(`input[name="road_acc"][value="${acc.category}"]`);
+                            if (cb) {
+                                cb.checked = true;
+                            } else if (acc.category && acc.category.startsWith('lighting_')) {
+                                // It's a lighting category, set the dropdown
+                                setVal('acc_lighting', acc.category);
+                            }
+                        });
+                    }
+                }
                 
-                // Attempt to populate Step 2 & 3 if road details are found (usually in estimations)
-                // For now, we save what we have to cache
+                // Save to cache so the wizard can maintain state between steps
                 setTimeout(() => {
                     this.saveWizardCache();
+                    // Take a snapshot of the data to detect changes
+                    this.wizardState.originalSnapshot = JSON.stringify(this.wizardState.formData);
                     this.updateFinalSummary();
                 }, 500);
             });
