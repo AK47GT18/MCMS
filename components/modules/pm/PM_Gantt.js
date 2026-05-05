@@ -154,12 +154,13 @@ export const PM_Gantt = {
             if (healthEl) healthEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--emerald-500);"></i> Connected: ${tasksList.length} Phases Found`;
 
             const mappedTasks = tasksList.map(t => {
-                const startDate = t.startDate ? t.startDate.split('T')[0] : new Date().toISOString().split('T')[0];
-                let endDate = t.endDate ? t.endDate.split('T')[0] : startDate;
-                if (startDate === endDate) {
-                    const nextDay = new Date(startDate);
+                const startDateStr = t.startDate ? t.startDate.split('T')[0] : new Date().toISOString().split('T')[0];
+                let endDateStr = t.endDate ? t.endDate.split('T')[0] : startDateStr;
+                
+                if (startDateStr === endDateStr) {
+                    const nextDay = new Date(startDateStr);
                     nextDay.setDate(nextDay.getDate() + 1);
-                    endDate = nextDay.toISOString().split('T')[0];
+                    endDateStr = nextDay.toISOString().split('T')[0];
                 }
 
                 let deps = '', depName = 'None';
@@ -174,8 +175,8 @@ export const PM_Gantt = {
                 return {
                     id: String(t.id || t.code),
                     name: t.name || 'Unnamed Phase',
-                    start: startDate,
-                    end: endDate,
+                    start: startDateStr + ' 00:00:00',
+                    end: endDateStr + ' 23:59:59',
                     progress: Number(t.progress) || 0,
                     dependencies: deps,
                     custom_dependency_name: depName
@@ -201,7 +202,7 @@ export const PM_Gantt = {
                 #gantt { display:block !important; width:100%; overflow-x:auto; }
                 #gantt-chart-container { display:block !important; width:100% !important; overflow:auto !important; position:relative; max-height:calc(100vh - 250px); }
                 .gantt-container { display:block !important; width:max-content !important; min-width:100%; overflow:visible !important; padding-right:150px; }
-                .gantt { -webkit-font-smoothing:antialiased; overflow:visible !important; width:auto !important; }
+                .gantt { -webkit-font-smoothing:antialiased; overflow:visible !important; }
                 .gantt .grid-background { fill:transparent !important; }
                 .gantt .grid-header { font-family:system-ui,sans-serif !important; font-size:13px !important; fill:#0f172a !important; font-weight:700 !important; }
                 .gantt .grid-row { fill:transparent !important; transition:fill 0.1s; }
@@ -246,8 +247,6 @@ export const PM_Gantt = {
             try {
                 this.ganttInstance = new GanttCls("#gantt", mappedTasks, {
                     header_height: HEADER_H,
-                    column_width: 45,
-                    step: 24,
                     view_modes: ['Day', 'Week', 'Month', 'Year'],
                     bar_height: BAR_HEIGHT,
                     bar_corner_radius: 4,

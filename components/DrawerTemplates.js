@@ -629,32 +629,28 @@ export const DrawerTemplates = {
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">End Date</div>
                         <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
-                    ${
-                      contract.contractType !== "project"
-                        ? `
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Retention (${contract.retentionPercentage || 0}%)</div>
-                        <div style="font-weight: 700; color: var(--orange); font-size: 14px;">MWK ${Number(contract.retentionAmount || 0).toLocaleString()}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Market Value</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number(contract.marketValue || contract.project?.approvedTotal || contract.value || 0).toLocaleString()}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Tax Liabilities (VAT/WHT)</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number((contract.vatAmount || 0) + (contract.whtAmount || 0)).toLocaleString()}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Actual Contract Value</div>
+                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number(contract.value || 0).toLocaleString()}</div>
                     </div>
-                    `
-                        : ""
-                    }
                 </div>
                 
-                ${
-                  contract.justification
-                    ? `
+                ${(() => {
+                  const justText = contract.justification || contract.versions?.[0]?.changeNotes || "";
+                  if (justText && justText !== "Initial contract creation") {
+                    return `
                 <div style="margin-top: 24px; padding: 16px; background: #fff; border: 1px solid var(--slate-200); border-radius: 12px;">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Justification / Purpose</div>
-                    <div style="font-size: 13px; color: var(--slate-700); line-height: 1.6;">${contract.justification}</div>
+                    <div style="font-size: 13px; color: var(--slate-700); line-height: 1.6;">${justText}</div>
                 </div>
-                `
-                    : ""
-                }
+                `;
+                  }
+                  return "";
+                })()}
             </div>
 
             <div style="padding: 24px;">
@@ -675,7 +671,7 @@ export const DrawerTemplates = {
                             <div style="padding: 12px 16px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center;">
                                 <div style="flex: 2;">
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${item.materialName}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">${item.unitPrice ? "MWK " + Number(item.unitPrice).toLocaleString() + " per " + (item.unit || "unit") : item.unit || "Standard Unit"}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">${(item.unitPrice !== undefined && item.unitPrice !== null) ? "MWK " + Number(item.unitPrice).toLocaleString() + " per " + (item.unit || "unit") : item.unit || "Standard Unit"}</div>
                                 </div>
                                 <div style="flex: 1; text-align: right;">
                                     <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${item.quantity} ${item.unit || ""}</div>
@@ -799,12 +795,14 @@ export const DrawerTemplates = {
                                         </button>
                                     </div>
                                 </div>
-                                <div style="padding: 12px 16px; background: var(--slate-50); border-radius: 8px; border-left: 4px solid var(--orange); font-size: 13px; color: var(--slate-700); line-height: 1.5;">
-                                    <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; display: flex; justify-content: space-between;">
+                                <div style="padding: 12px 0; font-size: 13px; color: var(--slate-700); line-height: 1.5;">
+                                    <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; display: flex; justify-content: space-between; border-bottom: 1px solid var(--slate-100); padding-bottom: 4px;">
                                         <span>Change Authorization & Intent</span>
-                                        <span style="color: var(--orange);">${v.versionNumber === 1 ? "ORIGINAL BASELINE" : "REVISION V" + v.versionNumber}</span>
+                                        <span style="color: var(--slate-500);">${v.versionNumber === 1 ? "ORIGINAL BASELINE" : "REVISION V" + v.versionNumber}</span>
                                     </div>
-                                    ${v.changeNotes || "Master agreement baseline establishment and legal archiving."}
+                                    <div style="padding-top: 4px;">
+                                        ${(v.changeNotes && v.changeNotes !== "Initial contract creation") ? v.changeNotes : "Master agreement baseline establishment and legal archiving."}
+                                    </div>
                                 </div>
                             </div>
                         `,

@@ -59,8 +59,8 @@ async function getById(id) {
   });
   if (!contract) throw new AppError('Contract not found', 404);
   
-  // If it's a project master agreement, we might want to map project materials to items
-  if (contract.contractType === 'project' && contract.project?.roadSpecification) {
+  // Map project road specification materials to contract items (for ANY contract linked to a project)
+  if (contract.project?.roadSpecification) {
     const spec = contract.project.roadSpecification;
     const projectItems = [];
     
@@ -77,18 +77,66 @@ async function getById(id) {
     
     spec.accessories?.forEach(a => {
       projectItems.push({
-        materialName: a.type,
-        quantity: a.quantity,
+        materialName: a.itemName || a.type || 'Accessory',
+        quantity: a.totalQuantity || a.quantity || 0,
         unit: a.unit || 'units',
-        unitPrice: a.estimatedUnitCost,
-        totalCost: a.totalValue || 0,
+        unitPrice: a.unitCostHigh || a.estimatedUnitCost || 0,
+        totalCost: a.totalCostHigh || a.totalValue || 0,
         isBaseline: true
       });
     });
     
     if (contract.items.length === 0) {
       contract.items = projectItems;
+    } else {
+      // Retroactive fix: patch any items that were saved with 0 unitPrice
+      contract.items = contract.items.map(dbItem => {
+        const price = Number(dbItem.unitPrice || 0);
+        if (price === 0) {
+          // Try exact match first, then fuzzy match
+          const baseline = projectItems.find(p => 
+            p.materialName.trim().toLowerCase() === dbItem.materialName.trim().toLowerCase()
+          ) || projectItems.find(p =>
+            dbItem.materialName.toLowerCase().includes(p.materialName.split(':').pop().trim().toLowerCase()) ||
+            p.materialName.toLowerCase().includes(dbItem.materialName.trim().toLowerCase())
+          );
+          if (baseline) {
+            return { ...dbItem, unitPrice: baseline.unitPrice, totalCost: Number(baseline.unitPrice) * Number(dbItem.quantity || 0) };
+          }
+        }
+        return dbItem;
+      });
     }
+
+    // Calculate actual market value from the project baseline for the specific items in this contract
+    const marketValue = contract.items.reduce((sum, item) => {
+      const baseline = projectItems.find(p => 
+        p.materialName.trim().toLowerCase() === item.materialName.trim().toLowerCase()
+      ) || projectItems.find(p =>
+        item.materialName.toLowerCase().includes(p.materialName.split(':').pop().trim().toLowerCase()) ||
+        p.materialName.toLowerCase().includes(item.materialName.trim().toLowerCase())
+      );
+      if (baseline) {
+        return sum + (Number(baseline.unitPrice || 0) * Number(item.quantity || 0));
+      }
+      return sum + (Number(item.unitPrice || 0) * Number(item.quantity || 0));
+    }, 0);
+    
+    contract.marketValue = marketValue > 0 ? marketValue : (spec.approvedTotal || spec.estimatedTotalHigh || 0);
+  }
+
+  // Surface justification from version history (V1 changeNotes) since it's not on the Contract model
+  if (contract.versions && contract.versions.length > 0) {
+    const v1 = contract.versions.find(v => v.versionNumber === 1);
+    const notes = v1?.changeNotes;
+    if (notes && notes !== 'Initial contract creation') {
+      contract.justification = notes;
+    }
+  }
+
+  // Fallback marketValue from project budget
+  if (!contract.marketValue && contract.project) {
+    contract.marketValue = Number(contract.project.budgetTotal || 0);
   }
 
   return contract;
@@ -526,3 +574,4 @@ module.exports = {
   rateVendor,
   terminate
 };
+

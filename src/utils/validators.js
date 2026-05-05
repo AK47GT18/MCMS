@@ -117,6 +117,7 @@ const createContractSchema = z.object({
   fileName: z.string().optional(),
   materialsList: z.string().optional(),
   contractType: z.string().max(50).optional(),
+  justification: z.string().optional(),
   // Financial Precision Fields
   retentionPercentage: z.coerce.number().min(0).optional(),
   retentionAmount: z.coerce.number().min(0).optional(),
