@@ -1201,6 +1201,18 @@ export const DrawerTemplates = {
                     </div>
                 </div>
 
+                <div style="background: var(--slate-50); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--slate-200); margin-bottom: 16px;">
+                    <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Allocated Budget (MWK)</div>
+                    <input type="number" id="step4_budget" 
+                        style="width: 100%; padding: 8px 12px; border: 1px solid var(--slate-300); border-radius: 6px; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 14px;"
+                        oninput="
+                            const mainBudget = document.getElementById('proj_budget');
+                            if (mainBudget) mainBudget.value = this.value;
+                            (window.app.pmModule || window.app.fsModule || window.app.caModule).checkBudgetReconciliation();
+                            (window.app.pmModule || window.app.fsModule || window.app.caModule).saveWizardCache();
+                        ">
+                </div>
+
                 <div id="estimation-loader" style="padding:40px; text-align:center; color:var(--slate-500); display:none;">
                     <i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px; color:var(--orange);"></i>
                     <div style="font-size:12px; font-weight:600; text-transform:uppercase;">Running Parametric Estimator...</div>

@@ -203,9 +203,21 @@ function getStatus() {
  * @param {Array} accessories - Array of approved RoadAccessory objects
  * @param {Object} recipients - { fs, fms: [], ecs: [] } containing User objects
  */
-async function sendRoadBudgetApproved(project, spec, layers, accessories, recipients) {
+async function sendRoadBudgetApproved(project, spec, layers, accessories, recipients, changes = null) {
   const promises = [];
   const formatter = new Intl.NumberFormat('en-MW', { style: 'currency', currency: 'MWK', minimumFractionDigits: 0 });
+
+  const renderChanges = (list, title, color) => {
+    if (!list || list.length === 0) return '';
+    return `
+      <div style="background-color: ${color}10; border-left: 4px solid ${color}; padding: 16px; margin: 15px 0; border-radius: 4px;">
+        <h4 style="margin: 0 0 10px 0; color: ${color}; font-size: 13px; text-transform: uppercase;">${title}</h4>
+        <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #334155;">
+          ${list.map(c => `<li style="margin-bottom: 4px;">${c}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  };
 
   const getWrapper = (content) => `
 <!DOCTYPE html>
@@ -259,6 +271,8 @@ async function sendRoadBudgetApproved(project, spec, layers, accessories, recipi
       <p>Hello <strong>${recipients.fs.name}</strong>,</p>
       <p>The road specification for <strong>${project.name}</strong> (${project.code}) has been approved and the budget is locked. You are the assigned Field Supervisor.</p>
       
+      ${renderChanges(changes?.universal, 'Universal Changes', '#64748b')}
+
       <div style="background-color: #f8fafc; border-left: 4px solid #f97415; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
         <h3 style="color: #0f1729; margin: 0 0 15px 0; font-size: 16px; text-transform: uppercase;">Project Specification</h3>
         <ul style="margin: 0; padding-left: 20px; color: #475569;">
@@ -305,6 +319,10 @@ async function sendRoadBudgetApproved(project, spec, layers, accessories, recipi
     const fmHtml = getWrapper(`
       <h2 style="color: #0f1729; margin-top: 0; font-size: 20px;">Road Project Procurement Brief</h2>
       <p>The budget for road project <strong>${project.name}</strong> (${project.code}) has been locked at <strong style="color: #f97415; font-size: 16px;">${formatter.format(project.budgetTotal)}</strong>.</p>
+      
+      ${renderChanges(changes?.universal, 'Universal Changes', '#64748b')}
+      ${renderChanges(changes?.finance, 'Budget Variance (Finance)', '#ef4444')}
+
       <p style="margin-bottom: 30px;">Please review the approved materials below and begin creating Vendor Contracts.</p>
       
       <div style="overflow-x: auto;">
@@ -354,6 +372,9 @@ async function sendRoadBudgetApproved(project, spec, layers, accessories, recipi
       <h2 style="color: #0f1729; margin-top: 0; font-size: 20px;">Road Project Equipment Assignment</h2>
       <p>The road specification for <strong>${project.name}</strong> (${project.code}) has been approved.</p>
       
+      ${renderChanges(changes?.universal, 'Universal Changes', '#64748b')}
+      ${renderChanges(changes?.equipment, 'Material/Asset Adjustments (Logistics)', '#3b82f6')}
+
       <div style="background-color: #f8fafc; border-radius: 8px; padding: 15px 20px; margin: 20px 0; display: inline-block;">
         <span style="color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px;">Project Target Start</span>
         <span style="color: #0f1729; font-size: 16px; font-weight: 600;">${new Date(project.startDate).toLocaleDateString()}</span>

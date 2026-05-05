@@ -336,40 +336,49 @@ export const PM_FeatureHandlers = {
     },
 
     updateItemQuantity(type, index, value) {
+        if (!this.wizardState?.roadEstimatePreview) return;
         const est = this.wizardState.roadEstimatePreview;
         const list = type === 'layer' ? est.layers : est.accessories;
         const item = list[index];
+        const qty = parseFloat(value) || 0;
         
-        const newQty = parseFloat(value) || 0;
-        const oldQty = item.totalQuantity;
+        // Update data in memory
+        item.totalQuantity = qty;
+        item.totalCostLow = qty * (item.unitCostLow || (item.unitCostHigh * 0.7));
+        item.totalCostHigh = qty * item.unitCostHigh;
+        item.isManualOverride = true;
         
-        // Update quantity
-        item.totalQuantity = newQty;
+        // Surgically update ONLY the cost cell for this row (no table re-render)
+        const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const rowIndex = type === 'layer' ? index : est.layers.length + index;
+        const rows = document.querySelectorAll('#estimation-receipt-container tbody tr');
+        if (rows[rowIndex]) {
+            const costCell = rows[rowIndex].querySelectorAll('td')[2];
+            if (costCell) {
+                costCell.innerHTML = `
+                    <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} -</span> 
+                    <span style="font-weight:700; margin-left:4px;">${formatter.format(item.totalCostHigh)}</span>
+                `;
+            }
+        }
         
-        // Recalculate costs proportionally if they weren't manually overridden yet?
-        // Actually, usually PM wants to change quantity which then updates total cost
-        const unitCostHigh = item.totalCostHigh / (oldQty || 1);
-        const unitCostLow = item.totalCostLow / (oldQty || 1);
+        // Recalculate approved totals
+        let totalHigh = 0;
+        est.layers.forEach(l => { if (l.approved) totalHigh += l.totalCostHigh; });
+        est.accessories.forEach(a => { if (a.approved) totalHigh += a.totalCostHigh; });
+        this.wizardState.currentlyApprovedHigh = totalHigh;
         
-        item.totalCostHigh = newQty * unitCostHigh;
-        item.totalCostLow = newQty * unitCostLow;
-        
-        // Re-render the receipt to show new totals
-        this.renderEstimatedReceipt();
-    },
+        // Update the totals display directly by ID
+        const totalDisplay = document.getElementById('receipt-total-high');
+        if (totalDisplay) totalDisplay.textContent = this.formatMWKFull(totalHigh);
 
-    updateItemCost(type, index, value) {
-        const est = this.wizardState.roadEstimatePreview;
-        const list = type === 'layer' ? est.layers : est.accessories;
-        const item = list[index];
+        const costMeterDisplay = document.getElementById('receipt-cost-meter');
+        if (costMeterDisplay && est.lengthKm > 0) {
+            const costPerMeter = totalHigh / (est.lengthKm * 1000);
+            costMeterDisplay.textContent = this.formatMWKFull(costPerMeter);
+        }
         
-        item.totalCostHigh = parseFloat(value) || 0;
-        
-        // Re-render to update the grand total and gap
-        this.renderEstimatedReceipt();
+        this.checkBudgetReconciliation();
+        this.saveWizardCache();
     },
-
-    renderEstimatedReceipt() {
-        this.generateEstimatedReceipt(); 
-    }
 };

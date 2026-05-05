@@ -501,9 +501,19 @@ export const PM_MissingHandlers = {
 
         const newStep = this.wizardState.currentStep + direction;
         
-        // If moving to step 4 (Budget Receipt), run estimation
+        // If moving to step 4 (Budget Receipt), run estimation ONLY if no preview exists or if data changed
         if (newStep === 4 && direction > 0) {
-            await this.generateEstimatedReceipt();
+            const currentSpec = JSON.stringify({
+                type: document.getElementById('road_type').value,
+                len: document.getElementById('road_length').value,
+                width: document.getElementById('road_width').value,
+                terrain: document.getElementById('road_terrain').value
+            });
+            
+            if (!this.wizardState.roadEstimatePreview || this.wizardState.lastEstimatedSpec !== currentSpec) {
+                await this.generateEstimatedReceipt();
+                this.wizardState.lastEstimatedSpec = currentSpec;
+            }
         }
 
         if (newStep >= 1 && newStep <= 5) {
@@ -575,6 +585,12 @@ export const PM_MissingHandlers = {
         } else if (stepNum === 4) {
             btnNext.style.display = 'flex';
             btnSubmit.style.display = 'none';
+            // Sync Step 4 budget input from Step 1
+            const mainBudget = document.getElementById('proj_budget');
+            const step4Budget = document.getElementById('step4_budget');
+            if (step4Budget && mainBudget) {
+                step4Budget.value = mainBudget.value;
+            }
             // Disable next until budget is reconciled
             this.checkBudgetReconciliation();
         } else {
@@ -678,15 +694,12 @@ export const PM_MissingHandlers = {
                         <input type="number" step="any" value="${item.totalQuantity}" 
                             style="width:80px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px; position:relative; z-index:5;"
                             onclick="event.stopPropagation()"
-                            oninput="(window.app.pmModule || window.app.fsModule || window.app.caModule).updateItemQuantity('${type}', ${index}, this.value)">
+                            onchange="(window.app.pmModule || window.app.fsModule || window.app.caModule).updateItemQuantity('${type}', ${index}, this.value)">
                         ${item.unit}
                     </td>
                     <td style="font-family:'JetBrains Mono'; font-size:11px; font-weight:700; text-align:right;">
                         <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} -</span> 
-                        <input type="number" step="any" value="${Math.round(item.totalCostHigh)}" 
-                            style="width:120px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px; text-align:right; margin-left:4px; position:relative; z-index:5;"
-                            onclick="event.stopPropagation()"
-                            oninput="(window.app.pmModule || window.app.fsModule || window.app.caModule).updateItemCost('${type}', ${index}, this.value)">
+                        <span style="font-weight:700; margin-left:4px;">${formatter.format(item.totalCostHigh)}</span>
                     </td>
                     <td style="text-align:right;">
                         <input type="checkbox" ${item.approved ? 'checked' : ''} 
@@ -702,6 +715,9 @@ export const PM_MissingHandlers = {
         const accRows = est.accessories.map((a, i) => renderRow(a, i, 'accessory')).join('');
 
         this.wizardState.currentlyApprovedHigh = currentlyApprovedHigh;
+
+        const lengthKm = est.lengthKm || parseFloat(document.getElementById('road_length')?.value) || 1;
+        const dynamicCostPerMeter = currentlyApprovedHigh / (lengthKm * 1000);
 
         container.innerHTML = `
             <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 8px; margin-bottom: 16px;">
@@ -724,11 +740,11 @@ export const PM_MissingHandlers = {
             <div style="background: var(--slate-900); padding: 16px; border-radius: 8px; color: white; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Approved Total (High End)</div>
-                    <div style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono';">${this.formatMWKFull(currentlyApprovedHigh)}</div>
+                    <div id="receipt-total-high" style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono';">${this.formatMWKFull(currentlyApprovedHigh)}</div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Cost per meter</div>
-                    <div style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">${this.formatMWKFull(est.costPerMeterHigh)}</div>
+                    <div id="receipt-cost-meter" style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">${this.formatMWKFull(dynamicCostPerMeter)}</div>
                 </div>
             </div>
         `;
@@ -745,10 +761,65 @@ export const PM_MissingHandlers = {
         this.renderBudgetReceipt();
     },
 
+    updateItemQuantity(type, index, value) {
+        if (!this.wizardState.roadEstimatePreview) return;
+        const est = this.wizardState.roadEstimatePreview;
+        const list = type === 'layer' ? est.layers : est.accessories;
+        const item = list[index];
+        const qty = parseFloat(value) || 0;
+        
+        item.totalQuantity = qty;
+        item.totalCostLow = qty * (item.unitCostLow || (item.unitCostHigh * 0.7));
+        item.totalCostHigh = qty * item.unitCostHigh;
+        item.isManualOverride = true;
+        
+        // Update ONLY the cost cell for this row (don't re-render the whole table)
+        const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const rowIndex = type === 'layer' ? index : est.layers.length + index;
+        const rows = document.querySelectorAll('#estimation-receipt-container tbody tr');
+        if (rows[rowIndex]) {
+            const costCell = rows[rowIndex].querySelectorAll('td')[2]; // 3rd column = Est. MWK
+            if (costCell) {
+                costCell.innerHTML = `
+                    <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} -</span> 
+                    <span style="font-weight:700; margin-left:4px;">${formatter.format(item.totalCostHigh)}</span>
+                `;
+            }
+        }
+        
+        // Recalculate approved totals without re-rendering
+        let totalHigh = 0;
+        let totalLow = 0;
+        est.layers.forEach(l => { if (l.approved) { totalHigh += l.totalCostHigh; totalLow += l.totalCostLow; } });
+        est.accessories.forEach(a => { if (a.approved) { totalHigh += a.totalCostHigh; totalLow += a.totalCostLow; } });
+        
+        this.wizardState.currentlyApprovedHigh = totalHigh;
+        
+        // Update the totals display directly by ID
+        const totalDisplay = document.getElementById('receipt-total-high');
+        if (totalDisplay) totalDisplay.textContent = this.formatMWKFull(totalHigh);
+
+        const costMeterDisplay = document.getElementById('receipt-cost-meter');
+        if (costMeterDisplay && est.lengthKm > 0) {
+            const costPerMeter = totalHigh / (est.lengthKm * 1000);
+            costMeterDisplay.textContent = this.formatMWKFull(costPerMeter);
+        }
+        
+        this.checkBudgetReconciliation();
+        this.saveWizardCache();
+    },
+
     checkBudgetReconciliation() {
-        const allocatedBudget = parseFloat(document.getElementById('proj_budget').value) || 0;
+        // Prefer the Step 4 inline budget input, fall back to Step 1
+        const step4Budget = document.getElementById('step4_budget');
+        const projBudget = document.getElementById('proj_budget');
+        const allocatedBudget = parseFloat(step4Budget?.value || projBudget?.value) || 0;
         const currentEst = this.wizardState.currentlyApprovedHigh || 0;
         const gap = currentEst - allocatedBudget;
+
+        // Update the Approved Total display with the allocated budget
+        const totalDisplay = document.getElementById('receipt-total-high');
+        if (totalDisplay) totalDisplay.textContent = this.formatMWKFull(allocatedBudget);
         
         const banner = document.getElementById('budget_recon_banner');
         const icon = document.getElementById('budget_recon_icon');

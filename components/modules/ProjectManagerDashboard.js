@@ -39,6 +39,10 @@ export class ProjectManagerDashboard {
         this.selectedProjectId = null; 
         this.currentGanttViewMode = 'Month'; 
         
+        // Register globally for event handlers
+        if (!window.app) window.app = {};
+        window.app.pmModule = this;
+        
         // WebSocket Real-time listeners
         this.initRealtimeListeners();
     }

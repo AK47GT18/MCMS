@@ -432,6 +432,14 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
   const project = await prisma.project.findUnique({ where: { id: projectId }});
   if (!project) throw new AppError('Project not found', 404);
 
+  // Fetch existing spec for smart diffing before we delete it
+  const oldSpec = await prisma.roadSpecification.findUnique({
+    where: { projectId },
+    include: { layers: true, accessories: true }
+  });
+
+  const changes = await compareEstimates(oldSpec, estimateData, estimateData.layers, estimateData.accessories);
+
   // Use a transaction to create the spec and all its line items cleanly
   const result = await prisma.$transaction(async (tx) => {
     // Delete existing spec if rewriting
@@ -512,15 +520,63 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
   };
 
   // Dispatch email
+  const emailService = require('../emails/email.service');
   emailService.sendRoadBudgetApproved(
     fullProject, 
     result, 
     estimateData.layers, 
     estimateData.accessories, 
-    recipients
+    recipients,
+    changes
   ).catch(err => logger.error(`Failed to send road budget approved emails:`, err));
 
-  return getEstimateByProject(projectId);
+  return result;
+}
+
+/**
+ * Compare old vs new estimate to generate smart change logs
+ */
+async function compareEstimates(oldSpec, newSpec, newLayers, newAccessories) {
+  const changes = {
+    universal: [],
+    finance: [],
+    equipment: []
+  };
+
+  if (!oldSpec) return changes;
+
+  // 1. Universal (Metadata)
+  if (oldSpec.roadType !== newSpec.roadType) {
+    changes.universal.push(`Road type changed from <strong>${oldSpec.roadType}</strong> to <strong>${newSpec.roadType}</strong>`);
+  }
+  if (oldSpec.lengthKm !== newSpec.lengthKm) {
+    changes.universal.push(`Project length updated to <strong>${newSpec.lengthKm}km</strong> (was ${oldSpec.lengthKm}km)`);
+  }
+
+  // 2. Finance (Budget Variance)
+  const oldTotal = oldSpec.approvedTotal || 0;
+  const newTotal = newSpec.approvedTotal || 0;
+  if (Math.abs(newTotal - oldTotal) > 100) {
+    const diff = newTotal - oldTotal;
+    const direction = diff > 0 ? 'increased' : 'decreased';
+    changes.finance.push(`Total budget <strong>${direction}</strong> by <strong>MWK ${Math.abs(diff).toLocaleString()}</strong>`);
+  }
+
+  // 3. Equipment/Material (EC Specific)
+  newLayers.forEach(newLayer => {
+    const oldLayer = oldSpec.layers.find(l => l.materialType === newLayer.materialType && l.phaseNumber === newLayer.phaseNumber);
+    if (oldLayer) {
+      if (Math.abs(oldLayer.totalQuantity - newLayer.totalQuantity) > 0.01) {
+        const diff = newLayer.totalQuantity - oldLayer.totalQuantity;
+        const direction = diff > 0 ? 'increased' : 'reduced';
+        changes.equipment.push(`<strong>${newLayer.materialType}</strong> ${direction} to <strong>${newLayer.totalQuantity} ${newLayer.unit}</strong>`);
+      }
+    } else {
+      changes.equipment.push(`New material added: <strong>${newLayer.materialType}</strong>`);
+    }
+  });
+
+  return changes;
 }
 
 /**
