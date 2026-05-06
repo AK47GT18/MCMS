@@ -5161,19 +5161,28 @@ Contract Admin</textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Quantity to Receive</label>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <input type="number" id="receive_qty" class="form-input" value="${item.qty}" style="flex: 1; font-weight: 700; font-size: 18px;">
-                    <span style="font-weight: 600; color: var(--slate-500);">${item.unit}</span>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Quantity to Receive <span style="color: var(--red);">*</span></label>
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <input type="number" id="receive_qty" class="form-input" value="${item.qty}" min="0.001" max="${item.qty}" step="any" 
+                            data-vrules="required|numeric|min:0.001|max:${item.qty}" oninput="window.V?.checkField(this)"
+                            style="width: 100%; font-weight: 700; font-size: 18px; font-family: 'JetBrains Mono', monospace;">
+                    </div>
+                    <span style="font-weight: 600; color: var(--slate-500); padding-top: 10px;">${item.unit}</span>
                 </div>
-                <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">Max pending: ${item.qty} ${item.unit}</div>
+                <div style="margin-top: 8px; font-size: 11px; color: var(--slate-400);">
+                    Max pending: <strong>${item.qty} ${item.unit}</strong>
+                </div>
             </div>
 
             <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 6px; font-size: 12px; color: #92400E; margin-bottom: 24px;">
                 <i class="fas fa-triangle-exclamation"></i> <strong>Verification Note:</strong> By clicking receive, you confirm that the physical goods match the quantity entered and quality standards are met.
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleProcurementReceipt(${JSON.stringify(item).replace(/"/g, "&quot;")})">Confirm Physical Receipt</button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 800;" 
+                onclick="if(window.V?.validateForm(this.closest('.drawer-content'))) window.app.ecModule.handleProcurementReceipt(${JSON.stringify(item).replace(/"/g, "&quot;")})">
+                <i class="fas fa-check-circle" style="margin-right: 8px;"></i> Confirm Physical Receipt
+            </button>
         </div>
     `,
 

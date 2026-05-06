@@ -309,7 +309,7 @@ async function getAll() {
 
 async function getIncomingShipments() {
   const contracts = await prisma.contract.findMany({
-    where: { status: { in: ['active', 'draft'] } },
+    where: { status: { in: ['active', 'draft', 'expired'] } },
     include: {
       project: { select: { id: true, name: true, code: true } },
       vendor: { select: { id: true, name: true } },
