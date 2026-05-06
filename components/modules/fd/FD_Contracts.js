@@ -185,13 +185,13 @@ export const FD_Contracts = {
         const daysLeft = endDate
           ? Math.ceil((endDate - today) / (1000 * 60 * 60 * 24))
           : null;
-        const isExpired = daysLeft !== null && daysLeft <= 0;
-        const isExpiringSoon =
+        const isEnded = daysLeft !== null && daysLeft <= 0;
+        const isEndingSoon =
           daysLeft !== null && daysLeft > 0 && daysLeft <= 30;
 
         let statusClass = item.status === "Active" ? "active" : "locked";
-        if (isExpired) statusClass = "delayed";
-        if (isExpiringSoon) statusClass = "locked";
+        if (isEnded) statusClass = "delayed";
+        if (isEndingSoon) statusClass = "locked";
 
         return `
                 <tr onclick="window.app.fmModule.viewContract(${item.id})">
@@ -217,9 +217,9 @@ export const FD_Contracts = {
                         })()}
                     </td>
                     <td>
-                        <span class="status ${statusClass}">${isExpired ? "EXPIRED" : (item.status || "Draft").toUpperCase()}</span>
-                        ${isExpiringSoon ? `<div style="font-size: 10px; color: var(--orange); font-weight: 600; margin-top: 4px;">Expires in ${daysLeft} days</div>` : ""}
-                        ${isExpired ? `<div style="font-size: 10px; color: var(--red); font-weight: 600; margin-top: 4px;">Action Required</div>` : ""}
+                        <span class="status ${statusClass}">${isEnded ? "ENDED" : (item.status || "Draft").toUpperCase()}</span>
+                        ${isEndingSoon ? `<div style="font-size: 10px; color: var(--orange); font-weight: 600; margin-top: 4px;">Ends in ${daysLeft} days</div>` : ""}
+                        ${isEnded ? `<div style="font-size: 10px; color: var(--red); font-weight: 600; margin-top: 4px;">Action Required</div>` : ""}
                     </td>
                     <td style="text-align: right;">
                         <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">View</button>
@@ -429,8 +429,62 @@ export const FD_Contracts = {
       window.toast.show("Project Master Contract Archived successfully", "success");
       window.drawer.close();
       this.loadContractsData();
+
+      // Audit Log
+      client.post("/api/v1/audit-logs", {
+        action: "CONTRACT_ARCHIVED",
+        targetType: "CONTRACT",
+        targetId: result.data?.id || result.id,
+        details: { title, projectId, refCode, value }
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      this.broadcastContractEvent("Master Agreement Archived", 
+        `New Master Contract [${refCode}] established for project by ${window.currentUser?.name || 'Finance Director'}. Value: MWK ${value.toLocaleString()}.`,
+        projectId,
+        ["Project Manager", "Finance Director", "Equipment Coordinator"]
+      );
     } catch (err) {
       window.toast.show(err.message, "error");
+    }
+  },
+
+  async broadcastContractEvent(title, message, projectId, roles = [], excludeRoles = []) {
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const payload = {
+        title,
+        message,
+        roles,
+        priority: "high",
+        type: "contract",
+        isEmail: true
+      };
+
+      // Resolve Field Supervisor if projectId is provided
+      if (projectId) {
+        const projectRes = await fetch(`/api/v1/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (projectRes.ok) {
+          const projectData = await projectRes.json();
+          const project = projectData.data || projectData;
+          if (project.fieldSupervisorId) {
+            payload.users = [project.fieldSupervisorId];
+          }
+        }
+      }
+
+      await fetch("/api/v1/notifications/broadcast", {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn("Notification broadcast failed", err);
     }
   },
 
@@ -475,6 +529,21 @@ export const FD_Contracts = {
       // Refresh the view
       this.viewContract(contractId);
       this.loadContractsData();
+
+      // Audit Log
+      client.post("/api/v1/audit-logs", {
+        action: "CONTRACT_VERSION_CREATED",
+        targetType: "CONTRACT",
+        targetId: contractId,
+        details: { notes, newValue: newValueInput?.value }
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      this.broadcastContractEvent("Contract Version Committed", 
+        `A new version for contract [ID: ${contractId}] has been committed by ${window.currentUser?.name || 'Finance Director'}. Change Notes: ${notes}`,
+        null, // No project ID in this context, or we could fetch it
+        ["Project Manager", "Finance Director", "Equipment Coordinator"]
+      );
     } catch (error) {
       window.toast.show("Failed to upload version: " + error.message, "error");
     }
@@ -492,9 +561,18 @@ export const FD_Contracts = {
       });
       const result = await res.json();
       const projects = result.data || result.items || [];
+      
+      // Get IDs of projects that already have a master contract
+      const projectsWithMaster = new Set(
+        (this.allContracts || [])
+          .filter(c => c.contractType === 'project' || c.contractType === 'client')
+          .map(c => c.projectId)
+      );
+
       select.innerHTML =
         '<option value="">Select a project...</option>' +
         projects
+          .filter(p => !projectsWithMaster.has(p.id))
           .map((p) => `<option value="${p.id}" ${this.projectFilter == p.id ? 'selected' : ''}>${p.code} – ${p.name}</option>`)
           .join("");
     } catch (err) {
@@ -1178,6 +1256,21 @@ export const FD_Contracts = {
       window.drawer.close();
       this.loadContractsData();
       
+      // Audit Log
+      client.post("/api/v1/audit-logs", {
+        action: "VENDOR_RATED",
+        targetType: "CONTRACT",
+        targetId: contractId,
+        details: { rating: data.rating, comment: data.comment, rater: window.currentUser?.name }
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications - ONLY FD and PM as requested
+      this.broadcastContractEvent("Vendor Performance Rated", 
+        `${window.currentUser?.name || 'Finance Director'} has rated a vendor for contract [ID: ${contractId}]. Rating: ${data.rating} Stars.`,
+        null,
+        ["Project Manager", "Finance Director"]
+      );
+
       // If we're coming from the Records module, reload that too
       if (window.app.currentModule === "records" && window.app.recordsModule) {
         window.app.recordsModule.loadVendorsData();
@@ -1240,6 +1333,21 @@ export const FD_Contracts = {
       window.toast.show("Contract terminated. Remaining funds and materials returned to project.", "success");
       window.drawer.close();
       await this.loadContractsData();
+
+      // Audit Log
+      client.post("/api/v1/audit-logs", {
+        action: "CONTRACT_TERMINATED",
+        targetType: "CONTRACT",
+        targetId: contractId,
+        details: { reason }
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      this.broadcastContractEvent("Contract Terminated", 
+        `Contract [ID: ${contractId}] has been terminated by ${window.currentUser?.name || 'Finance Director'}. Reason: ${reason}`,
+        null, // Could resolve project ID from contract if needed
+        ["Project Manager", "Finance Director"]
+      );
       
       // If we're in the Ledger, reload to reflect budget changes
       if (window.app.currentModule === "ledger" && window.app.fmModule) {

@@ -277,9 +277,18 @@ export const PM_Contracts = {
       });
       const result = await res.json();
       const projects = result.data || result.items || [];
+
+      // Get IDs of projects that already have a master contract
+      const projectsWithMaster = new Set(
+        (this.allContracts || [])
+          .filter(c => c.contractType === 'project' || c.contractType === 'client')
+          .map(c => c.projectId)
+      );
+
       select.innerHTML =
         '<option value="">Select a project...</option>' +
         projects
+          .filter(p => !projectsWithMaster.has(p.id))
           .map((p) => `<option value="${p.id}">${p.code} – ${p.name}</option>`)
           .join("");
     } catch (err) {
@@ -611,6 +620,23 @@ export const PM_Contracts = {
       window.toast.show("Contract established successfully", "success");
       window.drawer.close();
       this.loadContractsData();
+
+      // Audit Log
+      import('../../../src/api/client.js').then(m => {
+        m.default.post("/api/v1/audit-logs", {
+          action: "VENDOR_CONTRACT_CREATED",
+          targetType: "CONTRACT",
+          targetId: res.data?.id || res.id,
+          details: { title: data.title, vendorName: data.vendorName, value: data.value, actor: window.currentUser?.name }
+        });
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      this.broadcastContractEvent("Vendor Contract Established", 
+        `New Vendor Contract for ${data.vendorName} established by ${window.currentUser?.name || 'Project Manager'}. Value: MWK ${data.value.toLocaleString()}.`,
+        data.projectId,
+        ["Project Manager", "Finance Director", "Equipment Coordinator"]
+      );
     } catch (err) {
       window.toast.show(err.message, "error");
     }
@@ -795,9 +821,65 @@ export const PM_Contracts = {
       this.selectedMasterFile = null;
       window.drawer.close();
       this.loadContractsData();
+
+      // Audit Log
+      import('../../../src/api/client.js').then(m => {
+        m.default.post("/api/v1/audit-logs", {
+          action: "CONTRACT_ARCHIVED",
+          targetType: "CONTRACT",
+          targetId: res.data?.id || res.id,
+          details: { title, projectId, refCode, value, actor: window.currentUser?.name }
+        });
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      this.broadcastContractEvent("Master Agreement Archived", 
+        `Project Master for ${refCode} has been archived by ${window.currentUser?.name || 'Project Manager'}. Justification: ${justification}`,
+        projectId,
+        ["Project Manager", "Finance Director", "Equipment Coordinator"]
+      );
     } catch (err) {
       console.error("[Contract Error]", err);
       window.toast.show(err.message || "Failed to archive contract", "error");
+    }
+  },
+
+  async broadcastContractEvent(title, message, projectId, roles = []) {
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const payload = {
+        title,
+        message,
+        roles,
+        priority: "high",
+        type: "contract",
+        isEmail: true
+      };
+
+      // Resolve Field Supervisor if projectId is provided
+      if (projectId) {
+        const projectRes = await fetch(`/api/v1/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (projectRes.ok) {
+          const projectData = await projectRes.json();
+          const project = projectData.data || projectData;
+          if (project.fieldSupervisorId) {
+            payload.users = [project.fieldSupervisorId];
+          }
+        }
+      }
+
+      await fetch("/api/v1/notifications/broadcast", {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn("Notification broadcast failed", err);
     }
   },
 
@@ -965,6 +1047,23 @@ export const PM_Contracts = {
 
       // Refresh the table first
       await this.loadContractsData();
+
+      // Audit Log
+      import('../../../src/api/client.js').then(m => {
+        m.default.post("/api/v1/audit-logs", {
+          action: "CONTRACT_VERSION_CREATED",
+          targetType: "CONTRACT",
+          targetId: contractId,
+          details: { changeNotes: notes, actor: window.currentUser?.name }
+        });
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      this.broadcastContractEvent("Contract Revised", 
+        `Contract [ID: ${contractId}] has been revised by ${window.currentUser?.name || 'Project Manager'}. Change: ${notes}`,
+        null,
+        ["Project Manager", "Finance Director", "Equipment Coordinator"]
+      );
 
       // Then re-open the viewer with fresh data if needed
       setTimeout(() => this.viewContract(contractId), 300);
