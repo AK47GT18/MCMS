@@ -67,7 +67,7 @@ export const FD_Handlers = {
             }
         } catch (error) {
             console.error('Workflow error:', error);
-            window.toast.show('Failed to process requisition action.', 'error');
+            window.toast.show(error.message || 'Failed to process requisition action.', 'error');
         }
     },
 

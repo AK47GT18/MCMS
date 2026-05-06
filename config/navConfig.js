@@ -65,7 +65,7 @@ export const NAV_ITEMS = {
             items: [
                 { label: 'Gantt Schedule', icon: '<i class="fas fa-stream"></i>', id: 'gantt' },
                 { label: 'Asset Registry', icon: '<i class="fas fa-truck-pickup"></i>', id: 'fleet' },
-                { label: 'Budget Control', icon: '<i class="fas fa-coins"></i>', id: 'budget' },
+                { label: 'Project Cost Ledger', icon: '<i class="fas fa-coins"></i>', id: 'budget' },
                 { label: 'Field Teams', icon: '<i class="fas fa-users"></i>', id: 'teams' }
             ]
         },

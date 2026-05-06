@@ -3,6 +3,8 @@ const { asyncHandler } = require('../middlewares/error.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
 const response = require('../utils/response');
 
+const { parseQuery } = require('../middlewares/validate.middleware');
+
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
@@ -14,7 +16,8 @@ const create = asyncHandler(async (req, res) => {
 const getAll = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  const bcrs = await budgetChangesService.getAll(req.query);
+  const query = parseQuery(req.url);
+  const bcrs = await budgetChangesService.getAll(query);
   response.success(res, bcrs);
 });
 

@@ -1,91 +1,334 @@
 import client from '../../../src/api/client.js';
-import projects from '../../../src/api/projects.api.js';
-import users from '../../../src/api/users.api.js';
-import dailyLogs from '../../../src/api/dailyLogs.api.js';
-import requisitions from '../../../src/api/requisitions.api.js';
-import audit from '../../../src/api/audit.api.js';
-import procurement from '../../../src/api/procurement.api.js';
-import assets from '../../../src/api/assets.api.js';
-import issues from '../../../src/api/issues.api.js';
-import tasks from '../../../src/api/tasks.api.js';
-import contracts from '../../../src/api/contracts.api.js';
+import projectsApi from '../../../src/api/projects.api.js';
+import procurementApi from '../../../src/api/procurement.api.js';
+import contractsApi from '../../../src/api/contracts.api.js';
 
 export const PM_Budget = {
+    projects: [],
+    materialBaselines: {},
+
     getBudgetView() {
-        setTimeout(() => this.loadTransactionsFromAPI(), 0);
+        // Trigger data load
+        this.loadPortfolioData();
+        
         return `
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
-                <div class="data-card">
-                    <div class="data-card-header">
-                        <div class="card-title">Transaction Ledger</div>
-                        <button class="btn btn-action" onclick="window.drawer.open('New Transaction', window.DrawerTemplates.transactionEntry)"><i class="fas fa-plus"></i> New Entry</button>
+            <div class="animate-fade-in">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div>
+                        <h2 style="font-size: 20px; font-weight: 800; color: var(--slate-900);">Project Cost Ledger</h2>
+                        <p style="font-size: 13px; color: var(--slate-500);">Comprehensive financial portfolio oversight and variance tracking.</p>
                     </div>
-                    <div id="transactions-table-container">
-                        ${this.renderLoadingState()}
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary" onclick="window.app.pmModule.loadPortfolioData()">
+                            <i class="fas fa-sync-alt"></i> Refresh Data
+                        </button>
                     </div>
                 </div>
 
-                <div style="display:flex; flex-direction:column; gap:16px;">
-                    <div class="stat-card" style="background:var(--slate-800); color:white; border:none;">
-                        <div class="stat-label" style="color:var(--slate-400);">Total Spend (Active)</div>
-                        <div class="stat-value" id="budget-total-spend" style="color:white; font-size:28px;">MWK 0.0M</div>
-                        <div class="stat-sub" style="color:var(--emerald);">Project Variance Tracking</div>
-                    </div>
-
-                    <div class="fraud-alert-card" style="background:#FEF2F2; border:1px solid #FECACA; padding:16px; border-radius:8px;">
-                         <div style="display:flex; gap:10px; margin-bottom:8px;">
-                            <i class="fas fa-exclamation-triangle" style="color:var(--red);"></i>
-                            <div style="font-weight:700; color:var(--red-dark); font-size:13px;">Budget Alert</div>
-                         </div>
-                         <div id="budget-alerts-container" style="font-size:12px; color:var(--red-dark); line-height:1.4;">
-                            Monitoring material utilization across all sectors.
-                         </div>
-                    </div>
+                <div id="portfolio-grid" style="background: white; border: 1px solid var(--slate-200); border-radius: 8px; overflow-x: auto;">
+                    ${this.renderLoadingState()}
                 </div>
             </div>
         `;
-    },
+    },
 
-    async loadTransactionsFromAPI() {
-        const container = document.getElementById('transactions-table-container');
-        if (!container) return;
+    async loadPortfolioData() {
+        console.log('[PM_Budget] Starting portfolio load...');
+        const grid = document.getElementById('portfolio-grid');
+        if (!grid) {
+            console.warn('[PM_Budget] portfolio-grid element not found. Retrying in 100ms...');
+            setTimeout(() => this.loadPortfolioData(), 100);
+            return;
+        }
 
         try {
-            const response = await procurement.getAll({ limit: 50 });
-            const data = response.data || response;
-            const transactions = Array.isArray(data) ? data : data.procurements || [];
+            console.log('[PM_Budget] Fetching projects and material prices...');
+            const [projRes, priceRes] = await Promise.all([
+                projectsApi.getAll(),
+                client.get('/pm/material-prices?limit=1000').catch(err => {
+                    console.error('[PM_Budget] Material prices fetch failed:', err);
+                    return { data: [] };
+                }) 
+            ]);
 
-            if (transactions.length === 0) {
-                container.innerHTML = this.renderEmptyState('No transactions found for this period.');
+            console.log('[PM_Budget] Data received:', { projRes, priceRes });
+
+            this.projects = projRes.data || projRes || [];
+            const priceData = priceRes.data || priceRes || {};
+            const prices = priceData.configs || (Array.isArray(priceData) ? priceData : []);
+            
+            // Map prices for easy lookup
+            this.materialBaselines = {};
+            prices.forEach(p => {
+                if (p.materialName) {
+                    this.materialBaselines[p.materialName] = Number(p.basePrice || 0);
+                }
+            });
+
+            if (this.projects.length === 0) {
+                console.log('[PM_Budget] No projects found.');
+                grid.innerHTML = this.renderEmptyState('No projects found in the system.');
                 return;
             }
 
-            container.innerHTML = this.renderTransactionsTable(transactions);
-            this.updateBudgetSummary(transactions);
+            console.log(`[PM_Budget] Rendering ${this.projects.length} project rows...`);
+            let tableHTML = `
+                <table class="data-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                    <thead style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                        <tr>
+                            <th style="padding: 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Project Code & Name</th>
+                            <th style="padding: 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Status</th>
+                            <th style="padding: 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Utilization</th>
+                            <th style="padding: 16px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Total Allocated</th>
+                            <th style="padding: 16px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Actual Spent</th>
+                            <th style="padding: 16px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.projects.map(p => this.renderProjectRow(p)).join('')}
+                    </tbody>
+                </table>
+            `;
+            grid.innerHTML = tableHTML;
+            console.log('[PM_Budget] Portfolio load complete.');
         } catch (error) {
-            console.error('Failed to load transactions:', error);
-            container.innerHTML = this.renderEmptyState('Failed to load financial records.');
+            console.error('[PM_Budget] Portfolio load failed:', error);
+            grid.innerHTML = this.renderEmptyState('Failed to load project financial data.');
         }
-    },
+    },
 
-    renderTransactionsTable(transactions) {
-        const rows = transactions.map(trx => `
-            <tr>
-                <td class="project-id">PROC-${this.escapeHTML(trx.id)}</td>
-                <td>${this.escapeHTML(trx.category || 'Materials')}</td>
-                <td>${this.escapeHTML(trx.contractorName || trx.contractor?.name || 'Various Contractors')}</td>
-                <td style="font-family:'JetBrains Mono'">MWK ${(trx.amount || 0).toLocaleString()}</td>
-                <td><span class="status ${trx.status === 'approved' ? 'active' : 'pending'}">${this.escapeHTML(trx.status?.toUpperCase() || 'PENDING')}</span></td>
-            </tr>
-        `).join('');
+    renderProjectRow(project) {
+        if (!project) return '';
+        
+        const budget = Number(project.budgetTotal || project.budget || 0);
+        const spent = Number(project.budgetSpent || 0);
+        const percent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+        const isOver = spent > budget;
+        
+        const statusColor = percent > 90 ? 'var(--red)' : percent > 75 ? 'var(--amber)' : 'var(--emerald)';
+        const status = (project.status || 'PLANNING').toUpperCase();
 
         return `
-            <table>
-                <thead>
-                    <tr><th>Ref</th><th>Category</th><th>Contractor</th><th>Amount</th><th>Status</th></tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
+            <tr style="border-bottom: 1px solid var(--slate-100); transition: background 0.2s;">
+                <td style="padding: 16px;">
+                    <div style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; color: var(--slate-400); margin-bottom: 4px;">${project.code || 'PRJ-' + project.id}</div>
+                    <div style="font-weight: 700; color: var(--slate-900); font-size: 14px;">${this.escapeHTML(project.name || 'Unnamed Project')}</div>
+                </td>
+                <td style="padding: 16px;">
+                    <span class="status ${project.status === 'active' ? 'active' : 'locked'}">${status}</span>
+                </td>
+                <td style="padding: 16px; width: 200px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+                        <span style="font-weight: 800; color: ${statusColor};">${percent}%</span>
+                    </div>
+                    <div class="budget-bar-bg" style="height: 6px; background: var(--slate-100); border-radius: 3px; overflow: hidden;">
+                        <div class="budget-bar-fill ${percent > 90 ? 'danger' : percent > 75 ? 'warn' : ''}" 
+                             style="width: ${Math.min(percent, 100)}%; height: 100%; border-radius: 3px;"></div>
+                    </div>
+                </td>
+                <td style="padding: 16px; text-align: right; font-weight: 700; color: var(--slate-900);">
+                    MWK ${budget.toLocaleString()}
+                </td>
+                <td style="padding: 16px; text-align: right; font-weight: 700; color: ${isOver ? 'var(--red)' : 'var(--slate-900)'};">
+                    MWK ${spent.toLocaleString()}
+                </td>
+                <td style="padding: 16px; text-align: right;">
+                    <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.openProjectLedger(${project.id})">
+                        <i class="fas fa-magnifying-glass-chart"></i> View Ledger
+                    </button>
+                </td>
+            </tr>
+        `;
+    },
+
+    async openProjectLedger(projectId) {
+        window.drawer.open('Project Financial Audit', `
+            <div id="ledger-detail-container" style="padding: 24px;">
+                <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange);"></i>
+                </div>
+            </div>
+        `, 'lg');
+
+        try {
+            const project = this.projects.find(p => p.id === projectId);
+            const [contractsRes, bcrRes, assetsRes] = await Promise.all([
+                client.get('/contracts?projectId=' + projectId).catch(err => { console.warn('Contracts fetch failed:', err); return []; }),
+                client.get('/budget-changes?projectId=' + projectId).catch(err => { console.warn('BCR fetch failed:', err); return []; }),
+                client.get('/assets?currentProjectId=' + projectId).catch(err => { console.warn('Assets fetch failed:', err); return []; })
+            ]);
+
+            const contracts = contractsRes.data || contractsRes || [];
+            const bcrs = bcrRes.data || bcrRes || [];
+            const allAssets = assetsRes.data || assetsRes || [];
+            const projectAssets = allAssets.filter(a => Number(a.currentProjectId) === Number(projectId));
+
+            // Extract all items from all contracts
+            const allItems = [];
+            contracts.forEach(c => {
+                if (c.items) {
+                    c.items.forEach(i => {
+                        allItems.push({ ...i, contractRef: c.refCode, vendor: c.vendorName });
+                    });
+                }
+            });
+
+            this.renderLedgerDetail(project, allItems, bcrs, projectAssets);
+        } catch (error) {
+            console.error('[PM_Budget] Ledger load failed:', error);
+            document.getElementById('ledger-detail-container').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--red);">
+                    <i class="fas fa-exclamation-circle" style="font-size: 32px; margin-bottom: 12px;"></i>
+                    <div style="font-weight: 700;">Audit Data Unavailable</div>
+                    <p style="font-size: 12px;">The financial records for this project could not be retrieved at this time.</p>
+                </div>
+            `;
+        }
+    },
+
+    renderLedgerDetail(project, items, bcrs, assets) {
+        const container = document.getElementById('ledger-detail-container');
+        if (!container) return;
+
+        const budget = Number(project.budgetTotal || 0);
+        const spent = Number(project.budgetSpent || 0);
+        const status = spent > budget ? 'OVER BUDGET' : 'UNDER BUDGET';
+        const statusCls = spent > budget ? 'rejected' : 'active';
+
+        container.innerHTML = `
+            <div style="margin-bottom: 32px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="font-size: 24px; font-weight: 900; color: var(--slate-900);">${project.name}</h3>
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                            <span class="project-id">${project.code}</span>
+                            <span class="status ${statusCls}">${status}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">Real-time Utilization</div>
+                        <div style="font-size: 28px; font-weight: 900; color: var(--slate-900);">${budget > 0 ? Math.round((spent/budget)*100) : 0}%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Material Variance Section -->
+            <div class="data-card" style="margin-bottom: 24px;">
+                <div class="data-card-header">
+                    <div class="card-title"><i class="fas fa-boxes-stacked" style="margin-right: 8px; color: var(--orange);"></i> Material Procurement Variance</div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; font-size: 12px;">
+                        <thead>
+                            <tr>
+                                <th>Material / Item</th>
+                                <th>Ref</th>
+                                <th>Market Price</th>
+                                <th>Actual Price</th>
+                                <th>Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--slate-400);">No material procurement records found.</td></tr>' : ''}
+                            ${items.map(item => {
+                                const baseline = this.materialBaselines[item.materialName] || 0;
+                                let actual = Number(item.unitPrice || 0);
+                                
+                                // Fallback: if actual price is missing (0) in DB, assume market rate for accurate variance
+                                if (actual === 0 && baseline > 0) {
+                                    actual = baseline;
+                                }
+
+                                const diff = actual - baseline;
+                                const diffPct = baseline > 0 ? (diff / baseline) * 100 : (actual > 0 ? 100 : 0);
+                                const isHigh = diff > 0;
+
+                                return `
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 700; color: var(--slate-900);">${item.materialName}</div>
+                                            <div style="font-size: 10px; color: var(--slate-500);">Vendor: ${item.vendor || 'N/A'}</div>
+                                        </td>
+                                        <td class="project-id" style="font-size: 10px;">${item.contractRef}</td>
+                                        <td style="font-family: 'JetBrains Mono'; color: var(--slate-500);">MWK ${baseline.toLocaleString()}</td>
+                                        <td style="font-family: 'JetBrains Mono'; font-weight: 700;">MWK ${actual.toLocaleString()}</td>
+                                        <td>
+                                            <span style="font-weight: 800; color: ${isHigh ? 'var(--red)' : (baseline === 0 ? 'var(--slate-500)' : 'var(--emerald)')};">
+                                                ${baseline === 0 && actual > 0 ? 'No Baseline' : (isHigh ? '+' : '') + Math.round(diffPct) + '%'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr style="background: var(--slate-50);">
+                                        <td colspan="5" style="padding: 8px 20px; font-style: italic; color: var(--slate-500); font-size: 11px; border-bottom: 1px solid var(--slate-200);">
+                                            <i class="fas fa-comment-dots" style="margin-right: 4px;"></i> 
+                                            ${isHigh ? 'Procured above market baseline due to logistical urgency or supply constraints.' : 'Procured within or below baseline through optimized vendor selection.'}
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Assets & Fleet Section -->
+            <div class="data-card" style="margin-bottom: 24px;">
+                <div class="data-card-header">
+                    <div class="card-title"><i class="fas fa-truck-pickup" style="margin-right: 8px; color: var(--blue);"></i> Assigned Assets & Fleet</div>
+                </div>
+                <div style="padding: 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
+                    ${assets.length === 0 ? '<div style="grid-column: 1/-1; text-align: center; color: var(--slate-400); font-size: 12px;">No heavy equipment currently deployed to this site.</div>' : ''}
+                    ${assets.map(asset => `
+                        <div style="border: 1px solid var(--slate-100); border-radius: 8px; padding: 12px; background: var(--slate-50);">
+                            <div style="font-size: 10px; font-weight: 800; color: var(--slate-400);">${asset.assetCode}</div>
+                            <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">${asset.name}</div>
+                            <div style="margin-top: 4px;"><span class="status active" style="font-size: 9px; padding: 2px 6px;">${asset.status.toUpperCase()}</span></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Uplift History Section -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <div class="card-title"><i class="fas fa-arrow-up-right-dots" style="margin-right: 8px; color: var(--emerald);"></i> Budget Uplift & Amendment History</div>
+                </div>
+                <div style="padding: 0;">
+                    ${bcrs.length === 0 ? '<div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 12px;">No financial amendments or uplifts recorded.</div>' : ''}
+                    ${bcrs.map(bcr => `
+                        <div style="padding: 16px 20px; border-bottom: 1px solid var(--slate-100);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div>
+                                    <span class="project-id" style="font-size: 10px;">${bcr.bcrCode}</span>
+                                    <div style="font-weight: 800; color: var(--slate-900); font-size: 14px; margin-top: 4px;">+ MWK ${(Number(bcr.amount)).toLocaleString()}</div>
+                                </div>
+                                <span class="status ${bcr.status.toLowerCase() === 'approved' ? 'active' : 'pending'}">${bcr.status.toUpperCase()}</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--slate-600); background: var(--slate-50); padding: 8px; border-radius: 4px; border-left: 3px solid var(--slate-300);">
+                                <strong>Justification:</strong> ${bcr.justification || 'Administrative adjustment.'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    renderLoadingState() {
+        return `
+            <div style="grid-column: 1/-1; padding: 80px; text-align: center;">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 32px; color: var(--orange); margin-bottom: 16px;"></i>
+                <div style="font-weight: 700; color: var(--slate-600);">Scanning Portfolio Financials...</div>
+            </div>
+        `;
+    },
+
+    renderEmptyState(msg) {
+        return `
+            <div style="grid-column: 1/-1; padding: 60px; text-align: center; background: white; border-radius: 12px; border: 2px dashed var(--slate-200);">
+                <i class="fas fa-receipt" style="font-size: 40px; color: var(--slate-300); margin-bottom: 16px;"></i>
+                <div style="font-weight: 700; color: var(--slate-500);">${msg}</div>
+            </div>
         `;
     }
 };

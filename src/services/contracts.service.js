@@ -9,9 +9,11 @@ const auditService = require('./audit.service');
 const emailService = require('../emails/email.service');
 const logger = require('../utils/logger');
 
-async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status }) {
+async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, projectId }) {
   const skip = (page - 1) * limit;
-  const where = status ? { status } : {};
+  const where = {};
+  if (status) where.status = status;
+  if (projectId) where.projectId = Number(projectId);
   
   const [contracts, total] = await Promise.all([
     prisma.contract.findMany({
@@ -24,7 +26,7 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
           include: { createdBy: { select: { name: true } } },
           orderBy: { versionNumber: 'desc' }
         },
-        items: { select: { receivedQty: true } },
+        items: { select: { id: true, materialName: true, quantity: true, unit: true, unitPrice: true, totalCost: true, receivedQty: true } },
         _count: { select: { milestones: true } },
       },
     }),

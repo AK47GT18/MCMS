@@ -19,7 +19,7 @@ const getAll = asyncHandler(async (req, res) => {
   const options = validateBody(query, paginationSchema, res);
   if (!options) return;
   
-  const result = await contractsService.getAll({ ...options, status: query.status });
+  const result = await contractsService.getAll({ ...options, status: query.status, projectId: query.projectId });
   response.paginated(res, result.contracts, result.page, result.limit, result.total);
 });
 
