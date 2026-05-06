@@ -897,14 +897,14 @@ export const DrawerTemplates = {
                         <i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Details
                     </button>
                     ` : ''}
-                    ${(contract.status === 'active' || contract.status === 'Active') ? `
+                    ${(contract.status === 'active' || contract.status === 'Active' || contract.status === 'expired') ? `
                     ${contract.items && contract.items.length > 0 && contract.items.every(i => Number(i.receivedQty) >= Number(i.quantity)) ? `
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700; color: var(--emerald); border-color: #bbf7d0; background: #f0fdf4;" onclick="(window.app.fmModule || window.app.pmModule)?.completeContract(${contract.id})">
                         <i class="fas fa-check-double" style="margin-right: 8px;"></i> Mark Completed
                     </button>
                     ` : `
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700; color: var(--red); border-color: #fecaca; background: #fef2f2;" onclick="(window.app.fmModule || window.app.pmModule)?.openTerminateContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
-                        <i class="fas fa-ban" style="margin-right: 8px;"></i> Terminate
+                        <i class="fas fa-ban" style="margin-right: 8px;"></i> ${contract.status === 'expired' ? 'Finalize Closure' : 'Terminate'}
                     </button>
                     `}
                     ` : ''}
@@ -5627,27 +5627,28 @@ Contract Admin</textarea>
         `;
   },
 
-  terminateContract: (contract) => {
+   terminateContract: (contract) => {
+        const isExpired = contract.status === 'expired' || (contract.endDate && new Date(contract.endDate) <= new Date());
         return `
         <div style="padding: 24px;">
-            <div style="margin-bottom: 20px; padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-                <div style="font-weight: 800; color: #dc2626; font-size: 15px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-exclamation-triangle"></i> Terminate Contract
+            <div style="margin-bottom: 20px; padding: 16px; background: ${isExpired ? '#eff6ff' : '#fef2f2'}; border-radius: 8px; border: 1px solid ${isExpired ? '#dbeafe' : '#fecaca'};">
+                <div style="font-weight: 800; color: ${isExpired ? '#1e40af' : '#dc2626'}; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas ${isExpired ? 'fa-file-circle-check' : 'fa-exclamation-triangle'}"></i> ${isExpired ? 'Contract Closure & Reconciliation' : 'Terminate Contract'}
                 </div>
-                <div style="font-size: 12px; color: #991b1b; margin-top: 4px;">
-                    You are terminating <strong>${contract.refCode}</strong>. Please reconcile any received materials so the remaining budget can be returned to the project.
+                <div style="font-size: 12px; color: ${isExpired ? '#1e3a8a' : '#991b1b'}; margin-top: 4px;">
+                    You are ${isExpired ? 'closing' : 'terminating'} <strong>${contract.refCode}</strong>. Please reconcile any received materials so the remaining budget can be returned to the project.
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
-                <label style="display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px;">Termination Reason <span style="color: var(--red);">*</span></label>
-                <textarea id="term_reason" class="form-input" style="width: 100%; min-height: 100px; padding: 12px;" placeholder="Provide justification for termination..." data-vrules="required|minLen:10"></textarea>
+                <label style="display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px;">${isExpired ? 'Closure Notes' : 'Termination Reason'} <span style="color: var(--red);">*</span></label>
+                <textarea id="term_reason" class="form-input" style="width: 100%; min-height: 100px; padding: 12px;" placeholder="${isExpired ? 'Provide final summary for closure...' : 'Provide justification for termination...'}" data-vrules="required|minLen:10" oninput="window.V?.checkField(this)"></textarea>
             </div>
 
             <div style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 12px; text-transform: uppercase;">Material Reconciliation</label>
                 <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 12px; line-height: 1.5;">
-                    Specify exactly how much material was <strong>actually received</strong> before termination. The difference will be returned to the project budget. If no materials were delivered, leave as 0.
+                    Specify exactly how much material was <strong>actually received</strong> before ${isExpired ? 'closure' : 'termination'}. The difference will be returned to the project budget.
                 </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -5659,7 +5660,7 @@ Contract Admin</textarea>
                             </div>
                             <div style="width: 120px;">
                                 <label style="font-size: 10px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px; display: block; text-transform: uppercase;">Qty Received</label>
-                                <input type="number" class="form-input term-received-qty" data-item-id="${item.id}" value="${item.receivedQty || 0}" min="${item.receivedQty || 0}" max="${item.quantity}" style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: center;" data-vrules="required|numeric|min:${item.receivedQty || 0}|max:${item.quantity}">
+                                <input type="number" class="form-input term-received-qty" data-item-id="${item.id}" value="${item.receivedQty || 0}" min="${item.receivedQty || 0}" max="${item.quantity}" style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: center;" data-vrules="required|numeric|min:${item.receivedQty || 0}|max:${item.quantity}" oninput="window.V?.checkField(this)">
                             </div>
                         </div>
                     `).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
@@ -5668,8 +5669,8 @@ Contract Admin</textarea>
 
             <div style="display: flex; gap: 12px; margin-top: 32px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Cancel</button>
-                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--red); border-color: var(--red);" onclick="if(window.V.validateForm(this.closest('.drawer-content'))) (window.app.fmModule || window.app.pmModule)?.submitTermination(${contract.id})">
-                    <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Finalize Termination
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: ${isExpired ? 'var(--slate-800)' : 'var(--red)'}; border-color: ${isExpired ? 'var(--slate-800)' : 'var(--red)'};" onclick="if(window.V.validateForm(this.closest('.drawer-content'))) (window.app.fmModule || window.app.pmModule)?.submitTermination(${contract.id})">
+                    <i class="fas ${isExpired ? 'fa-file-circle-check' : 'fa-file-contract'}" style="margin-right: 8px;"></i> ${isExpired ? 'Finalize Closure' : 'Finalize Termination'}
                 </button>
             </div>
         </div>

@@ -1287,8 +1287,9 @@ export const FD_Contracts = {
   },
 
   openTerminateContractDrawer(contract) {
+    const isExpired = contract.status === 'expired' || (contract.endDate && new Date(contract.endDate) <= new Date());
     window.drawer.open(
-      `Terminate: ${contract.refCode}`,
+      `${isExpired ? 'Contract Closure' : 'Contract Termination'}: ${contract.refCode}`,
       window.DrawerTemplates.terminateContract(contract)
     );
   },
@@ -1313,7 +1314,10 @@ export const FD_Contracts = {
     });
 
     try {
-      window.toast.show("Finalizing contract termination...", "info");
+      const contract = (this.allContracts || []).find(c => c.id == contractId);
+      const isExpired = contract?.status === 'expired' || (contract?.endDate && new Date(contract.endDate) <= new Date());
+      
+      window.toast.show(isExpired ? "Finalizing contract closure..." : "Finalizing contract termination...", "info");
       const token = localStorage.getItem("mcms_auth_token");
       const res = await fetch(`/api/v1/contracts/${contractId}/terminate`, {
         method: "POST",
@@ -1326,26 +1330,25 @@ export const FD_Contracts = {
       
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || "Failed to terminate contract");
+        throw new Error(error.message || `Failed to ${isExpired ? 'close' : 'terminate'} contract`);
       }
 
-      window.toast.show("Contract terminated. Remaining funds and materials returned to project.", "success");
+      window.toast.show(isExpired ? "Contract successfully closed and reconciled." : "Contract terminated. Remaining funds and materials returned to project.", "success");
       window.drawer.close();
       await this.loadContractsData();
 
       // Audit Log
       client.post("/audit-logs", {
-        action: "CONTRACT_TERMINATED",
+        action: isExpired ? "CONTRACT_CLOSED" : "CONTRACT_TERMINATED",
         targetType: "CONTRACT",
         targetId: contractId,
-        details: { reason }
+        details: { reason, type: isExpired ? 'Closure' : 'Termination' }
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
-      const contract = (this.allContracts || []).find(c => c.id == contractId);
       const materials = contract?.items?.map(i => i.materialName).join(", ") || "General Services";
-      this.broadcastContractEvent("Contract Terminated", 
-        `"${contract?.title || 'Contract'}" (Materials: ${materials}) has been terminated by ${window.currentUser?.name || 'Finance Director'}. Reason: ${reason}`,
+      this.broadcastContractEvent(isExpired ? "Contract Closed" : "Contract Terminated", 
+        `"${contract?.title || 'Contract'}" has been ${isExpired ? 'formally closed' : 'terminated'} by ${window.currentUser?.name || 'Finance Director'}. ${isExpired ? 'Final Reconciliation' : 'Reason'}: ${reason}`,
         contract?.projectId,
         ["Project Manager", "Finance Director"]
       );
