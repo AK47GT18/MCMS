@@ -85,28 +85,7 @@ function initProjectJobs() {
   cron.schedule('0 */12 * * *', async () => {
     logger.info('Running inventory threshold scan...');
     try {
-      const inventories = await prisma.inventory.findMany({
-        where: {
-          OR: [
-            { quantityOnHand: { lte: prisma.inventory.lowThreshold } },
-            // Logic for 20% rule would require knowing totalAllocated, which we have in DB now
-            { 
-              quantityOnHand: { 
-                lte: { 
-                  multiply: [0.2, { _ref: 'totalQtyAllocated' }] 
-                } 
-              } 
-            }
-          ]
-        },
-        include: {
-          sector: { include: { project: { include: { manager: true } } } }
-        }
-      });
 
-      // Prisma doesn't support _ref in lte easily in standard findMany without raw, 
-      // so we'll fetch and filter if needed, or use a simpler check for now.
-      // Re-fetching all and filtering for simplicity in this environment
       const allInventory = await prisma.inventory.findMany({
         include: { sector: { include: { project: { include: { manager: true } } } } }
       });

@@ -280,6 +280,26 @@ async function create(data, userId) {
   // Note: Contract values are recorded as commitments, not immediate expenditures.
   // We do not deduct from budgetSpent here. Actual spending is tracked via requisitions and site logistics.
   
+  // General Contract Creation Notifications
+  const notifService = require('./notification.service');
+  if (contract.project?.managerId && contract.project.managerId !== userId) {
+    await notifService.create({
+      userId: contract.project.managerId,
+      type: 'info', icon: 'fa-file-contract',
+      title: 'New Contract Created',
+      message: `A new contract "${contract.title}" has been created for your project "${contract.project.name}".`
+    });
+  }
+
+  // Notify Finance Director if they didn't create it
+  const creator = await prisma.user.findUnique({ where: { id: userId } });
+  if (creator && creator.role !== 'Finance_Director') {
+    await notifService.notifyRole('Finance_Director', {
+      type: 'info', icon: 'fa-file-contract',
+      title: 'New Contract Registered',
+      message: `Contract "${contract.title}" was registered by ${creator.name} (${creator.role}).`
+    });
+  }
 
   // Create Initial Version
   const nextVersionNum = 1;
