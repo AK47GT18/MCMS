@@ -1357,5 +1357,45 @@ export const FD_Contracts = {
     } catch (e) {
       window.toast.show(e.message, "error");
     }
+  },
+
+  async completeContract(contractId) {
+    if (!confirm("Are you sure you want to mark this contract as 100% completed? This will close the contract and lock it for further changes.")) {
+      return;
+    }
+
+    try {
+      window.toast.show("Processing completion...", "info");
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/contracts/${contractId}/complete`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to complete contract");
+      }
+
+      window.toast.show("Contract successfully marked as completed.", "success");
+      window.drawer.close();
+      await this.loadContractsData();
+
+      // Audit Log handled by backend service
+
+      // Notifications
+      const contract = (this.allContracts || []).find(c => c.id == contractId);
+      this.broadcastContractEvent("Contract Completed", 
+        `"${contract?.title || 'Contract'}" has been successfully completed and 100% fulfilled.`,
+        contract?.projectId,
+        ["Project Manager", "Finance Director"]
+      );
+      
+    } catch (e) {
+      window.toast.show(e.message, "error");
+    }
   }
 };

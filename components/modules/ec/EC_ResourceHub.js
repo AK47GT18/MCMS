@@ -52,7 +52,13 @@ export const EC_ResourceHub = {
                                 <td>${item.vendor}</td>
                                 <td style="font-weight: 800; color: var(--blue);">${item.qty} ${item.unit}</td>
                                 <td style="text-align: right;">
-                                    <button class="btn btn-primary" onclick="window.drawer.open('Receipt Confirmation', window.DrawerTemplates.receiveProcurement(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Receive Goods</button>
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button class="btn btn-secondary" style="color: var(--red); border-color: var(--red-light);" 
+                                            onclick="window.app.ecModule.openComplaintDrawer(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                            <i class="fas fa-exclamation-triangle"></i> Report Delay
+                                        </button>
+                                        <button class="btn btn-primary" onclick="window.drawer.open('Receipt Confirmation', window.DrawerTemplates.receiveProcurement(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Receive Goods</button>
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}

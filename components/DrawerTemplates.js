@@ -831,11 +831,23 @@ export const DrawerTemplates = {
                     </div>
                 </div>
 
-                <div style="background: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#fef2f2" : "#f0fdf4"}; border: 1px solid ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#fecaca" : "#bbf7d0"}; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 32px;">
-                    <i class="fas ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "fa-exclamation-triangle" : "fa-shield-check"}" style="color: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#dc2626" : "#16a34a"}; font-size: 18px; margin-top: 2px;"></i>
-                    <div style="font-size: 13px; color: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#991b1b" : "#15803d"}; line-height: 1.5;">
-                        <strong>Compliance Status:</strong> ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "This contract has ended and requires immediate renewal or final closure." : "This contract is active and all associated insurance policies are valid. No payment blocks detected."}
+                <div style="background: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#fef2f2" : "#f0fdf4"}; border: 1px solid ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#fecaca" : "#bbf7d0"}; padding: 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <i class="fas ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "fa-exclamation-triangle" : "fa-shield-check"}" style="color: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#dc2626" : "#16a34a"}; font-size: 18px; margin-top: 2px;"></i>
+                        <div style="font-size: 13px; color: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#991b1b" : "#15803d"}; line-height: 1.5;">
+                            <strong>Compliance Status:</strong> ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "This contract has ended and requires immediate renewal or final closure." : "This contract is active and all associated insurance policies are valid. No payment blocks detected."}
+                        </div>
                     </div>
+                    ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? `
+                    <div style="display: flex; gap: 8px; margin-left: 30px;">
+                        <button class="btn btn-primary btn-sm" style="background: var(--slate-800); border-color: var(--slate-800);" onclick="(window.app.fmModule || window.app.pmModule)?.openEditContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
+                            <i class="fas fa-sync-alt"></i> Renew Contract
+                        </button>
+                        <button class="btn btn-secondary btn-sm" style="color: var(--red); border-color: #fecaca; background: white;" onclick="(window.app.fmModule || window.app.pmModule)?.openTerminateContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
+                            <i class="fas fa-file-circle-check"></i> Initiate Closure
+                        </button>
+                    </div>
+                    ` : ''}
                 </div>
 
                 ${((contract.status === 'expired' || contract.status === 'cancelled' || (contract.endDate && new Date(contract.endDate) <= new Date())) && !contract.vendorRating && contract.vendorId) ? `
@@ -886,9 +898,15 @@ export const DrawerTemplates = {
                     </button>
                     ` : ''}
                     ${(contract.status === 'active' || contract.status === 'Active') ? `
+                    ${contract.items && contract.items.length > 0 && contract.items.every(i => Number(i.receivedQty) >= Number(i.quantity)) ? `
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700; color: var(--emerald); border-color: #bbf7d0; background: #f0fdf4;" onclick="(window.app.fmModule || window.app.pmModule)?.completeContract(${contract.id})">
+                        <i class="fas fa-check-double" style="margin-right: 8px;"></i> Mark Completed
+                    </button>
+                    ` : `
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700; color: var(--red); border-color: #fecaca; background: #fef2f2;" onclick="(window.app.fmModule || window.app.pmModule)?.openTerminateContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
                         <i class="fas fa-ban" style="margin-right: 8px;"></i> Terminate
                     </button>
+                    `}
                     ` : ''}
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Close</button>
                 </div>
@@ -5641,7 +5659,7 @@ Contract Admin</textarea>
                             </div>
                             <div style="width: 120px;">
                                 <label style="font-size: 10px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px; display: block; text-transform: uppercase;">Qty Received</label>
-                                <input type="number" class="form-input term-received-qty" data-item-id="${item.id}" value="${item.receivedQty || 0}" min="0" max="${item.quantity}" style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: center;" data-vrules="required|numeric|min:0|max:${item.quantity}">
+                                <input type="number" class="form-input term-received-qty" data-item-id="${item.id}" value="${item.receivedQty || 0}" min="${item.receivedQty || 0}" max="${item.quantity}" style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: center;" data-vrules="required|numeric|min:${item.receivedQty || 0}|max:${item.quantity}">
                             </div>
                         </div>
                     `).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}

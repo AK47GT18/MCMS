@@ -666,7 +666,16 @@ async function terminate(contractId, { reason, receivedItems }, user) {
   
   if (contract.items.length > 0) {
     for (const item of contract.items) {
-      const received = receivedMap[item.id] || 0;
+      const received = receivedMap[item.id] !== undefined ? receivedMap[item.id] : Number(item.receivedQty || 0);
+      const currentReceived = Number(item.receivedQty || 0);
+      
+      // Guard: Cannot lower received qty below what the system already has on record
+      if (received < currentReceived) {
+        throw new AppError(
+          `Cannot reduce received quantity for ${item.materialName}. System records ${currentReceived} ${item.unit} already received and dispatched.`, 
+          400
+        );
+      }
       if (received > Number(item.quantity)) {
         throw new AppError(`Received quantity for ${item.materialName} cannot exceed contracted quantity.`, 400);
       }
@@ -748,6 +757,62 @@ async function terminate(contractId, { reason, receivedItems }, user) {
   return { success: true, newStatus, finalValue };
 }
 
+/**
+ * Mark a fully-delivered contract as completed (happy-path closure).
+ * No budget refund is needed since 100% was delivered.
+ */
+async function complete(contractId, user) {
+  const contract = await prisma.contract.findUnique({
+    where: { id: contractId },
+    include: { items: true }
+  });
+
+  if (!contract) throw new AppError('Contract not found', 404);
+  if (contract.status !== 'active' && contract.status !== 'Active') {
+    throw new AppError('Only active contracts can be marked as completed.', 400);
+  }
+
+  // Verify all items are fully delivered
+  if (contract.items && contract.items.length > 0) {
+    const unfulfilled = contract.items.filter(i => Number(i.receivedQty || 0) < Number(i.quantity));
+    if (unfulfilled.length > 0) {
+      const names = unfulfilled.map(i => i.materialName).join(', ');
+      throw new AppError(`Cannot complete: the following items are not fully delivered: ${names}`, 400);
+    }
+  }
+
+  const nextVersionNum = (await prisma.contractVersion.count({ where: { contractId } })) + 1;
+
+  await prisma.$transaction([
+    prisma.contract.update({
+      where: { id: contractId },
+      data: { status: 'completed' }
+    }),
+    prisma.contractVersion.create({
+      data: {
+        contractId,
+        versionNumber: nextVersionNum,
+        refCode: contract.refCode,
+        title: contract.title,
+        value: Number(contract.value),
+        status: 'completed',
+        changeNotes: '[COMPLETED] All materials fully delivered and verified.',
+        createdById: user?.id
+      }
+    })
+  ]);
+
+  if (user?.id) {
+    await auditService.log(user.id, 'COMPLETE_CONTRACT', 'Contract', contractId, {
+      refCode: contract.refCode,
+      value: Number(contract.value)
+    });
+  }
+
+  logger.info('Contract marked as completed', { contractId, refCode: contract.refCode });
+  return { success: true, status: 'completed' };
+}
+
 module.exports = { 
   getAll, 
   getById, 
@@ -758,6 +823,7 @@ module.exports = {
   getByProject,
   isContractLocked,
   rateVendor,
-  terminate
+  terminate,
+  complete
 };
 

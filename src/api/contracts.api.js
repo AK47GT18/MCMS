@@ -48,6 +48,20 @@ const contracts = {
   async getVersions(contractId) {
     return await client.get(`/contracts/${contractId}/versions`);
   },
+
+  /**
+   * Terminate a contract
+   */
+  async terminate(id, data) {
+    return await client.post(`/contracts/${id}/terminate`, data);
+  },
+
+  /**
+   * Mark a fully-delivered contract as completed
+   */
+  async complete(id) {
+    return await client.post(`/contracts/${id}/complete`, {});
+  },
 };
 
 export default contracts;

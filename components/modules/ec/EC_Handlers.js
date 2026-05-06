@@ -602,6 +602,26 @@ export const EC_Handlers = {
         }
     },
 
+    openComplaintDrawer(item) {
+        window.drawer.open('Report Site Issue / Delay', window.DrawerTemplates.submitComplaint);
+        
+        // Auto-fill context after drawer opens
+        setTimeout(() => {
+            const categorySelect = document.querySelector('.drawer-content select');
+            const detailsText = document.querySelector('.drawer-content textarea');
+            
+            if (categorySelect) {
+                const options = Array.from(categorySelect.options);
+                const match = options.find(o => o.text.includes('Material')) || options[0];
+                categorySelect.value = match.value;
+            }
+
+            if (detailsText) {
+                detailsText.value = `DELIVERY DELAY: Contract ${item.contractRef} (${item.name}). Expected fulfillment is behind schedule. Impacting Project: ${item.projectName || 'Active Site'}.`;
+            }
+        }, 100);
+    },
+
     async handleIntake(requisitionId) {
         try {
             await window.loader.show('Processing GRN and Intaking Inventory...', async () => {

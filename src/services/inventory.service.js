@@ -391,6 +391,31 @@ async function receiveShipment(contractItemId, receivedQty, userId) {
     }, { id: userId });
   }
 
+  // Check for Total Contract Fulfillment
+  try {
+    const fullContract = await prisma.contract.findUnique({
+      where: { id: item.contractId },
+      include: { items: true }
+    });
+
+    const isFullyDelivered = fullContract.items.every(i => Number(i.receivedQty) >= Number(i.quantity));
+
+    if (isFullyDelivered) {
+      const notificationService = require('./notification.service');
+      
+      await notificationService.notifyRole('Finance_Director', {
+        title: 'Contract Fully Delivered',
+        message: `Contract ${fullContract.refCode} for ${fullContract.title} is now 100% delivered. Ready for formal closure.`,
+        type: 'contract',
+        icon: 'fa-check-double',
+        link: `/contracts/${fullContract.id}`
+      });
+      logger.info('Contract fulfillment notification sent to FD', { contractId: fullContract.id });
+    }
+  } catch (err) {
+    logger.error('Fulfillment check failed', err);
+  }
+
   return updatedItem;
 }
 

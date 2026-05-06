@@ -39,7 +39,6 @@ const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
   if (!hasMinimumRole(req, res, 'Project_Manager')) return;
-  // const user = { id: 1 }; // Mock user
   
   const isMultipart = req.headers['content-type']?.includes('multipart/form-data');
   const body = isMultipart ? req.body : await parseBody(req);
@@ -130,4 +129,16 @@ const terminateContract = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, approve, rateVendor, terminateContract };
+const completeContract = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  
+  const contractId = validateId(id, res);
+  if (!contractId) return;
+
+  const result = await contractsService.complete(contractId, user);
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, update, remove, approve, rateVendor, terminateContract, completeContract };

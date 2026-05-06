@@ -250,6 +250,9 @@ async function router(req, res) {
     if (action === 'terminate' && method === 'POST') {
       return contractsController.terminateContract(req, res, id);
     }
+    if (action === 'complete' && method === 'POST') {
+      return contractsController.completeContract(req, res, id);
+    }
     if (action === 'versions') {
       if (method === 'GET') return contractVersionsController.getByContract(req, res, id);
       if (method === 'POST') {
