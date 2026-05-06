@@ -585,6 +585,22 @@ async function addToSpent(id, amount) {
 }
 
 /**
+ * Refund project budget spent
+ * @param {number} id - Project ID
+ * @param {number} amount - Amount to subtract from spent
+ */
+async function subtractFromSpent(id, amount) {
+  await prisma.project.update({
+    where: { id },
+    data: {
+      budgetSpent: {
+        decrement: amount,
+      },
+    },
+  });
+}
+
+/**
  * Get projects by manager
  * @param {number} managerId - Manager user ID
  * @returns {Promise<Array>} Projects managed by user
@@ -830,6 +846,7 @@ module.exports = {
   remove,
   getBudgetSummary,
   addToSpent,
+  subtractFromSpent,
   getByManager,
   getMaterials,
   extendProject,

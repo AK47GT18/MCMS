@@ -880,9 +880,11 @@ export const DrawerTemplates = {
                 ` : ''}
 
                 <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    ${['active', 'draft', 'pending'].includes(contract.status) ? `
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="(window.app.fmModule || window.app.pmModule)?.openEditContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
                         <i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Details
                     </button>
+                    ` : ''}
                     ${(contract.status === 'active' || contract.status === 'Active') ? `
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700; color: var(--red); border-color: #fecaca; background: #fef2f2;" onclick="(window.app.fmModule || window.app.pmModule)?.openTerminateContractDrawer(${JSON.stringify(contract).replace(/"/g, "&quot;")})">
                         <i class="fas fa-ban" style="margin-right: 8px;"></i> Terminate
@@ -5619,9 +5621,9 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Reason for Termination *</label>
-                <textarea id="term_reason" required class="form-input" rows="2" style="width: 100%; border-color: var(--slate-300);" placeholder="e.g., Vendor default, project descoped, mutual agreement..."></textarea>
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px;">Termination Reason <span style="color: var(--red);">*</span></label>
+                <textarea id="term_reason" class="form-input" style="width: 100%; min-height: 100px; padding: 12px;" placeholder="Provide justification for termination..." data-vrules="required|minLen:10"></textarea>
             </div>
 
             <div style="margin-bottom: 20px;">
@@ -5639,7 +5641,7 @@ Contract Admin</textarea>
                             </div>
                             <div style="width: 120px;">
                                 <label style="font-size: 10px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px; display: block; text-transform: uppercase;">Qty Received</label>
-                                <input type="number" class="form-input term-qty-input" data-item-id="${item.id}" data-max="${item.quantity}" min="0" max="${item.quantity}" step="any" value="${item.receivedQty || 0}" style="width: 100%; padding: 6px 8px; font-size: 13px;">
+                                <input type="number" class="form-input term-received-qty" data-item-id="${item.id}" value="${item.receivedQty || 0}" min="0" max="${item.quantity}" style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: center;" data-vrules="required|numeric|min:0|max:${item.quantity}">
                             </div>
                         </div>
                     `).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
@@ -5648,8 +5650,8 @@ Contract Admin</textarea>
 
             <div style="display: flex; gap: 12px; margin-top: 32px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-weight: 700;" onclick="window.drawer.close()">Cancel</button>
-                <button class="btn btn-primary" style="flex: 2; justify-content: center; font-weight: 700; background: #dc2626; border-color: #dc2626;" onclick="(window.app.fmModule || window.app.pmModule)?.submitTermination(${contract.id})">
-                    <i class="fas fa-ban" style="margin-right: 8px;"></i> Finalize Termination
+                <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--red); border-color: var(--red);" onclick="if(window.V.validateForm(this.closest('.drawer-content'))) (window.app.fmModule || window.app.pmModule)?.submitTermination(${contract.id})">
+                    <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Finalize Termination
                 </button>
             </div>
         </div>

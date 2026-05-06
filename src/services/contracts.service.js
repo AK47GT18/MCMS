@@ -277,8 +277,8 @@ async function create(data, userId) {
     }
   });
 
-  // Note: Contract values are recorded as commitments, not immediate expenditures.
-  // We do not deduct from budgetSpent here. Actual spending is tracked via requisitions and site logistics.
+  // Note: Contract values are recorded as commitments against the project budget.
+  // We deduct from budgetSpent here if the contract is active upon creation.
   
   // General Contract Creation Notifications
   const notifService = require('./notification.service');
@@ -424,6 +424,28 @@ async function update(id, data, userId) {
 
   const contract = await prisma.contract.update({ where: { id }, data });
   
+  // Update project budget if value has changed for an active/ended vendor contract
+  if (contract.projectId && contract.contractType !== 'project' && ['active', 'ended'].includes(contract.status)) {
+    const oldValue = Number(existing.value || 0);
+    const newValue = Number(contract.value || 0);
+    const diff = newValue - oldValue;
+    
+    if (diff !== 0) {
+      const projectService = require('./projects.service');
+      if (diff > 0) {
+        await projectService.addToSpent(Number(contract.projectId), diff);
+      } else {
+        await projectService.subtractFromSpent(Number(contract.projectId), Math.abs(diff));
+      }
+      logger.info('Contract value change reflected in project budget', { 
+        contractId: id, 
+        oldValue, 
+        newValue, 
+        diff 
+      });
+    }
+  }
+
   // Create New Version
   const latestVersion = await prisma.contractVersion.findFirst({
     where: { contractId: id },
@@ -491,6 +513,17 @@ async function remove(id, userId) {
     throw new AppError('CRITICAL: Cannot delete contract with active material receipts. Financial trail must be preserved.', 403);
   }
 
+  // Refund project budget if it was deducted (active or ended vendor contracts)
+  if (contract.projectId && contract.value && contract.contractType !== 'project' && ['active', 'ended'].includes(contract.status)) {
+    const projectService = require('./projects.service');
+    await projectService.subtractFromSpent(Number(contract.projectId), Number(contract.value));
+    logger.info('Deleted contract value refunded to project budget', { 
+      contractId: id, 
+      projectId: contract.projectId, 
+      amount: contract.value 
+    });
+  }
+
   await prisma.contract.delete({ where: { id } });
   logger.info('Contract deleted', { contractId: id });
   
@@ -514,6 +547,17 @@ async function approve(id, userId) {
     where: { id },
     data: { status: 'active' }
   });
+
+  // Deduct from project budget if it's a vendor contract tied to a project
+  if (updated.projectId && updated.value && updated.contractType !== 'project') {
+    const projectService = require('./projects.service');
+    await projectService.addToSpent(Number(updated.projectId), Number(updated.value));
+    logger.info('Approved contract value deducted from project budget', { 
+      contractId: id, 
+      projectId: updated.projectId, 
+      amount: updated.value 
+    });
+  }
 
   logger.info('Contract approved', { contractId: id, approvedBy: userId });
 
@@ -661,7 +705,19 @@ async function terminate(contractId, { reason, receivedItems }, user) {
     }
   }));
 
-  // Note: Since we no longer deduct contract value on creation, we don't return budget here.
+  // Refund unused budget back to project
+  if (contract.projectId && contract.value && contract.contractType !== 'project') {
+    const refundAmount = Number(contract.value) - finalValue;
+    if (refundAmount > 0) {
+      const projectService = require('./projects.service');
+      await projectService.subtractFromSpent(Number(contract.projectId), refundAmount);
+      logger.info('Terminated contract: Unused value refunded to project budget', { 
+        contractId, 
+        projectId: contract.projectId, 
+        refundAmount 
+      });
+    }
+  }
 
   const nextVersionNum = (await prisma.contractVersion.count({ where: { contractId } })) + 1;
   txOps.push(prisma.contractVersion.create({

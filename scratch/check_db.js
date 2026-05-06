@@ -1,22 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
-async function main() {
-  const projects = await prisma.project.findMany();
-  console.log('Projects count:', projects.length);
-  projects.forEach(p => {
-    console.log(`- ${p.code}: Total=${p.budgetTotal}, Spent=${p.budgetSpent}`);
-  });
-  
-  const contracts = await prisma.contract.findMany();
-  console.log('Contracts count:', contracts.length);
-  
-  const reqs = await prisma.requisition.findMany();
-  console.log('Requisitions count:', reqs.length);
+const { prisma } = require('../src/config/database');
+async function check() {
+  const p = await prisma.project.findMany({ select: { id: true, code: true, budgetTotal: true, budgetSpent: true } });
+  console.log(JSON.stringify(p, null, 2));
+  const c = await prisma.contract.findMany({ select: { id: true, refCode: true, projectId: true, contractType: true, status: true, value: true } });
+  console.log(JSON.stringify(c, null, 2));
+  await prisma.$disconnect();
 }
-
-main()
-  .catch(e => console.error(e))
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+check();

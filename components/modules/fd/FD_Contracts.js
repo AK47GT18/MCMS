@@ -1294,24 +1294,17 @@ export const FD_Contracts = {
   },
 
   async submitTermination(contractId) {
-    if (window.app && typeof window.app.validateForm === 'function') {
-      const formContainer = document.getElementById('drawer-content') || document.body;
-      if (!window.app.validateForm(formContainer)) {
-        return;
-      }
-    }
-
-    const reasonInput = document.getElementById("term_reason");
-    const reason = reasonInput?.value;
-    
-    if (!reason) {
-      window.toast.show("Please provide a reason for termination.", "error");
+    // Validation check using V utility
+    if (window.V && !window.V.validateForm(document.getElementById('drawer-content') || document.body)) {
       return;
     }
 
+
+    const reason = document.getElementById("term_reason")?.value;
+
     // Collect received quantities
     const receivedItems = [];
-    const qtyInputs = document.querySelectorAll('.term-qty-input');
+    const qtyInputs = document.querySelectorAll('.term-received-qty');
     qtyInputs.forEach(input => {
       receivedItems.push({
         id: parseInt(input.dataset.itemId, 10),
