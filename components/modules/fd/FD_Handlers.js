@@ -78,5 +78,62 @@ export const FD_Handlers = {
         } else {
             window.toast.show('Request details not found.', 'error');
         }
+    },
+
+    async handleBulkApprove() {
+        const filtered = this.data.filteredRequisitions || [];
+        if (filtered.length === 0) {
+            window.toast.show('No requisitions to approve.', 'warning');
+            return;
+        }
+
+        // Filter out over-budget items (they require manual review)
+        const toApprove = filtered.filter(req => {
+            const totalAmt = Number(req.totalAmount || 0);
+            const projBudget = Number(req.project?.budgetTotal || 0);
+            const projSpent = Number(req.project?.budgetSpent || 0);
+            const remaining = projBudget - projSpent;
+            return totalAmt <= remaining || projBudget === 0;
+        });
+
+        if (toApprove.length === 0) {
+            window.toast.show('All filtered items are over-budget. Please review individually.', 'warning');
+            return;
+        }
+
+        const confirm = window.confirm(`Bulk Approve ${toApprove.length} requisitions? (Items over-budget will be skipped)`);
+        if (!confirm) return;
+
+        window.toast.show(`Bulk approving ${toApprove.length} items...`, 'info');
+
+        try {
+            const promises = toApprove.map(async (req) => {
+                if (req.isReplenishment) {
+                    return client.post(`/replenishment/${req.id}/finance-action`, { 
+                        action: 'approve', 
+                        financeComments: 'Bulk approved by Finance Director',
+                        estimatedCost: req.totalAmount 
+                    });
+                } else {
+                    return client.post(`/requisitions/${req.id}/approve`);
+                }
+            });
+
+            await Promise.all(promises);
+            
+            window.toast.show(`Successfully approved ${toApprove.length} requisitions.`, 'success');
+            
+            // Log to Audit
+            client.post('/audit-logs', {
+                action: 'BULK_APPROVE_REQUISITIONS',
+                targetType: 'REQUISITION',
+                details: { count: toApprove.length, actor: window.currentUser?.name }
+            }).catch(e => console.warn('Audit failed', e));
+
+            this.loadPendingRequisitions();
+        } catch (error) {
+            console.error('Bulk approval error:', error);
+            window.toast.show('Some items failed to approve. Please refresh.', 'error');
+        }
     }
 };

@@ -63,6 +63,23 @@ async function approve(id, approverId) {
       data: { budgetTotal: project.budgetTotal + req.amount },
     });
 
+    // If this uplift was triggered by a specific contract, activate it
+    if (req.targetContractId) {
+      const contract = await tx.contract.findUnique({ where: { id: req.targetContractId } });
+      if (contract) {
+        await tx.contract.update({
+          where: { id: req.targetContractId },
+          data: { status: 'active' }
+        });
+        
+        // Now deduct the contract value from the newly increased budget
+        await tx.project.update({
+          where: { id: req.projectId },
+          data: { budgetSpent: { increment: contract.value } }
+        });
+      }
+    }
+
     return updatedReq;
   });
 

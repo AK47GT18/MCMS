@@ -182,7 +182,7 @@ async function create(data, userId) {
     vendorId,
     items: materials.length > 0 ? {
       create: materials.map(m => ({
-        materialName: m.name,
+        materialName: m.materialName || m.name, // Support both formats
         quantity: m.quantity || 0,
         unit: m.unit || 'units',
         unitPrice: m.unitPrice || 0,
@@ -193,10 +193,71 @@ async function create(data, userId) {
     status: 'active'
   };
   
+  // Budget Check for Vendor Contracts
+  let isOverBudget = false;
+  let budgetUpliftReq = null;
+  const isVendorContract = data.contractType !== 'project';
+  
+  if (isVendorContract && data.projectId && data.value) {
+    const projectService = require('./projects.service');
+    const project = await projectService.getById(Number(data.projectId));
+    const available = Number(project.budgetTotal || 0) - Number(project.budgetSpent || 0);
+    const contractValue = Number(data.value);
+    
+    if (contractValue > available) {
+      isOverBudget = true;
+      contractData.status = 'pending_approval';
+    }
+  }
+
   const contract = await prisma.contract.create({
     data: contractData,
-    include: { project: { select: { id: true, name: true, manager: { select: { email: true } } } }, items: true },
+    include: { project: { select: { id: true, name: true, managerId: true, manager: { select: { email: true } } } }, items: true },
   });
+
+  // Handle Over-Budget Workflow
+  if (isOverBudget) {
+    const bcrService = require('./budgetChanges.service');
+    const project = await prisma.project.findUnique({ where: { id: Number(data.projectId) } });
+    const shortfall = Number(data.value) - (Number(project.budgetTotal) - Number(project.budgetSpent));
+    
+    budgetUpliftReq = await bcrService.create({
+      bcrCode: `BCR-CTR-${contract.id}-${Date.now().toString().slice(-4)}`,
+      projectId: Number(data.projectId),
+      budgetCategory: 'Contract Fulfillment',
+      currentAmount: project.budgetTotal,
+      proposedAmount: Number(project.budgetTotal) + shortfall,
+      amount: shortfall,
+      justification: `Automated uplift request triggered by Vendor Contract "${contract.title}" which exceeds available budget by MWK ${shortfall.toLocaleString()}.`,
+      requestedBy: userId,
+      requesterRole: 'Finance Director',
+      targetContractId: contract.id,
+      status: 'Pending'
+    });
+
+    // Notify Operations Manager, Managing Director, and the assigned Project Manager
+    const notifService = require('./notification.service');
+    const alertData = {
+      type: 'warning', icon: 'fa-money-bill-wave',
+      title: 'Action Required: Budget Uplift',
+      message: `Project "${project.name}" requires an uplift of MWK ${shortfall.toLocaleString()} to accommodate a new contract: ${contract.title}.`,
+      projectId: project.id
+    };
+
+    await notifService.notifyRole('Operations_Manager', alertData);
+    await notifService.notifyRole('Managing_Director', alertData);
+    
+    if (contract.project?.managerId) {
+      await notifService.create({
+        userId: contract.project.managerId,
+        ...alertData
+      });
+    }
+  } else if (isVendorContract && data.projectId && data.value) {
+    // Deduct immediately if not over budget
+    const projectService = require('./projects.service');
+    await projectService.addToSpent(Number(data.projectId), Number(data.value));
+  }
 
   // Create Audit Log
   await prisma.auditLog.create({
@@ -216,12 +277,8 @@ async function create(data, userId) {
     }
   });
 
-  // Deduct the contract value from the project budget (by adding to spent)
-  // ONLY for vendor contracts. Project Master Agreements represent the budget itself, not an expenditure.
-  if (contract.value && contract.projectId && contract.contractType !== 'project') {
-    const projectService = require('./projects.service');
-    await projectService.addToSpent(contract.projectId, Number(contract.value));
-  }
+  // Note: Contract values are recorded as commitments, not immediate expenditures.
+  // We do not deduct from budgetSpent here. Actual spending is tracked via requisitions and site logistics.
   
 
   // Create Initial Version
@@ -584,12 +641,7 @@ async function terminate(contractId, { reason, receivedItems }, user) {
     }
   }));
 
-  // Return the remaining unused budget to the project
-  const budgetDifference = Number(contract.value || 0) - finalValue;
-  if (budgetDifference > 0 && contract.projectId) {
-    const projectService = require('./projects.service');
-    await projectService.addToSpent(contract.projectId, -budgetDifference);
-  }
+  // Note: Since we no longer deduct contract value on creation, we don't return budget here.
 
   const nextVersionNum = (await prisma.contractVersion.count({ where: { contractId } })) + 1;
   txOps.push(prisma.contractVersion.create({

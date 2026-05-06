@@ -158,7 +158,7 @@ export class FinanceDashboard {
         if (!isVisible) {
             content.style.display = 'block';
             const close = (e) => {
-                if (!btn.contains(e.target)) {
+                if (!btn.contains(e.target) && !content.contains(e.target)) {
                     content.style.display = 'none';
                     document.removeEventListener('click', close);
                 }

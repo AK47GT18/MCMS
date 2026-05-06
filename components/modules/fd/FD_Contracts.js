@@ -18,7 +18,7 @@ export const FD_Contracts = {
                     ${
                       this.currentContractTab === "project"
                         ? `<button class="btn btn-primary" onclick="window.app.fmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
-                        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
+                        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(true); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
                     }
                 </div>
                 
@@ -548,7 +548,7 @@ export const FD_Contracts = {
 
   // Using global window.viewDocument and window.downloadDocument instead
 
-  async loadContractProjects() {
+  async loadContractProjects(isVendor = false) {
     const select = document.getElementById("contract_project");
     if (!select) return;
     try {
@@ -559,17 +559,22 @@ export const FD_Contracts = {
       const result = await res.json();
       const projects = result.data || result.items || [];
       
-      // Get IDs of projects that already have a master contract
-      const projectsWithMaster = new Set(
-        (this.allContracts || [])
-          .filter(c => c.contractType === 'project' || c.contractType === 'client')
-          .map(c => c.projectId)
-      );
+      let filteredProjects = projects;
+
+      // Only filter for Master Contract creation. 
+      // Vendor contracts can be created for any project, even those with existing contracts.
+      if (!isVendor) {
+        const projectsWithMaster = new Set(
+          (this.allContracts || [])
+            .filter(c => c.contractType === 'project' || c.contractType === 'client')
+            .map(c => c.projectId)
+        );
+        filteredProjects = projects.filter(p => !projectsWithMaster.has(p.id));
+      }
 
       select.innerHTML =
         '<option value="">Select a project...</option>' +
-        projects
-          .filter(p => !projectsWithMaster.has(p.id))
+        filteredProjects
           .map((p) => `<option value="${p.id}" ${this.projectFilter == p.id ? 'selected' : ''}>${p.code} – ${p.name}</option>`)
           .join("");
     } catch (err) {
@@ -904,8 +909,10 @@ export const FD_Contracts = {
         if (!confirmExceed) return;
     }
 
+    const projectId = parseInt(document.getElementById("contract_project")?.value, 10);
     const data = {
-      projectId: parseInt(document.getElementById("contract_project")?.value, 10),
+      refCode: `VND-${projectId}-${Math.floor(Math.random() * 90000) + 10000}`,
+      projectId: projectId,
       vendorName: vendorName,
       vendorPhone: document.getElementById("contract_vendor_phone")?.value,
       vendorId: document.getElementById("contract_vendor_id")?.value ? parseInt(document.getElementById("contract_vendor_id").value, 10) : null,
