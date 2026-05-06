@@ -219,7 +219,8 @@ export const FD_Contracts = {
                     <td>
                         <span class="status ${statusClass}">${isEnded ? "ENDED" : (item.status || "Draft").toUpperCase()}</span>
                         ${isEndingSoon ? `<div style="font-size: 10px; color: var(--orange); font-weight: 600; margin-top: 4px;">Ends in ${daysLeft} days</div>` : ""}
-                        ${isEnded ? `<div style="font-size: 10px; color: var(--red); font-weight: 600; margin-top: 4px;">Action Required</div>` : ""}
+                        ${(isEnded && !item.vendorRating) ? `<div style="font-size: 10px; color: var(--red); font-weight: 600; margin-top: 4px;">Action Required</div>` : ""}
+                        ${(isEnded && item.vendorRating) ? `<div style="font-size: 10px; color: var(--emerald); font-weight: 600; margin-top: 4px;"><i class="fas fa-check-circle"></i> Performance Rated</div>` : ""}
                     </td>
                     <td style="text-align: right;">
                         <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">View</button>
@@ -431,7 +432,7 @@ export const FD_Contracts = {
       this.loadContractsData();
 
       // Audit Log
-      client.post("/api/v1/audit-logs", {
+      client.post("/audit-logs", {
         action: "CONTRACT_ARCHIVED",
         targetType: "CONTRACT",
         targetId: result.data?.id || result.id,
@@ -439,8 +440,9 @@ export const FD_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
+      const projectName = (this.allContracts || []).find(c => c.projectId == projectId)?.project?.name || "the project";
       this.broadcastContractEvent("Master Agreement Archived", 
-        `New Master Contract [${refCode}] established for project by ${window.currentUser?.name || 'Finance Director'}. Value: MWK ${value.toLocaleString()}.`,
+        `New Master Contract archived for project "${projectName}" by ${window.currentUser?.name || 'Finance Director'}. Value: MWK ${value.toLocaleString()}.`,
         projectId,
         ["Project Manager", "Finance Director", "Equipment Coordinator"]
       );
@@ -475,14 +477,7 @@ export const FD_Contracts = {
         }
       }
 
-      await fetch("/api/v1/notifications/broadcast", {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
+      await client.post("/notifications/broadcast", payload);
     } catch (err) {
       console.warn("Notification broadcast failed", err);
     }
@@ -531,7 +526,7 @@ export const FD_Contracts = {
       this.loadContractsData();
 
       // Audit Log
-      client.post("/api/v1/audit-logs", {
+      client.post("/audit-logs", {
         action: "CONTRACT_VERSION_CREATED",
         targetType: "CONTRACT",
         targetId: contractId,
@@ -539,9 +534,11 @@ export const FD_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
+      const contract = (this.allContracts || []).find(c => c.id == contractId);
+      const materials = contract?.items?.map(i => i.materialName).join(", ") || "General Services";
       this.broadcastContractEvent("Contract Version Committed", 
-        `A new version for contract [ID: ${contractId}] has been committed by ${window.currentUser?.name || 'Finance Director'}. Change Notes: ${notes}`,
-        null, // No project ID in this context, or we could fetch it
+        `Revision committed for "${contract?.title || 'Contract'}" (Materials: ${materials}) by ${window.currentUser?.name || 'Finance Director'}. Change: ${notes}`,
+        contract?.projectId, 
         ["Project Manager", "Finance Director", "Equipment Coordinator"]
       );
     } catch (error) {
@@ -1257,7 +1254,7 @@ export const FD_Contracts = {
       this.loadContractsData();
       
       // Audit Log
-      client.post("/api/v1/audit-logs", {
+      client.post("/audit-logs", {
         action: "VENDOR_RATED",
         targetType: "CONTRACT",
         targetId: contractId,
@@ -1265,9 +1262,11 @@ export const FD_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications - ONLY FD and PM as requested
+      const contract = (this.allContracts || []).find(c => c.id == contractId);
+      const materials = contract?.items?.map(i => i.materialName).join(", ") || "General Services";
       this.broadcastContractEvent("Vendor Performance Rated", 
-        `${window.currentUser?.name || 'Finance Director'} has rated a vendor for contract [ID: ${contractId}]. Rating: ${data.rating} Stars.`,
-        null,
+        `${window.currentUser?.name || 'Finance Director'} has rated the vendor for "${contract?.title || 'Contract'}" (Materials: ${materials}). Rating: ${data.rating} Stars.`,
+        contract?.projectId,
         ["Project Manager", "Finance Director"]
       );
 
@@ -1335,7 +1334,7 @@ export const FD_Contracts = {
       await this.loadContractsData();
 
       // Audit Log
-      client.post("/api/v1/audit-logs", {
+      client.post("/audit-logs", {
         action: "CONTRACT_TERMINATED",
         targetType: "CONTRACT",
         targetId: contractId,
@@ -1343,9 +1342,11 @@ export const FD_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
+      const contract = (this.allContracts || []).find(c => c.id == contractId);
+      const materials = contract?.items?.map(i => i.materialName).join(", ") || "General Services";
       this.broadcastContractEvent("Contract Terminated", 
-        `Contract [ID: ${contractId}] has been terminated by ${window.currentUser?.name || 'Finance Director'}. Reason: ${reason}`,
-        null, // Could resolve project ID from contract if needed
+        `"${contract?.title || 'Contract'}" (Materials: ${materials}) has been terminated by ${window.currentUser?.name || 'Finance Director'}. Reason: ${reason}`,
+        contract?.projectId,
         ["Project Manager", "Finance Director"]
       );
       

@@ -623,7 +623,7 @@ export const PM_Contracts = {
 
       // Audit Log
       import('../../../src/api/client.js').then(m => {
-        m.default.post("/api/v1/audit-logs", {
+        m.default.post("/audit-logs", {
           action: "VENDOR_CONTRACT_CREATED",
           targetType: "CONTRACT",
           targetId: res.data?.id || res.id,
@@ -632,8 +632,9 @@ export const PM_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
+      const materials = data.materialsList ? JSON.parse(data.materialsList).map(m => m.name).join(", ") : "General Services";
       this.broadcastContractEvent("Vendor Contract Established", 
-        `New Vendor Contract for ${data.vendorName} established by ${window.currentUser?.name || 'Project Manager'}. Value: MWK ${data.value.toLocaleString()}.`,
+        `New Vendor Contract established for "${data.title}" (Materials: ${materials}) by ${window.currentUser?.name || 'Project Manager'}. Value: MWK ${data.value.toLocaleString()}.`,
         data.projectId,
         ["Project Manager", "Finance Director", "Equipment Coordinator"]
       );
@@ -824,7 +825,7 @@ export const PM_Contracts = {
 
       // Audit Log
       import('../../../src/api/client.js').then(m => {
-        m.default.post("/api/v1/audit-logs", {
+        m.default.post("/audit-logs", {
           action: "CONTRACT_ARCHIVED",
           targetType: "CONTRACT",
           targetId: res.data?.id || res.id,
@@ -833,8 +834,9 @@ export const PM_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
+      const projectName = (this.allContracts || []).find(c => c.projectId == projectId)?.project?.name || "the project";
       this.broadcastContractEvent("Master Agreement Archived", 
-        `Project Master for ${refCode} has been archived by ${window.currentUser?.name || 'Project Manager'}. Justification: ${justification}`,
+        `Project Master for "${projectName}" has been archived by ${window.currentUser?.name || 'Project Manager'}. Justification: ${justification}`,
         projectId,
         ["Project Manager", "Finance Director", "Equipment Coordinator"]
       );
@@ -949,9 +951,10 @@ export const PM_Contracts = {
       if (!res.ok) throw new Error("System error creating contract");
 
       // Send Notifications
+      const materials = data.materialsList ? JSON.parse(data.materialsList).map(m => m.name).join(", ") : "General Services";
       this.sendContractNotification(
         "Vendor Contract Established",
-        `New Vendor Contract for ${data.vendorName} established by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}. Justification: ${data.justification}`,
+        `New Vendor Contract established for "${data.title}" (Materials: ${materials}) by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}.`,
       );
 
       window.toast.show("Contract established successfully", "success");
@@ -964,20 +967,12 @@ export const PM_Contracts = {
 
   async sendContractNotification(title, message) {
     try {
-      const token = localStorage.getItem("mcms_auth_token");
-      await fetch("/api/v1/notifications/broadcast", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title,
-          message: message,
-          roles: ["Project Manager", "Finance Director"],
-          priority: "high",
-          type: "contract",
-        }),
+      await client.post("/notifications/broadcast", {
+        title: title,
+        message: message,
+        roles: ["Project Manager", "Finance Director"],
+        priority: "high",
+        type: "contract",
       });
     } catch (err) {
       console.warn("Broadcast notification failed:", err);
@@ -1050,7 +1045,7 @@ export const PM_Contracts = {
 
       // Audit Log
       import('../../../src/api/client.js').then(m => {
-        m.default.post("/api/v1/audit-logs", {
+        m.default.post("/audit-logs", {
           action: "CONTRACT_VERSION_CREATED",
           targetType: "CONTRACT",
           targetId: contractId,
@@ -1059,9 +1054,11 @@ export const PM_Contracts = {
       }).catch(e => console.warn("Audit failed", e));
 
       // Notifications
+      const contract = (this.allContracts || []).find(c => c.id == contractId);
+      const materials = contract?.items?.map(i => i.materialName).join(", ") || "General Services";
       this.broadcastContractEvent("Contract Revised", 
-        `Contract [ID: ${contractId}] has been revised by ${window.currentUser?.name || 'Project Manager'}. Change: ${notes}`,
-        null,
+        `Contract "${contract?.title || 'Contract'}" (Materials: ${materials}) has been revised by ${window.currentUser?.name || 'Project Manager'}. Change: ${notes}`,
+        contract?.projectId,
         ["Project Manager", "Finance Director", "Equipment Coordinator"]
       );
 

@@ -480,9 +480,13 @@ async function rateVendor(contractId, { rating, comment }, userId) {
 
   if (!contract) throw new AppError('Contract not found', 404);
   if (!contract.vendorId) throw new AppError('This contract has no linked vendor', 400);
-  if (!['expired', 'cancelled'].includes(contract.status)) {
-    throw new AppError('Vendor can only be rated after contract expires or is completed', 400);
+  const isEnded = contract.endDate && new Date(contract.endDate) <= new Date();
+  const canRate = ['expired', 'cancelled', 'terminated'].includes(contract.status) || isEnded;
+
+  if (!canRate) {
+    throw new AppError('Vendor can only be rated after the contract has ended or been cancelled', 400);
   }
+
   if (contract.vendorRating) {
     throw new AppError('This contract has already been rated', 400);
   }
@@ -495,7 +499,8 @@ async function rateVendor(contractId, { rating, comment }, userId) {
     data: {
       vendorRating: parseInt(rating),
       ratingComment: comment || null,
-      ratedAt: new Date()
+      ratedAt: new Date(),
+      status: contract.status === 'active' ? 'expired' : contract.status // Auto-close if it was active
     }
   });
 

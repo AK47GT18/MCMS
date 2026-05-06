@@ -69,4 +69,31 @@ const getRecent = asyncHandler(async (req, res) => {
   response.success(res, logs);
 });
 
-module.exports = { getAll, getRecent, getUniqueActions };
+/**
+ * POST /api/v1/audit-logs
+ * Create an audit log entry (client-side triggers)
+ */
+const create = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  const { parseBody } = require('../middlewares/validate.middleware');
+  const body = await parseBody(req);
+  
+  await auditService.log({
+    userId: user.id,
+    userName: user.name,
+    userRole: user.role,
+    action: body.action,
+    targetType: body.targetType,
+    targetId: body.targetId ? parseInt(body.targetId) : null,
+    targetCode: body.targetCode,
+    details: body.details,
+    severity: body.severity || 'info',
+    ipAddress: req.headers['x-forwarded-for'] || req.socket?.remoteAddress
+  });
+
+  response.success(res, { message: 'Audit log created' });
+});
+
+module.exports = { getAll, getRecent, getUniqueActions, create };

@@ -489,7 +489,10 @@ async function router(req, res) {
     if (!id && method === 'GET') {
       return auditController.getAll(req, res);
     }
-    return methodNotAllowed(res, ['GET']);
+    if (!id && method === 'POST') {
+      return auditController.create(req, res);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
   }
   
   // ============================================
@@ -663,6 +666,9 @@ async function router(req, res) {
   // NOTIFICATION ROUTES
   // ============================================
   if (resource === 'notifications') {
+    if (id === 'broadcast' && method === 'POST') {
+      return notificationsController.broadcast(req, res);
+    }
     if (id === 'count' && method === 'GET') {
       return notificationsController.getUnreadCount(req, res);
     }

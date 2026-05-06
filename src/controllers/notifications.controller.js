@@ -71,4 +71,32 @@ const create = asyncHandler(async (req, res) => {
   response.created(res, result);
 });
 
-module.exports = { getAll, getUnreadCount, markRead, markAllRead, create };
+/**
+ * POST /notifications/broadcast - Broadcast a notification to all users or specific roles
+ */
+const broadcast = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  const body = await parseBody(req);
+  let result;
+  
+  if (body.roles && Array.isArray(body.roles)) {
+    // Notify specific roles
+    result = [];
+    for (const role of body.roles) {
+      // Map display name to DB role if needed, or assume DB role names
+      // For now, assuming they are DB roles like 'Finance_Director'
+      const roleName = role.replace(/ /g, '_'); 
+      const roleResult = await notificationService.notifyRole(roleName, body);
+      result.push(...roleResult);
+    }
+  } else {
+    // Broadcast to everyone
+    result = await notificationService.broadcast(body);
+  }
+  
+  response.success(res, result);
+});
+
+module.exports = { getAll, getUnreadCount, markRead, markAllRead, create, broadcast };

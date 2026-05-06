@@ -598,7 +598,7 @@ export const DrawerTemplates = {
                         <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${contract.refCode || "CTR-" + contract.id}</div>
                         <div style="color: var(--slate-500); font-size: 13px; font-weight: 500;">${contract.title}</div>
                     </div>
-                    <span class="status active" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; background: var(--emerald-light); color: var(--emerald);">${contract.status || "ACTIVE"}</span>
+                    <span class="status ${ (contract.endDate && new Date(contract.endDate) <= new Date()) ? 'delayed' : (contract.status === 'active' ? 'active' : 'locked') }" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; ${ (contract.endDate && new Date(contract.endDate) <= new Date()) ? 'background: #fee2e2; color: #ef4444;' : '' }">${ (contract.endDate && new Date(contract.endDate) <= new Date()) ? "ENDED" : (contract.status || "ACTIVE").toUpperCase()}</span>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
@@ -831,14 +831,14 @@ export const DrawerTemplates = {
                     </div>
                 </div>
 
-                <div style="background: ${contract.status === "expired" ? "#fef2f2" : "#f0fdf4"}; border: 1px solid ${contract.status === "expired" ? "#fecaca" : "#bbf7d0"}; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 32px;">
-                    <i class="fas ${contract.status === "expired" ? "fa-exclamation-triangle" : "fa-shield-check"}" style="color: ${contract.status === "expired" ? "#dc2626" : "#16a34a"}; font-size: 18px; margin-top: 2px;"></i>
-                    <div style="font-size: 13px; color: ${contract.status === "expired" ? "#991b1b" : "#15803d"}; line-height: 1.5;">
-                        <strong>Compliance Status:</strong> ${contract.status === "expired" ? "This contract has expired and requires immediate renewal or extension." : "This contract is active and all associated insurance policies are valid. No payment blocks detected."}
+                <div style="background: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#fef2f2" : "#f0fdf4"}; border: 1px solid ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#fecaca" : "#bbf7d0"}; padding: 16px; border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 32px;">
+                    <i class="fas ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "fa-exclamation-triangle" : "fa-shield-check"}" style="color: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#dc2626" : "#16a34a"}; font-size: 18px; margin-top: 2px;"></i>
+                    <div style="font-size: 13px; color: ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "#991b1b" : "#15803d"}; line-height: 1.5;">
+                        <strong>Compliance Status:</strong> ${(contract.status === "expired" || (contract.endDate && new Date(contract.endDate) <= new Date())) ? "This contract has ended and requires immediate renewal or final closure." : "This contract is active and all associated insurance policies are valid. No payment blocks detected."}
                     </div>
                 </div>
 
-                ${(contract.status === 'expired' || contract.status === 'cancelled') && !contract.vendorRating && contract.vendorId ? `
+                ${((contract.status === 'expired' || contract.status === 'cancelled' || (contract.endDate && new Date(contract.endDate) <= new Date())) && !contract.vendorRating && contract.vendorId) ? `
                 <div style="margin-bottom: 32px; padding: 20px; background: #fffaf5; border-radius: 12px; border: 1px solid var(--orange); box-shadow: var(--shadow-sm);">
                     <h4 style="font-size: 14px; font-weight: 800; color: var(--orange-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-star-half-alt"></i> Rate Vendor Performance
