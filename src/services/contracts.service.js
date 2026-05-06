@@ -217,7 +217,8 @@ async function create(data, userId) {
   });
 
   // Deduct the contract value from the project budget (by adding to spent)
-  if (contract.value && contract.projectId) {
+  // ONLY for vendor contracts. Project Master Agreements represent the budget itself, not an expenditure.
+  if (contract.value && contract.projectId && contract.contractType !== 'project') {
     const projectService = require('./projects.service');
     await projectService.addToSpent(contract.projectId, Number(contract.value));
   }

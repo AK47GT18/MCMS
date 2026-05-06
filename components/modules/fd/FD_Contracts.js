@@ -972,6 +972,11 @@ export const FD_Contracts = {
     );
 
     setTimeout(() => {
+      const drawerEl = document.querySelector('.drawer-content');
+      if (drawerEl && window.V) {
+        window.V.attachListeners(drawerEl);
+      }
+
       const dropZone = document.getElementById("v-drop-zone");
       const fileInput = document.getElementById("v-file-input");
       const status = document.getElementById("v-file-status");
@@ -981,7 +986,16 @@ export const FD_Contracts = {
         fileInput.onchange = (e) => {
           const file = e.target.files[0];
           if (file) {
-            status.innerHTML = `<span style="color: var(--emerald);"><i class="fas fa-check-circle"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</span>`;
+            const sizeMB = file.size / 1024 / 1024;
+            if (sizeMB > 25) {
+              window.toast?.show('Document size exceeds 25MB limit', 'error');
+              fileInput.value = '';
+              status.innerHTML = `<span style="color: var(--red);"><i class="fas fa-times-circle"></i> File too large (${sizeMB.toFixed(2)}MB)</span>`;
+              dropZone.style.borderColor = "var(--red)";
+              dropZone.style.background = "#FEF2F2";
+              return;
+            }
+            status.innerHTML = `<span style="color: var(--emerald);"><i class="fas fa-check-circle"></i> ${file.name} (${sizeMB.toFixed(2)}MB)</span>`;
             dropZone.style.borderColor = "var(--emerald)";
             dropZone.style.background = "#F0FDF4";
           }
@@ -991,6 +1005,12 @@ export const FD_Contracts = {
   },
 
   async submitContractUpdate(contractId) {
+    const drawerEl = document.querySelector('.drawer-content');
+    if (window.V && !window.V.validateForm(drawerEl)) {
+      window.toast?.show('Please resolve the validation errors.', 'warning');
+      return;
+    }
+
     try {
       const fileInput = document.getElementById("v-file-input");
       const file = fileInput?.files[0];

@@ -315,6 +315,12 @@ const V = {
     clearMsg,
     showErr,
     showOk,
+    attachListeners: (container) => {
+        const root = typeof container === 'string' ? document.querySelector(container) : (container || document);
+        if (!root) return;
+        const fields = root.querySelectorAll('[data-vrules]');
+        fields.forEach(el => attach(el, el.dataset.vrules));
+    },
     RX,
 };
 

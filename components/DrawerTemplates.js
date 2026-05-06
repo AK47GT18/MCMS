@@ -630,8 +630,21 @@ export const DrawerTemplates = {
                         <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Market Value (Baseline)</div>
-                        <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">MWK ${Number(contract.marketValue || contract.project?.budgetTotal || contract.value || 0).toLocaleString()}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Procurement Variance</div>
+                        ${(() => {
+                          const market = Number(contract.marketValue || contract.project?.budgetTotal || 0);
+                          const actual = Number(contract.value || 0);
+                          const variance = actual - market;
+                          const isOver = variance > 0;
+                          const percent = market > 0 ? ((variance / market) * 100).toFixed(1) : '0.0';
+                          return `
+                          <div style="font-weight: 800; color: ${isOver ? '#e11d48' : '#059669'}; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                            ${isOver ? '+' : ''}MWK ${Math.abs(variance).toLocaleString()} 
+                            <span style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: ${isOver ? '#fff1f2' : '#ecfdf5'}; color: ${isOver ? '#e11d48' : '#059669'};">
+                                ${percent}% ${isOver ? 'OVER' : 'UNDER'}
+                            </span>
+                          </div>`;
+                        })()}
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Actual Contract Value</div>
@@ -1769,7 +1782,7 @@ export const DrawerTemplates = {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                 <div class="form-group">
                      <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Value (MWK)</label>
-                     <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|min:1" value="${contract.value || ""}" style="width:100%; padding:10px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;">
+                     <input type="number" id="edit_contract_value" class="form-input" data-vrules="required|numeric|min:1" value="${contract.value || ""}" style="width:100%; padding:10px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;">
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Status</label>
@@ -1793,10 +1806,12 @@ export const DrawerTemplates = {
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                     <div class="form-group">
-                        <input type="date" id="edit_contract_start" class="form-input" value="${formatDate(contract.startDate)}" style="width:100%; padding:10px; border-radius: 8px;">
+                        <label style="font-size: 10px; color: var(--slate-400); margin-bottom: 4px; display: block;">Commencement</label>
+                        <input type="date" id="edit_contract_start" class="form-input" data-vrules="required" min="${new Date().toISOString().split("T")[0]}" value="${formatDate(contract.startDate)}" style="width:100%; padding:10px; border-radius: 8px;">
                     </div>
                     <div class="form-group">
-                        <input type="date" id="edit_contract_end" class="form-input" value="${formatDate(contract.endDate)}" style="width:100%; padding:10px; border-radius: 8px;">
+                        <label style="font-size: 10px; color: var(--slate-400); margin-bottom: 4px; display: block;">Deadline</label>
+                        <input type="date" id="edit_contract_end" class="form-input" data-vrules="required" min="${new Date().toISOString().split("T")[0]}" value="${formatDate(contract.endDate)}" style="width:100%; padding:10px; border-radius: 8px;">
                     </div>
                 </div>
             </div>
@@ -1822,7 +1837,7 @@ export const DrawerTemplates = {
             <div style="display: flex; gap: 12px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
                 <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--orange); border-color: var(--orange); padding: 14px; font-weight: 800;" 
-                    onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} (window.app.caModule || window.app.pmModule || window.app.fmModule)?.submitContractUpdate(${contract.id})">
+                    onclick="if(!window.V?.validateForm(this.closest('.drawer-content'))){ window.toast?.show('Please fix the errors in the form', 'error'); return; } (window.app.caModule || window.app.pmModule || window.app.fmModule)?.submitContractUpdate(${contract.id})">
                     <i class="fas fa-upload" style="margin-right: 8px;"></i> Commit Revision & Version
                 </button>
             </div>
