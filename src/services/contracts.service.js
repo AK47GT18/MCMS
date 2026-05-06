@@ -212,7 +212,7 @@ async function create(data, userId) {
 
   const contract = await prisma.contract.create({
     data: contractData,
-    include: { project: { select: { id: true, name: true, managerId: true, manager: { select: { email: true } } } }, items: true },
+    include: { project: { select: { id: true, name: true, managerId: true, manager: { select: { name: true, email: true } } } }, items: true },
   });
 
   // Handle Over-Budget Workflow
@@ -292,7 +292,7 @@ async function create(data, userId) {
   }
 
   // Notify Finance Director if they didn't create it
-  const creator = await prisma.user.findUnique({ where: { id: userId } });
+  let creator = await prisma.user.findUnique({ where: { id: userId } });
   if (creator && creator.role !== 'Finance_Director') {
     await notifService.notifyRole('Finance_Director', {
       type: 'info', icon: 'fa-file-contract',
@@ -323,7 +323,7 @@ async function create(data, userId) {
   // 5. Enhanced Audit Logging & Cross-Module Notifications
   if (userId) {
     try {
-      const creator = await prisma.user.findUnique({ 
+      creator = await prisma.user.findUnique({ 
         where: { id: userId },
         select: { id: true, name: true, role: true }
       });
@@ -345,7 +345,7 @@ async function create(data, userId) {
 
       // Email Notifications
       if (creator) {
-        const dashboardUrl = `${env.FRONTEND_URL}/contracts`;
+        const dashboardUrl = `${process.env.FRONTEND_URL}/contracts`;
         
         if (creator.role === 'Project_Manager') {
           // Notify Finance Directors
@@ -380,14 +380,14 @@ async function create(data, userId) {
   }
   
   // Role-based Notifications (PM <-> FD)
-  const creator = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, name: true } });
+  creator = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, name: true } });
   
   if (creator?.role === 'Project_Manager') {
     // Notify all Finance Directors
-    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { email: true } });
+    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { name: true, email: true } });
     for (const fd of fds) {
       await emailService.sendNotification(
-        fd.email,
+        fd,
         'Contract Created by Project Manager',
         `A new project contract ${contract.refCode} has been archived by PM ${creator.name}. \nJustification: ${data.justification || 'N/A'}`
       ).catch(e => logger.error('FD Notification failed', e));
@@ -396,7 +396,7 @@ async function create(data, userId) {
     // Notify the Project Manager
     if (contract.project && contract.project.manager && contract.project.manager.email) {
       await emailService.sendNotification(
-        contract.project.manager.email,
+        contract.project.manager,
         'Contract Created by Finance Director',
         `A new vendor contract ${contract.refCode} has been established by FD ${creator.name}. \nProject: ${contract.project.name}`
       ).catch(e => logger.error('PM Notification failed', e));
@@ -410,7 +410,7 @@ async function update(id, data, userId) {
   const existing = await prisma.contract.findUnique({
     where: { id },
     include: { 
-      project: { select: { id: true, name: true, manager: { select: { email: true } } } },
+      project: { select: { id: true, name: true, manager: { select: { name: true, email: true } } } },
       items: true
     }
   });
@@ -455,10 +455,10 @@ async function update(id, data, userId) {
   
   if (creator?.role === 'Project_Manager') {
     // Notify all Finance Directors
-    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { email: true } });
+    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director' }, select: { name: true, email: true } });
     for (const fd of fds) {
       await emailService.sendNotification(
-        fd.email,
+        fd,
         'Contract Updated by Project Manager',
         `Contract ${contract.refCode} has been modified by PM ${creator.name}. \nChange Version: V${nextVersionNum}`
       ).catch(e => logger.error('FD Update Notification failed', e));
@@ -467,7 +467,7 @@ async function update(id, data, userId) {
     // Notify the Project Manager
     if (existing.project && existing.project.manager && existing.project.manager.email) {
       await emailService.sendNotification(
-        existing.project.manager.email,
+        existing.project.manager,
         'Contract Updated by Finance Director',
         `Contract ${contract.refCode} has been updated by FD ${creator.name}. \nPlease review the latest version (V${nextVersionNum}).`
       ).catch(e => logger.error('PM Update Notification failed', e));
