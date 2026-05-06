@@ -1036,7 +1036,8 @@
                         const data = await response.json();
                         
                         if (!response.ok) {
-                            throw new Error(data.error || data.message || 'Login failed');
+                            const errorMsg = data.error?.message || data.error || data.message || 'Login failed';
+                            throw new Error(errorMsg);
                         }
                         
                         // Store token and redirect
@@ -1078,7 +1079,8 @@
                         const data = await response.json();
                         
                         if (!response.ok) {
-                            throw new Error(data.error || data.message || 'Request failed');
+                            const errorMsg = data.error?.message || data.error || data.message || 'Request failed';
+                            throw new Error(errorMsg);
                         }
                         
                         window.switchModal('forgotModal', 'codeModal');
@@ -1134,7 +1136,8 @@
                         const data = await response.json();
                         
                         if (!response.ok) {
-                            throw new Error(data.error || data.message || 'Reset failed');
+                            const errorMsg = data.error?.message || data.error || data.message || 'Reset failed';
+                            throw new Error(errorMsg);
                         }
                         
                         window.closeModal('resetModal');
