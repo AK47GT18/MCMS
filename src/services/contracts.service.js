@@ -648,7 +648,7 @@ async function terminate(contractId, { reason, receivedItems }, user) {
   });
 
   if (!contract) throw new AppError('Contract not found', 404);
-  if (['cancelled', 'expired'].includes(contract.status)) {
+  if (['cancelled'].includes(contract.status)) {
     throw new AppError(`Contract is already ${contract.status}`, 400);
   }
 
@@ -768,8 +768,8 @@ async function complete(contractId, user) {
   });
 
   if (!contract) throw new AppError('Contract not found', 404);
-  if (contract.status !== 'active' && contract.status !== 'Active') {
-    throw new AppError('Only active contracts can be marked as completed.', 400);
+  if (!['active', 'Active', 'expired'].includes(contract.status)) {
+    throw new AppError('Only active or expired contracts can be marked as completed.', 400);
   }
 
   // Verify all items are fully delivered
