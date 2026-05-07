@@ -4,20 +4,20 @@ export const EC_ProjectLogistics = {
     getProjectLogisticsView() {
         setTimeout(() => this.loadProjectLogistics(), 0);
         return `
-            <div class="data-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-sm);">
-                <div class="data-card-header" style="padding: 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+            <div class="data-card" style="background: #ffffff !important; border: 1px solid var(--slate-200); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-sm);">
+                <div class="data-card-header" style="padding: 32px 24px; background: #ffffff; border-bottom: 1px solid var(--slate-100);">
                     <div>
-                        <div class="card-title" style="font-size: 18px; font-weight: 800; color: var(--slate-900);">Project Logistics Ledger</div>
-                        <div style="font-size: 12px; color: var(--slate-500); font-weight: 500;">Real-time site fulfillment and consumption tracking</div>
+                        <div class="card-title" style="font-size: 20px; font-weight: 900; color: var(--slate-900); letter-spacing: -0.02em;">Project Logistics Ledger</div>
+                        <div style="font-size: 13px; color: var(--slate-400); font-weight: 500; margin-top: 2px;">Real-time site fulfillment and consumption tracking</div>
                     </div>
                     <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-secondary" style="background: white; border-color: var(--slate-200); font-weight: 700;" onclick="window.app.ecModule?.loadProjectLogistics()">
-                            <i class="fas fa-sync" style="color: var(--orange);"></i> Refresh Ledger
+                        <button class="btn btn-secondary" style="background: white; border: 1px solid var(--slate-200); font-weight: 700; border-radius: 12px; padding: 10px 20px;" onclick="window.app.ecModule?.loadProjectLogistics()">
+                            <i class="fas fa-sync" style="color: var(--orange); margin-right: 8px;"></i> Refresh Ledger
                         </button>
                     </div>
                 </div>
 
-                <div id="pl-ledger-container">
+                <div id="pl-ledger-container" style="background: #ffffff;">
                     <div style="padding: 60px; text-align: center; color: var(--slate-400);">
                         <i class="fas fa-circle-notch fa-spin" style="font-size: 32px; margin-bottom: 16px;"></i>
                         <div style="font-weight: 600;">Aggregating portfolio logistics data...</div>
@@ -52,14 +52,14 @@ export const EC_ProjectLogistics = {
 
             // No charts in ledger view per user request
             container.innerHTML = `
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; background: #ffffff;">
+                    <thead style="background: #ffffff; border-bottom: 1px solid var(--slate-100);">
                         <tr>
-                            <th style="padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em;">Project / Site Location</th>
-                            <th style="padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em;">Fulfillment (Holdings)</th>
-                            <th style="padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em;">Demand (Requests)</th>
-                            <th style="padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">Logistics Health</th>
-                            <th style="padding: 16px 24px; font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Operations</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em;">Project / Site Location</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em;">Fulfillment (Holdings)</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em;">Demand (Requests)</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em; text-align: center;">Logistics Health</th>
+                            <th style="padding: 20px 24px; font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em; text-align: right;">Operations</th>
                         </tr>
                     </thead>
                     <tbody>

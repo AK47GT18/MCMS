@@ -877,6 +877,7 @@ export const EC_Handlers = {
             items.forEach(item => {
                 // System Total Map
                 invMap[item.materialName] = {
+                    materialName: item.materialName,
                     qty: Number(item.totalQuantity) || 0,
                     unit: item.unit || 'Units',
                     thresh: 100, // Default threshold
