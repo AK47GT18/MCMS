@@ -53,7 +53,7 @@ export const FS_Equipment = {
 
     async _loadSiteAssets() {
         try {
-            const result = await assets.getAll({ status: 'checked_out' });
+            const result = await assets.getAll({ status: 'checked_out', projectId: this.assignedProject?.id });
             const data = result.data || result;
             this.siteAssets = Array.isArray(data) ? data : (data.items || []);
             this.assetsLoaded = true;

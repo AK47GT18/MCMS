@@ -18,22 +18,31 @@ const ALLOWED_SORT_FIELDS = [
   'budgetTotal', 'budgetSpent', 'startDate', 'endDate', 'createdAt'
 ];
 
-async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, fieldSupervisorId, managerId }) {
+async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status, fieldSupervisorId, managerId, includeManaged }) {
   try {
     const skip = (page - 1) * limit;
     const where = {};
     if (status) where.status = status;
     if (fieldSupervisorId) {
-      where.fieldSupervisorId = Number(fieldSupervisorId);
-      // If no specific status is requested, include active and recently completed (48h grace period)
-      if (!status) {
+      const fsId = Number(fieldSupervisorId);
+      const orConditions = [
+        { status: 'active' },
+        { 
+          status: 'completed',
+          updatedAt: { gte: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+        }
+      ];
+
+      if (includeManaged) {
         where.OR = [
-          { status: 'active' },
-          { 
-            status: 'completed',
-            updatedAt: { gte: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
-          }
+          { fieldSupervisorId: fsId, OR: orConditions },
+          { managerId: fsId, OR: orConditions }
         ];
+      } else {
+        where.fieldSupervisorId = fsId;
+        if (!status) {
+          where.OR = orConditions;
+        }
       }
     }
     if (managerId) where.managerId = Number(managerId);

@@ -94,6 +94,46 @@ const USERS = [
         phone: '+265 888 333 444',
         avatarUrl: 'https://ui-avatars.com/api/?name=Unilia+Student&background=0D8ABC&color=fff',
         permissions: ['read_all', 'write_project']
+    },
+    {
+        name: 'Timothy Phiri',
+        role: ROLES.FIELD_SUPERVISOR,
+        email: 't.phiri@mkaka.mw',
+        phone: '+265 996 111 222',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Timothy+Phiri&background=10B981&color=fff',
+        permissions: ['read_assigned', 'write_daily_logs']
+    },
+    {
+        name: 'Lumbani Gondwe',
+        role: ROLES.FIELD_SUPERVISOR,
+        email: 'l.gondwe@mkaka.mw',
+        phone: '+265 885 222 333',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Lumbani+Gondwe&background=10B981&color=fff',
+        permissions: ['read_assigned', 'write_daily_logs']
+    },
+    {
+        name: 'Chisomo Mwale',
+        role: ROLES.FIELD_SUPERVISOR,
+        email: 'c.mwale@mkaka.mw',
+        phone: '+265 994 444 555',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Chisomo+Mwale&background=10B981&color=fff',
+        permissions: ['read_assigned', 'write_daily_logs']
+    },
+    {
+        name: 'Memory Chirwa',
+        role: ROLES.FIELD_SUPERVISOR,
+        email: 'm.chirwa@mkaka.mw',
+        phone: '+265 887 666 777',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Memory+Chirwa&background=10B981&color=fff',
+        permissions: ['read_assigned', 'write_daily_logs']
+    },
+    {
+        name: 'Andrew Kumwenda',
+        role: ROLES.FIELD_SUPERVISOR,
+        email: 'a.kumwenda@mkaka.mw',
+        phone: '+265 992 888 999',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Andrew+Kumwenda&background=10B981&color=fff',
+        permissions: ['read_assigned', 'write_daily_logs']
     }
 ];
 

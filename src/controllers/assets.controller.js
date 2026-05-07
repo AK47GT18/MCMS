@@ -20,7 +20,7 @@ const getAll = asyncHandler(async (req, res) => {
   const options = validateBody(query, paginationSchema, res);
   if (!options) return;
   
-  const result = await assetsService.getAll({ ...options, status: query.status, category: query.category });
+  const result = await assetsService.getAll({ ...options, status: query.status, category: query.category, projectId: query.projectId });
   response.paginated(res, result.assets, result.page, result.limit, result.total);
 });
 

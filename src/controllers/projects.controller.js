@@ -24,6 +24,7 @@ const getAll = asyncHandler(async (req, res) => {
   
   if (userRole === 'Field_Supervisor') {
     filters.fieldSupervisorId = user.id;
+    filters.includeManaged = true; // Flag for service to use OR logic
   } else if (userRole === 'Project_Manager' && !user.permissions?.includes('read_all')) {
     filters.managerId = user.id;
   } else if (query.fieldSupervisorId) {

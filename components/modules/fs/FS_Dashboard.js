@@ -93,9 +93,19 @@ export const FS_Dashboard = {
                             <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Initializing Map...
                         </div>
                     </div>
-                    <div style="padding: 12px; font-size: 11px; color: var(--slate-500); display: flex; justify-content: space-between; align-items: center;">
-                        <span><i class="fas fa-info-circle"></i> Submission allowed within the circle.</span>
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.initGeofenceMap()"><i class="fas fa-sync"></i> Reset</button>
+                    <div style="padding: 12px; font-size: 11px; color: var(--slate-500); display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span id="gps-status-badge" style="padding: 4px 8px; background: var(--slate-100); border-radius: 4px; font-weight: 700; font-size: 10px; color: var(--slate-600);">
+                                <i class="fas fa-satellite-dish"></i> GPS Standby
+                            </span>
+                            <button id="btn-refresh-gps" class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.refreshGPS()">
+                                <i class="fas fa-sync"></i> Refresh GPS
+                            </button>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); pt-2; margin-top: 4px; padding-top: 8px;">
+                            <span><i class="fas fa-info-circle"></i> Submission allowed within the circle.</span>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.initGeofenceMap()"><i class="fas fa-expand"></i> Reset View</button>
+                        </div>
                     </div>
                 </div>
 
@@ -227,6 +237,51 @@ export const FS_Dashboard = {
                 }).addTo(this.geofenceMap).bindTooltip("You are here");
             }, (err) => {
                 console.warn('[FS Map] Could not get user location:', err);
+                const statusEl = document.getElementById('gps-status-badge');
+                if (statusEl) {
+                    statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> GPS Precision Low';
+                    statusEl.style.background = 'var(--red-light)';
+                    statusEl.style.color = 'var(--red)';
+                }
+            }, { enableHighAccuracy: true });
+        }
+    },
+
+    refreshGPS() {
+        const btn = document.getElementById('btn-refresh-gps');
+        if (btn) btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Locating...';
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const { latitude, longitude, accuracy } = pos.coords;
+                console.log('[FS GPS] Refreshed:', latitude, longitude, 'Accuracy:', accuracy);
+                
+                if (this.geofenceMap) {
+                    const Leaflet = window.MKAKA_L || window.L;
+                    Leaflet.circleMarker([latitude, longitude], {
+                        radius: 8,
+                        fillColor: '#3b82f6',
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 1
+                    }).addTo(this.geofenceMap).bindTooltip("Refreshed Location").openTooltip();
+                    
+                    this.geofenceMap.panTo([latitude, longitude]);
+                }
+
+                const badge = document.getElementById('gps-status-badge');
+                if (badge) {
+                    badge.innerHTML = `<i class="fas fa-check-circle"></i> Live GPS Active (${Math.round(accuracy)}m)`;
+                    badge.style.background = 'var(--emerald-light)';
+                    badge.style.color = 'var(--emerald)';
+                }
+
+                if (btn) btn.innerHTML = '<i class="fas fa-sync"></i> Refresh GPS';
+                window.toast.show('Location updated successfully.', 'success');
+            }, (err) => {
+                if (btn) btn.innerHTML = '<i class="fas fa-sync"></i> Refresh GPS';
+                window.toast.show('GPS Refresh failed: ' + err.message, 'error');
             }, { enableHighAccuracy: true });
         }
     },

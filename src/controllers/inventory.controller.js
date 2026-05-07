@@ -128,7 +128,7 @@ const consume = asyncHandler(async (req, res) => {
 const getAll = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director'])) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director', 'Field_Supervisor'])) return;
 
   const result = await inventoryService.getAll();
   response.success(res, result);

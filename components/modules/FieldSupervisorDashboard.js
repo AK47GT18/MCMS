@@ -22,10 +22,12 @@ export class FieldSupervisorDashboard {
         this.siteAssets = [];
         this.dailyLogsCount = 0;
         this.safetyDays = 124;
+        this._loadStarted = false;
 
         this.inventoryLoaded = false;
         this.assetsLoaded = false;
         this.tasksLoaded = false;
+        this.projectLoading = true;
 
         // Register module globally for template access
         window.app = window.app || {};
@@ -113,8 +115,10 @@ export class FieldSupervisorDashboard {
     }
 
     _refreshCurrentView() {
-        const container = document.getElementById('fs-content-area');
-        if (container) {
+        const contentArea = document.getElementById('fs-content-area');
+        const moduleContainer = document.getElementById('fs-module');
+
+        if (contentArea) {
             let contentHTML = '';
             switch (this.currentView) {
                 case 'dashboard': contentHTML = this.getDashboardView(); break;
@@ -125,7 +129,13 @@ export class FieldSupervisorDashboard {
                 case 'reporting': contentHTML = this.getReportingView(); break;
                 default: contentHTML = this.getDashboardView();
             }
-            container.innerHTML = contentHTML;
+            contentArea.innerHTML = contentHTML;
+        } else if (moduleContainer) {
+            // If the module container exists but content area doesn't, we likely just finished loading
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.innerHTML = this.render();
+            }
         }
     }
 
@@ -139,17 +149,37 @@ export class FieldSupervisorDashboard {
     }
 
     render() {
-        // Trigger initial data load
-        setTimeout(() => {
-            this._loadAssignedProject().then(() => {
-                this._cacheRequisitionData().then(() => {
+        // Trigger initial data load once
+        if (this.projectLoading && !this._loadStarted) {
+            this._loadStarted = true;
+            setTimeout(() => {
+                this._loadAssignedProject().then(() => {
+                    this.projectLoading = false;
+                    this._cacheRequisitionData().then(() => {
+                        this._refreshCurrentView();
+                    });
+                    this._loadSiteInventory();
+                    this._loadDashboardStats();
+                    this._loadSiteAssets();
+                    this._refreshCurrentView();
+                }).catch((err) => {
+                    console.error('[FS] Initialization failed:', err);
+                    this.projectLoading = false;
                     this._refreshCurrentView();
                 });
-                this._loadSiteInventory();
-                this._loadDashboardStats();
-            });
-            this._loadSiteAssets();
-        }, 0);
+            }, 100);
+        }
+
+        if (this.projectLoading) {
+            return `
+                <div id="fs-module" style="height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--slate-50);">
+                    <div style="text-align: center;">
+                        <i class="fas fa-circle-notch fa-spin" style="font-size: 40px; color: var(--orange); margin-bottom: 16px;"></i>
+                        <div style="font-weight: 700; color: var(--slate-600);">Syncing Project Workspace...</div>
+                    </div>
+                </div>
+            `;
+        }
 
         if (!this.assignedProject) {
             return `

@@ -3,6 +3,17 @@ import tasksApi from '../../../src/api/tasks.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 import assets from '../../../src/api/assets.api.js';
 
+const escapeHTML = (str) => {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    })[m]);
+};
+
 export const FS_Tasks = {
     getTasksView() {
         setTimeout(() => this._loadTasks(), 0);
@@ -54,7 +65,7 @@ export const FS_Tasks = {
                                         <span style="font-size:11px; font-weight:700;">${t.progress || 0}%</span>
                                     </div>
                                 </td>
-                                <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.drawer.open('Update Task', window.DrawerTemplates.updateTask)">Update</button></td>
+                                <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.drawer.open('Update Task', window.DrawerTemplates.logDailyProgress({ taskId: '${t.id}', taskName: '${escapeHTML(t.name)}' }))">Update</button></td>
                             </tr>
                         `).join('')}
                     </tbody>

@@ -8,11 +8,12 @@ const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 const handlers = require('../realtime/handlers');
 
-async function getAll({ page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc', status, category }) {
+async function getAll({ page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc', status, category, projectId }) {
   const skip = (page - 1) * limit;
   const where = {};
   if (status) where.status = status;
   if (category) where.category = category;
+  if (projectId) where.currentProjectId = Number(projectId);
   
   const [assets, total] = await Promise.all([
     prisma.asset.findMany({
