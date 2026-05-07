@@ -210,6 +210,19 @@ export const PM_ProjectHandlers = {
             projects.getById(id).then(response => {
                 const project = response.data || response;
                 
+                // Pre-load contract UI state
+                const masterContract = project.contracts?.find(c => c.contractType === 'project');
+                if (masterContract) {
+                    if (docLabel) docLabel.innerText = 'Master Agreement Exists (Upload to Replace)';
+                    const fileStatus = document.getElementById('project-file-status');
+                    if (fileStatus) {
+                        fileStatus.innerText = masterContract.fileName || 'Existing contract attached';
+                        fileStatus.style.color = 'var(--emerald)';
+                    }
+                    const fileInput = document.getElementById('proj_document');
+                    if (fileInput) fileInput.removeAttribute('data-vrules');
+                }
+
                 const setVal = (fid, val) => {
                     const el = document.getElementById(fid);
                     if (el) el.value = val !== undefined && val !== null ? val : '';

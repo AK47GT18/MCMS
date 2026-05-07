@@ -1036,7 +1036,7 @@ export const PM_MissingHandlers = {
             }
 
             
-            if (this.wizardState?.isRoad && this.wizardState?.roadEstimatePreview && projectId) {
+            if (this.wizardState?.isRoad && projectId) {
                 const accBoxes = document.querySelectorAll('input[name="road_acc"]:checked');
                 const accessories = Array.from(accBoxes).map(cb => cb.value);
                 if (document.getElementById('acc_lighting').value) {
@@ -1053,8 +1053,8 @@ export const PM_MissingHandlers = {
                     terrain: document.getElementById('road_terrain').value,
                     geographicZone: document.getElementById('road_zone').value,
                     nearestTownKm: parseFloat(document.getElementById('road_town_dist').value),
-                    layers: this.wizardState.roadEstimatePreview.layers,
-                    accessories: this.wizardState.roadEstimatePreview.accessories
+                    layers: this.wizardState?.roadEstimatePreview?.layers || undefined,
+                    accessories: this.wizardState?.roadEstimatePreview?.accessories || accessories
                 };
                 
                 await fetch('/api/v1/road-estimation/save', {
