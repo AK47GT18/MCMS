@@ -137,7 +137,7 @@ export const PM_Budget = {
         try {
             const project = this.projects.find(p => p.id === projectId);
             const [contractsRes, bcrRes, assetsRes] = await Promise.all([
-                client.get('/contracts?projectId=' + projectId).catch(err => { console.warn('Contracts fetch failed:', err); return []; }),
+                client.get(`/contracts?projectId=${projectId}&limit=20`).catch(err => { console.warn('Contracts fetch failed:', err); return []; }),
                 client.get('/budget-changes?projectId=' + projectId).catch(err => { console.warn('BCR fetch failed:', err); return []; }),
                 client.get('/assets?currentProjectId=' + projectId).catch(err => { console.warn('Assets fetch failed:', err); return []; })
             ]);

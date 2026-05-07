@@ -59,7 +59,7 @@ export const FD_Ledger = {
 
         try {
             const [contractsRes, reqsRes, bcrRes] = await Promise.all([
-                contracts.getAll({ limit: 100 }),
+                contracts.getAll({ limit: 20 }),
                 requisitions.getPending().catch(() => ({ data: [] })),
                 client.get('/budget-changes').catch(() => ({ data: [] }))
             ]);

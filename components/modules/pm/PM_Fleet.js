@@ -34,7 +34,7 @@ export const PM_Fleet = {
         if (!container) return;
 
         try {
-            const response = await assets.getAll({ limit: 100 });
+            const response = await assets.getAll({ limit: 20 });
             const data = response.data || response;
             const assetList = Array.isArray(data) ? data : data.assets || [];
 

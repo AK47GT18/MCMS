@@ -42,7 +42,7 @@ export const PM_Issues = {
 
         try {
             // Force cache bypass for real-time updates
-            const response = await issues.getAll({ limit: 50 }, { skipCache: true });
+            const response = await issues.getAll({ limit: 20 }, { skipCache: true });
             const data = response.data || response;
             const issuesList = Array.isArray(data) ? data : data.issues || [];
 

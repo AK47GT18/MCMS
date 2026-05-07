@@ -95,7 +95,7 @@ export const FD_Contracts = {
         .catch((e) => console.error("Error loading projects for filter", e));
 
       // Load contracts
-      const response = await contracts.getAll({ limit: 100 });
+      const response = await contracts.getAll({ limit: 20 });
       const data = response.data || response;
       const allContracts = Array.isArray(data) ? data : data.contracts || [];
 
