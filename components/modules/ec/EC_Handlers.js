@@ -24,7 +24,7 @@ export const EC_Handlers = {
         try {
             const projects = await client.get('/projects');
             const projectList = Array.isArray(projects) ? projects : (projects.data || []);
-            
+
             window.drawer.open(`Dispatch: ${materialName}`, `
                 <div style="padding: 24px;">
                     <!-- Dual Metrics: Global vs Local -->
@@ -110,7 +110,7 @@ export const EC_Handlers = {
         const recipient = document.getElementById('dispatch_recipient')?.value;
         const date = document.getElementById('dispatch_date')?.value;
         const justification = document.getElementById('dispatch_justification')?.value;
-        
+
         // Allocation Validation
         const displayEl = document.getElementById('display_available');
         const allocation = Number(displayEl?.dataset.allocated || 0);
@@ -119,7 +119,7 @@ export const EC_Handlers = {
             window.toast?.show('Error: Cannot dispatch to a project with zero allocation.', 'error');
             return;
         }
-        
+
         const material = this.inventory[materialName];
         const errorEl = document.getElementById('dispatch_error');
 
@@ -134,7 +134,7 @@ export const EC_Handlers = {
 
         try {
             window.toast?.show('Processing distribution...', 'info');
-            
+
             // Perform deduction API call
             await client.post('/inventory/dispatch', {
                 materialName,
@@ -148,7 +148,7 @@ export const EC_Handlers = {
 
             // Update local state
             this.inventory[materialName].qty -= amount;
-            
+
             // Send Notification Email
             try {
                 const notificationsApi = await import('../../../src/api/notifications.api.js');
@@ -162,11 +162,11 @@ export const EC_Handlers = {
 
             window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
             window.drawer?.close();
-            
+
             // Refresh view
             if (this.currentView === 'inventory') this._refreshCurrentView();
             if (this.currentView === 'dashboard') this._refreshCurrentView();
-            
+
         } catch (err) {
             window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');
         }
@@ -222,13 +222,13 @@ export const EC_Handlers = {
 
     async _loadProjectContext(materialName, projectId) {
         if (!projectId) return;
-        
+
         // Reset metrics to avoid stale data leakage
         const displayAvailableEl = document.getElementById('display_available');
         const allocationInfoEl = document.getElementById('project_allocation_info');
         const siteStockEl = document.getElementById('site_current_stock');
         const siteImpactEl = document.getElementById('site_impact');
-        
+
         if (displayAvailableEl) {
             displayAvailableEl.textContent = '0';
             displayAvailableEl.dataset.allocated = '0'; // CRITICAL RESET
@@ -247,12 +247,12 @@ export const EC_Handlers = {
                 // Find matching allocation for this project
                 const match = material.allocations.find(a => String(a.projectId) === String(projectId));
                 const allocated = match ? (Number(match.quantity) || 0) : 0;
-                
+
                 displayAvailableEl.textContent = allocated.toLocaleString();
-                displayAvailableEl.dataset.allocated = allocated; 
-                
+                displayAvailableEl.dataset.allocated = allocated;
+
                 allocationInfoEl.innerHTML = `Project Allocation <span style="margin-left: 8px; color: var(--slate-400); font-weight: 500;">(Global: ${material.qty.toLocaleString()})</span>`;
-                
+
                 if (allocated === 0) {
                     window.toast?.show('Notice: No allocation for this project. Dispatch blocked.', 'warning');
                 }
@@ -263,10 +263,10 @@ export const EC_Handlers = {
                     let requirements = [];
                     if (Array.isArray(result)) requirements = result;
                     else if (result && Array.isArray(result.data)) requirements = result.data;
-                    
+
                     const match = requirements.find(r => r.name === materialName || r.materialName === materialName);
                     const allocated = match ? (match.requiredQuantity || match.quantity || 0) : 0;
-                    
+
                     displayAvailableEl.textContent = allocated.toLocaleString();
                     displayAvailableEl.dataset.allocated = allocated;
                 } catch (e) {
@@ -301,11 +301,11 @@ export const EC_Handlers = {
             const result = await client.get(`/projects/${projectId}/tasks`);
             const tasks = Array.isArray(result) ? result : (result.data || []);
             const phases = tasks.filter(t => !t.parentId);
-            
+
             if (phases.length === 0) {
                 phaseSelect.innerHTML = '<option value="general">General Operations</option>';
             } else {
-                phaseSelect.innerHTML = '<option value="">Select Phase...</option>' + 
+                phaseSelect.innerHTML = '<option value="">Select Phase...</option>' +
                     phases.map(ph => `<option value="${ph.id}">${ph.name}</option>`).join('');
             }
 
@@ -314,7 +314,7 @@ export const EC_Handlers = {
             if (project && recipientInput) {
                 recipientInput.value = project.supervisorName || project.managerName || '';
             }
-            
+
             // Clear resource list on project change
             const resSummary = document.getElementById('phase_resources_summary');
             if (resSummary) resSummary.style.display = 'none';
@@ -331,7 +331,7 @@ export const EC_Handlers = {
         const phaseId = document.getElementById('dispatch_phase')?.value;
         const recipient = document.getElementById('dispatch_recipient')?.value;
         const date = document.getElementById('dispatch_date')?.value;
-        
+
         const material = this.inventory[materialName];
         const errorEl = document.getElementById('dispatch_error');
 
@@ -346,7 +346,7 @@ export const EC_Handlers = {
 
         try {
             window.toast?.show('Processing distribution...', 'info');
-            
+
             // Perform deduction API call
             await client.post('/inventory/dispatch', {
                 materialName,
@@ -359,14 +359,14 @@ export const EC_Handlers = {
 
             // Update local state
             this.inventory[materialName].qty -= amount;
-            
+
             window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
             window.drawer?.close();
-            
+
             // Refresh view
             if (this.currentView === 'inventory') this._refreshCurrentView();
             if (this.currentView === 'dashboard') this._refreshCurrentView();
-            
+
         } catch (err) {
             window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');
         }
@@ -499,7 +499,7 @@ export const EC_Handlers = {
 
             try {
                 await inventoryApi.distribute({
-                    sectorId: stockItem ? stockItem.sectorId : 1, 
+                    sectorId: stockItem ? stockItem.sectorId : 1,
                     materialName: item.name,
                     category: 'Construction',
                     unit: item.unit,
@@ -534,7 +534,7 @@ export const EC_Handlers = {
         // --- STRICT SILO ENFORCEMENT ---
         const projectStock = this.inventoryByProject?.[projectId] || [];
         const material = projectStock.find(m => m.materialName === itemId || m.id === parseInt(itemId));
-        
+
         if (!material || material.quantityOnHand < qty) {
             window.toast.show(`INSUFFICIENT PROJECT STOCK: Project ${projectId} only has ${material ? material.quantityOnHand : 0} units of this material. Refusing cross-project transfer.`, 'error');
             return;
@@ -550,7 +550,7 @@ export const EC_Handlers = {
                 reference: `Field Release: ${projectId}`,
                 notes: `Released to site by EC`
             });
-            
+
             await this._loadInventory(); // Refresh specific silo
             await this._loadDistributionLogs();
 
@@ -582,7 +582,7 @@ export const EC_Handlers = {
                 contractItemId: item.id,
                 receivedQty: qty
             });
-            
+
             this.pendingReceipts = this.pendingReceipts.filter(p => p.id !== item.id);
             await this._loadInventory(); // Refresh stock levels
             await this._loadProcurementReceipts(); // Sync with server
@@ -604,12 +604,12 @@ export const EC_Handlers = {
 
     openComplaintDrawer(item) {
         window.drawer.open('Report Site Issue / Delay', window.DrawerTemplates.submitComplaint);
-        
+
         // Auto-fill context after drawer opens
         setTimeout(() => {
             const categorySelect = document.querySelector('.drawer-content select');
             const detailsText = document.querySelector('.drawer-content textarea');
-            
+
             if (categorySelect) {
                 const options = Array.from(categorySelect.options);
                 const match = options.find(o => o.text.includes('Material')) || options[0];
@@ -637,7 +637,7 @@ export const EC_Handlers = {
         }
     },
 
-    async handleAssetUpdate(assetId) {},
+    async handleAssetUpdate(assetId) { },
 
     handleTimelineProjectChange(projectId) {
         console.log('[EC] Project context changed to:', projectId);
@@ -692,7 +692,7 @@ export const EC_Handlers = {
 
     async syncFMProcurement() {
         window.toast.show('Syncing with Finance procurement system…', 'info');
-        
+
         try {
             await this._loadProcurementReceipts();
             await this._loadInventory();
@@ -730,7 +730,7 @@ export const EC_Handlers = {
         const req = this.requisitionQueue.find(r => String(r.id) === String(reqId));
         if (req) {
             window.drawer.open('Dispatch Authorization', window.DrawerTemplates.dispatchResource(req));
-            
+
             // Auto-trigger inventory impact calculation
             setTimeout(async () => {
                 if (!this.inventory || Object.keys(this.inventory).length === 0) {
@@ -752,7 +752,7 @@ export const EC_Handlers = {
         const eta = document.getElementById('dispatch_eta')?.value;
         const etaDate = new Date(eta);
         const etaError = document.getElementById('eta_error');
-        
+
         if (isNaN(etaDate.getTime()) || etaDate < new Date()) {
             if (etaError) etaError.style.display = 'block';
             window.toast?.show('Invalid ETA provided.', 'warning');
@@ -823,7 +823,7 @@ export const EC_Handlers = {
 
         try {
             window.toast.show('Submitting replenishment request to Finance Director...', 'info');
-            
+
             // Create a new replenishment requisition linked to the original
             const items = (req.items || []).map(i => ({
                 itemName: i.itemName,
@@ -835,7 +835,7 @@ export const EC_Handlers = {
                 projectId: req.projectId || req.project?.id || 1,
                 totalAmount: 0, // Will be auto-calculated by price catalog
                 vendorName: 'Replenishment Request',
-                notes: `REPLENISHMENT: ${reason} | Ref: ${req.reqCode || 'REQ-'+req.id}`,
+                notes: `REPLENISHMENT: ${reason} | Ref: ${req.reqCode || 'REQ-' + req.id}`,
                 items
             });
 
@@ -845,7 +845,7 @@ export const EC_Handlers = {
                 await notificationService.sendEmail({
                     to: 'Finance Director',
                     subject: `Replenishment Request: Stock Depleted for ${req.project?.name || 'Project'}`,
-                    body: `Equipment Coordinator is requesting stock replenishment.\n\nJustification: ${reason}\n\nOriginal Requisition: ${req.reqCode || 'REQ-'+req.id}\nItems: ${items.map(i => `${i.quantity}x ${i.itemName}`).join(', ')}\n\nPlease review and approve a vendor contract if budget permits.`
+                    body: `Equipment Coordinator is requesting stock replenishment.\n\nJustification: ${reason}\n\nOriginal Requisition: ${req.reqCode || 'REQ-' + req.id}\nItems: ${items.map(i => `${i.quantity}x ${i.itemName}`).join(', ')}\n\nPlease review and approve a vendor contract if budget permits.`
                 });
             } catch (emailErr) {
                 console.error('[EC] Email notification failed:', emailErr);
@@ -863,17 +863,17 @@ export const EC_Handlers = {
     async _loadInventory() {
         if (this.isLoadingInventory) return;
         this.isLoadingInventory = true;
-        
+
         const refreshBtn = document.getElementById('btn-inventory-refresh');
         if (refreshBtn) refreshBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Refreshing...';
 
         try {
             const data = await inventoryApi.getAll({ skipCache: true });
             const items = Array.isArray(data) ? data : (data.data || []);
-            
+
             const invMap = {};
             const projectMap = {};
-            
+
             items.forEach(item => {
                 // System Total Map
                 invMap[item.materialName] = {
@@ -895,10 +895,10 @@ export const EC_Handlers = {
                     });
                 });
             });
-            
+
             this.inventory = invMap;
             this.inventoryByProject = projectMap;
-            
+
             // Visual feedback for manual refresh button
             const refreshBtn = document.getElementById('btn-inventory-refresh');
             if (refreshBtn) {
@@ -951,7 +951,7 @@ export const EC_Handlers = {
                         <span>Inventory Impact Intelligence</span>
                         <span style="flex: 1; height: 1px; background: var(--slate-200);"></span>
                     </div>`;
-        
+
         let allAvailable = true;
         let anyAvailable = false;
         const shortfalls = [];
@@ -964,7 +964,7 @@ export const EC_Handlers = {
             const remaining = available - requested;
 
             if (available > 0) anyAvailable = true;
-            
+
             const isShort = available < requested;
             if (isShort) {
                 allAvailable = false;
@@ -1012,7 +1012,7 @@ export const EC_Handlers = {
                     </button>
                 </div>
             `;
-            
+
             if (mainBtn) {
                 const etaContainer = document.getElementById('eta_container');
                 if (!anyAvailable) {
@@ -1073,17 +1073,17 @@ export const EC_Handlers = {
             // We use the email service directly for external escalation
             const emailService = await import('../../../src/emails/email.service.js');
             const notificationService = await import('../../../src/services/notification.service.js');
-            
+
             const anyAvailable = ctx.shortfalls.some(s => s.available > 0);
             const shortageList = ctx.shortfalls.map(s => `- ${s.name}: Requested ${s.requested}, only ${s.available} in stock (Shortfall: ${s.deficit})`).join('\n');
             const target = ctx.project || 'Project Site';
 
             const escalationBody = `🛑 URGENT: Inventory Shortage & Restock Request - ${target}\n\n` +
-                                  `Equipment Coordinator is reporting a critical material shortage for ${target}.\n\n` +
-                                  `Shortfall Details:\n${shortageList}\n\n` +
-                                  `Action Taken: ${anyAvailable ? 'Dispatched available quantities' : 'Dispatch blocked'} and escalated to Finance.\n` +
-                                  `Escalation: Restocking is required immediately by the Financial Manager (FM) or Finance Director.\n\n` +
-                                  `Note: If budget limits are reached, PM approval for contingency funds may be required.`;
+                `Equipment Coordinator is reporting a critical material shortage for ${target}.\n\n` +
+                `Shortfall Details:\n${shortageList}\n\n` +
+                `Action Taken: ${anyAvailable ? 'Dispatched available quantities' : 'Dispatch blocked'} and escalated to Finance.\n` +
+                `Escalation: Restocking is required immediately by the Financial Manager (FM) or Finance Director.\n\n` +
+                `Note: If budget limits are reached, PM approval for contingency funds may be required.`;
 
             // Notify Finance (FD/FM)
             await emailService.send({
@@ -1093,7 +1093,7 @@ export const EC_Handlers = {
             });
 
             // Notify Site Supervisor (FS)
-            const fsMessage = anyAvailable 
+            const fsMessage = anyAvailable
                 ? `The Yard is currently low on stock. We have dispatched what is available (${ctx.shortfalls.map(s => `${s.available} ${s.name}`).join(', ')}) but since the full quantity isn't there, it may take a bit longer to complete your request as we have escalated a restocking order to the Financial Manager (FM).`
                 : `The Yard is currently out of stock for the requested materials. We have escalated an urgent restocking request to the Financial Manager (FM). Please note that this will take a bit longer than usual while we wait for procurement.`;
 
@@ -1101,8 +1101,8 @@ export const EC_Handlers = {
                 to: ctx.supervisor || 'Field Supervisor',
                 subject: `🚚 Dispatch Notice: ${target} (Restock Required)`,
                 text: `Notice regarding your resource request for ${target}.\n\n` +
-                      `${fsMessage}\n\n` +
-                      `ETA (Partial): ${ctx.eta || 'N/A'}`
+                    `${fsMessage}\n\n` +
+                    `ETA (Partial): ${ctx.eta || 'N/A'}`
             });
 
             // 2. Also create in-app notifications for visibility
@@ -1128,8 +1128,8 @@ export const EC_Handlers = {
 
             // 3. Execute the actual dispatch for the available quantities
             if (ctx.type === 'requisition') {
-                await client.post('/dispatch', { 
-                    requisitionId: ctx.reqId, 
+                await client.post('/dispatch', {
+                    requisitionId: ctx.reqId,
                     estimatedArrival: ctx.eta,
                     partial: true,
                     dispatchedItems: ctx.shortfalls.map(s => ({ name: s.name, qty: s.available }))
@@ -1142,7 +1142,7 @@ export const EC_Handlers = {
                     if (dispatchQty <= 0) continue;
 
                     await inventoryApi.distribute({
-                        sectorId: 1, 
+                        sectorId: 1,
                         materialName: item.name,
                         category: 'Construction',
                         unit: item.unit,
@@ -1173,12 +1173,12 @@ export const EC_Handlers = {
             // Find a project to link this to (defaulting to project 1 if none found)
             const projectsRes = await client.get('/projects');
             const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.data || []);
-            const targetProject = projects[0]?.id || 1; 
+            const targetProject = projects[0]?.id || 1;
 
             await client.post('/assets-scheduler/replenishment', {
                 projectId: targetProject,
                 materialName: materialName,
-                quantityNeeded: 500, 
+                quantityNeeded: 500,
                 notes: 'Automated low-stock replenishment from EC Dashboard.'
             });
 
@@ -1187,6 +1187,56 @@ export const EC_Handlers = {
         } catch (error) {
             console.error('[EC] Reorder failed:', error);
             window.toast.show('Reorder failed: ' + (error.message || 'Server error'), 'error');
+        }
+    },
+
+    async openProjectIntelligence(projectId) {
+        if (!projectId) return;
+        window.toast.show('Aggregating project resource intelligence...', 'info');
+        
+        try {
+            // Parallel fetch for deep insights
+            const [project, requirements, onSite, assets] = await Promise.all([
+                client.get(`/projects/${projectId}`),
+                client.get(`/projects/${projectId}/material-sheet`),
+                client.get(`/inventory/project/${projectId}`),
+                client.get(`/assets?projectId=${projectId}`)
+            ]);
+
+            const projectData = Array.isArray(project) ? project[0] : (project?.data ? project.data[0] : project);
+            const reqList = Array.isArray(requirements) ? requirements : (requirements?.data || projectData?.materialRequirements || projectData?.materials || []);
+            const siteStock = Array.isArray(onSite) ? onSite : (onSite.data || []);
+            const assetList = Array.isArray(assets) ? assets : (assets.data || []);
+            
+            // Extract history from holdings logs
+            const history = [];
+            siteStock.forEach(item => {
+                if (item.logs) {
+                    item.logs.forEach(log => {
+                        history.push({
+                            id: log.id,
+                            item: item.materialName,
+                            qty: Number(log.quantity) || 0,
+                            type: log.type,
+                            timestamp: log.timestamp,
+                            user: log.user?.name || 'System'
+                        });
+                    });
+                }
+            });
+
+            window.drawer.open(`Project Intelligence: ${projectData?.name || 'Site ' + projectId}`, 
+                window.DrawerTemplates.projectIntelligence({
+                    project: projectData || { name: 'Active Site', id: projectId },
+                    requirements: reqList,
+                    holdings: siteStock,
+                    assets: assetList,
+                    consumption: history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                })
+            );
+        } catch (err) {
+            console.error('[EC] Intelligence fetch failed:', err);
+            window.toast.show('Failed to load project intelligence data.', 'error');
         }
     },
 
@@ -1239,7 +1289,7 @@ export const EC_Handlers = {
             // Fetch material sheet/allocations for this phase
             const result = await client.get(`/tasks/${phaseId}/materials`);
             const materials = Array.isArray(result) ? result : (result.data || []);
-            
+
             if (materials.length === 0) {
                 list.innerHTML = 'No specific material allocations found for this phase.';
             } else {

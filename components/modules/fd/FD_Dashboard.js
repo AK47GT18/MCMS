@@ -12,7 +12,7 @@ export const FD_Dashboard = {
                 ${StatCard({ title: 'Committed', value: this.formatCurrency(s.committed), subtext: 'In active vendor contracts', alertColor: 'blue' })}
                 ${StatCard({ title: 'EC Requests', value: s.ecRequests, subtext: 'Awaiting stock procurement', alertColor: 'orange' })}
                 ${StatCard({ title: 'PM Uplifts', value: s.pmUplifts, subtext: 'Pending additional funding', alertColor: 'red' })}
-                <div class="stat-card" style="border-left: 4px solid var(--orange); background: linear-gradient(to bottom right, #fff, #fff9f5);">
+                <div class="stat-card" style="background: linear-gradient(to bottom right, #fff, #fff9f5);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Est. Monthly Burn</div>
                         <i class="fas fa-fire-flame-curved" style="color: var(--orange); font-size: 14px; opacity: 0.5;"></i>
@@ -26,7 +26,7 @@ export const FD_Dashboard = {
                     </div>
                 </div>
 
-                <div class="stat-card" style="border-left: 4px solid var(--emerald); background: linear-gradient(to bottom right, #fff, #f6fdf9);">
+                <div class="stat-card" style="background: linear-gradient(to bottom right, #fff, #f6fdf9);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Cash Runway</div>
                         <i class="fas fa-hourglass-half" style="color: var(--emerald); font-size: 14px; opacity: 0.5;"></i>
@@ -37,6 +37,49 @@ export const FD_Dashboard = {
                             <i class="fas fa-shield-check"></i> STABLE
                         </span>
                         <span style="font-size: 11px; color: var(--slate-500); font-weight: 500;">Operating liquidity</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px;">
+                <div class="data-card" style="margin-bottom: 0;">
+                    <div class="data-card-header">
+                        <div class="card-title">Financial Risk Assessment</div>
+                        <span class="badge badge-primary" style="background: var(--slate-100); color: var(--slate-600);">Auto-Scanning</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">High-Utilization Alert</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">3 projects are currently above 85% budget threshold</div>
+                                </div>
+                                <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="(window.fmModule || window.app?.fmModule)?.switchView('budget')">Review Risks</button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">Pending Procurement Exposure</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">MWK ${this.formatCurrency(s.committed * 0.05)} awaiting final FD sign-off</div>
+                                </div>
+                                <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="(window.fmModule || window.app?.fmModule)?.switchView('approvals')">Open approvals</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-card" style="margin-bottom: 0; background: white;">
+                    <div style="padding: 24px;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px;">Portfolio Health Index</div>
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100px;">
+                            <div style="position: relative; width: 80px; height: 80px; border: 8px solid var(--slate-100); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; top: -8px; left: -8px; width: 80px; height: 80px; border: 8px solid var(--emerald); border-radius: 50%; border-bottom-color: transparent; border-right-color: transparent; transform: rotate(45deg);"></div>
+                                <span style="font-size: 20px; font-weight: 800; color: var(--slate-900);">92%</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 16px;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--slate-900);">Excellent Stability</div>
+                            <div style="font-size: 11px; color: var(--slate-500); margin-top: 4px;">Based on 14 active KPIs</div>
+                        </div>
                     </div>
                 </div>
             </div>

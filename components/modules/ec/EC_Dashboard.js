@@ -13,20 +13,53 @@ export const EC_Dashboard = {
                 ${StatCard({ title: 'Daily Burn', value: this.dispatchLogs.length.toString(), subtext: 'Fulfillment today', alertColor: 'orange' })}
             </div>
 
-            <!-- Role Gist / Guidance Strip -->
-            <div style="background: linear-gradient(135deg, var(--indigo-600), var(--indigo-800)); color: white; padding: 20px; border-radius: 16px; margin: 24px 0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);">
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; backdrop-filter: blur(10px);">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
+            <div style="background: linear-gradient(135deg, var(--indigo-600), var(--indigo-800)); color: white; padding: 24px; border-radius: 20px; margin: 24px 0; box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
                     <div>
-                        <div style="font-weight: 800; font-size: 16px; letter-spacing: -0.02em;">Equipment Coordinator Hub</div>
-                        <div style="font-size: 13px; opacity: 0.8;">You are responsible for Site fulfillment, Asset readiness, and Inventory integrity.</div>
+                        <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Logistics Intelligence</div>
+                        <h2 style="font-size: 24px; font-weight: 900; color: white; margin: 0;">Portfolio Performance</h2>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase;">System Health</div>
+                        <div style="font-size: 14px; font-weight: 800; color: var(--emerald);">100% Operational</div>
                     </div>
                 </div>
-                <button class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px);" onclick="window.app.ecModule.showGistModal()">
-                    Learn Module Map
-                </button>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <div style="font-weight: 800; color: white; font-size: 13px;">Fulfillment vs Consumption (Burn)</div>
+                            <span style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5);">Portfolio-wide (30D)</span>
+                        </div>
+                        <div style="height: 180px; position: relative;">
+                            <canvas id="pl-portfolio-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase;">Avg Lead Time</div>
+                                <div style="font-size: 16px; font-weight: 900; color: white;">1.2 Days</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                                <i class="fas fa-truck-fast"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase;">Dispatch Volume</div>
+                                <div style="font-size: 16px; font-weight: 900; color: white;">480 Units <span style="font-size: 10px; color: var(--emerald); font-weight: 800;">+12%</span></div>
+                            </div>
+                        </div>
+                        <button class="btn" style="background: white; color: var(--indigo-700); font-weight: 800; font-size: 11px; margin-top: auto; padding: 10px;" onclick="window.app.loadPage('project-logistics')">
+                            Open Logistics Ledger <i class="fas fa-arrow-right" style="margin-left: 6px;"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
@@ -192,8 +225,8 @@ export const EC_Dashboard = {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { 
-                        duration: 2000, 
+                    animation: {
+                        duration: 2000,
                         easing: 'easeOutElastic',
                         delay: (context) => context.dataIndex * 150
                     },
@@ -215,16 +248,16 @@ export const EC_Dashboard = {
                         y: {
                             beginAtZero: true,
                             grid: { display: true, color: 'rgba(0,0,0,0.04)', drawBorder: false },
-                            ticks: { 
-                                font: { size: 11, weight: '700' }, 
+                            ticks: {
+                                font: { size: 11, weight: '700' },
                                 color: '#94a3b8',
                                 padding: 12
                             }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { 
-                                font: { size: 12, weight: '800' }, 
+                            ticks: {
+                                font: { size: 12, weight: '800' },
                                 color: '#475569',
                                 padding: 12
                             }
@@ -255,5 +288,63 @@ export const EC_Dashboard = {
             { main: '#0f172a' }
         ];
         return fallbacks[i % fallbacks.length];
+    },
+
+    initPortfolioCharts() {
+        requestAnimationFrame(() => {
+            const ctx = document.getElementById('pl-portfolio-chart');
+            if (!ctx || typeof Chart === 'undefined') return;
+
+            if (this.portfolioChartInstance) this.portfolioChartInstance.destroy();
+
+            this.portfolioChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'],
+                    datasets: [
+                        {
+                            label: 'Fulfillment',
+                            data: [65, 78, 72, 85, 80, 92],
+                            borderColor: '#ffffff',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Consumption',
+                            data: [45, 52, 60, 58, 65, 70],
+                            borderColor: 'rgba(255,255,255,0.4)',
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            display: false,
+                            beginAtZero: true 
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                font: { size: 10, weight: '700' }, 
+                                color: 'rgba(255,255,255,0.4)' 
+                            }
+                        }
+                    }
+                }
+            });
+        });
     }
 };

@@ -1,17 +1,17 @@
 export const DrawerTemplates = {
-  escapeHTML(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  },
+    escapeHTML(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
 
-  documentViewer: (url, fileName = "Document") => {
-    if (!url || url === "null" || url === "") {
-      return `
+    documentViewer: (url, fileName = "Document") => {
+        if (!url || url === "null" || url === "") {
+            return `
                 <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 48px; text-align: center;">
                     <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--slate-400); margin-bottom: 24px;">
                         <i class="fas fa-file-excel"></i>
@@ -24,15 +24,15 @@ export const DrawerTemplates = {
                     <button class="btn btn-secondary" onclick="window.drawer.close()" style="margin-top: 24px;">Return to Registry</button>
                 </div>
             `;
-    }
+        }
 
-    const isPdf =
-      (url || "").toLowerCase().includes(".pdf") ||
-      (fileName || "").toLowerCase().includes(".pdf") ||
-      (url || "").includes("type=pdf");
-    const fileExt = (fileName || "document.pdf").split(".").pop().toUpperCase();
+        const isPdf =
+            (url || "").toLowerCase().includes(".pdf") ||
+            (fileName || "").toLowerCase().includes(".pdf") ||
+            (url || "").includes("type=pdf");
+        const fileExt = (fileName || "document.pdf").split(".").pop().toUpperCase();
 
-    return `
+        return `
             <div style="height: 100%; display: flex; flex-direction: column; background: var(--slate-50);">
                 <div style="padding: 16px 24px; border-bottom: 1px solid var(--slate-200); background: white; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); z-index: 10;">
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -55,12 +55,11 @@ export const DrawerTemplates = {
                 </div>
                 
                 <div style="flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column;">
-                    ${
-                      isPdf
-                        ? `
+                    ${isPdf
+                ? `
                         <iframe src="${url}#toolbar=0&navpanes=0" style="width: 100%; height: 100%; border: none; background: var(--slate-100);"></iframe>
                     `
-                        : `
+                : `
                         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 48px; text-align: center; background: white; margin: 24px; border-radius: 16px; border: 1px dashed var(--slate-300);">
                             <div style="width: 100px; height: 100px; border-radius: 24px; background: #F0F9FF; display: flex; align-items: center; justify-content: center; color: #0369A1; font-size: 48px; margin-bottom: 24px; border: 1px solid #E0F2FE;">
                                 <i class="fas fa-file-word"></i>
@@ -80,7 +79,7 @@ export const DrawerTemplates = {
                             </div>
                         </div>
                     `
-                    }
+            }
                 </div>
                 
                 <div style="padding: 12px 24px; background: white; border-top: 1px solid var(--slate-200); font-size: 11px; color: var(--slate-400); display: flex; justify-content: space-between; align-items: center;">
@@ -92,9 +91,9 @@ export const DrawerTemplates = {
                 </div>
             </div>
         `;
-  },
+    },
 
-  materialPriceForm: (data = {}) => `
+    materialPriceForm: (data = {}) => `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Material Name</label>
@@ -158,19 +157,18 @@ export const DrawerTemplates = {
                     <i class="fas fa-save" style="margin-right: 8px;"></i> ${data.id ? "Update Configuration" : "Save Configuration"}
                 </button>
                 
-                ${
-                  data.id
-                    ? `
+                ${data.id
+            ? `
                     <button class="btn btn-secondary" style="width: 100%; justify-content: center; color: var(--red); border-color: var(--red-light); background: transparent;" onclick="window.app.pmModule.deleteMaterialPrice('${data.id}')">
                         <i class="fas fa-trash-can" style="margin-right: 8px;"></i> Delete Configuration
                     </button>
                 `
-                    : ""
-                }
+            : ""
+        }
             </div>
         </div>
     `,
-  variationOrderForm: (contractId) => `
+    variationOrderForm: (contractId) => `
         <div style="padding: 24px;">
             <div style="background: var(--orange-light); padding: 12px; border-radius: 8px; border: 1px solid var(--orange-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-file-signature" style="color: var(--orange); font-size: 20px;"></i>
@@ -206,7 +204,7 @@ export const DrawerTemplates = {
             </button>
         </div>
     `,
-  transactionEntry: `
+    transactionEntry: `
         <div style="padding: 24px;">
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Transaction Type</label>
@@ -266,7 +264,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  whistleblowerPortal: `
+    whistleblowerPortal: `
         <div style="padding: 24px;">
             <div style="background: var(--red-light); padding: 16px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-shield-halved" style="color: var(--red); font-size: 20px;"></i>
@@ -320,7 +318,7 @@ export const DrawerTemplates = {
             <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
         </div>
     `,
-  safetyIncident: (incident) => `
+    safetyIncident: (incident) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -350,16 +348,15 @@ export const DrawerTemplates = {
                     <div id="safety-photo-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
                         ${(incident?.photos || []).map((p) => `<img src="${p}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid var(--slate-200);">`).join("")}
                     </div>
-                    ${
-                      !incident?.id
-                        ? `
+                    ${!incident?.id
+            ? `
                     <label class="camera-btn" style="border: 2px dashed #FECACA; background: #FFF5F5; padding: 20px; text-align: center; border-radius: 12px; color: #B91C1C; cursor: pointer; display: block;" onclick="window.app.fsModule?.triggerSafetyCamera()">
                         <i class="fas fa-camera" style="font-size: 24px; margin-bottom: 8px;"></i>
                         <div style="font-weight: 700; font-size: 13px;">Capture Scene / Hazard</div>
                     </label>
                     `
-                        : ""
-                    }
+            : ""
+        }
                 </div>
 
                 <div style="border-top: 1px solid var(--slate-200); padding-top: 24px; margin-top: 24px;">
@@ -375,18 +372,17 @@ export const DrawerTemplates = {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${
-                                  (incident?.replies || []).length === 0
-                                    ? `
+                                ${(incident?.replies || []).length === 0
+            ? `
                                     <tr>
                                         <td colspan="3" style="text-align: center; padding: 24px; color: var(--slate-400); font-size: 12px; background: white;">
                                             No handling updates yet.
                                         </td>
                                     </tr>
                                 `
-                                    : incident.replies
-                                        .map(
-                                          (reply) => `
+            : incident.replies
+                .map(
+                    (reply) => `
                                     <tr style="border-bottom: 1px solid var(--slate-100); background: white;">
                                         <td style="padding: 12px; vertical-align: top;">
                                             <div style="font-weight: 700; font-size: 12px; color: var(--slate-900);">${reply.user?.name || "System"}</div>
@@ -400,9 +396,9 @@ export const DrawerTemplates = {
                                         </td>
                                     </tr>
                                 `,
-                                        )
-                                        .join("")
-                                }
+                )
+                .join("")
+        }
                             </tbody>
                         </table>
                     </div>
@@ -418,12 +414,12 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  contractView: (contract) => {
-    const versions = contract.versions || [];
-    const latestVersion = versions.length > 0 ? versions[0] : null;
-    const currentVersionNum = latestVersion ? latestVersion.versionNumber : 1;
+    contractView: (contract) => {
+        const versions = contract.versions || [];
+        const latestVersion = versions.length > 0 ? versions[0] : null;
+        const currentVersionNum = latestVersion ? latestVersion.versionNumber : 1;
 
-    return `
+        return `
         <div style="padding: 0;">
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: linear-gradient(to right, var(--slate-50), #fff);">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
@@ -431,25 +427,24 @@ export const DrawerTemplates = {
                         <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${contract.refCode || "CTR-" + contract.id}</div>
                         <div style="color: var(--slate-500); font-size: 13px; font-weight: 500;">${contract.title}</div>
                     </div>
-                    <span class="status ${ (contract.endDate && new Date(contract.endDate) <= new Date()) ? 'delayed' : (contract.status === 'active' ? 'active' : 'locked') }" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; ${ (contract.endDate && new Date(contract.endDate) <= new Date()) ? 'background: #fee2e2; color: #ef4444;' : '' }">${ (contract.endDate && new Date(contract.endDate) <= new Date()) ? "ENDED" : (contract.status || "ACTIVE").toUpperCase()}</span>
+                    <span class="status ${(contract.endDate && new Date(contract.endDate) <= new Date()) ? 'delayed' : (contract.status === 'active' ? 'active' : 'locked')}" style="padding: 4px 12px; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; ${(contract.endDate && new Date(contract.endDate) <= new Date()) ? 'background: #fee2e2; color: #ef4444;' : ''}">${(contract.endDate && new Date(contract.endDate) <= new Date()) ? "ENDED" : (contract.status || "ACTIVE").toUpperCase()}</span>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
-                    ${
-                      contract.contractType !== "project"
-                        ? `
+                    ${contract.contractType !== "project"
+                ? `
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor / Party</div>
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.vendorName || "-"}</div>
                     </div>
                     `
-                        : `
+                : `
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Linked Project</div>
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.project?.name || "Master Project"}</div>
                     </div>
                     `
-                    }
+            }
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Contract Value</div>
                         <div style="font-weight: 800; color: var(--slate-900); font-family: 'JetBrains Mono'; font-size: 15px;">MWK ${Number(contract.value || 0).toLocaleString()}</div>
@@ -465,19 +460,19 @@ export const DrawerTemplates = {
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Procurement Variance</div>
                         ${(() => {
-                          const market = Number(contract.marketValue || contract.project?.budgetTotal || 0);
-                          const actual = Number(contract.value || 0);
-                          const variance = actual - market;
-                          const isOver = variance > 0;
-                          const percent = market > 0 ? ((variance / market) * 100).toFixed(1) : '0.0';
-                          return `
+                const market = Number(contract.marketValue || contract.project?.budgetTotal || 0);
+                const actual = Number(contract.value || 0);
+                const variance = actual - market;
+                const isOver = variance > 0;
+                const percent = market > 0 ? ((variance / market) * 100).toFixed(1) : '0.0';
+                return `
                           <div style="font-weight: 800; color: ${isOver ? '#e11d48' : '#059669'}; font-size: 14px; display: flex; align-items: center; gap: 6px;">
                             ${isOver ? '+' : ''}MWK ${Math.abs(variance).toLocaleString()} 
                             <span style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: ${isOver ? '#fff1f2' : '#ecfdf5'}; color: ${isOver ? '#e11d48' : '#059669'};">
                                 ${percent}% ${isOver ? 'OVER' : 'UNDER'}
                             </span>
                           </div>`;
-                        })()}
+            })()}
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Actual Contract Value</div>
@@ -486,17 +481,17 @@ export const DrawerTemplates = {
                 </div>
                 
                 ${(() => {
-                  const justText = contract.justification || contract.versions?.[0]?.changeNotes || "";
-                  if (justText && justText !== "Initial contract creation") {
+                const justText = contract.justification || contract.versions?.[0]?.changeNotes || "";
+                if (justText && justText !== "Initial contract creation") {
                     return `
                 <div style="margin-top: 24px; padding: 16px; background: #fff; border: 1px solid var(--slate-200); border-radius: 12px;">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Justification / Purpose</div>
                     <div style="font-size: 13px; color: var(--slate-700); line-height: 1.6;">${justText}</div>
                 </div>
                 `;
-                  }
-                  return "";
-                })()}
+                }
+                return "";
+            })()}
             </div>
 
             <div style="padding: 24px;">
@@ -509,11 +504,10 @@ export const DrawerTemplates = {
                             <div style="flex: 1; text-align: right;">Quantity</div>
                             <div style="flex: 1.2; text-align: right;">Total Est. Value</div>
                         </div>
-                        ${
-                          contract.items && contract.items.length > 0
-                            ? contract.items
-                                .map(
-                                  (item) => `
+                        ${contract.items && contract.items.length > 0
+                ? contract.items
+                    .map(
+                        (item) => `
                             <div style="padding: 12px 16px; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center;">
                                 <div style="flex: 2;">
                                     <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${item.materialName}</div>
@@ -533,22 +527,21 @@ export const DrawerTemplates = {
                                 </div>
                             </div>
                         `,
-                                )
-                                .join("")
-                            : `
+                    )
+                    .join("")
+                : `
                             <div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 12px;">
                                 <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
                                 No specific material line items attached to this agreement.
                             </div>
                         `
-                        }
+            }
                     </div>
                 </div>
 
                 <!-- Variation Orders Section -->
-                ${
-                  contract.contractType !== "project"
-                    ? `
+                ${contract.contractType !== "project"
+                ? `
                 <div style="margin-bottom: 32px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Variation Orders (VO)</h4>
@@ -557,12 +550,11 @@ export const DrawerTemplates = {
                         </button>
                     </div>
                     <div id="variation-orders-list">
-                        ${
-                          contract.variationOrders &&
-                          contract.variationOrders.length > 0
-                            ? contract.variationOrders
-                                .map(
-                                  (vo) => `
+                        ${contract.variationOrders &&
+                    contract.variationOrders.length > 0
+                    ? contract.variationOrders
+                        .map(
+                            (vo) => `
                             <div style="padding: 10px; background: white; border: 1px solid var(--slate-200); border-radius: 8px; margin-bottom: 8px;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                     <span style="font-weight: 700; font-size: 12px; color: var(--slate-800);">${vo.voCode}</span>
@@ -573,19 +565,19 @@ export const DrawerTemplates = {
                                 <div style="font-size: 11px; color: var(--slate-500); line-height: 1.4;">${vo.reason}</div>
                             </div>
                         `,
-                                )
-                                .join("")
-                            : `
+                        )
+                        .join("")
+                    : `
                             <div style="font-size: 11px; color: var(--slate-400); text-align: center; padding: 12px; border: 1px dashed var(--slate-200); border-radius: 8px; background: white;">
                                 No Variation Orders recorded for this contract.
                             </div>
                         `
-                        }
+                }
                     </div>
                 </div>
                 `
-                    : ""
-                }
+                : ""
+            }
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Contract Documents</h4>
                 </div>
@@ -615,11 +607,10 @@ export const DrawerTemplates = {
                         <i class="fas fa-history" style="color: var(--orange);"></i> Version History & Audit Trace
                     </h4>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${
-                          versions.length > 0
-                            ? versions
-                                .map(
-                                  (v, idx) => `
+                        ${versions.length > 0
+                ? versions
+                    .map(
+                        (v, idx) => `
                             <div style="display: flex; flex-direction: column; padding: 16px; background: white; border-radius: 12px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -652,15 +643,15 @@ export const DrawerTemplates = {
                                 </div>
                             </div>
                         `,
-                                )
-                                .join("")
-                            : `
+                    )
+                    .join("")
+                : `
                             <div style="text-align: center; padding: 32px; color: var(--slate-400); font-size: 13px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-200);">
                                 <i class="fas fa-history" style="font-size: 24px; margin-bottom: 12px; opacity: 0.5;"></i>
                                 <div>No prior versions tracked for this contract.</div>
                             </div>
                         `
-                        }
+            }
                     </div>
                 </div>
 
@@ -749,13 +740,13 @@ export const DrawerTemplates = {
             </div>
         </div>
     `;
-  },
+    },
 
 
 
 
 
-  requestFunds: `
+    requestFunds: `
         <div class="drawer-section">
             <div style="margin-bottom: 24px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover); display: flex; gap: 12px; align-items: center;">
                  <i class="fas fa-file-invoice-dollar" style="color: var(--orange); font-size: 20px;"></i>
@@ -800,7 +791,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  investigation: `
+    investigation: `
         <div style="padding: 24px;">
             <div style="text-align: center; margin-bottom: 24px;">
                 <div style="width: 64px; height: 64px; background: var(--red-light); color: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px;">
@@ -831,7 +822,7 @@ export const DrawerTemplates = {
             </div>
         </div>
     `,
-  newProject: `
+    newProject: `
         <div class="drawer-section" style="padding-bottom: 80px;">
             <div id="project-form-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1131,17 +1122,17 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  siteLogVerification: (project, log) => {
-    const escapeHTML = (str) => {
-      if (!str) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
-    return `
+    siteLogVerification: (project, log) => {
+        const escapeHTML = (str) => {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+        return `
         <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
           <div class="tabs" style="margin-bottom: 0;">
             <div class="tab active" style="border-bottom-color: var(--orange);">Verify Log</div>
@@ -1197,9 +1188,9 @@ export const DrawerTemplates = {
           <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleApproveLog('${escapeHTML(log?.id)}')">Approve & Update Gantt</button>
         </div>
     `;
-  },
+    },
 
-  dailyReport: `
+    dailyReport: `
         <div class="drawer-section">
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: 600; color: var(--slate-600); font-size: 12px;">GPS Location Verified</span>
@@ -1271,7 +1262,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  confirmArrival: `
+    confirmArrival: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--blue);">Incoming Asset Verification</div>
@@ -1309,7 +1300,7 @@ export const DrawerTemplates = {
          </div>
     `,
 
-  updateTask: `
+    updateTask: `
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                  <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Task Update</div>
@@ -1349,7 +1340,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  dailyProgressLog: (taskId = null) => `
+    dailyProgressLog: (taskId = null) => `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <input type="hidden" id="daily-log-task-id" value="${taskId || ""}" />
@@ -1456,7 +1447,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  dailyProgressLogHistory: (logs = []) => `
+    dailyProgressLogHistory: (logs = []) => `
         <div class="drawer-section" style="padding-top: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800;">Log History</h3>
@@ -1464,18 +1455,17 @@ export const DrawerTemplates = {
             </div>
             
             <div id="history-content-area">
-                ${
-                  logs.length === 0
-                    ? `
+                ${logs.length === 0
+            ? `
                     <div style="text-align: center; padding: 40px 20px; color: var(--slate-400);">
                         <i class="fas fa-calendar-alt" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
                         <div>Select a date to view historical progress reports</div>
                     </div>
                 `
-                    : `
+            : `
                     <div style="text-align: center; padding: 20px; color: var(--slate-500);">Loading historical data...</div>
                 `
-                }
+        }
             </div>
             
             <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
@@ -1484,7 +1474,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  logEquipmentUsage: `
+    logEquipmentUsage: `
          <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Task Description</label>
@@ -1498,7 +1488,7 @@ export const DrawerTemplates = {
          </div>
     `,
 
-  returnEquipment: `
+    returnEquipment: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--orange);">Return Asset to Yard</div>
@@ -1524,7 +1514,7 @@ export const DrawerTemplates = {
          </div>
     `,
 
-  attendanceLog: `
+    attendanceLog: `
         <div class="drawer-section">
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">General Labor</label><input type="number" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" value="12"></div>
             <div style="margin-bottom: 16px;"><label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Skilled Labor</label><input type="number" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;" value="2"></div>
@@ -1533,7 +1523,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  incidentReport: `
+    incidentReport: `
          <div class="drawer-section">
             <div style="background: #FEF2F2; color: #B91C1C; padding: 12px; border-radius: 6px; font-size: 12px; margin-bottom: 16px;">
                 <i class="fas fa-triangle-exclamation"></i> This will immediately alert the Project Manager and Safety Officer.
@@ -1549,8 +1539,8 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  // --- CONTRACT ADMIN TEMPLATES ---
-  contractDetails: `
+    // --- CONTRACT ADMIN TEMPLATES ---
+    contractDetails: `
         <div class="drawer-section">
             <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
                 <div><div class="stat-label">Start Date</div><div style="font-weight:600;">Jan 01, 2025</div></div>
@@ -1583,14 +1573,14 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  editContract: (contract) => {
-    const formatDate = (dateStr) => {
-      if (!dateStr) return "";
-      const d = new Date(dateStr);
-      return d.toISOString().split("T")[0];
-    };
+    editContract: (contract) => {
+        const formatDate = (dateStr) => {
+            if (!dateStr) return "";
+            const d = new Date(dateStr);
+            return d.toISOString().split("T")[0];
+        };
 
-    return `
+        return `
         <div style="padding: 24px;">
             <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
                 <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--orange); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
@@ -1669,9 +1659,9 @@ export const DrawerTemplates = {
             </div>
         </div>
         `;
-  },
+    },
 
-  uploadAmendment: `
+    uploadAmendment: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Amendment Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Variation Order</option><option>Addendum</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Change Description</label><textarea class="form-input" rows="3" style="width:100%; padding:10px;"></textarea></div>
@@ -1686,7 +1676,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  uploadDocument: (projects = []) => `
+    uploadDocument: (projects = []) => `
         <div class="drawer-section">
             <div id="upload-doc-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1737,7 +1727,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  documentVersionHistory: (document) => `
+    documentVersionHistory: (document) => `
         <div class="drawer-section">
             <div style="margin-bottom: 20px; padding: 12px; background: var(--blue-light); border-radius: 8px;">
                 <div style="font-weight: 700; color: var(--blue); font-size: 14px;">Version History: ${document.title}</div>
@@ -1753,8 +1743,8 @@ export const DrawerTemplates = {
                 </thead>
                 <tbody>
                     ${(document.versions || [])
-                      .map(
-                        (v) => `
+            .map(
+                (v) => `
                         <tr style="border-bottom: 1px solid var(--slate-100);">
                             <td style="padding: 12px 8px; font-weight: 600;">v${v.versionNumber}</td>
                             <td style="padding: 12px 8px;">${new Date(v.createdAt).toLocaleDateString()}</td>
@@ -1767,19 +1757,19 @@ export const DrawerTemplates = {
                             </td>
                         </tr>
                     `,
-                      )
-                      .join("")}
+            )
+            .join("")}
                 </tbody>
             </table>
         </div>
     `,
 
-  contractViewer: (contract) => {
-    const versions = contract.versions || [];
-    const latestVersion =
-      versions.length > 0 ? versions[versions.length - 1] : null;
+    contractViewer: (contract) => {
+        const versions = contract.versions || [];
+        const latestVersion =
+            versions.length > 0 ? versions[versions.length - 1] : null;
 
-    return `
+        return `
         <div style="height: 100%; display: flex; flex-direction: column; background: white;">
             <!-- Header -->
             <div style="padding: 28px 24px; background: linear-gradient(135deg, var(--orange-dark), var(--orange)); color: white; position: relative; overflow: hidden;">
@@ -1830,11 +1820,10 @@ export const DrawerTemplates = {
                 <div style="background: white; border-bottom: 1px solid var(--slate-200); padding: 16px 24px;">
                     <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; margin-top: 0;">Version History</h4>
                     <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
-                        ${
-                          versions.length > 0
-                            ? versions
-                                .map(
-                                  (v, idx) => `
+                        ${versions.length > 0
+                ? versions
+                    .map(
+                        (v, idx) => `
                             <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber || idx + 1}</div>
@@ -1849,21 +1838,20 @@ export const DrawerTemplates = {
                                 </div>
                             </div>
                         `,
-                                )
-                                .reverse()
-                                .join("")
-                            : `
+                    )
+                    .reverse()
+                    .join("")
+                : `
                             <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
                                 No prior versions tracked for this contract.
                             </div>
                         `
-                        }
+            }
                     </div>
                 </div>
 
-                ${
-                  contract.fileUrl
-                    ? `
+                ${contract.fileUrl
+                ? `
                     <div style="background: var(--slate-800); padding: 10px; display: flex; justify-content: center; gap: 20px;">
                         <div style="color: white; font-size: 11px; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-shield-alt" style="color: var(--emerald);"></i> Digitally Verified
@@ -1874,7 +1862,7 @@ export const DrawerTemplates = {
                     </div>
                     <iframe src="${contract.fileUrl}" style="flex: 1; width: 100%; border: none;"></iframe>
                 `
-                    : `
+                : `
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--slate-500); padding: 60px; text-align: center;">
                         <div style="position: relative; margin-bottom: 24px;">
                             <div style="width: 100px; height: 100px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-orange 2s infinite;">
@@ -1897,7 +1885,7 @@ export const DrawerTemplates = {
                         </div>
                     </div>
                 `
-                }
+            }
             </div>
 
             <!-- Footer Actions -->
@@ -1922,9 +1910,9 @@ export const DrawerTemplates = {
         </div>
         </div>
     `;
-  },
+    },
 
-  uploadDocumentVersion: (document) => `
+    uploadDocumentVersion: (document) => `
         <div class="drawer-section">
             <div id="upload-ver-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1951,7 +1939,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  editDocument: (doc) => `
+    editDocument: (doc) => `
         <div class="drawer-section">
             <div id="edit-doc-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             
@@ -1979,8 +1967,8 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  // --- EQUIPMENT COORDINATOR TEMPLATES ---
-  assignEquipment: `
+    // --- EQUIPMENT COORDINATOR TEMPLATES ---
+    assignEquipment: `
         <div class="drawer-section">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 12px; background: var(--orange-light); border-radius: 8px; border: 1px solid var(--orange-hover);">
                 <i class="fas fa-key" style="color: var(--orange); font-size: 20px;"></i>
@@ -2073,17 +2061,17 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  assetDetails: (asset) => {
-    const escapeHTML = (str) => {
-      if (!str) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
-    return `
+    assetDetails: (asset) => {
+        const escapeHTML = (str) => {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+        return `
         <div class="drawer-section">
             <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center;">
                 <div style="width: 80px; height: 80px; background: var(--slate-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--slate-600); border: 1px solid var(--slate-200);">
@@ -2168,9 +2156,9 @@ export const DrawerTemplates = {
             </div>
         </div>
     `;
-  },
+    },
 
-  scheduleMaintenance: `
+    scheduleMaintenance: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Equipment</label><select class="form-input" style="width:100%; padding:10px;"><option>EQP-045 Excavator</option></select></div>
             <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Service Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Preventive (Scheduled)</option><option>Corrective (Repair)</option></select></div>
@@ -2180,10 +2168,10 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
+    // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
 
-  // --- PROJECT MANAGEMENT TEMPLATES ---
-  vendorProfile: `
+    // --- PROJECT MANAGEMENT TEMPLATES ---
+    vendorProfile: `
         <div class="drawer-section">
             <div style="display:flex; gap:16px; align-items:center; margin-bottom:16px;">
                 <div style="width:60px; height:60px; background:var(--slate-200); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:24px; color:var(--slate-600);">MC</div>
@@ -2228,7 +2216,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  onboardVendor: `
+    onboardVendor: `
         <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Company Name</label>
@@ -2257,7 +2245,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  certifyMilestone: `
+    certifyMilestone: `
         <div class="drawer-section" style="background:#F0FDF4; border-bottom:1px solid #BBF7D0;">
             <div style="font-size:12px; color:#166534; font-weight:700;">Milestone Details</div>
             <div style="font-size:16px; font-weight:700; color:#15803D; margin:4px 0;">Foundation Completion</div>
@@ -2285,7 +2273,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  viewPolicy: `
+    viewPolicy: `
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:18px;">Performance Bond</div>
@@ -2311,7 +2299,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  requestRenewal: `
+    requestRenewal: `
          <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--orange);">Insurance Renewal Required</div>
@@ -2338,7 +2326,7 @@ Contract Admin</textarea>
          </div>
     `,
 
-  flagBreach: `
+    flagBreach: `
          <div class="drawer-section">
             <div style="background:var(--red-light); padding:16px; border-radius:8px; display:flex; gap:12px; align-items:center; margin-bottom:24px;">
                 <i class="fas fa-gavel" style="color:var(--red); font-size:20px;"></i>
@@ -2373,7 +2361,7 @@ Contract Admin</textarea>
          </div>
     `,
 
-  sendReminders: `
+    sendReminders: `
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:14px; color:var(--blue);">Bulk Reminder Action</div>
@@ -2413,7 +2401,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  newAudit: `
+    newAudit: `
         <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Site</label>
@@ -2441,7 +2429,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  shiftPlan: `
+    shiftPlan: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Select Site</label>
@@ -2470,7 +2458,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  addTask: `
+    addTask: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Task Name</label>
@@ -2499,7 +2487,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  matchTransaction: `
+    matchTransaction: `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom:16px;">
                 <div style="font-size:11px; color:var(--slate-500); font-weight:700; text-transform:uppercase;">Bank Transaction</div>
@@ -2527,7 +2515,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  createJournalEntry: `
+    createJournalEntry: `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:12px; border-radius:6px; margin-bottom:16px;">
                 <div style="font-size:11px; color:var(--slate-500); font-weight:700; text-transform:uppercase;">Source (Bank Stmt)</div>
@@ -2555,7 +2543,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  submitComplaint: (projectId = null) => `
+    submitComplaint: (projectId = null) => `
         <div class="drawer-section">
             <div style="background:var(--red-light); padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid var(--red-hover);">
                 <div style="display:flex; gap:12px; align-items:center;">
@@ -2668,7 +2656,7 @@ Contract Admin</textarea>
 
     complaintDetails: (issue) => {
         const notes = (issue.resolutionNotes || "").split("\n\n").filter(n => n.trim());
-        
+
         return `
             <div style="padding: 0; background: var(--slate-50); height: 100%; display: flex; flex-direction: column;">
                 <!-- Header Card -->
@@ -2712,8 +2700,8 @@ Contract Admin</textarea>
 
                     <!-- Resolution Thread -->
                     ${notes.map((note, idx) => {
-                        const isSystem = note.includes("System") || note.includes("HQ") || note.includes("PM Response");
-                        return `
+            const isSystem = note.includes("System") || note.includes("HQ") || note.includes("PM Response");
+            return `
                         <div style="display: flex; gap: 12px; ${!isSystem ? 'flex-direction: row-reverse;' : ''}">
                             <div style="width: 32px; height: 32px; background: ${isSystem ? 'var(--slate-200)' : 'var(--orange-light)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; color: ${isSystem ? 'var(--slate-600)' : 'var(--orange)'}">
                                 <i class="fas ${isSystem ? 'fa-shield-halved' : 'fa-user-tie'}"></i>
@@ -2723,7 +2711,7 @@ Contract Admin</textarea>
                             </div>
                         </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
 
                 <!-- Response Input Area -->
@@ -2753,8 +2741,8 @@ Contract Admin</textarea>
         `;
     },
 
-  // --- VEHICLE PROCUREMENT WORKFLOW ---
-  requestNewVehicle: `
+    // --- VEHICLE PROCUREMENT WORKFLOW ---
+    requestNewVehicle: `
         <div class="drawer-section">
             <div style="background:var(--blue-light); padding:16px; border-radius:8px; border:1px solid var(--blue); margin-bottom:24px; display:flex; gap:12px; align-items:center;">
                 <i class="fas fa-truck-pickup" style="color:var(--blue); font-size:20px;"></i>
@@ -2789,7 +2777,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  reviewVehicleRequest: (request) => `
+    reviewVehicleRequest: (request) => `
         <div class="drawer-section">
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:20px;">
                 <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Procurement Request #${request.id || "PROC-NEW"}</div>
@@ -2809,7 +2797,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  approveVehiclePurchase: `
+    approveVehiclePurchase: `
         <div class="drawer-section">
             <div style="background:var(--emerald-light); padding:16px; border-radius:8px; border:1px solid var(--emerald); margin-bottom:24px; display:flex; gap:12px; align-items:center;">
                 <i class="fas fa-check-circle" style="color:var(--emerald); font-size:20px;"></i>
@@ -2839,7 +2827,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  addNewVehicle: `
+    addNewVehicle: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Vehicle Name / Model</label>
@@ -2875,8 +2863,8 @@ Contract Admin</textarea>
         </div>
     `,
 
-  // --- SYSTEM TECHNICIAN / USER MANAGEMENT TEMPLATES ---
-  newUser: `
+    // --- SYSTEM TECHNICIAN / USER MANAGEMENT TEMPLATES ---
+    newUser: `
         <div class="drawer-section">
             <div id="create-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             <form id="newUserForm" onsubmit="event.preventDefault(); (window.techModule || window.app.pmModule)?.handleCreateUser(new FormData(this));">
@@ -2917,7 +2905,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  editUser: `
+    editUser: `
         <div class="drawer-section">
             <div id="edit-user-error" style="display:none; padding:12px; background:var(--red-light); color:var(--red); border-radius:6px; margin-bottom:16px; font-size:13px;"></div>
             <form id="editUserForm" onsubmit="event.preventDefault(); (window.techModule || window.app.pmModule)?.handleUpdateUser(new FormData(this));">
@@ -2967,7 +2955,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  editVAT: `
+    editVAT: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:20px;">
                 <label class="form-label">Current VAT Rate (%)</label>
@@ -2978,7 +2966,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  editCurrency: `
+    editCurrency: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:20px;">
                 <label class="form-label">System Primary Currency</label>
@@ -2992,7 +2980,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  editCompany: `
+    editCompany: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Company Name</label>
@@ -3006,7 +2994,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  editSMTP: `
+    editSMTP: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:12px;">
                 <label class="form-label">SMTP Host</label>
@@ -3024,7 +3012,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  newContract: `
+    newContract: `
         <div style="padding: 24px;">
             <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
                 <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Create Vendor Contract</div>
@@ -3156,7 +3144,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  newProjectContract: `
+    newProjectContract: `
         <div style="padding: 24px;">
             <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-file-contract" style="color: var(--orange); font-size: 24px;"></i>
@@ -3219,7 +3207,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  newVendor: `
+    newVendor: `
         <div style="padding: 24px;">
             <div style="margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200); display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-store" style="color: var(--slate-600); font-size: 24px;"></i>
@@ -3269,7 +3257,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  completeMaintenance: (assetId) => `
+    completeMaintenance: (assetId) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
             <div class="form-group" style="margin-bottom: 16px;">
@@ -3283,7 +3271,7 @@ Contract Admin</textarea>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `,
-  initiateBCR: (projects = [], selectedId = "") => `
+    initiateBCR: (projects = [], selectedId = "") => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
@@ -3291,17 +3279,16 @@ Contract Admin</textarea>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project *</label>
                 <select id="bcr_project" class="form-input" style="width: 100%;">
-                    ${
-                      projects.length
-                        ? projects
-                            .map(
-                              (p) => `
+                    ${projects.length
+            ? projects
+                .map(
+                    (p) => `
                         <option value="${p.id}" ${p.code === selectedId || String(p.id) === selectedId ? "selected" : ""}>${p.code}: ${p.name}</option>
                     `,
-                            )
-                            .join("")
-                        : '<option value="">No projects available</option>'
-                    }
+                )
+                .join("")
+            : '<option value="">No projects available</option>'
+        }
                 </select>
             </div>
             
@@ -3322,7 +3309,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  reportGenerator: `
+    reportGenerator: `
         <div class="drawer-section">
             <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--slate-900);">Generate System Report</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Select parameters to generate detailed project or financial intelligence.</p>
@@ -3379,7 +3366,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  materialDistribution: (item) => `
+    materialDistribution: (item) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Issue Material to Project</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming the "Burn" (distribution) of consumable resources from the central store.</p>
@@ -3413,7 +3400,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  forwardProcurement: (req) => `
+    forwardProcurement: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Forward to Finance (Stock-Out)</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">The current stock is insufficient. Forwarding this to the Finance Director (Stefan Mwale) for urgent procurement.</p>
@@ -3434,7 +3421,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  requestNewAsset: `
+    requestNewAsset: `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">New Asset Procurement Request</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Requesting additional fleet or specialized equipment from Finance.</p>
@@ -3470,7 +3457,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  requestResourceFS: (projectData = {}) => `
+    requestResourceFS: (projectData = {}) => `
         <div class="drawer-section" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
             <div style="display: flex; align-items: center; margin-bottom: 16px;">
                 <div style="width: 40px; height: 40px; background: rgba(255, 107, 0, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--orange); margin-right: 12px; font-size: 18px;">
@@ -3504,17 +3491,16 @@ Contract Admin</textarea>
                 <div id="fs_machinery_req_view">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Equipment Model</label>
                     <select id="fs_mac_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        ${
-                          (projectData?.recommendedMachines || []).length > 0
-                            ? (projectData.recommendedMachines || [])
-                                .map(
-                                  (m) => `
+                        ${(projectData?.recommendedMachines || []).length > 0
+            ? (projectData.recommendedMachines || [])
+                .map(
+                    (m) => `
                             <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.available ? "(Available)" : "(Waitlist)"} ${m.type}: ${m.model}</option>
                         `,
-                                )
-                                .join("")
-                            : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
-                        }
+                )
+                .join("")
+            : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
+        }
                     </select>
                     
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
@@ -3531,17 +3517,16 @@ Contract Admin</textarea>
                 <div id="fs_material_req_view" style="display: none;">
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Material Type</label>
                     <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        ${
-                          (projectData?.recommendedMaterials || []).length > 0
-                            ? (projectData.recommendedMaterials || [])
-                                .map(
-                                  (m) => `
+                        ${(projectData?.recommendedMaterials || []).length > 0
+            ? (projectData.recommendedMaterials || [])
+                .map(
+                    (m) => `
                             <option value="${m.name}" data-unit="${m.unit}">${m.name} (${m.unit})</option>
                         `,
-                                )
-                                .join("")
-                            : `<option value="" disabled>No materials mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
-                        }
+                )
+                .join("")
+            : `<option value="" disabled>No materials mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
+        }
                     </select>
 
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
@@ -3578,7 +3563,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  dispatchResource: (req) => `
+    dispatchResource: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Dispatch Resources</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Confirming stock availability and setting estimated delivery time.</p>
@@ -3606,7 +3591,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  replenishRequest: (req) => `
+    replenishRequest: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Replenishment Request (FD)</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Stock is unavailable in yard. Requesting procurement approval from Finance Director.</p>
@@ -3630,7 +3615,7 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-  logMaterialBurn: (item) => `
+    logMaterialBurn: (item) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Log Material Consumption (Burn)</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Recording use of project-owned inventory on site.</p>
@@ -3671,7 +3656,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  extendProject: (project) => `
+    extendProject: (project) => `
         <div style="padding: 24px;">
             <div style="background: var(--orange-light); padding: 16px; border-radius: 8px; border: 1px solid var(--orange); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-calendar-plus" style="color: var(--orange); font-size: 20px;"></i>
@@ -3734,10 +3719,10 @@ Contract Admin</textarea>
         </div>
     `,
 
-  // ============================================================
-  // GANTT PHASE EDITOR  (PM opens from Gantt toolbar)
-  // ============================================================
-  ganttPhaseEditor: `
+    // ============================================================
+    // GANTT PHASE EDITOR  (PM opens from Gantt toolbar)
+    // ============================================================
+    ganttPhaseEditor: `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50); display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -3772,10 +3757,10 @@ Contract Admin</textarea>
         </div>
     `,
 
-  // ============================================================
-  // REQUEST TIMELINE EXTENSION  (any role submits to PM)
-  // ============================================================
-  requestTimelineExtension: (projects = []) => `
+    // ============================================================
+    // REQUEST TIMELINE EXTENSION  (any role submits to PM)
+    // ============================================================
+    requestTimelineExtension: (projects = []) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-bottom: 4px solid var(--orange);">
                 <div style="display: flex; align-items: center; gap: 14px;">
@@ -3845,7 +3830,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  timelineExtensionReview: (req) => `
+    timelineExtensionReview: (req) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -3887,7 +3872,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  dailyLogReview: (log, historicalLogs = []) => `
+    dailyLogReview: (log, historicalLogs = []) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -3924,22 +3909,21 @@ Contract Admin</textarea>
                     </div>
                 </div>
 
-                ${
-                  log.expenseItems && log.expenseItems.length > 0
-                    ? `
+                ${log.expenseItems && log.expenseItems.length > 0
+            ? `
                     <div style="margin-bottom: 24px;">
                         <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Site Expenses (MWK)</div>
                         <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                             ${log.expenseItems
-                              .map(
-                                (item) => `
+                .map(
+                    (item) => `
                                 <tr>
                                     <td style="padding: 8px; border-bottom: 1px solid var(--slate-100);">${item.description}</td>
                                     <td style="padding: 8px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(item.amount).toLocaleString()}</td>
                                 </tr>
                             `,
-                              )
-                              .join("")}
+                )
+                .join("")}
                             <tr>
                                 <td style="padding: 8px; font-weight: 700;">Total</td>
                                 <td style="padding: 8px; text-align: right; font-weight: 700; font-family: 'JetBrains Mono';">${log.expenseItems.reduce((s, i) => s + Number(i.amount), 0).toLocaleString()}</td>
@@ -3947,8 +3931,8 @@ Contract Admin</textarea>
                         </table>
                     </div>
                 `
-                    : ""
-                }
+            : ""
+        }
 
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label class="form-label" style="font-size: 11px;">REJECTION REASON (ONLY IF REJECTING)</label>
@@ -3957,30 +3941,29 @@ Contract Admin</textarea>
 
                 <div style="display: flex; gap: 12px; margin-top: 32px;">
                     <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                    ${
-                      log.status === "submitted" || log.status === "pending"
-                        ? `
+                    ${log.status === "submitted" || log.status === "pending"
+            ? `
                         <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectLog('${log.id}', document.getElementById('log-review-comment').value)">Reject</button>
                         <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveLog('${log.id}')">Approve & Update Schedule</button>
                     `
-                        : ""
-                    }
+            : ""
+        }
                 </div>
             </div>
         </div>
     `,
 
-  requisitionReview: (req) => {
-    const isReplenishment = req.isReplenishment;
-    const items = req.items || [];
-    const reqCode = req.reqCode || "REQ-" + req.id;
-    const submitterName =
-      req.submitter?.name ||
-      req.user?.name ||
-      req.requester?.name ||
-      "Supervisor";
+    requisitionReview: (req) => {
+        const isReplenishment = req.isReplenishment;
+        const items = req.items || [];
+        const reqCode = req.reqCode || "REQ-" + req.id;
+        const submitterName =
+            req.submitter?.name ||
+            req.user?.name ||
+            req.requester?.name ||
+            "Supervisor";
 
-    return `
+        return `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -4001,25 +3984,25 @@ Contract Admin</textarea>
                     </thead>
                     <tbody>
                         ${items
-                          .map((item) => {
-                            const name =
-                              item.itemName ||
-                              item.materialName ||
-                              "Unknown Item";
-                            const qty =
-                              item.quantity || item.quantityNeeded || 0;
-                            const unit = item.unit || "";
-                            const cost =
-                              item.unitPrice || item.estimatedCost || 0;
-                            return `
+                .map((item) => {
+                    const name =
+                        item.itemName ||
+                        item.materialName ||
+                        "Unknown Item";
+                    const qty =
+                        item.quantity || item.quantityNeeded || 0;
+                    const unit = item.unit || "";
+                    const cost =
+                        item.unitPrice || item.estimatedCost || 0;
+                    return `
                                 <tr>
                                     <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); font-weight: 600;">${name}</td>
                                     <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right;">${qty} ${unit}</td>
                                     <td style="padding: 10px; border-bottom: 1px solid var(--slate-100); text-align: right; font-family: 'JetBrains Mono';">${Number(cost * qty).toLocaleString()}</td>
                                 </tr>
                             `;
-                          })
-                          .join("")}
+                })
+                .join("")}
                     </tbody>
                 </table>
 
@@ -4039,9 +4022,9 @@ Contract Admin</textarea>
             </div>
         </div>
     `;
-  },
+    },
 
-  userForm: `
+    userForm: `
         <div style="padding: 24px;">
             <input type="hidden" id="edit_user_id" name="id">
             <div class="form-group" style="margin-bottom: 16px;">
@@ -4074,7 +4057,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  editProject: `
+    editProject: `
         <div style="padding: 24px;">
             <input type="hidden" id="edit_proj_id">
             <div class="form-group" style="margin-bottom: 16px;">
@@ -4133,7 +4116,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  projectDetails: (p) => `
+    projectDetails: (p) => `
         <div style="padding: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
                 <div>
@@ -4175,7 +4158,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  assignResource: (projects) => `
+    assignResource: (projects) => `
         <div style="padding: 24px;">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Strategic Asset Dispatch</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">Allocate materials and machinery to active project sites.</p>
@@ -4255,7 +4238,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  receiveProcurement: (item) => `
+    receiveProcurement: (item) => `
         <div style="padding: 24px;">
             <div style="background: var(--blue-light); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
                 <div style="font-weight: 700; color: var(--blue); font-size: 16px;">${item.name}</div>
@@ -4288,7 +4271,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  inventoryDetails: (data) => `
+    inventoryDetails: (data) => `
         <div style="padding: 20px; background: #fff;">
             <div style="background: var(--orange-light); padding: 16px; border-radius: 12px; border: 1px solid rgba(249, 115, 22, 0.2); margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
                 <div style="width: 48px; height: 48px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--orange); box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
@@ -4308,16 +4291,15 @@ Contract Admin</textarea>
             </div>
             
             <div style="display: grid; gap: 8px; margin-bottom: 20px;">
-                ${
-                  data.allocations.length === 0
-                    ? `
+                ${data.allocations.length === 0
+            ? `
                     <div style="padding: 24px; text-align: center; background: var(--slate-50); border: 1px dashed var(--slate-200); border-radius: 12px; color: var(--slate-400); font-size: 12px;">
                         No project-specific stock found.
                     </div>
                 `
-                    : data.allocations
-                        .map(
-                          (a) => `
+            : data.allocations
+                .map(
+                    (a) => `
                     <div style="background: #fff; border: 1px solid var(--slate-100); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fas fa-location-dot" style="font-size: 12px; color: var(--orange);"></i>
@@ -4331,9 +4313,9 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `,
-                        )
-                        .join("")
-                }
+                )
+                .join("")
+        }
             </div>
 
             <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px; display: flex; gap: 12px; align-items: flex-start;">
@@ -4354,7 +4336,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  assetHistory: (asset) => `
+    assetHistory: (asset) => `
         <div style="padding: 24px;">
             <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 24px; border-radius: 16px; color: white; margin-bottom: 24px;">
                 <div style="font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 8px;">Asset Chain of Custody</div>
@@ -4365,23 +4347,22 @@ Contract Admin</textarea>
             <div style="display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 20px;">
                 <div style="position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--slate-200);"></div>
                 
-                ${
-                  asset.assetLogs.length === 0
-                    ? '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No history logs found for this asset.</div>'
-                    : asset.assetLogs
-                        .map((log, i) => {
-                          const isIssue = log.action === "flagged_issue";
-                          const isResolve = log.action === "issue_resolved";
-                          const isCheckOut = log.action === "check_out";
-                          const color = isIssue
-                            ? "var(--red)"
-                            : isResolve
-                              ? "var(--emerald)"
-                              : isCheckOut
+                ${asset.assetLogs.length === 0
+            ? '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No history logs found for this asset.</div>'
+            : asset.assetLogs
+                .map((log, i) => {
+                    const isIssue = log.action === "flagged_issue";
+                    const isResolve = log.action === "issue_resolved";
+                    const isCheckOut = log.action === "check_out";
+                    const color = isIssue
+                        ? "var(--red)"
+                        : isResolve
+                            ? "var(--emerald)"
+                            : isCheckOut
                                 ? "var(--blue)"
                                 : "var(--slate-400)";
 
-                          return `
+                    return `
                         <div style="position: relative; margin-bottom: 24px;">
                             <div style="position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: ${color}; border: 3px solid white; box-shadow: 0 0 0 2px ${color}20;"></div>
                             <div style="background: ${isIssue ? "#fef2f2" : "white"}; border: 1px solid ${isIssue ? "#fecaca" : "var(--slate-200)"}; border-radius: 12px; padding: 16px; margin-left: 10px;">
@@ -4395,9 +4376,9 @@ Contract Admin</textarea>
                             </div>
                         </div>
                         `;
-                        })
-                        .join("")
-                }
+                })
+                .join("")
+        }
             </div>
 
             <div style="margin-top: 32px; border-top: 1px solid var(--slate-200); padding-top: 24px;">
@@ -4406,7 +4387,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  safetyIncidentTable: (incidents = []) => `
+    safetyIncidentTable: (incidents = []) => `
         <div class="drawer-section" style="padding: 0;">
             <div style="padding: 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -4419,15 +4400,14 @@ Contract Admin</textarea>
             </div>
             
             <div style="padding: 24px;">
-                ${
-                  incidents.length === 0
-                    ? `
+                ${incidents.length === 0
+            ? `
                     <div style="padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
                         <i class="fas fa-shield-check" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i>
                         <div>No safety incidents reported.</div>
                     </div>
                 `
-                    : `
+            : `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--slate-200); text-align: left;">
@@ -4439,8 +4419,8 @@ Contract Admin</textarea>
                         </thead>
                         <tbody>
                             ${incidents
-                              .map(
-                                (inc) => `
+                .map(
+                    (inc) => `
                                 <tr style="border-bottom: 1px solid var(--slate-100); background: white; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
                                     <td style="padding: 16px 8px;">
                                         <div style="font-weight: 700; font-size: 13px;">${inc.id || "N/A"}</div>
@@ -4460,17 +4440,17 @@ Contract Admin</textarea>
                                     </td>
                                 </tr>
                             `,
-                              )
-                              .join("")}
+                )
+                .join("")}
                         </tbody>
                     </table>
                 `
-                }
+        }
             </div>
         </div>
     `,
 
-  issueTable: (issues = []) => `
+    issueTable: (issues = []) => `
         <div class="drawer-section" style="padding: 0;">
             <div style="padding: 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -4483,15 +4463,14 @@ Contract Admin</textarea>
             </div>
             
             <div style="padding: 24px;">
-                ${
-                  issues.length === 0
-                    ? `
+                ${issues.length === 0
+            ? `
                     <div style="padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 8px; border: 1px dashed var(--slate-200);">
                         <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 12px; color: var(--emerald);"></i>
                         <div>No open issues reported.</div>
                     </div>
                 `
-                    : `
+            : `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--slate-200); text-align: left;">
@@ -4503,8 +4482,8 @@ Contract Admin</textarea>
                         </thead>
                         <tbody>
                             ${issues
-                              .map(
-                                (iss) => `
+                .map(
+                    (iss) => `
                                 <tr style="border-bottom: 1px solid var(--slate-100); background: white; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
                                     <td style="padding: 16px 8px;">
                                         <div style="font-weight: 700; font-size: 13px;">${iss.id || "N/A"}</div>
@@ -4524,28 +4503,28 @@ Contract Admin</textarea>
                                     </td>
                                 </tr>
                             `,
-                              )
-                              .join("")}
+                )
+                .join("")}
                         </tbody>
                     </table>
                 `
-                }
+        }
             </div>
         </div>
     `,
 
-  auditDetails: (log) => {
-    const details =
-      typeof log.details === "string" ? JSON.parse(log.details) : log.details;
+    auditDetails: (log) => {
+        const details =
+            typeof log.details === "string" ? JSON.parse(log.details) : log.details;
 
-    const getAuditSummaryHTML = () => {
-      if (!details) return "";
+        const getAuditSummaryHTML = () => {
+            if (!details) return "";
 
-      let summary = "";
-      const action = log.action;
+            let summary = "";
+            const action = log.action;
 
-      if (action === "UPDATE_USER" || action === "CREATE_USER") {
-        summary = `
+            if (action === "UPDATE_USER" || action === "CREATE_USER") {
+                summary = `
                     <div style="background: #fdf2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #991b1b; font-weight: 700; margin-bottom: 4px;">User Profile Event</div>
                         <div style="font-size: 13px; color: #7f1d1d;">
@@ -4556,8 +4535,8 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (action.includes("EXTENSION") || action.includes("TIMELINE")) {
-        summary = `
+            } else if (action.includes("EXTENSION") || action.includes("TIMELINE")) {
+                summary = `
                     <div style="background: #fefce8; border: 1px solid #fef08a; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #854d0e; font-weight: 700; margin-bottom: 4px;">Timeline Variance Event</div>
                         <div style="font-size: 13px; color: #713f12;">
@@ -4568,16 +4547,16 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (
-        action.includes("MONETARY") ||
-        action.includes("BUDGET") ||
-        action.includes("FINANCE") ||
-        action.includes("REQUISITION") ||
-        action.includes("PAYMENT")
-      ) {
-        const amount =
-          details.amount || details.totalAmount || details.cost || 0;
-        summary = `
+            } else if (
+                action.includes("MONETARY") ||
+                action.includes("BUDGET") ||
+                action.includes("FINANCE") ||
+                action.includes("REQUISITION") ||
+                action.includes("PAYMENT")
+            ) {
+                const amount =
+                    details.amount || details.totalAmount || details.cost || 0;
+                summary = `
                     <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #065f46; font-weight: 700; margin-bottom: 4px;">Financial Transaction Event</div>
                         <div style="font-size: 13px; color: #064e3b;">
@@ -4588,12 +4567,12 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (
-        action.includes("VENDOR") ||
-        action.includes("PROCUREMENT") ||
-        action.includes("CONTRACT")
-      ) {
-        summary = `
+            } else if (
+                action.includes("VENDOR") ||
+                action.includes("PROCUREMENT") ||
+                action.includes("CONTRACT")
+            ) {
+                summary = `
                     <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #1e40af; font-weight: 700; margin-bottom: 4px;">Supply Chain & Logistics Event</div>
                         <div style="font-size: 13px; color: #1e3a8a;">
@@ -4603,8 +4582,8 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (action.includes("ASSET") || action.includes("EQUIPMENT")) {
-        summary = `
+            } else if (action.includes("ASSET") || action.includes("EQUIPMENT")) {
+                summary = `
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 4px;">Asset Allocation Event</div>
                         <div style="font-size: 13px; color: #1e293b;">
@@ -4614,8 +4593,8 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (action.includes("REQUISITION")) {
-        summary = `
+            } else if (action.includes("REQUISITION")) {
+                summary = `
                     <div style="background: #fff7ed; border: 1px solid #ffedd5; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #9a3412; font-weight: 700; margin-bottom: 4px;">Resource Requisition Event</div>
                         <div style="font-size: 13px; color: #7c2d12;">
@@ -4626,12 +4605,12 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (
-        action.includes("ISSUE") ||
-        action.includes("COMPLAINT") ||
-        action.includes("INCIDENT")
-      ) {
-        summary = `
+            } else if (
+                action.includes("ISSUE") ||
+                action.includes("COMPLAINT") ||
+                action.includes("INCIDENT")
+            ) {
+                summary = `
                     <div style="background: #fff1f2; border: 1px solid #ffe4e6; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #be123c; font-weight: 700; margin-bottom: 4px;">Governance & Safety Event</div>
                         <div style="font-size: 13px; color: #881337;">
@@ -4641,8 +4620,8 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (action.includes("REPORT") || action.includes("ANALYTICS")) {
-        summary = `
+            } else if (action.includes("REPORT") || action.includes("ANALYTICS")) {
+                summary = `
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 4px;">Data & Insights Event</div>
                         <div style="font-size: 13px; color: #1e293b;">
@@ -4652,13 +4631,13 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      } else if (
-        action === "APPROVE" ||
-        action === "REJECT" ||
-        action.includes("REVIEW")
-      ) {
-        const isApprove = action === "APPROVE" || action.includes("APPROVE");
-        summary = `
+            } else if (
+                action === "APPROVE" ||
+                action === "REJECT" ||
+                action.includes("REVIEW")
+            ) {
+                const isApprove = action === "APPROVE" || action.includes("APPROVE");
+                summary = `
                     <div style="background: ${isApprove ? "#ecfdf5" : "#fff1f2"}; border: 1px solid ${isApprove ? "#a7f3d0" : "#fecaca"}; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
                         <div style="font-size: 11px; text-transform: uppercase; color: ${isApprove ? "#065f46" : "#991b1b"}; font-weight: 700; margin-bottom: 4px;">Governance Approval Workflow</div>
                         <div style="font-size: 13px; color: ${isApprove ? "#064e3b" : "#7f1d1d"};">
@@ -4668,11 +4647,11 @@ Contract Admin</textarea>
                         </div>
                     </div>
                 `;
-      }
-      return summary;
-    };
+            }
+            return summary;
+        };
 
-    return `
+        return `
             <div style="padding: 24px; border-bottom: 1px solid var(--slate-200); background: var(--slate-50);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px;">
                     <div>
@@ -4736,9 +4715,9 @@ Contract Admin</textarea>
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Close Log</button>
             </div>
         `;
-  },
+    },
 
-   terminateContract: (contract) => {
+    terminateContract: (contract) => {
         const isExpired = contract.status === 'expired' || (contract.endDate && new Date(contract.endDate) <= new Date());
         return `
         <div style="padding: 24px;">
@@ -4884,4 +4863,137 @@ Contract Admin</textarea>
             </div>
         </div>
     `,
+
+    projectIntelligence: ({ project, requirements, holdings, assets, consumption }) => {
+        const reqs = Array.isArray(requirements) ? requirements : (requirements?.data || requirements?.materials || []);
+        const holds = Array.isArray(holdings) ? holdings : (holdings?.data || []);
+        const fleet = Array.isArray(assets) ? assets : (assets?.data || []);
+        const history = Array.isArray(consumption) ? consumption : (consumption?.data || []);
+
+        const totalReq = reqs.length;
+        const totalHoldings = holds.reduce((acc, h) => acc + (Number(h.quantity) || 0), 0);
+        
+        // Gap Analysis: Requirements vs Holdings (Unified List)
+        const allMaterialNames = new Set([
+            ...reqs.map(r => r.materialName),
+            ...holds.map(h => h.materialName)
+        ]);
+
+        const gapAnalysis = Array.from(allMaterialNames).map(mName => {
+            const req = reqs.find(r => r.materialName === mName);
+            const hold = holds.find(h => h.materialName === mName);
+            
+            const current = hold ? Number(hold.quantity) || 0 : 0;
+            const target = req ? Number(req.quantity) || 0 : 0;
+            const shortfall = Math.max(0, target - current);
+            
+            return {
+                name: mName,
+                current,
+                target,
+                shortfall,
+                unit: req?.unit || hold?.unit || 'Units',
+                isUnplanned: !req && hold
+            };
+        });
+
+        return `
+            <div style="padding: 24px; background: var(--slate-50); min-height: 100%;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: white; padding: 16px; border-radius: 16px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px;">Site Fulfillment</div>
+                        <div style="font-size: 20px; font-weight: 900; color: var(--slate-900);">${totalHoldings.toLocaleString()} <span style="font-size: 12px; color: var(--slate-400);">Units</span></div>
+                    </div>
+                    <div style="background: white; padding: 16px; border-radius: 16px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px;">Pending Reqs</div>
+                        <div style="font-size: 20px; font-weight: 900; color: var(--orange);">${totalReq} <span style="font-size: 12px; color: var(--slate-400);">Open</span></div>
+                    </div>
+                    <div style="background: white; padding: 16px; border-radius: 16px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px;">Assets On-Site</div>
+                        <div style="font-size: 20px; font-weight: 900; color: var(--indigo-600);">${fleet.length} <span style="font-size: 12px; color: var(--slate-400);">Units</span></div>
+                    </div>
+                </div>
+
+                <!-- Resource Gap Analysis -->
+                <div class="data-card" style="background: white; border-radius: 20px; border: 1px solid var(--slate-200); margin-bottom: 24px; overflow: hidden;">
+                    <div class="data-card-header" style="padding: 16px 20px; background: #FFF7ED; border-bottom: 1px solid #FFEDD5; display: flex; justify-content: space-between;">
+                        <div style="font-weight: 800; font-size: 13px; color: #9A3412;">Resource Gap Analysis (Need vs Have)</div>
+                        <span style="font-size: 10px; font-weight: 800; color: #C2410C; background: white; padding: 2px 8px; border-radius: 10px;">Fulfillment Accuracy</span>
+                    </div>
+                    <div style="padding: 0;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                                    <th style="padding: 12px 20px; text-align: left; font-weight: 700; color: var(--slate-500);">Material</th>
+                                    <th style="padding: 12px 20px; text-align: center; font-weight: 700; color: var(--slate-500);">Target</th>
+                                    <th style="padding: 12px 20px; text-align: center; font-weight: 700; color: var(--slate-500);">Current</th>
+                                    <th style="padding: 12px 20px; text-align: right; font-weight: 700; color: var(--slate-500);">Shortfall</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${gapAnalysis.length > 0 ? gapAnalysis.map(g => `
+                                    <tr style="border-bottom: 1px solid var(--slate-50); ${g.isUnplanned ? 'background: #F0FDF4;' : ''}">
+                                        <td style="padding: 12px 20px;">
+                                            <div style="font-weight: 700; color: var(--slate-800);">${g.name}</div>
+                                            ${g.isUnplanned ? '<div style="font-size: 9px; font-weight: 800; color: var(--emerald); text-transform: uppercase;">Unplanned Holding</div>' : ''}
+                                        </td>
+                                        <td style="padding: 12px 20px; text-align: center; font-weight: 600; color: var(--slate-500);">${g.target.toLocaleString()} ${g.unit}</td>
+                                        <td style="padding: 12px 20px; text-align: center; font-weight: 800; color: var(--emerald);">${g.current.toLocaleString()} ${g.unit}</td>
+                                        <td style="padding: 12px 20px; text-align: right; font-weight: 900; color: ${g.shortfall > 0 ? 'var(--red)' : 'var(--emerald)'};">
+                                            ${g.shortfall > 0 ? `-${g.shortfall.toLocaleString()}` : 'FULL'}
+                                        </td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4" style="padding: 32px; text-align: center; color: var(--slate-400);">No resource data available for this site.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Assets (Vehicles/Heavy) -->
+                <div class="data-card" style="background: white; border-radius: 20px; border: 1px solid var(--slate-200); margin-bottom: 24px; overflow: hidden;">
+                    <div class="data-card-header" style="padding: 16px 20px; background: #F0F9FF; border-bottom: 1px solid #BAE6FD;">
+                        <div style="font-weight: 800; font-size: 13px; color: #0369A1;">Assigned Assets (Fleet & Heavy Equipment)</div>
+                    </div>
+                    <div style="padding: 16px 20px;">
+                        ${fleet.length > 0 ? fleet.map(a => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--slate-50);">
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; color: var(--slate-500);">
+                                        <i class="fas fa-${a.type === 'Vehicle' ? 'truck' : 'tractor'}"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.name}</div>
+                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} • ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
+                                    </div>
+                                </div>
+                                <span style="font-size: 10px; font-weight: 800; color: var(--emerald); background: #F0FDF4; padding: 4px 8px; border-radius: 6px;">DEPLOYED</span>
+                            </div>
+                        `).join('') : '<div style="padding: 32px; text-align: center; color: var(--slate-400);">No heavy assets currently assigned to this site.</div>'}
+                    </div>
+                </div>
+
+                <div class="data-card" style="background: white; border-radius: 20px; border: 1px solid var(--slate-200); overflow: hidden;">
+                    <div class="data-card-header" style="padding: 16px 20px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                        <div style="font-weight: 800; font-size: 13px; color: var(--slate-900);">Recent Fulfillment History</div>
+                    </div>
+                    <div style="padding: 16px 20px;">
+                        ${history.length > 0 ? history.slice(0, 10).map(c => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--slate-50);">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${c.item || 'Generic Resource'}</div>
+                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} • ${c.user || 'System'}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 800; color: ${c.type === 'IN' ? 'var(--emerald)' : 'var(--orange)'};">
+                                        ${c.type === 'IN' ? '+' : '-'}${(Number(c.qty) || 0).toLocaleString()}
+                                    </div>
+                                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">${c.type === 'IN' ? 'Restock' : 'Dispatch'}</div>
+                                </div>
+                            </div>
+                        `).join('') : '<div style="padding: 32px; text-align: center; color: var(--slate-400);">No fulfillment history recorded.</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 };

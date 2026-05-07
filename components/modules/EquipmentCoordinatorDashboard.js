@@ -9,6 +9,7 @@ import { EC_Records } from './ec/EC_Records.js';
 import { EC_Guidance } from './ec/EC_Guidance.js';
 import { EC_Custody } from './ec/EC_Custody.js';
 import { EC_Audit } from './ec/EC_Audit.js';
+import { EC_ProjectLogistics } from './ec/EC_ProjectLogistics.js';
 import { Shared_Issues } from './Shared_Issues.js';
 import { StatCard } from '../ui/StatCard.js';
 import { notificationService } from '../../src/services/notifications.service.js';
@@ -16,24 +17,25 @@ import client from '../../src/api/client.js';
 
 export class EquipmentCoordinatorDashboard {
     constructor() {
-        Object.assign(this, 
-            EC_Dashboard, 
+        Object.assign(this,
+            EC_Dashboard,
             EC_ResourceHub,
-            EC_Inventory, 
-            EC_Registry, 
-            EC_Distribution, 
-            EC_Maintenance, 
-            EC_Custody, 
-            EC_Records, 
-            EC_Audit, 
+            EC_Inventory,
+            EC_Registry,
+            EC_Distribution,
+            EC_Maintenance,
+            EC_Custody,
+            EC_Records,
+            EC_Audit,
             EC_Handlers,
+            EC_ProjectLogistics,
             EC_Guidance,
             Shared_Issues
         );
-        
+
         this.currentView = 'dashboard';
         this.hubActiveTab = 'field';
-        
+
         // --- LIVE STATE (API-BACKED) ---
         this.inventory = {};
         this.dispatchLogs = [];
@@ -43,7 +45,7 @@ export class EquipmentCoordinatorDashboard {
         this.conflicts = [];
         this.auditLogs = [];
         this.projects = [];
-        
+
         // WebSocket Real-time listeners
         this._setupRealtimeListeners();
     }
@@ -79,7 +81,7 @@ export class EquipmentCoordinatorDashboard {
     }
 
     getCurrentViewHTML() {
-        switch(this.currentView) {
+        switch (this.currentView) {
             case 'dashboard': return this.getDashboardView();
             case 'requests': return this.getResourceHubView();
             case 'inventory': return this.getInventoryView();
@@ -89,6 +91,7 @@ export class EquipmentCoordinatorDashboard {
             case 'custody': return this.getCustodyView();
             case 'reports': return this.getRecordsView();
             case 'governance': return this.getGovernanceView();
+            case 'project-logistics': return this.getProjectLogisticsView();
             case 'audit': return this.getAuditView();
             default: return `<div class="p-4">View ${this.currentView} not found</div>`;
         }
@@ -103,6 +106,7 @@ export class EquipmentCoordinatorDashboard {
             'distribution': { title: 'Distribution Log', context: 'Project Resource Consumption (Burn)' },
             'maintenance': { title: 'Service Schedule', context: 'Preventative Maintenance' },
             'custody': { title: 'Chain of Custody', context: 'Asset Timeline & Fault History' },
+            'project-logistics': { title: 'Project Logistics Hub', context: 'Portfolio fulfillment & Site delays' },
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
             'governance': { title: 'Governance Center', context: 'Blockers & PM Responses' },
             'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
@@ -143,14 +147,17 @@ export class EquipmentCoordinatorDashboard {
             container.innerHTML = this.getCurrentViewHTML();
             if (this.currentView === 'dashboard') {
                 this.initCharts();
+                this.initPortfolioCharts?.();
+            } else if (this.currentView === 'project-logistics') {
+                // No charts in ledger view per user request
             }
         }
     }
 
     switchView(view) {
         this.currentView = view;
-        
-        switch(view) {
+
+        switch (view) {
             case 'dashboard':
                 this._loadAssets();
                 this._loadInventory();
@@ -173,12 +180,62 @@ export class EquipmentCoordinatorDashboard {
             case 'maintenance':
                 this._loadAssets();
                 break;
-            case 'custody':
+            case 'project-logistics':
+                this._loadProjects();
+                break;
             case 'audit':
                 this._loadAuditLogs?.();
                 break;
         }
-        
+
         this._refreshCurrentView();
+    }
+
+    async _loadProjects() {
+        if (this.isLoadingProjects) return;
+        this.isLoadingProjects = true;
+        try {
+            const res = await client.get('/projects');
+            this.projects = Array.isArray(res) ? res : (res.data || []);
+
+            // Load inventory holdings for each project to support the hub view
+            if (this.projects.length > 0) {
+                const holdingPromises = this.projects.map(p => client.get(`/inventory/project/${p.id}`));
+                const holdings = await Promise.all(holdingPromises);
+
+                this.inventoryByProject = {};
+                this.projects.forEach((p, idx) => {
+                    const data = holdings[idx];
+                    this.inventoryByProject[p.id] = Array.isArray(data) ? data : (data?.data || []);
+                });
+            }
+
+            if (this.currentView === 'dashboard' || this.currentView === 'project-logistics') {
+                this._refreshCurrentView();
+            }
+        } catch (error) {
+            console.error('[EC] Failed to load projects:', error);
+        } finally {
+            this.isLoadingProjects = false;
+        }
+    }
+
+    async _loadProjectHistory(projectId) {
+        try {
+            const res = await client.get(`/inventory/project/${projectId}`);
+            const items = Array.isArray(res) ? res : (res.data || []);
+            const logs = [];
+            items.forEach(item => {
+                if (item.logs) {
+                    item.logs.forEach(l => {
+                        logs.push({ ...l, materialName: item.materialName });
+                    });
+                }
+            });
+            return logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        } catch (error) {
+            console.error('[EC] Failed to load project history:', error);
+            return [];
+        }
     }
 }
