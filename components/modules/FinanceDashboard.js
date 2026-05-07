@@ -6,6 +6,7 @@ import { FD_Records } from './fd/FD_Records.js';
 import { FD_Handlers } from './fd/FD_Handlers.js';
 import { FD_Ledger } from './fd/FD_Ledger.js';
 import { Shared_Audit } from './Shared_Audit.js';
+import { Shared_Issues } from './Shared_Issues.js';
 import { StatCard } from '../ui/StatCard.js';
 
 import client from '../../src/api/client.js';
@@ -58,6 +59,7 @@ export class FinanceDashboard {
             case 'bcr': return this.getBudgetControlView();
             case 'ledger': return this.getLedgerView();
             case 'reports': return this.getRecordsView();
+            case 'governance': return this.getGovernanceView();
             case 'audit': return this.getAuditView();
             case 'portfolio': 
                 this.currentView = 'dashboard';
@@ -79,6 +81,7 @@ export class FinanceDashboard {
             'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
             'bcr': { title: 'PM Uplift Requests', context: 'Budget Extensions' },
             'ledger': { title: 'Commitments Ledger', context: 'Organizational Obligations' },
+            'governance': { title: 'Governance Center', context: 'Blockers & PM Responses' },
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
             'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
         };
@@ -93,6 +96,12 @@ export class FinanceDashboard {
                         <div class="context-strip">
                             <span class="context-value">${current.context}</span>
                         </div>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items: center;">
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="window.app.openIssueDrawer(null, 'Report Financial Issue')">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Report Issue</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -182,4 +191,4 @@ export class FinanceDashboard {
 }
 
 // Apply modular mixins
-Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger, Shared_Audit);
+Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger, Shared_Audit, Shared_Issues);

@@ -46,6 +46,7 @@ export const NAV_ITEMS = {
         { 
             section: 'Records', 
             items: [
+                { label: 'Governance Center', icon: '<i class="fas fa-headset"></i>', id: 'governance' },
                 { label: 'Audit Log', icon: ICONS.fingerprint, id: 'audit' },
                 { label: 'Reports Generator', icon: ICONS.reports, id: 'reports' }
             ]
@@ -153,6 +154,7 @@ export const NAV_ITEMS = {
         { 
             section: 'Records', 
             items: [
+                { label: 'Governance Center', icon: '<i class="fas fa-headset"></i>', id: 'governance' },
                 { label: 'Chain of Custody', icon: '<i class="fas fa-link-slash"></i>', id: 'custody' },
                 { label: 'Audit Log', icon: ICONS.fingerprint, id: 'audit' },
                 { label: 'Reports', icon: ICONS.reports, id: 'reports' }

@@ -9,6 +9,7 @@ import { EC_Records } from './ec/EC_Records.js';
 import { EC_Guidance } from './ec/EC_Guidance.js';
 import { EC_Custody } from './ec/EC_Custody.js';
 import { EC_Audit } from './ec/EC_Audit.js';
+import { Shared_Issues } from './Shared_Issues.js';
 import { StatCard } from '../ui/StatCard.js';
 import { notificationService } from '../../src/services/notifications.service.js';
 import client from '../../src/api/client.js';
@@ -26,7 +27,8 @@ export class EquipmentCoordinatorDashboard {
             EC_Records, 
             EC_Audit, 
             EC_Handlers,
-            EC_Guidance
+            EC_Guidance,
+            Shared_Issues
         );
         
         this.currentView = 'dashboard';
@@ -86,6 +88,7 @@ export class EquipmentCoordinatorDashboard {
             case 'maintenance': return this.getMaintenanceView();
             case 'custody': return this.getCustodyView();
             case 'reports': return this.getRecordsView();
+            case 'governance': return this.getGovernanceView();
             case 'audit': return this.getAuditView();
             default: return `<div class="p-4">View ${this.currentView} not found</div>`;
         }
@@ -101,6 +104,7 @@ export class EquipmentCoordinatorDashboard {
             'maintenance': { title: 'Service Schedule', context: 'Preventative Maintenance' },
             'custody': { title: 'Chain of Custody', context: 'Asset Timeline & Fault History' },
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
+            'governance': { title: 'Governance Center', context: 'Blockers & PM Responses' },
             'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
         };
         const current = headers[this.currentView] || { title: 'Dashboard', context: '' };
@@ -115,6 +119,10 @@ export class EquipmentCoordinatorDashboard {
                     </div>
                   </div>
                   <div style="display:flex; gap:8px;">
+                    <button class="btn btn-secondary" onclick="window.app.openIssueDrawer(null, 'Report Logistics Issue')">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Report Issue</span>
+                    </button>
                     <button class="btn btn-secondary" onclick="window.app.ecModule?.openDispatchDrawer()">
                         <i class="fas fa-paper-plane"></i>
                         <span>Immediate Dispatch</span>

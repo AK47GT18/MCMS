@@ -207,6 +207,10 @@ export class FieldSupervisorDashboard {
                     
                     <!-- Desktop-only Actions in Header -->
                     <div class="hidden-mobile" style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary" onclick="window.app.openIssueDrawer(window.app.fsModule.assignedProject?.id, 'Report Site Issue')">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Report Issue</span>
+                        </button>
                         <button class="btn btn-secondary" onclick="window.app.fsModule.openResourceRequestDrawer()">
                             <i class="fas fa-plus-circle"></i>
                             <span>Request from EC</span>
@@ -370,6 +374,7 @@ export class FieldSupervisorDashboard {
                         <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Category</th>
                         <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Priority</th>
                         <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Status</th>
+                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">PM Response</th>
                         <th style="padding: 14px 16px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Action</th>
                     </tr>
                 </thead>
@@ -384,6 +389,9 @@ export class FieldSupervisorDashboard {
                                 <td style="padding: 14px 16px; font-size: 13px; font-weight: 600;">${issue.category || 'General'}</td>
                                 <td style="padding: 14px 16px;"><span style="color: ${priorityColor}; font-weight: 700; font-size: 12px; text-transform: uppercase;">${issue.priority || 'Medium'}</span></td>
                                 <td style="padding: 14px 16px;"><span class="status ${statusClass}" style="font-size: 11px;">${(issue.status || 'OPEN').toUpperCase()}</span></td>
+                                <td style="padding: 14px 16px; font-size: 12px; color: var(--slate-500); font-style: italic; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    ${issue.resolutionNotes || 'Awaiting response...'}
+                                </td>
                                 <td style="padding: 14px 16px; text-align: right;">
                                     <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick='event.stopPropagation(); window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
                                         <i class="fas fa-eye"></i> Details

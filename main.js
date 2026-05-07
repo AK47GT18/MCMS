@@ -3,6 +3,7 @@ import { currentUser as mockUser, ROLES } from './config/roles.js'; // Keep as f
 import { drawer } from './components/DrawerManager.js';
 import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
 import issues from './src/api/issues.api.js';
+import client from './src/api/client.js';
 import { realtime } from './src/realtime/RealtimeClient.js';
 import V from './components/ui/FormValidator.js';
 import './components/ui/ToastManager.js';
@@ -632,12 +633,45 @@ class App {
         window.modal.success('Security Synced', 'Your credentials have been updated. Welcome to MCMS!');
     }
 
+    handleIssuePhotoChange(input) {
+        const file = input.files[0];
+        const preview = document.getElementById('issue-photo-preview');
+        const label = document.getElementById('issue-photo-label');
+        const error = document.getElementById('issue-photo-error');
+        
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                error.style.display = 'block';
+                input.value = '';
+                preview.style.display = 'none';
+                label.textContent = 'Click to upload photo';
+                return;
+            }
+            error.style.display = 'none';
+            label.textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (preview) {
+                    const img = preview.querySelector('img');
+                    if (img) {
+                        img.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
     // Generic Issue Submission Handler (works for all roles)
     async handleIssueSubmit() {
+        const submitBtn = document.getElementById('issue-submit-btn');
         try {
             const category = document.getElementById('issue-category')?.value;
             const priority = document.getElementById('issue-priority')?.value;
             const description = document.getElementById('issue-description')?.value;
+            const photoFile = document.getElementById('issue-photo')?.files[0];
             
             // Try to get project ID - with validation
             let projectId = window.currentIssueProjectId;
@@ -649,87 +683,80 @@ class App {
                 if (selectedValue) {
                     projectId = parseInt(selectedValue);
                     console.log('[Issue Submit] Project selected from dropdown:', projectId);
-                } else {
-                    console.warn('[Issue Submit] Dropdown visible but no project selected');
                 }
             }
             
             // Fallback to module's selected project
             if (!projectId && this.pmModule?.selectedProjectId) {
                 projectId = this.pmModule.selectedProjectId;
-                console.log('[Issue Submit] Using pmModule.selectedProjectId:', projectId);
             }
             
             // Fallback to window variable
             if (!projectId) {
                 projectId = window.currentProjectId;
-                console.log('[Issue Submit] Using window.currentProjectId:', projectId);
             }
             
             // Fallback to URL params
             if (!projectId) {
                 const urlParams = new URLSearchParams(window.location.search);
                 projectId = parseInt(urlParams.get('projectId'));
-                console.log('[Issue Submit] Using URL projectId:', projectId);
             }
 
-            // Validate description
-            if (!description || description.trim() === '') {
-                window.toast.show('❌ Description required: Please explain the issue', 'error');
-                document.getElementById('issue-description')?.focus();
+            // Inline Validation — shows errors directly on each field
+            if (!this.validateIssueForm()) {
                 return;
             }
 
-            // Validate project ID
-            if (!projectId || isNaN(projectId)) {
-                const errorEl = document.getElementById('issue-project-error');
-                if (errorEl) {
-                    errorEl.style.display = 'block';
-                    document.getElementById('issue-project')?.focus();
-                }
-                window.toast.show('❌ Project required: Please select a project from the dropdown', 'error');
-                console.warn('[Issue Submit] No valid projectId found:', {
-                    currentIssueProjectId: window.currentIssueProjectId,
-                    projectSelectValue: projectSelectEl?.value,
-                    pmModuleSelected: this.pmModule?.selectedProjectId,
-                    windowProjectId: window.currentProjectId,
-                    urlParam: new URLSearchParams(window.location.search).get('projectId')
-                });
-                return;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
             }
 
-            console.log('[Issue Submit] ✅ All validation passed. Submitting for project:', projectId);
-            window.toast.show('✅ Submitting issue report...', 'info');
+            console.log('[Issue Submit] ✅ Submitting for project:', projectId);
             
-            const result = await issues.create({
-                projectId: parseInt(projectId),
-                category: category || 'General',
-                priority: priority || 'Medium',
-                description: description.trim(),
-                status: 'open'
-            });
+            const formData = new FormData();
+            formData.append('projectId', projectId);
+            formData.append('category', category || 'General');
+            formData.append('priority', priority || 'Medium');
+            formData.append('description', description.trim());
+            formData.append('status', 'open');
+            if (photoFile) {
+                formData.append('photo', photoFile);
+            }
 
-            console.log('[Issue Submit] ✅ Issue created successfully:', result);
-            window.toast.show('✅ Issue submitted! Issue Code: ' + (result.issueCode || result.id), 'success');
+            const result = await issues.create(formData);
+            const createdIssue = result.data || result;
+
+            // Audit Trail Integration
+            client.post('/audit-logs', {
+                action: 'CREATE_ISSUE',
+                entityType: 'Issue',
+                entityId: createdIssue.id,
+                details: `Issue #${createdIssue.id} (${category}) reported with ${photoFile ? 'photo evidence' : 'no photo'}`
+            }).catch(() => {});
+
+            console.log('[Issue Submit] ✅ Success:', result);
+            window.toast.show('✅ Issue submitted! Ref: ISS-' + (createdIssue.id || createdIssue.issueCode), 'success');
             
             // Close drawer after slight delay
             setTimeout(() => {
                 window.drawer.close();
-            }, 500);
+            }, 800);
             
-            // Clear the stored project context
             window.currentIssueProjectId = null;
             
-            // Reload issues if in issues view
-            if (this.pmModule?.currentView === 'issues') {
-                console.log('[Issue Submit] Refreshing issues list');
-                this.pmModule.loadIssuesFromAPI();
-            }
+            // Refresh views
+            if (this.pmModule?.currentView === 'issues') this.pmModule.loadIssuesFromAPI();
+            if (this.ecModule?.currentView === 'governance') this.ecModule._loadSharedIssues?.();
+            if (this.fmModule?.currentView === 'governance') this.fmModule._loadSharedIssues?.();
             
         } catch (error) {
             console.error('[Issue Submit] ❌ Error:', error);
-            const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
-            window.toast.show('❌ Failed to submit: ' + errorMsg, 'error');
+            window.toast.show('❌ Failed to submit issue report', 'error');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Submit Formal Report';
+            }
         }
     }
 
@@ -737,6 +764,134 @@ class App {
     openIssueDrawer(projectId = null, title = 'Report Issue') {
         window.currentIssueProjectId = projectId;
         window.drawer.open(title, window.DrawerTemplates.submitComplaint);
+    }
+
+    // Real-time inline validation — called on every keystroke via oninput
+    // forceShow = true when called from submit to show errors on untouched/empty fields
+    validateIssueInline(forceShow = false) {
+        const desc = document.getElementById('issue-description');
+        const error = document.getElementById('issue-description-error');
+        const count = document.getElementById('issue-char-count');
+        
+        if (!desc) return false;
+        
+        const text = desc.value.trim();
+        const len = text.length;
+        
+        // Update character counter
+        if (count) {
+            count.textContent = `${len} / 20`;
+            count.style.color = len >= 20 ? 'var(--emerald)' : len > 0 ? 'var(--red)' : 'var(--slate-400)';
+            count.style.fontWeight = len >= 20 ? '700' : '500';
+        }
+        
+        // Regex: must contain at least 3 real words (letters only, no pure numbers/symbols)
+        const realWordPattern = /[a-zA-Z]{2,}/g;
+        const wordMatches = text.match(realWordPattern) || [];
+        
+        // Empty field
+        if (len === 0) {
+            if (forceShow) {
+                desc.classList.add('v-error', 'v-shake');
+                desc.classList.remove('v-ok');
+                setTimeout(() => desc.classList.remove('v-shake'), 400);
+                if (error) {
+                    error.style.display = 'flex';
+                    error.className = 'v-msg v-msg-err';
+                    error.innerHTML = '<i class="fas fa-exclamation-circle"></i> This field is required. Describe the issue.';
+                }
+            }
+            return false;
+        }
+        
+        // Too short
+        if (len < 20) {
+            desc.classList.add('v-error');
+            desc.classList.remove('v-ok');
+            if (error) {
+                error.style.display = 'flex';
+                error.className = 'v-msg v-msg-err';
+                error.innerHTML = `<i class="fas fa-exclamation-circle"></i> Too short — need ${20 - len} more characters.`;
+            }
+            return false;
+        }
+        
+        // Has enough chars but not enough real words (gibberish check)
+        if (wordMatches.length < 3) {
+            desc.classList.add('v-error');
+            desc.classList.remove('v-ok');
+            if (error) {
+                error.style.display = 'flex';
+                error.className = 'v-msg v-msg-err';
+                error.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please use meaningful words to describe the issue.';
+            }
+            return false;
+        }
+        
+        // Valid
+        desc.classList.add('v-ok');
+        desc.classList.remove('v-error');
+        if (error) {
+            error.style.display = 'flex';
+            error.className = 'v-msg v-msg-ok';
+            error.innerHTML = '<i class="fas fa-check-circle"></i> Looks good.';
+        }
+        return true;
+    }
+
+    // Full form validation on submit — returns true if all fields valid
+    validateIssueForm() {
+        let valid = true;
+
+        // 1. Description
+        if (!this.validateIssueInline(true)) {
+            document.getElementById('issue-description')?.focus();
+            valid = false;
+        }
+
+        // 2. Project selection (only if selector is visible)
+        const projectSelect = document.getElementById('issue-project');
+        const projectError = document.getElementById('issue-project-error');
+        if (projectSelect && projectSelect.offsetParent !== null) {
+            if (!projectSelect.value) {
+                projectSelect.classList.add('v-error', 'v-shake');
+                setTimeout(() => projectSelect.classList.remove('v-shake'), 400);
+                if (projectError) {
+                    projectError.style.display = 'flex';
+                    projectError.className = 'v-msg v-msg-err';
+                    projectError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please select the affected project.';
+                }
+                if (valid) projectSelect.focus(); // focus first invalid field
+                valid = false;
+            } else {
+                projectSelect.classList.remove('v-error');
+                projectSelect.classList.add('v-ok');
+                if (projectError) projectError.style.display = 'none';
+            }
+        }
+
+        // 3. Photo size (already validated on change, just double-check)
+        const photoFile = document.getElementById('issue-photo')?.files[0];
+        const photoError = document.getElementById('issue-photo-error');
+        if (photoFile && photoFile.size > 5 * 1024 * 1024) {
+            if (photoError) {
+                photoError.style.display = 'flex';
+                photoError.className = 'v-msg v-msg-err';
+                photoError.innerHTML = '<i class="fas fa-exclamation-circle"></i> Photo exceeds 5MB limit. Choose a smaller file.';
+            }
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    previewImage(src) {
+        if (!src) return;
+        window.modal.show({
+            title: 'Evidence Preview',
+            message: `<div style="text-align:center;"><img src="${src}" style="max-width:100%; max-height: 70vh; border-radius:8px; box-shadow:var(--shadow-lg);"></div>`,
+            confirmText: 'Close'
+        });
     }
 }
 

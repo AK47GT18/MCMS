@@ -76,11 +76,28 @@ export const PM_FeatureHandlers = {
             const status = document.getElementById('resolution-status').value;
             const notes = document.getElementById('resolution-notes').value;
 
-            if (!notes) {
-                window.toast.show('Resolution notes required', 'error');
+            if (!this.validateResolutionInline(true)) {
+                document.getElementById('resolution-notes')?.focus();
                 return;
             }
 
+            if (status === 'resolved') {
+                window.modal.confirm(
+                    'Confirm Resolution',
+                    'Mark this issue as fully resolved? This will notify the reporting team.',
+                    () => this.executeResolutionUpdate(id, status, notes)
+                );
+            } else {
+                await this.executeResolutionUpdate(id, status, notes);
+            }
+        } catch (error) {
+            console.error('[Issue Resolution] Error:', error);
+            window.toast.show('❌ Failed to update resolution', 'error');
+        }
+    },
+
+    async executeResolutionUpdate(id, status, notes) {
+        try {
             window.toast.show('Updating issue status...', 'info');
             await issues.update(id, {
                 status,
@@ -88,12 +105,23 @@ export const PM_FeatureHandlers = {
                 resolvedAt: status === 'resolved' ? new Date().toISOString() : null
             });
 
+            // Audit Trail
+            client.post('/audit-logs', {
+                action: 'RESOLVE_ISSUE',
+                entityType: 'Issue',
+                entityId: id,
+                details: `Issue #${id} status set to ${status}. Notes: ${notes}`
+            }).catch(() => {});
+
             window.toast.show('Issue updated successfully', 'success');
             window.drawer.close();
             if (this.currentView === 'issues') this.loadIssuesFromAPI();
+            // Refresh shared issues if applicable
+            if (window.app.ecModule) window.app.ecModule._loadSharedIssues?.();
+            if (window.app.fmModule) window.app.fmModule._loadSharedIssues?.();
         } catch (error) {
-            console.error('Issue resolution error:', error);
-            window.toast.show('Failed to update issue: ' + error.message, 'error');
+            console.error('[Issue Execution] Error:', error);
+            window.toast.show('❌ Update failed: ' + error.message, 'error');
         }
     },
 
@@ -104,6 +132,53 @@ export const PM_FeatureHandlers = {
             const statusEl = document.getElementById('resolution-status');
             if (statusEl && issue.status) statusEl.value = issue.status === 'open' ? 'in_progress' : issue.status;
         }, 100);
+    },
+
+    validateResolutionInline(forceShow = false) {
+        const notes = document.getElementById('resolution-notes');
+        const error = document.getElementById('resolution-notes-error');
+        
+        if (!notes) return false;
+        
+        const text = notes.value.trim();
+        const len = text.length;
+        
+        // Empty
+        if (len === 0) {
+            if (forceShow) {
+                notes.classList.add('v-error', 'v-shake');
+                notes.classList.remove('v-ok');
+                setTimeout(() => notes.classList.remove('v-shake'), 400);
+                if (error) {
+                    error.style.display = 'flex';
+                    error.className = 'v-msg v-msg-err';
+                    error.innerHTML = '<i class="fas fa-exclamation-circle"></i> Resolution notes are required.';
+                }
+            }
+            return false;
+        }
+        
+        // Too short
+        if (len < 10) {
+            notes.classList.add('v-error');
+            notes.classList.remove('v-ok');
+            if (error) {
+                error.style.display = 'flex';
+                error.className = 'v-msg v-msg-err';
+                error.innerHTML = `<i class="fas fa-exclamation-circle"></i> Too short — need ${10 - len} more characters.`;
+            }
+            return false;
+        }
+        
+        // Valid
+        notes.classList.add('v-ok');
+        notes.classList.remove('v-error');
+        if (error) {
+            error.style.display = 'flex';
+            error.className = 'v-msg v-msg-ok';
+            error.innerHTML = '<i class="fas fa-check-circle"></i> Looks good.';
+        }
+        return true;
     },
 
     async handleAddVehicle() {

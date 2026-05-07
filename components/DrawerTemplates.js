@@ -459,36 +459,72 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Issue Category</label>
-                <select class="form-input">
+                <select id="issue-category" class="form-input">
                     <option>Material Shortage</option>
                     <option>Weather Delay</option>
                     <option>Equipment Breakdown</option>
                     <option>Technical Clarification Needed</option>
                     <option>Labor Dispute</option>
+                    <option>Quality Control Flag</option>
+                    <option>Safety Concern</option>
+                    <option>Budgetary Override</option>
+                    <option>Logistical Blockage</option>
+                    <option>Site Access Issue</option>
+                    <option>Environmental Hazard</option>
+                    <option>Structural Integrity Alert</option>
+                    <option>Subcontractor Performance</option>
+                    <option>Community Conflict</option>
+                    <option>Permit/Legal Delay</option>
+                    <option>Theft / Security Breach</option>
                 </select>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Severity</label>
-                <div style="display: flex; gap: 12px;">
-                    <label style="flex: 1; border: 1px solid var(--slate-200); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
-                        <input type="radio" name="severity" value="low"> <div style="font-size: 11px;">Low</div>
-                    </label>
-                    <label style="flex: 1; border: 1px solid var(--amber); background: var(--amber-light); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
-                        <input type="radio" name="severity" value="medium" checked> <div style="font-size: 11px; font-weight: 700;">Medium</div>
-                    </label>
-                    <label style="flex: 1; border: 1px solid var(--red); background: var(--red-light); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
-                        <input type="radio" name="severity" value="high"> <div style="font-size: 11px; font-weight: 700;">High</div>
-                    </label>
+                <label class="form-label">Priority Level</label>
+                <select id="issue-priority" class="form-input">
+                    <option value="Low">Low - Informational</option>
+                    <option value="Medium" selected>Medium - Action Required</option>
+                    <option value="High">High - Critical / Blocker</option>
+                </select>
+            </div>
+
+            ${!window.currentIssueProjectId ? `
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Affected Project</label>
+                <select id="issue-project" class="form-input" data-vrules="required">
+                    <option value="">Select Project...</option>
+                    ${(window.app?.pmModule?.projects || window.app?.fmModule?.allProjects || []).map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                </select>
+                <div id="issue-project-error" style="display:none; color:var(--red); font-size:10px; margin-top:4px;">Please select a project</div>
+            </div>
+            ` : ''}
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Attach Photo Evidence (Max 5MB)</label>
+                <div style="border: 2px dashed var(--slate-200); padding: 16px; border-radius: 8px; text-align: center; background: var(--slate-50); cursor: pointer;" onclick="document.getElementById('issue-photo').click()">
+                    <i class="fas fa-camera" style="font-size: 24px; color: var(--slate-400); margin-bottom: 8px;"></i>
+                    <div style="font-size: 12px; color: var(--slate-500);" id="issue-photo-label">Click to upload photo</div>
+                    <input type="file" id="issue-photo" accept="image/*" style="display: none;" onchange="window.app.handleIssuePhotoChange(this)">
+                    <div id="issue-photo-preview" style="display:none; margin-top:12px;">
+                        <img src="" style="max-width:100%; max-height:150px; border-radius:4px; box-shadow:var(--shadow-sm);">
+                    </div>
                 </div>
+                <div id="issue-photo-error" style="display:none; color:var(--red); font-size:10px; margin-top:4px;">File too large. Max 5MB allowed.</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Details</label>
-                <textarea class="form-input" data-vrules="required|minLen:10" rows="5" placeholder="Describe the issue and expected impact on schedule..."></textarea>
+                <label class="form-label">Issue Details</label>
+                <textarea id="issue-description" class="form-input" data-vrules="required|minLen:20" rows="5" 
+                    placeholder="Describe the problem, impact on schedule, and any immediate actions taken..."
+                    oninput="window.app.validateIssueInline()"></textarea>
+                <div id="issue-description-error" style="display:none; color:var(--red); font-size:11px; margin-top:4px;">❌ Narrative must be at least 20 characters.</div>
+                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px; display: flex; justify-content: space-between;">
+                    <span>Minimum 20 characters</span>
+                    <span id="issue-char-count">0 / 20</span>
+                </div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('Issue reported to PM and Operations.', 'info'); window.drawer.close();">Submit Report</button>
+            <button id="issue-submit-btn" class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.app.handleIssueSubmit()">Submit Formal Report</button>
         </div>
     `,
 
@@ -3237,14 +3273,29 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Issue Description / Narrative <span style="color:var(--red);">*</span></label>
-                <textarea id="issue-description" class="form-input" rows="4" placeholder="Provide details about the issue..." required></textarea>
+                <textarea id="issue-description" class="form-input" rows="4" placeholder="Provide details about the issue..." required
+                    oninput="window.app.validateIssueInline()"></textarea>
+                <div id="issue-description-error" class="v-msg v-msg-err" style="display:none;">
+                    <i class="fas fa-exclamation-circle"></i> Narrative must be at least 20 characters.
+                </div>
+                <div style="font-size:11px; color:var(--slate-400); margin-top:4px; display:flex; justify-content:space-between;">
+                    <span>Minimum 20 characters required</span>
+                    <span id="issue-char-count" style="font-weight:600;">0 / 20</span>
+                </div>
             </div>
 
             <div class="form-group" style="margin-bottom:24px;">
                 <label class="form-label">Photo Evidence (Optional)</label>
-                <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:8px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;" onclick="window.toast.show('Camera launched', 'info')">
+                <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:8px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;" onclick="document.getElementById('issue-photo').click()">
                     <i class="fas fa-camera" style="font-size:24px; margin-bottom:8px;"></i>
-                    <div style="font-weight:600; font-size:13px;">Snap or Upload photo</div>
+                    <div style="font-weight:600; font-size:13px;" id="issue-photo-label">Snap or Upload photo</div>
+                    <input type="file" id="issue-photo" accept="image/*" capture="environment" style="display:none;" onchange="window.app.handleIssuePhotoChange(this)">
+                    <div id="issue-photo-preview" style="display:none; margin-top:12px;">
+                        <img src="" style="max-width:100%; max-height:150px; border-radius:6px; box-shadow:var(--shadow-sm);">
+                    </div>
+                </div>
+                <div id="issue-photo-error" class="v-msg v-msg-err" style="display:none;">
+                    <i class="fas fa-exclamation-circle"></i> File too large. Maximum 5MB allowed.
                 </div>
             </div>
 
@@ -3378,34 +3429,62 @@ Contract Admin</textarea>
 
             <div style="margin-bottom:24px;">
                 <label class="form-label" style="color:var(--slate-400);">Narrative</label>
-                <p style="font-size:13px; line-height:1.6; color:var(--slate-700); background:var(--white); border:1px solid var(--slate-200); padding:16px; border-radius:8px;">
+                <p style="font-size:13px; line-height:1.6; color:var(--slate-700); background:var(--white); border:1px solid var(--slate-200); padding:16px; border-radius:8px; margin:0;">
                     "${issue.description || "No description provided."}"
                 </p>
             </div>
 
-            ${(issue.status === 'open' || issue.status === 'investigating') ? `
+            ${issue.photoUrl ? `
+            <div style="margin-bottom:24px;">
+                <label class="form-label" style="color:var(--slate-400);">Photo Evidence</label>
+                <div style="border-radius:8px; overflow:hidden; border:1px solid var(--slate-200); background:var(--slate-50);">
+                    <img src="${issue.photoUrl}" style="width:100%; height:200px; object-fit:cover; display:block; cursor:zoom-in;" onclick="window.app.previewImage(this.src)" title="Click to enlarge">
+                    <div style="padding: 8px 12px; background: white; border-top: 1px solid var(--slate-200); display: flex; justify-content: flex-end;">
+                        <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="window.downloadDocument('${issue.photoUrl}', 'ISS-${issue.id}-evidence.jpg')">
+                            <i class="fas fa-download"></i> Download Full Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            ${((issue.status === 'open' || issue.status === 'investigating' || issue.status === 'in_progress') && window.app?.pmModule) ? `
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
                 <label class="form-label" style="margin-bottom:12px; font-weight:700;">Resolution Management</label>
 
                 <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label" style="font-size:11px;">RESOLUTION STATUS</label>
                     <select id="resolution-status" class="form-input">
-                        <option value="resolved">Mark Resolved</option>
-                        <option value="in_progress">Set In Progress</option>
-                        <option value="closed">Close (No Action)</option>
+                        <option value="resolved" ${issue.status === 'resolved' ? 'selected' : ''}>Mark Resolved</option>
+                        <option value="in_progress" ${issue.status === 'in_progress' ? 'selected' : ''}>Set In Progress</option>
+                        <option value="investigating" ${issue.status === 'investigating' ? 'selected' : ''}>Mark as Investigating</option>
+                        <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>Close (No Action)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" style="font-size:11px;">INTERNAL RESOLUTION NOTES</label>
-                    <textarea id="resolution-notes" class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."></textarea>
+                    <label class="form-label" style="font-size:11px;">INTERNAL RESOLUTION NOTES <span style="color:var(--red);">*</span></label>
+                    <textarea id="resolution-notes" class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."
+                        oninput="window.app.pmModule.validateResolutionInline()"></textarea>
+                    <div id="resolution-notes-error" class="v-msg v-msg-err" style="display:none;">
+                        <i class="fas fa-exclamation-circle"></i> Notes must be at least 10 characters.
+                    </div>
+                    <div style="font-size:11px; color:var(--slate-400); margin-top:4px;">Minimum 10 characters required</div>
+                </div>
+            </div>
+            ` : (issue.status === 'open' || issue.status === 'investigating' || issue.status === 'in_progress') ? `
+            <div style="background:var(--blue-light); padding:16px; border-radius:8px; border:1px solid var(--blue); margin-bottom:24px;">
+                <label class="form-label" style="margin-bottom:8px; font-weight:700; color:var(--blue-dark);"><i class="fas fa-clock"></i> Status: ${issue.status === 'in_progress' ? 'Resolution In Progress' : 'Awaiting PM Review'}</label>
+                <div style="font-size:13px; color:var(--blue-dark); line-height:1.6;">
+                    ${issue.status === 'in_progress' ? 'The PM is currently working on this blocker.' : 'The Project Manager has been notified. Check back for resolution updates.'}
+                    ${issue.resolutionNotes ? `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--blue-hover); font-style:italic;">"${issue.resolutionNotes}"</div>` : ''}
                 </div>
             </div>
             ` : `
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
                 <label class="form-label" style="margin-bottom:12px; font-weight:700;"><i class="fas fa-check-circle" style="color:var(--emerald);"></i> Resolution History</label>
                 <div style="font-size:13px; color:var(--slate-700); line-height:1.6;">
-                    ${issue.resolutionNotes || "This issue was closed with no specific notes recorded."}
+                    ${issue.resolutionNotes || "This issue was resolved/closed."}
                 </div>
                 ${issue.resolvedAt ? `<div style="font-size:11px; color:var(--slate-500); margin-top:12px;">Resolved on ${new Date(issue.resolvedAt).toLocaleString()}</div>` : ""}
             </div>
@@ -3413,8 +3492,8 @@ Contract Admin</textarea>
 
             <div style="border-top:1px solid var(--slate-200); padding-top:24px; display: flex; gap: 12px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content:center;" onclick="window.drawer.close()">Close</button>
-                ${(issue.status === 'open' || issue.status === 'investigating') ? `
-                <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleResolveIssue('${issue.id}')">Submit Resolution</button>
+                ${((issue.status === 'open' || issue.status === 'investigating' || issue.status === 'in_progress') && window.app?.pmModule) ? `
+                <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.pmModule.handleResolveIssue('${issue.id}')">Submit Resolution</button>
                 ` : ""}
             </div>
         </div>
