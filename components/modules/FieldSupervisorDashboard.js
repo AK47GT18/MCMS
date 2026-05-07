@@ -135,6 +135,15 @@ export class FieldSupervisorDashboard {
                 default: contentHTML = this.getDashboardView();
             }
             contentArea.innerHTML = contentHTML;
+            
+            // Re-initialize map if returning to dashboard
+            if (this.currentView === 'dashboard') {
+                setTimeout(() => {
+                    if (typeof this.initGeofenceMap === 'function') {
+                        this.initGeofenceMap();
+                    }
+                }, 100);
+            }
         } else if (moduleContainer) {
             // If the module container exists but content area doesn't, we likely just finished loading
             const mainContent = document.getElementById('main-content');

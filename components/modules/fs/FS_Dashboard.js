@@ -90,6 +90,12 @@ export const FS_Dashboard = {
                     <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <div class="card-title">Project Work Zone (Geofence)</div>
                         <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.panToSiteLocation()" title="Center on Site">
+                                <i class="fas fa-crosshairs" style="color: var(--emerald)"></i> Site
+                            </button>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.panToUserLocation()" title="Center on My Location">
+                                <i class="fas fa-street-view" style="color: var(--blue)"></i> Me
+                            </button>
                              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.toggleAutoTrack()">
                                 <i class="fas fa-location-arrow" style="color: ${this.isTracking ? 'var(--blue)' : 'inherit'}"></i> ${this.isTracking ? 'Tracking' : 'Follow'}
                             </button>
@@ -98,7 +104,7 @@ export const FS_Dashboard = {
                             </button>
                         </div>
                     </div>
-                    <div id="fs-geofence-map" style="height: ${this.isExpanded ? '500px' : '200px'}; transition: height 0.3s ease; background: var(--slate-100); position: relative;">
+                    <div id="fs-geofence-map" style="height: ${this.isExpanded ? '600px' : '350px'}; transition: height 0.3s ease; background: var(--slate-100); position: relative; z-index: 1;">
                         <div id="map-loading-overlay" style="position: absolute; inset: 0; background: rgba(255,255,255,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--slate-500);">
                             <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Initializing Map...
                         </div>
@@ -326,6 +332,28 @@ export const FS_Dashboard = {
     toggleAutoTrack() {
         this.isTracking = !this.isTracking;
         this._refreshCurrentView();
+    },
+
+    panToSiteLocation() {
+        if (!this.geofenceMap || !this.assignedProject) return;
+        const { lat, lng } = this.assignedProject;
+        const projectLat = parseFloat(lat);
+        const projectLng = parseFloat(lng);
+        if (!isNaN(projectLat) && !isNaN(projectLng)) {
+            this.geofenceMap.panTo([projectLat, projectLng]);
+            this.geofenceMap.setZoom(15);
+            if (window.toast) window.toast.show('Centered on Project Site', 'success');
+        }
+    },
+
+    panToUserLocation() {
+        if (!this.geofenceMap || !this.userMarker) {
+            if (window.toast) window.toast.show('User location not available yet.', 'warning');
+            return;
+        }
+        this.geofenceMap.panTo(this.userMarker.getLatLng());
+        this.geofenceMap.setZoom(17);
+        if (window.toast) window.toast.show('Centered on Your Location', 'success');
     },
 
     toggleMapExpand() {
