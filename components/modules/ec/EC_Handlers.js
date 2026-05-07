@@ -1196,17 +1196,19 @@ export const EC_Handlers = {
         
         try {
             // Parallel fetch for deep insights
-            const [project, requirements, onSite, assets] = await Promise.all([
+            const [project, requirements, onSite, assets, procurementStatus] = await Promise.all([
                 client.get(`/projects/${projectId}`),
                 client.get(`/projects/${projectId}/material-sheet`),
                 client.get(`/inventory/project/${projectId}`),
-                client.get(`/assets?projectId=${projectId}`)
+                client.get(`/assets?projectId=${projectId}`),
+                client.get(`/procurement/project-status/${projectId}`).catch(() => ({ data: { materials: [] } }))
             ]);
 
             const projectData = Array.isArray(project) ? project[0] : (project?.data ? project.data[0] : project);
             const reqList = Array.isArray(requirements) ? requirements : (requirements?.data || projectData?.materialRequirements || projectData?.materials || []);
             const siteStock = Array.isArray(onSite) ? onSite : (onSite.data || []);
             const assetList = Array.isArray(assets) ? assets : (assets.data || []);
+            const pStatus = procurementStatus?.data || procurementStatus || { materials: [] };
             
             // Extract history from holdings logs
             const history = [];
@@ -1231,6 +1233,7 @@ export const EC_Handlers = {
                     requirements: reqList,
                     holdings: siteStock,
                     assets: assetList,
+                    procurement: pStatus,
                     consumption: history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                 })
             );

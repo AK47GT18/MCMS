@@ -4864,27 +4864,32 @@ Contract Admin</textarea>
         </div>
     `,
 
-    projectIntelligence: ({ project, requirements, holdings, assets, consumption }) => {
+    projectIntelligence: ({ project, requirements, holdings, assets, procurement, consumption }) => {
         const reqs = Array.isArray(requirements) ? requirements : (requirements?.data || requirements?.materials || []);
         const holds = Array.isArray(holdings) ? holdings : (holdings?.data || []);
         const fleet = Array.isArray(assets) ? assets : (assets?.data || []);
         const history = Array.isArray(consumption) ? consumption : (consumption?.data || []);
+        const pMaterials = Array.isArray(procurement?.materials) ? procurement.materials : [];
 
-        const totalReq = reqs.length;
-        const totalHoldings = holds.reduce((acc, h) => acc + (Number(h.quantity) || 0), 0);
+        const totalReq = reqs.length || pMaterials.length;
+        const totalHoldings = holds.reduce((acc, h) => acc + (Number(h.quantity || h.totalQuantity || 0)), 0);
         
         // Gap Analysis: Requirements vs Holdings (Unified List)
+        // We prioritize procurement.materials as it contains the official budget vs actuals
         const allMaterialNames = new Set([
+            ...pMaterials.map(m => m.materialName),
             ...reqs.map(r => r.materialName),
             ...holds.map(h => h.materialName)
         ]);
 
         const gapAnalysis = Array.from(allMaterialNames).map(mName => {
+            const pMat = pMaterials.find(m => m.materialName === mName);
             const req = reqs.find(r => r.materialName === mName);
             const hold = holds.find(h => h.materialName === mName);
             
-            const current = hold ? Number(hold.quantity) || 0 : 0;
-            const target = req ? Number(req.quantity) || 0 : 0;
+            // Priority: Procurement Received > Inventory Quantity
+            const current = pMat ? Number(pMat.receivedQuantity) : (hold ? Number(hold.quantity || hold.totalQuantity) || 0 : 0);
+            const target = pMat ? Number(pMat.requiredQuantity) : (req ? Number(req.quantity) || 0 : 0);
             const shortfall = Math.max(0, target - current);
             
             return {
@@ -4892,8 +4897,8 @@ Contract Admin</textarea>
                 current,
                 target,
                 shortfall,
-                unit: req?.unit || hold?.unit || 'Units',
-                isUnplanned: !req && hold
+                unit: pMat?.unit || req?.unit || hold?.unit || 'Units',
+                isUnplanned: target === 0 && current > 0
             };
         });
 
