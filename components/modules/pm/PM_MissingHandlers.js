@@ -945,6 +945,15 @@ export const PM_MissingHandlers = {
             return;
         }
 
+        let justification = '';
+        if (this.wizardState?.isEditMode) {
+            justification = document.getElementById('edit_justification')?.value?.trim();
+            if (!justification) {
+                window.toast.show('Please provide a reason for editing this project.', 'warning');
+                return;
+            }
+        }
+
         const btn = document.getElementById('wizard-submit') || document.getElementById('btn-create-project');
         const originalContent = btn ? btn.innerHTML : 'Submit';
         if(btn) {
@@ -985,6 +994,33 @@ export const PM_MissingHandlers = {
                 });
                 if (!response.ok) throw new Error('Failed to update project');
                 projectId = this.wizardState.projectId;
+
+                // Record Audit Log for the Edit
+                fetch("/api/v1/audit-logs", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "PROJECT_EDITED",
+                        targetType: "PROJECT",
+                        targetId: projectId,
+                        details: { title: projectName, justification, actor: window.currentUser?.name }
+                    })
+                }).catch(e => console.warn("Audit failed", e));
+
+                // Broadcast Edit Notification
+                fetch("/api/v1/notifications/broadcast", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "Project Parameters Updated",
+                        message: `Project "${projectName}" was modified by ${window.currentUser?.name || 'Project Manager'}. Reason: ${justification}`,
+                        roles: ["Finance Director", "Equipment Coordinator", "Field Supervisor"],
+                        priority: "high",
+                        type: "project",
+                        isEmail: true
+                    })
+                }).catch(e => console.warn("Notification failed", e));
+
             } else {
                 const response = await fetch('/api/v1/projects', {
                     method: 'POST',

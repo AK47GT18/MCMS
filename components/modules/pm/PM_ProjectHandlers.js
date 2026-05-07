@@ -15,8 +15,13 @@ export const PM_ProjectHandlers = {
         const cached = sessionStorage.getItem('mcms_new_project_cache');
         if (cached) {
             try {
-                this.wizardState = JSON.parse(cached);
-                console.log('[DEBUG] Restored wizard state from cache');
+                const parsedCache = JSON.parse(cached);
+                if (parsedCache.isEditMode) {
+                    this.clearWizardCache();
+                } else {
+                    this.wizardState = parsedCache;
+                    console.log('[DEBUG] Restored wizard state from cache');
+                }
             } catch (e) {
                 console.error('Failed to parse wizard cache', e);
                 this.initDefaultWizardState();
@@ -174,6 +179,8 @@ export const PM_ProjectHandlers = {
     openEditProjectDrawer(id) {
         if(!id) return;
         
+        this.clearWizardCache();
+        
         this.wizardState = {
             isEditMode: true,
             projectId: id,
@@ -190,6 +197,15 @@ export const PM_ProjectHandlers = {
             // Change title in the drawer
             const titleEl = document.querySelector('.drawer-header h3');
             if (titleEl) titleEl.innerText = 'Edit Project Details';
+            
+            const btnSubmit = document.getElementById('wizard-submit');
+            if (btnSubmit) btnSubmit.innerText = 'Update Project';
+            
+            const editJustContainer = document.getElementById('edit_justification_container');
+            if (editJustContainer) editJustContainer.style.display = 'block';
+
+            const docLabel = document.getElementById('project_document_label');
+            if (docLabel) docLabel.innerText = 'Attach Updated Document (Optional)';
             
             projects.getById(id).then(response => {
                 const project = response.data || response;

@@ -1283,14 +1283,19 @@ export const DrawerTemplates = {
                         <span id="summary_budget" style="font-size:14px; font-weight:700; color:var(--slate-900); font-family:'JetBrains Mono';">MWK 0.00</span>
                     </div>
 
-                    <div style="border-top: 1px solid var(--slate-200); padding-top: 12px; margin-top: 4px;">
-                        <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Attach Initial Document (Required) *</label>
+                    <div id="project_document_container" style="border-top: 1px solid var(--slate-200); padding-top: 12px; margin-top: 4px;">
+                        <label id="project_document_label" class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Attach Initial Document (Required) *</label>
                         <div id="project-drop-zone" onclick="document.getElementById('proj_document').click()" style="border: 2px dashed var(--slate-300); border-radius: 8px; padding: 16px; text-align: center; background: white; cursor: pointer;">
                              <i class="fas fa-file-upload" style="color: var(--slate-400); margin-bottom: 4px;"></i>
                              <div id="project-file-status" style="font-size: 11px; color: var(--slate-600); font-weight: 600;">Click to upload project charter/PDF (Max 25MB)</div>
                              <input type="file" id="proj_document" data-vrules="required" accept=".pdf" style="display: none;" onchange="if(this.files[0]) { const s = document.getElementById('project-file-status'); s.textContent = this.files[0].name; s.style.color = 'var(--emerald)'; }">
                         </div>
                     </div>
+                </div>
+
+                <div id="edit_justification_container" style="margin-bottom: 24px; display: none;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Reason for Edit (Required for Audit) *</label>
+                    <textarea id="edit_justification" class="form-input" style="width: 100%; padding: 12px; height: 80px;" placeholder="Briefly explain what you changed and why..."></textarea>
                 </div>
             </div>
 
