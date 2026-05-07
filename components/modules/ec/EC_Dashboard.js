@@ -36,6 +36,42 @@ export const EC_Dashboard = {
                 </div>
             </div>
 
+            <!-- Fleet Gap Analysis Center (New) -->
+            <div style="background: white; padding: 32px; border-radius: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--slate-200); position: relative; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="width: 8px; height: 8px; background: var(--orange); border-radius: 50%; box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);"></span>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em;">Asset Readiness & Procurement</div>
+                        </div>
+                        <h3 style="font-size: 24px; font-weight: 900; color: var(--slate-900); margin: 0;">Needs vs. Holdings Gap Analysis</h3>
+                    </div>
+                    <button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange); font-weight: 800; font-size: 12px; padding: 12px 24px;" onclick="window.app.ecModule.openNewRentalDrawer()">
+                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> Direct Requisition
+                    </button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px;">
+                    ${(this.projects || []).slice(0, 4).map(p => `
+                        <div style="background: var(--slate-50); padding: 20px; border-radius: 20px; border: 1px solid var(--slate-100); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;" onmouseover="this.style.background='white'; this.style.borderColor='var(--orange-light)'" onmouseout="this.style.background='var(--slate-50)'; this.style.borderColor='var(--slate-100)'">
+                            <div style="flex: 1; min-width: 0; margin-right: 16px;">
+                                <div style="font-weight: 800; color: var(--slate-800); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</div>
+                                <div style="font-size: 11px; color: var(--slate-500); font-weight: 600;">${p.roadType || 'Earth (RT-1)'} • ${p.location || 'Site Alpha'}</div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" style="flex-shrink: 0; background: white; border-color: var(--slate-200); font-weight: 700; font-size: 11px;" onclick="window.app.ecModule.openEquipmentGapDrawer(${p.id})">
+                                <i class="fas fa-microscope" style="margin-right: 6px; color: var(--orange);"></i> Run Gap Logic
+                            </button>
+                        </div>
+                    `).join('')}
+                    ${(this.projects || []).length === 0 ? `
+                        <div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--slate-400); background: var(--slate-50); border-radius: 20px; border: 1px dashed var(--slate-200);">
+                            <i class="fas fa-folder-open" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                            <div style="font-weight: 700; font-size: 14px;">No active projects to analyze</div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+
             <!-- Consolidated Logistics Intelligence Center -->
             <div style="background: white; color: var(--slate-900); padding: 32px; border-radius: 32px; margin-bottom: 24px; box-shadow: var(--shadow-md); border: 1px solid var(--slate-200); position: relative; overflow: hidden;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">

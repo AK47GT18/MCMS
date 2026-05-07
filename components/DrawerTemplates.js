@@ -9,6 +9,171 @@ export const DrawerTemplates = {
             .replace(/'/g, "&#039;");
     },
 
+    projectEquipmentGap: (data) => {
+        const { gap, summary } = data;
+        const totalNeedsRental = summary.totalNeedsRental;
+        return `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Gap Analysis Summary</div>
+                    <div style="display: flex; gap: 24px; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 24px; font-weight: 800; color: ${totalNeedsRental > 0 ? '#E11D48' : '#059669'};">${totalNeedsRental} Machines</div>
+                            <div style="font-size: 12px; color: var(--slate-500);">Missing from inventory</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 14px; font-weight: 700; color: var(--slate-700);">MWK ${Number(data.totalEquipmentBudget || 0).toLocaleString()}</div>
+                            <div style="font-size: 12px; color: var(--slate-500);">Estimated Rental Budget</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 32px;">
+                    <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 12px;">Machine Type Breakdown</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${gap.map(item => `
+                            <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${item.type}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">Requirement: ${item.required} • Owned: ${item.owned}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 800; color: ${item.gap > 0 ? '#F97316' : '#059669'}; font-size: 14px;">
+                                        ${item.gap > 0 ? `Needs ${item.gap}` : '<i class="fas fa-check-circle"></i> Fulfilled'}
+                                    </div>
+                                    ${item.gap > 0 ? `<div style="font-size: 11px; color: var(--slate-400);">Daily: MWK ${Number(item.estimatedDailyCost).toLocaleString()}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                ${totalNeedsRental > 0 ? `
+                    <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.app.ecModule.openNewRentalDrawer(${data.projectId})">
+                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> Raise Procurement Requisition
+                    </button>
+                ` : `
+                    <div style="text-align: center; color: #059669; font-weight: 700; font-size: 14px; padding: 20px; background: #ecfdf5; border-radius: 12px; border: 1px solid #bbf7d0;">
+                        <i class="fas fa-check-double"></i> All equipment needs met by internal holdings.
+                    </div>
+                `}
+            </div>
+        `;
+    },
+
+    newVehicleRental: (data) => {
+        const projects = data.projects || [];
+        const MACHINE_TYPES = data.machineTypes || ['Excavator', 'Dozer', 'Grader', 'Roller', 'Dumper', 'Crane', 'Backhoe', 'Water Truck'];
+        
+        return `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
+                    <div style="font-weight: 700; color: var(--slate-800); font-size: 14px; margin-bottom: 4px;">Rental/Purchase Request</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Establish a new vehicle procurement contract</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Procurement Type</label>
+                    <select id="rental-contract-type" class="form-input" style="width: 100%;">
+                        <option value="Rental">Rental Agreement</option>
+                        <option value="Purchase">Lease-to-Own / Purchase</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Machine Type</label>
+                    <select id="rental-machine-type" class="form-input" style="width: 100%;">
+                        ${MACHINE_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Allocated Project</label>
+                    <select id="rental-project-id" class="form-input" style="width: 100%;">
+                        <option value="">Select Project...</option>
+                        ${projects.map(p => `<option value="${p.id}" ${p.id == data.projectId ? 'selected' : ''}>${p.name}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">Daily Rate (MWK)</label>
+                        <input type="number" id="rental-daily-rate" class="form-input" placeholder="0.00" style="width: 100%; font-family: 'JetBrains Mono';">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duration (Days)</label>
+                        <input type="number" id="rental-duration" class="form-input" value="30" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">Provider / Vendor</label>
+                    <input type="text" id="rental-vendor" class="form-input" placeholder="Enter company name" style="width: 100%;">
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.app.ecModule.handleRentalSubmit()">
+                    Submit for Approval
+                </button>
+            </div>
+        `;
+    },
+
+    rentalReview: (data) => {
+        const isPending = data.status === 'Pending';
+        return `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Rental Requisition Details</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${data.machineType}</div>
+                            <div style="font-size: 12px; color: var(--slate-500);">${data.contractType} • ${data.vendorName}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 18px; font-weight: 800; color: var(--orange);">MWK ${data.dailyRate.toLocaleString()}</div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Per Day • ${data.durationDays} Days</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h4 style="font-size: 12px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 12px;">Financial Impact</h4>
+                    <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--slate-500); font-size: 13px;">Total Contract Value:</span>
+                            <span style="font-weight: 700; color: var(--slate-900);">MWK ${(data.dailyRate * data.durationDays).toLocaleString()}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--slate-500); font-size: 13px;">Project Allocation:</span>
+                            <span style="font-weight: 700; color: var(--indigo-600);">${data.project?.name || 'Unassigned'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${isPending ? `
+                    <div style="margin-bottom: 24px;">
+                        <label class="form-label">Reviewer Comments / Approval Note</label>
+                        <textarea id="rental_review_note" class="form-input" placeholder="Justification for approval or rejection..." style="width: 100%; height: 80px; resize: none;"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="btn btn-secondary" style="color: #E11D48; border-color: #E11D48;" onclick="window.app.fmModule.handleRentalAction(${data.id}, 'rejected')">
+                            Reject Request
+                        </button>
+                        <button class="btn btn-primary" onclick="window.app.fmModule.handleRentalAction(${data.id}, 'approved')">
+                            Approve & Sign
+                        </button>
+                    </div>
+                ` : `
+                    <div style="background: var(--slate-100); border-radius: 12px; padding: 16px; text-align: center;">
+                        <div style="font-weight: 700; color: var(--slate-600);">Status: ${data.status}</div>
+                        ${data.comments ? `<div style="font-size: 12px; color: var(--slate-500); margin-top: 8px;">"${data.comments}"</div>` : ''}
+                    </div>
+                `}
+            </div>
+        `;
+    },
+
     documentViewer: (url, fileName = "Document") => {
         if (!url || url === "null" || url === "") {
             return `

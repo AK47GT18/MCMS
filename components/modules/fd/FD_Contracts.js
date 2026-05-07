@@ -25,6 +25,7 @@ export const FD_Contracts = {
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
                     <div class="tab ${this.currentContractTab === "project" ? "active" : ""}" data-tab="project" onclick="window.app.fmModule.switchContractTab('project')">Project Contracts</div>
                     <div class="tab ${this.currentContractTab === "vendor" ? "active" : ""}" data-tab="vendor" onclick="window.app.fmModule.switchContractTab('vendor')">Vendor Contracts</div>
+                    <div class="tab ${this.currentContractTab === "rentals" ? "active" : ""}" data-tab="rentals" onclick="window.app.fmModule.switchContractTab('rentals')">Vehicle Rentals</div>
                 </div>
                 
                 <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; gap: 16px;">
@@ -103,6 +104,12 @@ export const FD_Contracts = {
       this.allContracts = allContracts;
       this._contractsMap = allContracts; // For legacy methods
 
+      // Load Vehicle Rentals if on that tab
+      if (this.currentContractTab === "rentals") {
+          const rentalRes = await window.vehicleRentalsApi.getAll();
+          this.data.vehicleRentals = Array.isArray(rentalRes) ? rentalRes : (rentalRes.data || []);
+      }
+
       // Populate vendor filter dynamically from contracts
       if (this.currentContractTab === "vendor") {
         const vendorSelect = document.getElementById("contract-vendor-filter");
@@ -137,6 +144,10 @@ export const FD_Contracts = {
   renderContractsTable() {
     const container = document.getElementById("contracts-table-container");
     if (!container) return;
+
+    if (this.currentContractTab === "rentals") {
+        return this.renderRentalsTable();
+    }
 
     if (!this.allContracts || this.allContracts.length === 0) {
       container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-file-contract" style="font-size: 32px; margin-bottom: 12px;"></i><div>No contracts found in the repository.</div></div>`;
@@ -1400,5 +1411,60 @@ export const FD_Contracts = {
     } catch (e) {
       window.toast.show(e.message, "error");
     }
+  },
+
+  renderRentalsTable() {
+    const container = document.getElementById("contracts-table-container");
+    const rentals = this.data.vehicleRentals || [];
+
+    if (rentals.length === 0) {
+      container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size: 32px; margin-bottom: 12px;"></i><div>No vehicle rental requisitions found.</div></div>`;
+      return;
+    }
+
+    const rows = rentals
+      .map((item) => {
+        let statusClass = "locked";
+        if (item.status === "Approved") statusClass = "active";
+        if (item.status === "Rejected") statusClass = "delayed";
+        if (item.status === "Pending") statusClass = "locked";
+
+        return `
+                <tr onclick="window.app.fmModule.openRentalReview(${item.id})">
+                    <td><span class="project-id">RENT-${item.id}</span></td>
+                    <td>
+                        <div style="font-weight: 600;">${item.machineType}</div>
+                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">${item.vendorName || "Unassigned"}</div>
+                    </td>
+                    <td>${item.project?.name || "Multiple"}</td>
+                    <td style="font-family:'JetBrains Mono'; font-weight: 700;">MWK ${item.dailyRate.toLocaleString()}/day</td>
+                    <td>${item.durationDays} Days</td>
+                    <td>
+                        <span class="status ${statusClass}">${(item.status || "Pending").toUpperCase()}</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Review</button>
+                    </td>
+                </tr>
+            `;
+      })
+      .join("");
+
+    container.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ref</th>
+                        <th>Machine Type</th>
+                        <th>Project</th>
+                        <th>Rate</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
   }
 };

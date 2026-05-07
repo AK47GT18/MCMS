@@ -3,6 +3,7 @@ import { currentUser as mockUser, ROLES } from './config/roles.js'; // Keep as f
 import { drawer } from './components/DrawerManager.js';
 import { ModuleLoaderStrategy } from './src/strategies/ModuleLoaderStrategy.js';
 import issues from './src/api/issues.api.js';
+import './src/api/vehicleRentals.api.js';
 import client from './src/api/client.js';
 import { realtime } from './src/realtime/RealtimeClient.js';
 import V from './components/ui/FormValidator.js';

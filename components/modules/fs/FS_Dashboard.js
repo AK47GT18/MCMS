@@ -8,8 +8,20 @@ export const FS_Dashboard = {
         const inventoryEntries = Object.entries(this.siteInventory);
         const lowStock = inventoryEntries.some(([, i]) => i.qty === 0);
         const inTransitCount = this.siteAssets.filter(a => a.status === 'in_transit').length;
+        const isCompleted = this.assignedProject?.status === 'completed';
 
         return `
+            ${isCompleted ? `
+                <div style="background: #FFFBEB; border: 1px solid #FEF3C7; border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 40px; height: 40px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #D97706; flex-shrink: 0;">
+                        <i class="fas fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 800; font-size: 14px; color: #92400E;">Grace Period Active</div>
+                        <div style="font-size: 12px; color: #B45309;">This project is marked as COMPLETED. You have a 48-hour grace period to finalize site logs and return excess inventory.</div>
+                    </div>
+                </div>
+            ` : ''}
             <div class="stats-grid">
                <div class="stat-card" style="cursor: pointer;" onclick="window.app.fsModule.switchView('logistics')">
                   <div class="stat-header"><span class="stat-label" style="color: var(--blue);">Site Stock</span><i class="fas fa-cubes" style="color: var(--blue);"></i></div>
@@ -34,11 +46,13 @@ export const FS_Dashboard = {
             </div>
 
             <div class="stats-grid action-tiles" style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                <div class="stat-card" style="border: 1px solid var(--slate-200); ${isCompleted ? 'opacity: 0.6; cursor: not-allowed;' : 'cursor: pointer;'}" 
+                    onclick="${isCompleted ? "window.toast.show('Progress logging is disabled for completed projects.', 'warning')" : "window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())"}">
                     <div style="color: var(--orange); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-camera"></i></div>
                     <div style="font-weight: 800; font-size: 13px;">Daily Log</div>
                 </div>
-                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" onclick="window.app.fsModule.openResourceRequestDrawer()">
+                <div class="stat-card" style="border: 1px solid var(--slate-200); ${isCompleted ? 'opacity: 0.6; cursor: not-allowed;' : 'cursor: pointer;'}" 
+                    onclick="${isCompleted ? "window.toast.show('New requests are disabled for completed projects.', 'warning')" : "window.app.fsModule.openResourceRequestDrawer()"}">
                     <div style="color: var(--blue); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-plus-circle"></i></div>
                     <div style="font-weight: 800; font-size: 13px;">Request</div>
                 </div>
@@ -58,8 +72,8 @@ export const FS_Dashboard = {
                                 <div style="font-size: 14px; font-weight: 800; margin-top: 4px;">${this.assignedProject?.name || 'Loading…'}</div>
                             </div>
                             <div style="flex: 1; padding: 16px; background: var(--slate-50); border-radius: 12px;">
-                                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Active Phase</div>
-                                <div style="font-size: 14px; font-weight: 800; margin-top: 4px; color: var(--blue);">${this.assignedProject?.status || 'Loading…'}</div>
+                                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Project Status</div>
+                                <div style="font-size: 14px; font-weight: 800; margin-top: 4px; color: ${isCompleted ? 'var(--emerald)' : 'var(--blue)'};">${(this.assignedProject?.status || 'Loading').toUpperCase()}</div>
                             </div>
                         </div>
                         <div style="height: 12px; background: var(--slate-100); border-radius: 6px; overflow: hidden; margin-bottom: 8px;">

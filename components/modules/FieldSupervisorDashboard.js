@@ -151,6 +151,14 @@ export class FieldSupervisorDashboard {
             this._loadSiteAssets();
         }, 0);
 
+        if (!this.assignedProject) {
+            return `
+                <div id="fs-module" class="animate-fade-in">
+                    ${this.getNoProjectView()}
+                </div>
+            `;
+        }
+
         let contentHTML = '';
 
         switch (this.currentView) {
@@ -168,6 +176,30 @@ export class FieldSupervisorDashboard {
                 ${this.getHeaderHTML()}
                 <div class="content" id="fs-content-area">
                     ${contentHTML}
+                </div>
+            </div>
+        `;
+    }
+
+    getNoProjectView() {
+        return `
+            <div style="height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--slate-50); padding: 40px;">
+                <div style="max-width: 450px; text-align: center;">
+                    <div style="width: 120px; height: 120px; background: white; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; box-shadow: var(--shadow-lg);">
+                        <i class="fas fa-hard-hat" style="font-size: 48px; color: var(--slate-300);"></i>
+                    </div>
+                    <h2 style="font-size: 24px; font-weight: 800; color: var(--slate-900); margin-bottom: 12px;">No Project Assigned</h2>
+                    <p style="font-size: 15px; color: var(--slate-500); line-height: 1.6; margin-bottom: 32px;">
+                        Your supervisor workspace is currently standby. Once you are assigned to an active site, your dashboard, inventory, and task center will activate here.
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button class="btn btn-secondary" onclick="location.reload()">
+                            <i class="fas fa-sync"></i> Check for Assignment
+                        </button>
+                    </div>
+                    <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--slate-200); font-size: 11px; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">
+                        Mkaka Construction Management System
+                    </div>
                 </div>
             </div>
         `;

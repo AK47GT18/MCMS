@@ -159,6 +159,7 @@ export class EquipmentCoordinatorDashboard {
 
         switch (view) {
             case 'dashboard':
+                this._loadProjects();
                 this._loadAssets();
                 this._loadInventory();
                 this._loadProcurementReceipts();

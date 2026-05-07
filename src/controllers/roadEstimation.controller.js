@@ -4,6 +4,7 @@
  */
 
 const estimationService = require('../services/roadEstimation.service');
+const equipmentService = require('../services/equipmentRequirements');
 const { validateBody, validateId, parseBody } = require('../middlewares/validate.middleware');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { roadEstimationInputSchema } = require('../utils/validators');
@@ -83,4 +84,15 @@ const toggleItem = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { calculate, save, getForProject, toggleItem };
+const getEquipmentGap = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const projectId = validateId(id, res);
+  if (!projectId) return;
+  
+  const result = await equipmentService.analyzeEquipmentGap(projectId);
+  response.success(res, result);
+});
+
+module.exports = { calculate, save, getForProject, toggleItem, getEquipmentGap };

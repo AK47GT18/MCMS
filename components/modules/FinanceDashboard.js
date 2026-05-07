@@ -24,7 +24,8 @@ export class FinanceDashboard {
             projects: [],
 
             requisitions: [],
-            budgetChanges: []
+            budgetChanges: [],
+            vehicleRentals: []
         };
         
         // Register this module globally with safety checks

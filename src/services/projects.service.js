@@ -23,7 +23,19 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
     const skip = (page - 1) * limit;
     const where = {};
     if (status) where.status = status;
-    if (fieldSupervisorId) where.fieldSupervisorId = Number(fieldSupervisorId);
+    if (fieldSupervisorId) {
+      where.fieldSupervisorId = Number(fieldSupervisorId);
+      // If no specific status is requested, include active and recently completed (48h grace period)
+      if (!status) {
+        where.OR = [
+          { status: 'active' },
+          { 
+            status: 'completed',
+            updatedAt: { gte: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+          }
+        ];
+      }
+    }
     if (managerId) where.managerId = Number(managerId);
     
     // Defensive check for sortBy

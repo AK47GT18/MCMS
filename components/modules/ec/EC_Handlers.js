@@ -1307,5 +1307,81 @@ export const EC_Handlers = {
         } catch (err) {
             list.innerHTML = 'General Project usage (No specific phase constraint).';
         }
+    },
+
+    async openEquipmentGapDrawer(projectId) {
+        try {
+            window.toast.show('Analyzing requirements...', 'info');
+            const data = await window.vehicleRentalsApi.getGapAnalysis(projectId);
+            window.drawer.open('Equipment Needs vs. Holdings', window.DrawerTemplates.projectEquipmentGap({
+                ...data,
+                projectId
+            }));
+        } catch (error) {
+            console.error('Gap analysis failed:', error);
+            window.toast.show('Failed to run gap analysis', 'error');
+        }
+    },
+
+    async openNewRentalDrawer(projectId = null) {
+        try {
+            const projectsRes = await client.get('/projects');
+            const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.data || []);
+            
+            const configsRes = await window.vehicleRentalsApi.getPriceConfigs();
+            const configs = Array.isArray(configsRes) ? configsRes : (configsRes.data || []);
+            const machineTypes = [...new Set(configs.map(c => c.machineType))];
+
+            window.drawer.open('Procurement Requisition', window.DrawerTemplates.newVehicleRental({
+                projectId,
+                projects,
+                machineTypes
+            }));
+        } catch (error) {
+            console.error('Failed to open rental drawer:', error);
+            window.toast.show('Error loading procurement data', 'error');
+        }
+    },
+
+    async handleRentalSubmit() {
+        const type = document.getElementById('rental-contract-type').value;
+        const machineType = document.getElementById('rental-machine-type').value;
+        const projectId = document.getElementById('rental-project-id').value;
+        const dailyRate = document.getElementById('rental-daily-rate').value;
+        const duration = document.getElementById('rental-duration').value;
+        const vendorName = document.getElementById('rental-vendor').value;
+
+        if (!projectId || !dailyRate || !duration || !vendorName) {
+            window.toast.show('Please fill all required fields', 'warning');
+            return;
+        }
+
+        try {
+            const res = await window.vehicleRentalsApi.create({
+                projectId: parseInt(projectId),
+                machineType,
+                contractType: type,
+                dailyRate: parseFloat(dailyRate),
+                durationDays: parseInt(duration),
+                vendorName
+            });
+
+            if (res.error) throw new Error(res.error);
+
+            window.toast.show('Requisition submitted to Finance Director', 'success');
+            window.drawer.close();
+            
+            // Log audit
+            client.post('/audit-logs', {
+                action: 'CREATE_RENTAL_REQUEST',
+                entityType: 'VehicleRentalContract',
+                entityId: (res.data || res).id,
+                details: `EC requested ${type} for ${machineType} at ${dailyRate}/day for ${duration} days.`
+            }).catch(() => {});
+
+        } catch (error) {
+            console.error('Rental submission failed:', error);
+            window.toast.show('Submission failed: ' + error.message, 'error');
+        }
     }
 };

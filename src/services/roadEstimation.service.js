@@ -10,6 +10,7 @@ const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 const emailService = require('../emails/email.service');
+const equipmentRequirements = require('./equipmentRequirements');
 
 // ==========================================
 // RCMS MASTER REFERENCE CONSTANTS (MALAWI 2025)
@@ -407,6 +408,29 @@ async function calculateEstimate(input) {
   const grandTotalLow = layersTotalLow + accessoriesTotalLow;
   const grandTotalHigh = layersTotalHigh + accessoriesTotalHigh;
 
+  // 3. Equipment Calculation (New)
+  let equipmentBudget = 0;
+  let equipmentDetails = null;
+  
+  try {
+    if (input.projectId) {
+      equipmentDetails = await equipmentRequirements.analyzeEquipmentGap(input.projectId);
+      equipmentBudget = equipmentDetails.totalEquipmentBudget;
+    } else {
+      // For simulation/calculation without project context
+      const reqMachines = equipmentRequirements.getRequiredEquipment(roadType);
+      // Fallback: 180 days simulation
+      equipmentBudget = reqMachines.reduce((sum, m) => sum + (m.defaultDailyRate * 180), 0);
+      equipmentDetails = {
+        required: reqMachines,
+        totalEquipmentBudget: equipmentBudget,
+        isSimulation: true
+      };
+    }
+  } catch (e) {
+    logger.warn('Equipment calculation failed during estimate', { error: e.message });
+  }
+
   return {
     roadType,
     lengthKm,
@@ -414,12 +438,14 @@ async function calculateEstimate(input) {
     terrain,
     geographicZone: input.geographicZone,
     nearestTownKm,
-    estimatedTotalLow: grandTotalLow,
-    estimatedTotalHigh: grandTotalHigh,
-    costPerMeterLow: grandTotalLow / (lengthKm * 1000),
-    costPerMeterHigh: grandTotalHigh / (lengthKm * 1000),
+    estimatedTotalLow: grandTotalLow + equipmentBudget,
+    estimatedTotalHigh: grandTotalHigh + equipmentBudget,
+    costPerMeterLow: (grandTotalLow + equipmentBudget) / (lengthKm * 1000),
+    costPerMeterHigh: (grandTotalHigh + equipmentBudget) / (lengthKm * 1000),
     layers: generatedLayers,
-    accessories: generatedAccessories
+    accessories: generatedAccessories,
+    equipmentBudget,
+    equipmentDetails
   };
 }
 
@@ -458,6 +484,7 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
         estimatedTotalHigh: estimateData.estimatedTotalHigh,
         costPerMeterLow: estimateData.costPerMeterLow,
         costPerMeterHigh: estimateData.costPerMeterHigh,
+        equipmentBudget: estimateData.equipmentBudget,
         reconciliationStatus: 'approved',
         approvedTotal: approvedTotal // PM locked value
       }

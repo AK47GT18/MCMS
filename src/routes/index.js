@@ -17,6 +17,7 @@ const issuesController = require('../controllers/issues.controller');
 const procurementController = require('../controllers/procurement.controller');
 const auditController = require('../controllers/audit.controller');
 const roadEstimationController = require('../controllers/roadEstimation.controller');
+const vehicleRentalController = require('../controllers/vehicleRental.controller');
 const inventoryController = require('../controllers/inventory.controller');
 const replenishmentController = require('../controllers/replenishment.controller');
 const reconciliationController = require('../controllers/reconciliation.controller');
@@ -358,6 +359,39 @@ async function router(req, res) {
     if (method === 'DELETE') return assetsController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
+
+  // ============================================
+  // VEHICLE RENTAL ROUTES
+  // ============================================
+  if (resource === 'vehicle-rentals') {
+    if (id === 'config') {
+      if (method === 'GET') return vehicleRentalController.getPriceConfigs(req, res);
+      if (method === 'POST') return vehicleRentalController.updatePriceConfig(req, res);
+      return methodNotAllowed(res, ['GET', 'POST']);
+    }
+    if (!id) {
+      if (method === 'GET') return vehicleRentalController.getAll(req, res);
+      if (method === 'POST') return vehicleRentalController.create(req, res);
+      return methodNotAllowed(res, ['GET', 'POST']);
+    }
+    if (action === 'approve' && method === 'POST') {
+      return vehicleRentalController.approve(req, res, id);
+    }
+    if (action === 'reject' && method === 'POST') {
+      return vehicleRentalController.reject(req, res, id);
+    }
+    if (action === 'renew' && method === 'POST') {
+      return vehicleRentalController.renew(req, res, id);
+    }
+    if (action === 'shift' && method === 'POST') {
+      return vehicleRentalController.shift(req, res, id);
+    }
+    if (action === 'return' && method === 'POST') {
+      return vehicleRentalController.markReturned(req, res, id);
+    }
+    if (method === 'GET') return vehicleRentalController.getAll(req, res); // Default for GET /vehicle-rentals/:id
+    return methodNotAllowed(res, ['GET', 'POST']);
+  }
   
   // ============================================
   // ASSET SCHEDULER ROUTES
@@ -515,6 +549,9 @@ async function router(req, res) {
     }
     if (action === 'toggle-item' && method === 'PATCH') {
       return roadEstimationController.toggleItem(req, res, id);
+    }
+    if (action === 'equipment-gap' && method === 'GET') {
+      return roadEstimationController.getEquipmentGap(req, res, id);
     }
     if (method === 'GET' && id && !action) {
       return roadEstimationController.getForProject(req, res, id);

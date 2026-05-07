@@ -135,5 +135,48 @@ export const FD_Handlers = {
             console.error('Bulk approval error:', error);
             window.toast.show('Some items failed to approve. Please refresh.', 'error');
         }
+    },
+
+    async handleRentalAction(rentalId, action) {
+        const note = document.getElementById('rental_review_note')?.value;
+        if (!note || note.trim().length < 5) {
+            window.toast.show('Please provide a review note (min 5 chars).', 'warning');
+            return;
+        }
+
+        try {
+            window.toast.show(`Processing rental ${action}...`, 'info');
+            
+            let res;
+            if (action === 'approved') {
+                res = await window.vehicleRentalsApi.approve(rentalId, { comments: note });
+            } else if (action === 'rejected') {
+                res = await window.vehicleRentalsApi.reject(rentalId, { reason: note });
+            }
+
+            if (res.error) throw new Error(res.error);
+
+            window.toast.show(`Rental contract ${action} successfully.`, 'success');
+            window.drawer.close();
+            
+            // Refresh view
+            if (this.currentView === 'contracts' || this.currentView === 'dashboard') {
+                this.loadContractsData?.();
+                this._refreshCurrentView();
+            }
+
+        } catch (error) {
+            console.error('Rental action failed:', error);
+            window.toast.show('Action failed: ' + error.message, 'error');
+        }
+    },
+
+    openRentalReview(rentalId) {
+        const rental = this.data.vehicleRentals?.find(r => String(r.id) === String(rentalId));
+        if (rental) {
+            window.drawer.open('Vehicle Rental Review', window.DrawerTemplates.rentalReview(rental));
+        } else {
+            window.toast.show('Rental details not found.', 'error');
+        }
     }
 };
