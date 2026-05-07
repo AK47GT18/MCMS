@@ -160,7 +160,7 @@ async function main() {
         { materialName: 'Stone Dust (filler)', category: 'Aggregates', unit: 'Tonne', basePrice: 45000, phase: 'Phase 5: Surfacing' },
         
         // Phase 6: Drainage
-        { materialName: 'Cement OPC', category: 'Cement', unit: 'Bag', basePrice: 18500, phase: 'Phase 6: Drainage' },
+        { materialName: 'Portland Cement (50kg)', category: 'Cement', unit: 'Bag', basePrice: 18500, phase: 'Phase 6: Drainage' },
         { materialName: 'Gabion Boxes (2x1x1m)', category: 'Drainage', unit: 'Unit', basePrice: 95000, phase: 'Phase 6: Drainage' },
         { materialName: 'Reno Mattresses', category: 'Drainage', unit: 'Unit', basePrice: 85000, phase: 'Phase 6: Drainage' },
         { materialName: 'Precast U-drain Sections', category: 'Drainage', unit: 'm', basePrice: 155000, phase: 'Phase 6: Drainage' },
@@ -190,7 +190,9 @@ async function main() {
         { materialName: 'Excavator Rental', category: 'Plant Hire', unit: 'Day', basePrice: 650000, phase: 'General' },
         { materialName: 'Grader Rental', category: 'Plant Hire', unit: 'Day', basePrice: 750000, phase: 'General' },
         { materialName: 'Site Engineer', category: 'Labor', unit: 'Month', basePrice: 2500000, phase: 'General' },
-        { materialName: 'Skilled Artisan', category: 'Labor', unit: 'Day', basePrice: 45000, phase: 'General' }
+        { materialName: 'Skilled Artisan', category: 'Labor', unit: 'Day', basePrice: 45000, phase: 'General' },
+        { materialName: 'GPS/Total Station Hire', category: 'Plant Hire', unit: 'Day', basePrice: 400000, phase: 'Phase 1: Clearing & Grubbing' },
+        { materialName: 'Herbicide (stump treatment)', category: 'Material', unit: 'Litre', basePrice: 45000, phase: 'Phase 1: Clearing & Grubbing' }
     ];
 
     for (const mp of MATERIAL_PRICES) {

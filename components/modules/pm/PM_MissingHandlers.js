@@ -88,15 +88,7 @@ export const PM_MissingHandlers = {
         }
     },
 
-    getAnalyticsView() {
-        return `
-            <div class="data-card" style="padding: 40px; text-align: center;">
-                <i class="fas fa-chart-pie" style="font-size: 48px; color: var(--slate-300); margin-bottom: 16px;"></i>
-                <h3 style="font-size: 18px; font-weight: 700; color: var(--slate-700);">Analytics Module</h3>
-                <p style="color: var(--slate-500); margin-top: 8px;">Detailed analytics are currently being configured.</p>
-            </div>
-        `;
-    },
+
 
     updateBudgetSummary(transactions) {
         const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);

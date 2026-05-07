@@ -16,7 +16,6 @@ export const PM_Portfolio = {
         setTimeout(() => this.loadProjectsFromAPI(), 0);
 
         return `
-            ${this.getStatsGridHTML()}
             <div class="data-card">
                 <div class="data-card-header" style="flex-wrap: wrap; gap: 16px;">
                     <div class="tabs" style="margin-bottom: 0; flex-grow: 1;">
@@ -188,30 +187,5 @@ export const PM_Portfolio = {
         });
     },
 
-    getStatsGridHTML() {
-        return `
-            <div class="stats-grid">
-               <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Budget Health</span><i class="fas fa-wallet" style="color: var(--emerald);"></i></div>
-                  <div class="stat-value" id="stat-budget-health">85%</div>
-                  <div class="stat-sub"><i class="fas fa-arrow-up"></i> Utilized (Aggregate)</div>
-               </div>
-               <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;" onclick="window.toast.show('Filtering for pending reviews...', 'info')">
-                  <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Pending Reviews</span><i class="fas fa-clipboard-check" style="color: var(--orange);"></i></div>
-                  <div class="stat-value" style="color: var(--orange);" id="stat-pending-reviews">0</div>
-                  <div class="stat-sub">Field logs awaiting approval</div>
-               </div>
-               <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Portfolio Value</span><i class="fas fa-chart-line" style="color: var(--blue);"></i></div>
-                  <div class="stat-value" id="stat-portfolio-value">MWK 0</div>
-                  <div class="stat-sub">Across all projects</div>
-               </div>
-               <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Active Projects</span><i class="fas fa-project-diagram" style="color: var(--slate-600);"></i></div>
-                  <div class="stat-value" id="stat-active-projects">0</div>
-                  <div class="stat-sub">Managed currently</div>
-               </div>
-            </div>
-        `;
-    }
+
 };

@@ -56,8 +56,7 @@ export const NAV_ITEMS = {
             section: 'Main',
             items: [
                 { label: 'Dashboard', icon: '<i class="fas fa-chart-simple"></i>', id: 'portfolio', active: true },
-                { label: 'Log Reviews', icon: '<i class="fas fa-check-double"></i>', id: 'reviews', badge: 3 },
-                { label: 'Analytics', icon: '<i class="fas fa-chart-pie"></i>', id: 'analytics' }
+                { label: 'Log Reviews', icon: '<i class="fas fa-check-double"></i>', id: 'reviews', badge: 3 }
             ]
         },
         {

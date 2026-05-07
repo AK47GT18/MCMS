@@ -22,10 +22,7 @@ export const PM_Contracts = {
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Contract Registry & Legal Repository</div>
-                    ${this.currentContractTab === "project"
-        ? `<button class="btn btn-primary" onclick="window.app.pmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
-        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.pmModule?.loadContractProjects(); window.app.pmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
-      }
+
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">

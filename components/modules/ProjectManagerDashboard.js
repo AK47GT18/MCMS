@@ -94,7 +94,6 @@ export class ProjectManagerDashboard {
             case 'teams': contentHTML = this.getTeamsView(); break;
             case 'contracts': contentHTML = this.getContractsView(); break;
             case 'reports': contentHTML = this.getReportsView(); break;
-            case 'analytics': contentHTML = this.getAnalyticsView(); break;
             case 'reviews': contentHTML = this.getReviewsView(); break;
             case 'issues': contentHTML = this.getIssuesView(); break;
             case 'fleet': contentHTML = this.getFleetView(); break;
@@ -124,7 +123,6 @@ export class ProjectManagerDashboard {
             'teams': 'Field Operations',
             'contracts': 'Contract Registry',
             'reports': 'Reports Center',
-            'analytics': 'Performance Analytics',
             'reviews': 'Approvals & Reviews',
             'issues': 'Issues Resolution Center',
             'fleet': 'Asset Registry',
@@ -272,61 +270,7 @@ export class ProjectManagerDashboard {
     // --- 7. REPORTS ---
 
 
-    getAnalyticsView() {
-        setTimeout(() => this.loadInventoryData(), 0);
-        const stats = this.calculateDashboardStats(this.allProjects || []);
-        const projectBars = (this.allProjects || []).slice(0, 4).map(p => {
-            const utilization = p.budgetTotal > 0 ? (p.budgetSpent / p.budgetTotal) * 100 : 0;
-            const color = utilization > 100 ? 'var(--red)' : utilization > 80 ? 'var(--orange)' : 'var(--emerald)';
-            return `
-                <div class="bar-group">
-                    <div class="bar" style="height: ${Math.min(utilization, 100)}%; background: ${color};" title="${p.name}: ${utilization.toFixed(1)}%"></div>
-                    <div class="bar-label">${p.code || p.id}</div>
-                </div>
-            `;
-        }).join('');
 
-        return `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:24px;">
-                <div class="data-card">
-                    <div class="data-card-header">
-                        <div class="card-title">Budget Utilization by Project (%)</div>
-                        <button class="btn btn-secondary" onclick="window.app.pmModule.loadProjectsFromAPI()"><i class="fas fa-sync"></i></button>
-                    </div>
-                    <div style="padding:24px;">
-                        <div class="chart-container">
-                            ${projectBars || '<div style="height:200px; display:flex; align-items:center; color:var(--slate-400);">No project data available</div>'}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="data-card">
-                    <div class="data-card-header">
-                        <div class="card-title">Portfolio Distribution</div>
-                        <div style="font-size:11px; color:var(--slate-500);">Value by Project Status</div>
-                    </div>
-                    <div style="padding:24px; display:flex; align-items:center; justify-content:center; height:240px;">
-                        <div style="position:relative; width:160px; height:160px; border-radius:50%; background:conic-gradient(var(--emerald) 0% 45%, var(--orange) 45% 75%, #4F46E5 75% 100%);">
-                            <div style="position:absolute; inset:30px; background:white; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                <div style="font-weight:800; font-size:18px;">MWK ${(stats.portfolioValue / 1e9).toFixed(1)}B</div>
-                                <div style="font-size:10px; color:var(--slate-500);">Portfolio</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="data-card">
-                 <div class="data-card-header">
-                    <div class="card-title">Critical Inventory & Assets</div>
-                    <button class="btn btn-secondary" onclick="window.app.pmModule.loadInventoryData()"><i class="fas fa-sync"></i> Refresh</button>
-                </div>
-                <div id="inventory-table-container">
-                    ${this.renderLoadingState()}
-                </div>
-            </div>
-        `;
-    }
 
 
     // --- 10. REVIEWS & APPROVALS ---

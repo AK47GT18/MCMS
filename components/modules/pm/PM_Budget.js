@@ -42,28 +42,12 @@ export const PM_Budget = {
         }
 
         try {
-            console.log('[PM_Budget] Fetching projects and material prices...');
-            const [projRes, priceRes] = await Promise.all([
-                projectsApi.getAll(),
-                client.get('/pm/material-prices?limit=1000').catch(err => {
-                    console.error('[PM_Budget] Material prices fetch failed:', err);
-                    return { data: [] };
-                }) 
-            ]);
+            console.log('[PM_Budget] Fetching projects...');
+            const projRes = await projectsApi.getAll();
 
-            console.log('[PM_Budget] Data received:', { projRes, priceRes });
+            console.log('[PM_Budget] Data received:', { projRes });
 
             this.projects = projRes.data || projRes || [];
-            const priceData = priceRes.data || priceRes || {};
-            const prices = priceData.configs || (Array.isArray(priceData) ? priceData : []);
-            
-            // Map prices for easy lookup
-            this.materialBaselines = {};
-            prices.forEach(p => {
-                if (p.materialName) {
-                    this.materialBaselines[p.materialName] = Number(p.basePrice || 0);
-                }
-            });
 
             if (this.projects.length === 0) {
                 console.log('[PM_Budget] No projects found.');
@@ -163,12 +147,26 @@ export const PM_Budget = {
             const allAssets = assetsRes.data || assetsRes || [];
             const projectAssets = allAssets.filter(a => Number(a.currentProjectId) === Number(projectId));
 
-            // Extract all items from all contracts
+            // Group data by contract for variance reporting
+            // Market baseline = item.totalCost (qty × market unitPrice, stored at contract creation from road spec)
+            // Actual total = contract.value (the real negotiated price the FD got)
             const allItems = [];
             contracts.forEach(c => {
-                if (c.items) {
+                const contractValue = Number(c.value || 0);
+                const itemMarketTotal = (c.items || []).reduce((sum, i) => sum + Number(i.totalCost || 0), 0);
+                if (c.items && c.items.length > 0) {
                     c.items.forEach(i => {
-                        allItems.push({ ...i, contractRef: c.refCode, vendor: c.vendorName });
+                        // For multi-item contracts, proportionally split the actual contract value
+                        const itemShare = itemMarketTotal > 0 
+                            ? (Number(i.totalCost || 0) / itemMarketTotal) * contractValue 
+                            : contractValue / c.items.length;
+                        allItems.push({ 
+                            ...i, 
+                            contractRef: c.refCode, 
+                            vendor: c.vendorName,
+                            contractStatus: c.status,
+                            actualTotal: itemShare // Proportional share of FD's negotiated price
+                        });
                     });
                 }
             });
@@ -223,38 +221,49 @@ export const PM_Budget = {
                             <tr>
                                 <th>Material / Item</th>
                                 <th>Ref</th>
-                                <th>Market Price</th>
-                                <th>Actual Price</th>
+                                <th>Market Baseline (Total)</th>
+                                <th>Actual Total</th>
                                 <th>Variance</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${items.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--slate-400);">No material procurement records found.</td></tr>' : ''}
                             ${items.map(item => {
-                                const baseline = this.materialBaselines[item.materialName] || 0;
-                                let actual = Number(item.unitPrice || 0);
+                                const qty = Number(item.quantity || 0);
+                                const receivedQty = Number(item.receivedQty || 0);
+                                const isTerminated = item.contractStatus === 'cancelled' || item.contractStatus === 'terminated';
                                 
-                                // Fallback: if actual price is missing (0) in DB, assume market rate for accurate variance
-                                if (actual === 0 && baseline > 0) {
-                                    actual = baseline;
-                                }
+                                const calcQty = isTerminated ? receivedQty : qty;
 
-                                const diff = actual - baseline;
-                                const diffPct = baseline > 0 ? (diff / baseline) * 100 : (actual > 0 ? 100 : 0);
+                                const marketUnitPrice = Number(item.unitPrice || 0); 
+                                const actualTotalNegotiated = Math.round(Number(item.actualTotal || 0)); 
+                                const actualUnitPrice = qty > 0 ? (actualTotalNegotiated / qty) : 0;
+                                
+                                const marketTotal = marketUnitPrice * calcQty;
+                                const actualTotal = Math.round(actualUnitPrice * calcQty);
+
+                                const diff = actualTotal - marketTotal;
+                                let diffPct = 0;
+                                if (calcQty > 0) {
+                                    diffPct = marketTotal > 0 ? (diff / marketTotal) * 100 : (actualTotal > 0 ? 100 : 0);
+                                }
                                 const isHigh = diff > 0;
 
                                 return `
                                     <tr>
                                         <td>
                                             <div style="font-weight: 700; color: var(--slate-900);">${item.materialName}</div>
-                                            <div style="font-size: 10px; color: var(--slate-500);">Vendor: ${item.vendor || 'N/A'}</div>
+                                            <div style="font-size: 10px; color: var(--slate-500);">
+                                                ${isTerminated ? `<span style="color:var(--red);font-weight:600;">[TERMINATED]</span> ` : ''}
+                                                Qty: ${calcQty} ${item.unit} | Vendor: ${item.vendor || 'N/A'}
+                                            </div>
                                         </td>
                                         <td class="project-id" style="font-size: 10px;">${item.contractRef}</td>
-                                        <td style="font-family: 'JetBrains Mono'; color: var(--slate-500);">MWK ${baseline.toLocaleString()}</td>
-                                        <td style="font-family: 'JetBrains Mono'; font-weight: 700;">MWK ${actual.toLocaleString()}</td>
+                                        <td style="font-family: 'JetBrains Mono'; color: var(--slate-500);">MWK ${marketTotal.toLocaleString()}</td>
+                                        <td style="font-family: 'JetBrains Mono'; font-weight: 700;">MWK ${actualTotal.toLocaleString()}</td>
                                         <td>
-                                            <span style="font-weight: 800; color: ${isHigh ? 'var(--red)' : (baseline === 0 ? 'var(--slate-500)' : 'var(--emerald)')};">
-                                                ${baseline === 0 && actual > 0 ? 'No Baseline' : (isHigh ? '+' : '') + Math.round(diffPct) + '%'}
+                                            <span style="font-weight: 800; color: ${isHigh ? 'var(--red)' : (marketTotal === 0 ? 'var(--slate-500)' : 'var(--emerald)')};">
+                                                ${marketTotal === 0 && actualTotal > 0 ? 'No Baseline' : (calcQty === 0 ? 'N/A' : (isHigh ? '+' : '') + Math.round(diffPct) + '%')}
                                             </span>
                                         </td>
                                     </tr>
