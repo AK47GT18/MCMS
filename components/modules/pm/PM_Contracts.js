@@ -781,6 +781,11 @@ export const PM_Contracts = {
       return;
     }
 
+    if (file.size > 25 * 1024 * 1024) {
+      window.toast.show("Document exceeds the 25MB limit. Please compress and re-upload.", "error");
+      return;
+    }
+
     window.toast.show("Archiving master agreement...", "info");
 
     try {

@@ -86,11 +86,24 @@ export const FS_Dashboard = {
                     </div>
                 </div>
 
-                <div class="data-card">
-                    <div class="data-card-header"><div class="card-title">Project Work Zone (Geofence)</div></div>
-                    <div id="fs-geofence-map" style="height: 200px; background: var(--slate-100); position: relative;">
+                <div class="data-card ${this.isExpanded ? 'expanded-map-card' : ''}" id="map-card">
+                    <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="card-title">Project Work Zone (Geofence)</div>
+                        <div style="display: flex; gap: 8px;">
+                             <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.toggleAutoTrack()">
+                                <i class="fas fa-location-arrow" style="color: ${this.isTracking ? 'var(--blue)' : 'inherit'}"></i> ${this.isTracking ? 'Tracking' : 'Follow'}
+                            </button>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.toggleMapExpand()">
+                                <i class="fas fa-${this.isExpanded ? 'compress' : 'expand-alt'}"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="fs-geofence-map" style="height: ${this.isExpanded ? '500px' : '200px'}; transition: height 0.3s ease; background: var(--slate-100); position: relative;">
                         <div id="map-loading-overlay" style="position: absolute; inset: 0; background: rgba(255,255,255,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--slate-500);">
                             <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Initializing Map...
+                        </div>
+                        <div id="distance-indicator" style="position: absolute; bottom: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; display: none;">
+                            Distance to Site: <span id="site-distance-val">--</span>
                         </div>
                     </div>
                     <div style="padding: 12px; font-size: 11px; color: var(--slate-500); display: flex; flex-direction: column; gap: 8px;">
@@ -104,7 +117,7 @@ export const FS_Dashboard = {
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); pt-2; margin-top: 4px; padding-top: 8px;">
                             <span><i class="fas fa-info-circle"></i> Submission allowed within the circle.</span>
-                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.initGeofenceMap()"><i class="fas fa-expand"></i> Reset View</button>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.initGeofenceMap()"><i class="fas fa-undo"></i> Reset View</button>
                         </div>
                     </div>
                 </div>
@@ -220,21 +233,10 @@ export const FS_Dashboard = {
         const overlay = document.getElementById('map-loading-overlay');
         if (overlay) overlay.style.display = 'none';
 
-        // Attempt to show user's current location
+        // Attempt to show user's current location with continuous watching
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const userLat = pos.coords.latitude;
-                const userLng = pos.coords.longitude;
-                console.log('[FS Map] User location:', userLat, userLng);
-                
-                Leaflet.circleMarker([userLat, userLng], {
-                    radius: 6,
-                    fillColor: '#3b82f6',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 1
-                }).addTo(this.geofenceMap).bindTooltip("You are here");
+            this._watchId = navigator.geolocation.watchPosition((pos) => {
+                this.updateUserPosition(pos);
             }, (err) => {
                 console.warn('[FS Map] Could not get user location:', err);
                 const statusEl = document.getElementById('gps-status-badge');
@@ -243,8 +245,92 @@ export const FS_Dashboard = {
                     statusEl.style.background = 'var(--red-light)';
                     statusEl.style.color = 'var(--red)';
                 }
-            }, { enableHighAccuracy: true });
+            }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
         }
+    },
+
+    updateUserPosition(pos) {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const Leaflet = window.MKAKA_L || window.L;
+        if (!Leaflet || !this.geofenceMap) return;
+
+        // Create or update marker
+        if (!this.userMarker) {
+            this.userMarker = Leaflet.circleMarker([latitude, longitude], {
+                radius: 8,
+                fillColor: '#3b82f6',
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 1
+            }).addTo(this.geofenceMap).bindTooltip("You are here");
+        } else {
+            this.userMarker.setLatLng([latitude, longitude]);
+        }
+
+        // Create or update accuracy circle
+        if (!this.accuracyCircle) {
+            this.accuracyCircle = Leaflet.circle([latitude, longitude], {
+                radius: accuracy,
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.1,
+                weight: 1
+            }).addTo(this.geofenceMap);
+        } else {
+            this.accuracyCircle.setLatLng([latitude, longitude]);
+            this.accuracyCircle.setRadius(accuracy);
+        }
+
+        // Auto-pan if tracking is enabled
+        if (this.isTracking) {
+            this.geofenceMap.panTo([latitude, longitude]);
+        }
+
+        // Calculate distance to site center
+        const { lat, lng } = this.assignedProject;
+        const dist = this.calculateDistance(latitude, longitude, parseFloat(lat), parseFloat(lng));
+        
+        const distEl = document.getElementById('distance-indicator');
+        const valEl = document.getElementById('site-distance-val');
+        if (distEl && valEl) {
+            distEl.style.display = 'block';
+            valEl.textContent = dist > 1000 ? (dist/1000).toFixed(2) + ' km' : Math.round(dist) + ' m';
+        }
+
+        // Update status badge
+        const badge = document.getElementById('gps-status-badge');
+        if (badge) {
+            const isGood = accuracy < 100;
+            badge.innerHTML = `<i class="fas fa-${isGood ? 'check-circle' : 'exclamation-circle'}"></i> ${isGood ? 'High Precision' : 'Low Precision'} (${Math.round(accuracy)}m)`;
+            badge.style.background = isGood ? 'var(--emerald-light)' : 'var(--orange-light)';
+            badge.style.color = isGood ? 'var(--emerald)' : 'var(--orange)';
+        }
+    },
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // meters
+        const phi1 = lat1 * Math.PI/180;
+        const phi2 = lat2 * Math.PI/180;
+        const dphi = (lat2-lat1) * Math.PI/180;
+        const dlambda = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(dphi/2) * Math.sin(dphi/2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(dlambda/2) * Math.sin(dlambda/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c; // in meters
+    },
+
+    toggleAutoTrack() {
+        this.isTracking = !this.isTracking;
+        this._refreshCurrentView();
+    },
+
+    toggleMapExpand() {
+        this.isExpanded = !this.isExpanded;
+        this._refreshCurrentView();
     },
 
     refreshGPS() {

@@ -932,6 +932,19 @@ export const PM_MissingHandlers = {
             return;
         }
 
+        const fileInput = document.getElementById('proj_document');
+        const file = fileInput?.files?.[0];
+
+        if (!file && !this.wizardState?.isEditMode) {
+            window.toast.show('Initial project document is mandatory.', 'warning');
+            return;
+        }
+
+        if (file && file.size > 25 * 1024 * 1024) {
+            window.toast.show('Document exceeds the 25MB limit. Please compress and re-upload.', 'error');
+            return;
+        }
+
         const btn = document.getElementById('wizard-submit') || document.getElementById('btn-create-project');
         const originalContent = btn ? btn.innerHTML : 'Submit';
         if(btn) {
@@ -939,26 +952,25 @@ export const PM_MissingHandlers = {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
         }
 
-        const formData = new FormData();
-        formData.append('name', document.getElementById('proj_name').value);
-        formData.append('client', document.getElementById('proj_client').value);
-        formData.append('projectType', 'road_works');
-        formData.append('budgetTotal', parseFloat(document.getElementById('proj_budget').value) || 0);
-        formData.append('startDate', new Date(document.getElementById('proj_start').value).toISOString());
-        formData.append('endDate', new Date(document.getElementById('proj_end').value).toISOString());
-        formData.append('managerId', parseInt(document.getElementById('proj_supervisor').value));
-        formData.append('lat', lat);
-        formData.append('lng', lng);
-        formData.append('radius', parseInt(document.getElementById('proj_radius_input')?.value || 500));
+        const projectName = document.getElementById('proj_name').value;
+        const projectBudget = parseFloat(document.getElementById('proj_budget').value) || 0;
+
+        const payload = {
+            name: projectName,
+            client: document.getElementById('proj_client').value,
+            projectType: 'road_works',
+            budgetTotal: projectBudget,
+            startDate: new Date(document.getElementById('proj_start').value).toISOString(),
+            endDate: new Date(document.getElementById('proj_end').value).toISOString(),
+            managerId: parseInt(document.getElementById('proj_supervisor').value),
+            lat: lat,
+            lng: lng,
+            radius: parseInt(document.getElementById('proj_radius_input')?.value || 500)
+        };
 
         if (!this.wizardState?.isEditMode) {
-            formData.append('status', 'planning');
-            formData.append('code', 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase());
-        }
-
-        const fileInput = document.getElementById('proj_document');
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-            formData.append('document', fileInput.files[0]);
+            payload.status = 'planning';
+            payload.code = 'PROJ-' + Math.random().toString(36).substr(2, 6).toUpperCase();
         }
 
         try {
@@ -968,16 +980,16 @@ export const PM_MissingHandlers = {
             if (this.wizardState?.isEditMode && this.wizardState.projectId) {
                 const response = await fetch(`/api/v1/projects/${this.wizardState.projectId}`, {
                     method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
                 if (!response.ok) throw new Error('Failed to update project');
                 projectId = this.wizardState.projectId;
             } else {
                 const response = await fetch('/api/v1/projects', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({}));
@@ -1009,7 +1021,61 @@ export const PM_MissingHandlers = {
                     accessories: this.wizardState.roadEstimatePreview.accessories
                 };
                 
-                await client.post('/road-estimation/save', estPayload);
+                await fetch('/api/v1/road-estimation/save', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(estPayload)
+                });
+            }
+
+            // Create Initial Master Contract if new project and document is provided
+            if (!this.wizardState?.isEditMode && projectId && file) {
+                const contractData = new FormData();
+                contractData.append('projectId', projectId);
+                contractData.append('refCode', 'MOW-' + (projectName.substring(0,3).toUpperCase() || 'PRJ') + '-' + Math.floor(1000 + Math.random() * 9000));
+                contractData.append('value', projectBudget);
+                contractData.append('startDate', new Date(document.getElementById('proj_start').value).toISOString());
+                contractData.append('endDate', new Date(document.getElementById('proj_end').value).toISOString());
+                contractData.append('justification', 'Initial Project Contract');
+                contractData.append('title', projectName + ' Master Agreement');
+                contractData.append('contractType', 'project');
+                contractData.append('document', file);
+
+                const contractRes = await fetch('/api/v1/contracts', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: contractData
+                });
+
+                if (contractRes.ok) {
+                    const cData = await contractRes.json();
+                    
+                    // Audit Log
+                    fetch("/api/v1/audit-logs", {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "CONTRACT_ARCHIVED",
+                            targetType: "CONTRACT",
+                            targetId: cData.data?.id || cData.id || projectId,
+                            details: { title: projectName + ' Master Agreement', projectId, value: projectBudget, actor: window.currentUser?.name }
+                        })
+                    }).catch(e => console.warn("Audit failed", e));
+
+                    // Notifications
+                    fetch("/api/v1/notifications/broadcast", {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            title: "Master Agreement Archived",
+                            message: `Initial Master Contract established for "${projectName}" by ${window.currentUser?.name || 'Project Manager'}. Value: MWK ${projectBudget.toLocaleString()}.`,
+                            roles: ["Finance Director", "Equipment Coordinator"],
+                            priority: "high",
+                            type: "contract",
+                            isEmail: true
+                        })
+                    }).catch(e => console.warn("Notification failed", e));
+                }
             }
 
             window.toast.show(this.wizardState?.isEditMode ? 'Project updated successfully' : 'Project initialized successfully', 'success');

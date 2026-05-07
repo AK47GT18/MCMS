@@ -28,6 +28,11 @@ export class FieldSupervisorDashboard {
         this.assetsLoaded = false;
         this.tasksLoaded = false;
         this.projectLoading = true;
+        this.geofenceMap = null;
+        this.userMarker = null;
+        this.accuracyCircle = null;
+        this.isTracking = false;
+        this.isExpanded = false;
 
         // Register module globally for template access
         window.app = window.app || {};
