@@ -633,6 +633,28 @@ class App {
         window.modal.success('Security Synced', 'Your credentials have been updated. Welcome to MCMS!');
     }
 
+    toggleIssueScope(scope) {
+        const projectBtn = document.getElementById('scope-project');
+        const internalBtn = document.getElementById('scope-internal');
+        const selector = document.getElementById('issue-project-selector');
+        const info = document.getElementById('issue-internal-info');
+        const scopeInput = document.getElementById('issue-scope');
+        
+        if (scope === 'project') {
+            projectBtn.classList.add('active');
+            internalBtn.classList.remove('active');
+            selector.style.display = 'block';
+            info.style.display = 'none';
+            scopeInput.value = 'project';
+        } else {
+            projectBtn.classList.remove('active');
+            internalBtn.classList.add('active');
+            selector.style.display = 'none';
+            info.style.display = 'block';
+            scopeInput.value = 'internal';
+        }
+    }
+
     handleIssuePhotoChange(input) {
         const file = input.files[0];
         const preview = document.getElementById('issue-photo-preview');
@@ -712,17 +734,20 @@ class App {
                 submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
             }
 
-            console.log('[Issue Submit] ✅ Submitting for project:', projectId);
-            
+            const scope = document.getElementById('issue-scope')?.value || 'project';
+            projectId = (scope === 'project') ? (document.getElementById('issue-project')?.value || projectId) : null;
+
             const formData = new FormData();
-            formData.append('projectId', projectId);
+            if (photoFile) {
+                formData.append('photo', photoFile);
+            }
+            if (projectId) {
+                formData.append('projectId', projectId);
+            }
             formData.append('category', category || 'General');
             formData.append('priority', priority || 'Medium');
             formData.append('description', description.trim());
             formData.append('status', 'open');
-            if (photoFile) {
-                formData.append('photo', photoFile);
-            }
 
             const result = await issues.create(formData);
             const createdIssue = result.data || result;
@@ -746,8 +771,16 @@ class App {
             window.currentIssueProjectId = null;
             
             // Refresh views
-            if (this.pmModule?.currentView === 'issues') this.pmModule.loadIssuesFromAPI();
-            if (this.ecModule?.currentView === 'governance') this.ecModule._loadSharedIssues?.();
+            // Refresh views across all modules
+            if (this.pmModule) {
+                if (typeof this.pmModule.loadIssuesFromAPI === 'function') this.pmModule.loadIssuesFromAPI();
+                if (this.pmModule.currentView === 'dashboard') this.pmModule.render();
+            }
+            if (this.ecModule && typeof this.ecModule._loadSharedIssues === 'function') this.ecModule._loadSharedIssues();
+            if (this.fmModule && typeof this.fmModule.loadIssuesFromAPI === 'function') this.fmModule.loadIssuesFromAPI();
+            
+            // Global refresh event for any custom listeners
+            window.dispatchEvent(new CustomEvent('issues:updated'));
             if (this.fmModule?.currentView === 'governance') this.fmModule._loadSharedIssues?.();
             
         } catch (error) {
@@ -762,8 +795,7 @@ class App {
 
     // Helper method to open issue drawer with project context
     openIssueDrawer(projectId = null, title = 'Report Issue') {
-        window.currentIssueProjectId = projectId;
-        window.drawer.open(title, window.DrawerTemplates.submitComplaint);
+        window.drawer.open(title, window.DrawerTemplates.submitComplaint(projectId));
     }
 
     // Real-time inline validation — called on every keystroke via oninput

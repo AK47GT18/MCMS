@@ -75,13 +75,13 @@ export const PM_Issues = {
                     <div style="font-size: 10px; color: var(--slate-500);">${item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Today'}</div>
                 </td>
                 <td title="${this.escapeHTML(item.description)}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHTML(item.description)}</td>
-                <td>${this.escapeHTML(item.projectName || item.project?.name || 'Central')}</td>
-                <td><span class="status ${item.priority?.toLowerCase() === 'high' ? 'red' : 'active'}" style="background: ${item.priority?.toLowerCase() === 'high' ? '#FEE2E2' : '#F0F9FF'}; color: ${item.priority?.toLowerCase() === 'high' ? '#991B1B' : '#075985'};">${this.escapeHTML(item.priority?.toUpperCase() || 'NORMAL')}</span></td>
-                <td><span class="status ${item.status === 'open' ? 'pending' : (item.status === 'resolved' || item.status === 'closed') ? 'active' : 'locked'}">${this.escapeHTML(item.status?.toUpperCase() || 'OPEN')}</span></td>
+                <td style="font-size: 12px; color: var(--slate-600);">${this.escapeHTML(item.projectName || item.project?.name || 'Central')}</td>
+                <td><span class="status ${item.priority?.toLowerCase() === 'high' || item.priority?.toLowerCase() === 'critical' ? 'red' : 'active'}" style="font-size: 10px; font-weight: 700;">${this.escapeHTML(item.priority?.toUpperCase() || 'NORMAL')}</span></td>
+                <td><span class="status ${item.status === 'open' ? 'pending' : (item.status === 'resolved' || item.status === 'closed') ? 'active' : 'locked'}" style="font-size: 10px; font-weight: 700;">${this.escapeHTML(item.status?.toUpperCase() || 'OPEN')}</span></td>
                 <td>
-                    ${(item.status === 'open') ? 
-                        `<button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')})); window.app.pmModule.initIssueResolutionForm(${JSON.stringify(item).replace(/"/g, '&quot;')})">Respond</button>` :
-                        `<button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-history"></i> History</button>`
+                    ${(item.status !== 'resolved' && item.status !== 'closed') ? 
+                        `<button class="btn btn-action btn-sm" style="font-size: 11px; padding: 4px 12px;" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')})); window.app.pmModule.initIssueResolutionForm(${JSON.stringify(item).replace(/"/g, '&quot;')})">Respond</button>` :
+                        `<button class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 12px;" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-history" style="margin-right:4px;"></i> History</button>`
                     }
                 </td>
             </tr>
@@ -89,16 +89,16 @@ export const PM_Issues = {
 
         return `
             <table class="data-table">
-                <thead>
+                <thead style="background: var(--slate-50);">
                     <tr>
-                        <th>ID</th>
-                        <th>Type</th>
-                        <th>Submitted By</th>
-                        <th>Description</th>
-                        <th>Project</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style="width: 80px;">ID</th>
+                        <th style="width: 100px;">Type</th>
+                        <th style="width: 150px;">Reporter</th>
+                        <th>Narrative</th>
+                        <th style="width: 150px;">Project</th>
+                        <th style="width: 100px;">Priority</th>
+                        <th style="width: 100px;">Status</th>
+                        <th style="width: 120px; text-align: right; padding-right: 24px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>

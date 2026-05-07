@@ -5,6 +5,7 @@ import { FD_Contracts } from './fd/FD_Contracts.js';
 import { FD_Records } from './fd/FD_Records.js';
 import { FD_Handlers } from './fd/FD_Handlers.js';
 import { FD_Ledger } from './fd/FD_Ledger.js';
+import { PM_Budget } from './pm/PM_Budget.js';
 import { Shared_Audit } from './Shared_Audit.js';
 import { Shared_Issues } from './Shared_Issues.js';
 import { StatCard } from '../ui/StatCard.js';
@@ -58,6 +59,7 @@ export class FinanceDashboard {
             case 'vendors': return this.getVendorsView();
             case 'bcr': return this.getBudgetControlView();
             case 'ledger': return this.getLedgerView();
+            case 'budget': return this.getBudgetView(); // PM_Budget integration
             case 'reports': return this.getRecordsView();
             case 'governance': return this.getGovernanceView();
             case 'audit': return this.getAuditView();
@@ -81,6 +83,7 @@ export class FinanceDashboard {
             'vendors': { title: 'Vendor Registry', context: 'Compliance & Performance' },
             'bcr': { title: 'PM Uplift Requests', context: 'Budget Extensions' },
             'ledger': { title: 'Commitments Ledger', context: 'Organizational Obligations' },
+            'budget': { title: 'Project Cost Ledger', context: 'Portfolio Financial Oversight' },
             'governance': { title: 'Governance Center', context: 'Blockers & PM Responses' },
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
             'audit': { title: 'Security Audit logs', context: 'Immutable Event Records' }
@@ -191,4 +194,4 @@ export class FinanceDashboard {
 }
 
 // Apply modular mixins
-Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger, Shared_Audit, Shared_Issues);
+Object.assign(FinanceDashboard.prototype, FD_Dashboard, FD_Procurement, FD_Budget, FD_Contracts, FD_Records, FD_Handlers, FD_Ledger, PM_Budget, Shared_Audit, Shared_Issues);

@@ -415,6 +415,12 @@ textarea {
     margin-bottom: 24px;
 }
 
+.project-card-fd:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--slate-300);
+}
+
 .data-card-header {
     padding: 16px 20px;
     border-bottom: 1px solid var(--slate-200);

@@ -320,214 +320,6 @@ export const DrawerTemplates = {
             <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return}window.toast.show('Report filed securely. Internal Audit alerted.', 'error'); window.drawer.close();">Submit Secure Report</button>
         </div>
     `,
-  safetyIncident: `
-        <div class="drawer-section" style="padding-top: 12px;">
-            <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
-            <div style="background: var(--red-light); padding: 16px; border-radius: 8px; border: 1px solid var(--red-border); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
-                <i class="fas fa-helmet-safety" style="color: var(--red); font-size: 20px;"></i>
-                <div style="font-weight: 700; color: var(--red); font-size: 14px;">Report Safety Incident</div>
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Incident Type</label>
-                <select class="form-input" data-vrules="required" onchange="window.V?.checkField(this)">
-                    <option value="" disabled selected>Select Incident Type...</option>
-                    <option>Near Miss</option>
-                    <option>Minor Injury</option>
-                    <option>Major Injury</option>
-                    <option>Equipment Damage</option>
-                    <option>Environmental Incident</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Description</label>
-                <textarea class="form-input" data-vrules="required|minLen:10" oninput="window.V?.checkField(this)" rows="4" placeholder="Provide details of the incident..."></textarea>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label class="form-label" style="margin:0;">Incident Evidence</label>
-                    <span id="photo-counter-safetyIncident" style="font-size:11px; color:var(--slate-500);"><span style="font-weight:700;">0</span>/10 photos</span>
-                </div>
-                <label id="photo-add-btn-safetyIncident" onclick="return window.handleCameraClick(event, 'safetyIncident')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
-                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
-                    <div style="font-weight: 600; font-size: 11px;">Capture Scene / Injury Evidence</div>
-                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'safetyIncident')">
-                </label>
-                <div id="photo-preview-safetyIncident" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
-                    <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px; width:100%;">No evidence attached.</div>
-                </div>
-            </div>
-            <button class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700;" onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} window.toast.show('Safety incident reported. HQ notified.', 'error'); window.drawer.close();">Submit Incident Report</button>
-        </div>
-    `,
-  reportingMenu: `
-        <div class="drawer-section" style="padding-top: 12px;">
-            <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
-            <div style="margin-bottom: 24px; text-align: center;">
-                <div style="width: 48px; height: 48px; background: var(--slate-100); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px;">
-                    <i class="fas fa-clipboard-list"></i>
-                </div>
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">Project Reporting</h3>
-                <p style="font-size: 13px; color: var(--slate-500);">Select a report type to submit</p>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Daily Log', window.DrawerTemplates.dailyProgressLog())">
-                    <div style="width: 32px; height: 32px; background: rgba(249, 116, 21, 0.1); color: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Daily Progress Log</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Log work done, expenses and photos</div>
-                    </div>
-                </button>
-
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.app.fsModule.viewRejectedLogs()">
-                    <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-undo-alt"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Rejected Reviews</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">View and fix rejected site logs</div>
-                    </div>
-                </button>
-
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident())">
-                    <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-helmet-safety"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Safety Incident</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Report injuries or near-misses</div>
-                    </div>
-                </button>
-
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint)">
-                    <div style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); color: var(--amber); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Report Issue / Delay</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Log site delays or technical issues</div>
-                    </div>
-                </button>
-
-                <div style="height: 1px; background: var(--slate-100); margin: 8px 0;"></div>
-
-                <!-- Profile Button -->
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.app.layout.showProfileDrawer()">
-                    <div style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.1); color: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">My Profile</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Account settings & credentials</div>
-                    </div>
-                </button>
-
-                <!-- Download App (PWA) -->
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.triggerPwaInstall()">
-                    <div style="width: 32px; height: 32px; background: rgba(249, 116, 21, 0.1); color: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-campground"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Install Work App</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Fast access from your home screen</div>
-                    </div>
-                </button>
-
-                <!-- Logout -->
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: #FFF1F2; border: 1px solid #FECACA; box-shadow: var(--shadow-sm);" onclick="window.app.layout.handleLogout()">
-                    <div style="width: 32px; height: 32px; background: white; color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #FECACA;">
-                        <i class="fas fa-power-off"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--red);">Logout Session</div>
-                        <div style="font-size: 11px; color: #B91C1C; opacity: 0.8;">Securely sign out of MCMS</div>
-                    </div>
-                </button>
-            </div>
-        </div>
-    `,
-
-  submitComplaint: `
-        <div class="drawer-section">
-            <div style="background: var(--amber-light); padding: 16px; border-radius: 8px; border: 1px solid var(--amber-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
-                <i class="fas fa-exclamation-triangle" style="color: var(--amber-dark); font-size: 20px;"></i>
-                <div style="font-weight: 700; color: var(--amber-dark); font-size: 14px;">Report Site Issue / Delay</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Issue Category</label>
-                <select id="issue-category" class="form-input">
-                    <option>Material Shortage</option>
-                    <option>Weather Delay</option>
-                    <option>Equipment Breakdown</option>
-                    <option>Technical Clarification Needed</option>
-                    <option>Labor Dispute</option>
-                    <option>Quality Control Flag</option>
-                    <option>Safety Concern</option>
-                    <option>Budgetary Override</option>
-                    <option>Logistical Blockage</option>
-                    <option>Site Access Issue</option>
-                    <option>Environmental Hazard</option>
-                    <option>Structural Integrity Alert</option>
-                    <option>Subcontractor Performance</option>
-                    <option>Community Conflict</option>
-                    <option>Permit/Legal Delay</option>
-                    <option>Theft / Security Breach</option>
-                </select>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Priority Level</label>
-                <select id="issue-priority" class="form-input">
-                    <option value="Low">Low - Informational</option>
-                    <option value="Medium" selected>Medium - Action Required</option>
-                    <option value="High">High - Critical / Blocker</option>
-                </select>
-            </div>
-
-            ${!window.currentIssueProjectId ? `
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Affected Project</label>
-                <select id="issue-project" class="form-input" data-vrules="required">
-                    <option value="">Select Project...</option>
-                    ${(window.app?.pmModule?.projects || window.app?.fmModule?.allProjects || []).map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                </select>
-                <div id="issue-project-error" style="display:none; color:var(--red); font-size:10px; margin-top:4px;">Please select a project</div>
-            </div>
-            ` : ''}
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Attach Photo Evidence (Max 5MB)</label>
-                <div style="border: 2px dashed var(--slate-200); padding: 16px; border-radius: 8px; text-align: center; background: var(--slate-50); cursor: pointer;" onclick="document.getElementById('issue-photo').click()">
-                    <i class="fas fa-camera" style="font-size: 24px; color: var(--slate-400); margin-bottom: 8px;"></i>
-                    <div style="font-size: 12px; color: var(--slate-500);" id="issue-photo-label">Click to upload photo</div>
-                    <input type="file" id="issue-photo" accept="image/*" style="display: none;" onchange="window.app.handleIssuePhotoChange(this)">
-                    <div id="issue-photo-preview" style="display:none; margin-top:12px;">
-                        <img src="" style="max-width:100%; max-height:150px; border-radius:4px; box-shadow:var(--shadow-sm);">
-                    </div>
-                </div>
-                <div id="issue-photo-error" style="display:none; color:var(--red); font-size:10px; margin-top:4px;">File too large. Max 5MB allowed.</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Issue Details</label>
-                <textarea id="issue-description" class="form-input" data-vrules="required|minLen:20" rows="5" 
-                    placeholder="Describe the problem, impact on schedule, and any immediate actions taken..."
-                    oninput="window.app.validateIssueInline()"></textarea>
-                <div id="issue-description-error" style="display:none; color:var(--red); font-size:11px; margin-top:4px;">❌ Narrative must be at least 20 characters.</div>
-                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px; display: flex; justify-content: space-between;">
-                    <span>Minimum 20 characters</span>
-                    <span id="issue-char-count">0 / 20</span>
-                </div>
-            </div>
-
-            <button id="issue-submit-btn" class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.app.handleIssueSubmit()">Submit Formal Report</button>
-        </div>
-    `,
-
   safetyIncident: (incident) => `
         <div style="padding: 0;">
             <div style="padding: 16px 24px; background: #FEF2F2; border-bottom: 1px solid #FECACA; display: flex; justify-content: space-between; align-items: center;">
@@ -1791,33 +1583,6 @@ export const DrawerTemplates = {
         </div>
     `,
 
-  newContract: `
-        <div class="drawer-section">
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Project</label><select class="form-input" style="width:100%; padding:10px;"><option>CEN-01 Unilia</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Vendor/Client</label><select class="form-input" style="width:100%; padding:10px;"><option>Mkaka Ltd</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Contract Type</label><select class="form-input" style="width:100%; padding:10px;"><option>Main Works</option><option>Supply</option></select></div>
-            <div class="form-group" style="margin-bottom:16px;">
-                 <label class="form-label">Contract Value</label>
-                 <div style="position:relative;">
-                      <input class="form-input" type="text" value="MWK 450,000,000" readonly style="width:100%; padding:10px; background:var(--slate-50); padding-right:30px; font-weight:600; color:var(--slate-700);">
-                      <i class="fas fa-lock" style="position:absolute; right:12px; top:12px; color:var(--slate-400); font-size:12px;"></i>
-                 </div>
-                 <div style="font-size:11px; color:var(--slate-500); margin-top:4px; display:flex; align-items:center; gap:4px;">
-                     <i class="fas fa-info-circle"></i> Linked to Project Budget (PM Approved)
-                 </div>
-            </div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Start Date</label><input class="form-input" type="date" style="width:100%; padding:10px;"></div>
-            <div class="form-group" style="margin-bottom:16px;">
-                 <label class="form-label">Contract Document (v1.0)</label>
-                 <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:6px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;">
-                    <i class="fas fa-file-pdf" style="font-size:24px; margin-bottom:8px;"></i><br>
-                    <span style="font-size:12px;">Drage Original Contract Here</span>
-                 </div>
-            </div>
-            <button class="btn btn-primary" style="width:100%; border:none; padding:12px;" onclick="window.drawer.close(); window.toast.show('New Contract Created', 'success')">Create Record</button>
-        </div>
-    `,
-
   editContract: (contract) => {
     const formatDate = (dateStr) => {
       if (!dateStr) return "";
@@ -2418,87 +2183,6 @@ export const DrawerTemplates = {
   // --- NEW ADDITIONS FOR COMPLETED DASHBOARDS ---
 
   // --- PROJECT MANAGEMENT TEMPLATES ---
-  editProject: `
-        <div class="drawer-section">
-            <input type="hidden" id="edit_proj_id">
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="edit_proj_name" class="form-input" style="width:100%; padding:10px;">
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Client</label>
-                <input type="text" id="edit_proj_client" class="form-input" style="width:100%; padding:10px;">
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Status</label>
-                <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px;">
-                    <option value="active">Active</option>
-                    <option value="on_hold">On Hold</option>
-                    <option value="completed">Completed</option>
-                    <option value="delayed">Delayed</option>
-                    <option value="suspended">Suspended</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Budget</label>
-                <input type="number" id="edit_proj_budget" class="form-input" style="width:100%; padding:10px;">
-            </div>
-            <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                <div class="form-group"><label class="form-label">Start Date</label><input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px;"></div>
-                <div class="form-group"><label class="form-label">End Date</label><input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px;"></div>
-            </div>
-            <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project</button>
-        </div>
-    `,
-
-  suspendProject: `
-        <div class="drawer-section">
-            <input type="hidden" id="suspend_project_id">
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; padding:10px;" readonly>
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                 <label class="form-label">Reason for Suspension</label>
-                 <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%; padding:10px;" placeholder="Detailed reason required..."></textarea>
-            </div>
-            <div style="background:var(--red-light); color:var(--red-dark); padding:12px; border-radius:6px; font-size:12px; margin-bottom:16px;">
-                <i class="fas fa-exclamation-triangle"></i> This will halt all active workflows and notify stakeholders.
-            </div>
-            <button class="btn btn-primary" style="width:100%; background:var(--red); border-color:var(--red); padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSuspendProject()">Suspend Project</button>
-        </div>
-    `,
-
-  userForm: `
-        <div class="drawer-section">
-            <input type="hidden" id="user_form_id">
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Full Name</label>
-                <input type="text" id="user_form_name" class="form-input" style="width:100%; padding:10px;" required>
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Email Address</label>
-                <input type="email" id="user_form_email" class="form-input" style="width:100%; padding:10px;" required>
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Role</label>
-                <select id="user_form_role" class="form-input" style="width:100%; padding:10px;" required>
-                    <option value="">Select Role...</option>
-                    <option value="Project_Manager">Project Manager</option>
-                    <option value="Finance_Director">Finance Director</option>
-                    <option value="Field_Supervisor">Field Supervisor</option>
-                    <option value="Equipment_Coordinator">Equipment Coordinator</option>
-                    <option value="Client_Viewer">Client Viewer</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Password</label>
-                <input type="password" id="user_form_password" class="form-input" style="width:100%; padding:10px;" placeholder="Leave blank to keep current (update only)">
-            </div>
-             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSaveUser()">Save User</button>
-        </div>
-    `,
-
   vendorProfile: `
         <div class="drawer-section">
             <div style="display:flex; gap:16px; align-items:center; margin-bottom:16px;">
@@ -2570,24 +2254,6 @@ export const DrawerTemplates = {
                  </div>
              </div>
              <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.drawer.close(); window.toast.show('Vendor onboarding request submitted for approval', 'success')">Submit Application</button>
-        </div>
-    `,
-
-  suspendProject: `
-        <div class="drawer-section">
-             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Project ID / Code</label>
-                <input type="text" id="suspend_project_id" class="form-input" style="width:100%; padding:10px; background:var(--slate-50);" readonly>
-             </div>
-             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; padding:10px; background:var(--slate-50);" readonly>
-             </div>
-             <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label v-req">Reason for Suspension</label>
-                <textarea id="suspend_project_reason" class="form-input" style="width:100%; padding:10px;" rows="4" placeholder="Enter reason (e.g. Funding frozen, Community issues)..."></textarea>
-             </div>
-             <button class="btn btn-primary" style="width:100%; padding:12px; background:var(--amber-dark); border-color:var(--amber-dark);" onclick="window.app.pmModule?.handleSuspendProject()">Suspend Project</button>
         </div>
     `,
 
@@ -2747,193 +2413,6 @@ Contract Admin</textarea>
         </div>
     `,
 
-  completeMaintenance: `
-        <div class="drawer-section">
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Asset</label><input type="text" class="form-input" value="CAT 320D (EQP-045)" readonly style="width:100%; padding:10px; background:#f1f5f9;"></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Work Done</label><textarea class="form-input" rows="3" style="width:100%; padding:10px;" placeholder="Describe repairs..."></textarea></div>
-            <div class="form-group" style="margin-bottom:16px;"><label class="form-label">Parts Replaced</label><input type="text" class="form-input" style="width:100%; padding:10px;" placeholder="e.g., Oil Filter, Hydraulic Hose"></div>
-            <div class="grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                 <div class="form-group"><label class="form-label">Parts Cost</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
-                 <div class="form-group"><label class="form-label">Labor Cost</label><input type="number" class="form-input" style="width:100%; padding:10px;"></div>
-            </div>
-             <button class="btn btn-primary" style="width:100%; margin-top:16px; padding:12px;" onclick="window.drawer.close(); window.toast.show('Audit evidence logged', 'success')">Submit Audit</button>
-        </div>
-    `,
-
-  newUser: `
-        <div class="drawer-section">
-            <form id="newUserForm" onsubmit="event.preventDefault(); window.app.pmModule.handleCreateUser(new FormData(this))">
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" name="name" class="form-input" placeholder="e.g., John Doe" style="width: 100%;" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Role / Access Level</label>
-                    <select name="role" class="form-input" style="width: 100%;" required>
-                        <option value="">Select Role...</option>
-                        <option value="Project Manager">Project Manager</option>
-                        <option value="Finance Director">Finance Director</option>
-                        <option value="Field Supervisor">Field Supervisor</option>
-                        <option value="Contract Administrator">Contract Administrator</option>
-                        <option value="Equipment Coordinator">Equipment Coordinator</option>
-                        <option value="Operations Manager">Operations Manager</option>
-                        <option value="Managing Director">Managing Director</option>
-                        <option value="System Technician">System Technician</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" placeholder="j.doe@mkaka.mw" style="width: 100%;" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Phone Number</label>
-                    <input type="tel" name="phone" class="form-input" placeholder="+265..." style="width: 100%;">
-                </div>
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label class="form-label">Initial Password</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="password" name="password" class="form-input" placeholder="********" style="width: 100%;" required>
-                        <button type="button" class="btn btn-secondary btn-generate-pass" style="white-space: nowrap;">Generate</button>
-                    </div>
-                </div>
-                <div id="create-user-error" style="display: none; color: var(--red); font-size: 12px; margin-bottom: 16px; padding: 10px; background: var(--red-light); border-radius: 4px;"></div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">Create User Account</button>
-            </form>
-        </div>
-    `,
-
-  editUser: `
-        <div class="drawer-section">
-            <form id="editUserForm" onsubmit="event.preventDefault(); window.app.pmModule.handleUpdateUser(new FormData(this))">
-                <input type="hidden" name="id">
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" name="name" class="form-input" style="width: 100%;" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Role</label>
-                    <select name="role" class="form-input" style="width: 100%;" required>
-                        <option value="Project Manager">Project Manager</option>
-                        <option value="Finance Director">Finance Director</option>
-                        <option value="Field Supervisor">Field Supervisor</option>
-                        <option value="Contract Administrator">Contract Administrator</option>
-                        <option value="Equipment Coordinator">Equipment Coordinator</option>
-                        <option value="Operations Manager">Operations Manager</option>
-                        <option value="Managing Director">Managing Director</option>
-                        <option value="System Technician">System Technician</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" style="width: 100%;" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Phone Number</label>
-                    <input type="tel" name="phone" class="form-input" style="width: 100%;">
-                </div>
-                
-                <div id="edit-user-error" style="display: none; color: var(--red); font-size: 12px; margin-bottom: 16px; padding: 10px; background: var(--red-light); border-radius: 4px;"></div>
-
-                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--slate-100);">
-                    <label class="form-label">Reset Password</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="password" name="password" class="form-input" style="width: 100%;" placeholder="Leave blank to keep current">
-                        <button type="button" class="btn btn-secondary btn-generate-pass" style="white-space: nowrap;" onclick="window.app.pmModule.generateTempPassword(null)">Generate</button>
-                    </div>
-                </div>
-
-                <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--slate-100); display: flex; flex-direction: column; gap: 12px;">
-                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase;">Administrative Actions</div>
-                    
-                    <button type="button" id="btn-unlock-user" class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; display: none;" onclick="window.app.pmModule.unlockUser(this.closest('form').querySelector('[name=id]').value)">
-                        <i class="fas fa-user-check" style="color: var(--emerald);"></i> Reactivate Account
-                    </button>
-
-                    <button type="button" id="btn-deactivate-user" class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="window.app.pmModule.lockUser(this.closest('form').querySelector('[name=id]').value)">
-                        <i class="fas fa-user-slash"></i> Deactivate Account
-                    </button>
-                    
-                    <button type="button" class="btn btn-secondary" style="width: 100%; justify-content: start; gap: 12px; color: var(--red); border-color: var(--red-light);" onclick="window.app.pmModule.deleteUser(this.closest('form').querySelector('[name=id]').value)">
-                        <i class="fas fa-trash-alt"></i> Permanently Purge User
-                    </button>
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px; padding: 12px;">Save Changes</button>
-            </form>
-        </div>
-    `,
-
-  editVAT: `
-        <div class="drawer-section">
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Standard VAT Rate (%)</label>
-                <input type="number" class="form-input" value="16.5" step="0.1" style="width: 100%; padding: 12px;">
-                <p style="font-size: 11px; color: var(--slate-500); margin-top: 6px;">Applies to all taxable transactions.</p>
-            </div>
-            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('VAT Rate updated', 'success')">Update Rate</button>
-        </div>
-    `,
-
-  editCurrency: `
-        <div class="drawer-section">
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">System Currency Symbol</label>
-                <select class="form-input" style="width: 100%; padding: 12px;">
-                    <option value="MWK" selected>MWK (Malawian Kwacha)</option>
-                    <option value="USD">USD (US Dollar)</option>
-                    <option value="GBP">GBP (British Pound)</option>
-                    <option value="ZAR">ZAR (South African Rand)</option>
-                </select>
-            </div>
-             <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('Currency updated', 'success')">Update Currency</button>
-        </div>
-    `,
-
-  editCompany: `
-        <div class="drawer-section">
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Legal Company Name</label>
-                <input type="text" class="form-input" value="Mkaka Construction Ltd" style="width: 100%; padding: 12px;">
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Tax ID (TPIN)</label>
-                <input type="text" class="form-input" value="10029384" style="width: 100%; padding: 12px;">
-            </div>
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Registered Address</label>
-                <textarea class="form-input" style="width: 100%; padding: 12px; height: 80px;">P.O. Box 30456, Capital City, Lilongwe 3</textarea>
-            </div>
-             <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('Company details updated', 'success')">Update Details</button>
-        </div>
-    `,
-
-  editSMTP: `
-        <div class="drawer-section">
-             <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">SMTP Host</label>
-                <input type="text" class="form-input" value="smtp.gmail.com" style="width: 100%; padding: 12px;">
-            </div>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">SMTP Port</label>
-                <input type="text" class="form-input" value="587" style="width: 100%; padding: 12px;">
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-input" value="system@mkaka.mw" style="width: 100%; padding: 12px;">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-input" value="secure_password" style="width: 100%; padding: 12px;">
-                </div>
-            </div>
-            <div style="background: var(--slate-50); padding: 12px; border-radius: 6px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
-                <button class="btn btn-secondary" style="width: 100%; font-size: 11px;">Test Connection</button>
-            </div>
-             <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="window.drawer.close(); window.toast.show('SMTP Settings updated', 'success')">Save Connection</button>
-        </div>
-    `,
-
   newAudit: `
         <div class="drawer-section">
              <div class="form-group" style="margin-bottom:16px;">
@@ -2991,107 +2470,6 @@ Contract Admin</textarea>
         </div>
     `,
 
-  projectDetails: (project) => {
-    const escapeHTML = (str) => {
-      if (!str) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
-    return `
-        <div class="drawer-section">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
-                <div>
-                    <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${escapeHTML(project.name) || "Project Details"}</div>
-                    <div style="font-size: 13px; color: var(--slate-500); font-family: 'JetBrains Mono';">${escapeHTML(project.code) || "PRJ-" + escapeHTML(project.id)}</div>
-                </div>
-                <span class="status active" style="padding: 6px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase;">${escapeHTML(project.status)?.toUpperCase() || "ACTIVE"}</span>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-100);">
-                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Client</div>
-                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.client) || "Government of Malawi"}</div>
-                </div>
-                <div style="background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-100);">
-                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Manager</div>
-                    <div style="font-weight: 600; color: var(--slate-800);">${escapeHTML(project.manager?.name || project.managerName || "Unassigned")}</div>
-                </div>
-            </div>
-
-            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                <div class="stat-card" style="margin: 0;">
-                    <div class="stat-label">Budget</div>
-                    <div class="stat-value" style="font-size: 18px;">MWK ${project.budgetTotal ? (project.budgetTotal / 1000000).toFixed(1) + "M" : "0"}</div>
-                </div>
-                <div class="stat-card" style="margin: 0;">
-                    <div class="stat-label">Progress</div>
-                    <div class="stat-value" style="font-size: 18px; color: var(--orange);">${project.progress || 0}%</div>
-                </div>
-            </div>
-
-            <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
-                <div style="padding: 12px 16px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase;">
-                    Schedule Timeline
-                </div>
-                <div style="padding: 16px; display: flex; justify-content: space-between;">
-                    <div>
-                        <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 2px;">Start Date</div>
-                        <div style="font-weight: 600;">${project.startDate || "Jan 10, 2024"}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 2px;">End Date</div>
-                        <div style="font-weight: 600;">${project.endDate || "Dec 15, 2024"}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-                <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Health Metrics</div>
-                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                      <div style="flex: 1; min-width: 100px; padding: 12px; border-radius: 8px; background: ${project.budgetUtilization > 100 ? "var(--red-light)" : "var(--emerald-light)"}; border: 1px solid ${project.budgetUtilization > 100 ? "var(--red-hover)" : "var(--emerald-hover)"};">
-                         <div style="font-size: 10px; color: ${project.budgetUtilization > 100 ? "var(--red)" : "var(--emerald)"}; font-weight: 700;">BUDGET</div>
-                         <div style="font-weight: 600; font-size: 13px;">${project.budgetUtilization > 100 ? "Overrun" : "Within Budget"}</div>
-                      </div>
-                      <div style="flex: 1; min-width: 100px; padding: 12px; border-radius: 8px; background: ${Number(project.procurementVariance || 0) >= 0 ? "var(--emerald-light)" : "var(--red-light)"}; border: 1px solid ${Number(project.procurementVariance || 0) >= 0 ? "var(--emerald-hover)" : "var(--red-hover)"};">
-                         <div style="font-size: 10px; color: ${Number(project.procurementVariance || 0) >= 0 ? "var(--emerald)" : "var(--red)"}; font-weight: 700;">EFFICIENCY</div>
-                         <div style="font-weight: 600; font-size: 13px;">${Number(project.procurementVariance || 0) >= 0 ? "Saving" : "Loss"}: MWK ${Math.abs(Number(project.procurementVariance || 0)).toLocaleString()}</div>
-                      </div>
-                      <div style="flex: 1; min-width: 100px; padding: 12px; border-radius: 8px; background: var(--blue-light); border: 1px solid var(--blue-hover);">
-                         <div style="font-size: 10px; color: var(--blue); font-weight: 700;">SAFETY</div>
-                         <div style="font-weight: 600; font-size: 13px;">100% Score</div>
-                      </div>
-                 </div>
-            </div>
-
-             <div style="font-size: 12px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 12px;">Recent Updates</div>
-             <div style="display: flex; flex-direction: column; gap: 12px;">
-                 <div style="display: flex; gap: 10px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--orange); margin-top: 4px;"></div>
-                    <div>
-                        <div style="font-size: 13px; font-weight: 600;">Site Log Submitted</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">3 hours ago by Supervisor</div>
-                    </div>
-                 </div>
-                 <div style="display: flex; gap: 10px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); margin-top: 4px;"></div>
-                    <div>
-                        <div style="font-size: 13px; font-weight: 600;">Project Review Completed</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Yesterday by PM</div>
-                    </div>
-                 </div>
-             </div>
-        </div>
-        <div style="padding: 24px; border-top: 1px solid var(--slate-200); background: var(--slate-50); display: flex; gap: 12px; border-radius: 0 0 12px 12px;">
-            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).currentView='gantt'; (window.app.pmModule || window.app.fsModule || window.app.caModule).render();">View Schedule</button>
-            <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="window.drawer.close(); (window.app.pmModule || window.app.fsModule || window.app.caModule).currentView='budget'; (window.app.pmModule || window.app.fsModule || window.app.caModule).render();">Financial Info</button>
-        </div>
-    `;
-  },
-
   addTask: `
         <div class="drawer-section">
             <div class="form-group" style="margin-bottom:16px;">
@@ -3118,46 +2496,6 @@ Contract Admin</textarea>
                 <input type="text" id="task-dependencies" class="form-input" style="width:100%; padding:10px;" placeholder="e.g. T1, T2">
             </div>
             <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleAddTask()">Save Task</button>
-        </div>
-    `,
-
-  initiateBCR: `
-        <div class="drawer-section">
-             <div class="stats-grid" style="grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-                <div class="stat-card" style="padding:12px;">
-                    <div class="stat-label">Current Budget</div>
-                    <div class="stat-value" style="font-size:16px;">MWK 200M</div>
-                </div>
-                <div class="stat-card" style="padding:12px;">
-                    <div class="stat-label">Variance</div>
-                    <div class="stat-value" style="font-size:16px; color:var(--red);">+10%</div>
-                </div>
-             </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project Code</label>
-                <select style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;">
-                    <option>CEN-01 Unilia Construction</option>
-                    <option>NOR-04 Mzuzu Bridge</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Budget Category</label>
-                <select style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;">
-                    <option>02-MAT Materials</option>
-                    <option>03-LAB Labor</option>
-                    <option>04-EQU Equipment</option>
-                </select>
-            </div>
-             <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Proposed New Amount (MWK)</label>
-                <input type="number" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px; border-color: var(--orange);">
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification</label>
-                <textarea style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 4px; font-family: inherit; font-size: 13px;" rows="3" placeholder="Explain the reason for budget increase..."></textarea>
-            </div>
-            <button class="btn btn-action" style="width: 100%; justify-content: center; padding:12px;" onclick="window.drawer.close(); window.toast.show('Budget Change Request Initiated', 'success')">Submit Request</button>
         </div>
     `,
 
@@ -3217,7 +2555,7 @@ Contract Admin</textarea>
         </div>
     `,
 
-  submitComplaint: `
+  submitComplaint: (projectId = null) => `
         <div class="drawer-section">
             <div style="background:var(--red-light); padding:16px; border-radius:8px; margin-bottom:24px; border:1px solid var(--red-hover);">
                 <div style="display:flex; gap:12px; align-items:center;">
@@ -3226,278 +2564,194 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div id="issue-project-selector" style="margin-bottom:20px; display:none;">
-                <div class="form-group">
-                    <label class="form-label" style="color:var(--red); font-weight:700;">
-                        <span style="color:var(--red);">*</span> Select Project
-                    </label>
-                    <select id="issue-project" class="form-input" required style="border-color:var(--orange); border-width:2px;">
-                        <option value="">-- Choose a Project --</option>
-                    </select>
-                    <span id="issue-project-error" style="color:var(--red); font-size:12px; display:none; margin-top:4px;">
-                        <i class="fas fa-exclamation-triangle"></i> Project is required
-                    </span>
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label" style="font-weight:700; color:var(--slate-600);">Issue Scope</label>
+                <div id="issue-scope-wrapper" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <button id="scope-project" class="btn btn-secondary ${projectId ? 'active' : ''}" style="font-size:12px; padding:10px;" onclick="window.app.toggleIssueScope('project')">
+                        <i class="fas fa-building" style="margin-right:8px;"></i> Project Specific
+                    </button>
+                    <button id="scope-internal" class="btn btn-secondary ${!projectId ? 'active' : ''}" style="font-size:12px; padding:10px;" onclick="window.app.toggleIssueScope('internal')">
+                        <i class="fas fa-shield-halved" style="margin-right:8px;"></i> Internal / HQ
+                    </button>
                 </div>
-                <div id="issue-project-selected" style="background:var(--emerald-light); border:1px solid var(--emerald); padding:12px; border-radius:6px; margin-top:8px; display:none; color:var(--slate-700);">
-                    <i class="fas fa-check-circle" style="color:var(--emerald); margin-right:8px;"></i>
-                    <strong>Selected Project:</strong> <span id="issue-project-name">--</span>
-                </div>
+                <input type="hidden" id="issue-scope" value="${projectId ? 'project' : 'internal'}">
             </div>
 
-            <div id="issue-no-project-warning" style="background:var(--amber-light); border:1px solid var(--amber); padding:12px; border-radius:6px; margin-bottom:16px; display:none; color:var(--slate-700);">
-                <i class="fas fa-info-circle"></i> <strong>No project selected.</strong> Please choose a project from the dropdown above.
+            <div id="issue-project-selector" style="margin-bottom: 20px; display: ${projectId ? 'block' : 'none'};">
+                <label class="form-label">Affected Project <span style="color:var(--red);">*</span></label>
+                <select id="issue-project" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)">
+                    <option value="">Select Project...</option>
+                </select>
+                <div class="v-msg v-msg-err" style="display:none; font-size:11px; margin-top:4px;">Please select the project being impacted.</div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div class="form-group">
-                    <label class="form-label">Issue Category</label>
-                    <select id="issue-category" class="form-input">
-                        <option value="material">Material Shortage</option>
-                        <option value="equipment">Equipment Failure</option>
-                        <option value="safety">Safety Hazard</option>
-                        <option value="labor">Labor Dispute</option>
-                        <option value="weather">Weather Delay</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Priority</label>
-                    <select id="issue-priority" class="form-input">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical / SOS</option>
-                    </select>
-                </div>
+            <div id="issue-internal-info" style="display: ${!projectId ? 'block' : 'none'}; background: var(--slate-50); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 12px; color: var(--slate-600); border: 1px solid var(--slate-200);">
+                <i class="fas fa-info-circle"></i> Internal issues are routed directly to HQ Governance. Visibility is restricted to Audit & Executive teams.
             </div>
 
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Issue Description / Narrative <span style="color:var(--red);">*</span></label>
-                <textarea id="issue-description" class="form-input" rows="4" placeholder="Provide details about the issue..." required
-                    oninput="window.app.validateIssueInline()"></textarea>
-                <div id="issue-description-error" class="v-msg v-msg-err" style="display:none;">
-                    <i class="fas fa-exclamation-circle"></i> Narrative must be at least 20 characters.
-                </div>
-                <div style="font-size:11px; color:var(--slate-400); margin-top:4px; display:flex; justify-content:space-between;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Issue Category</label>
+                <select id="issue-category" class="form-input" data-vrules="required">
+                    <option value="technical">Technical Clarification</option>
+                    <option value="material">Material Shortage</option>
+                    <option value="logistics">Logistics / Supply Chain</option>
+                    <option value="labor">Labor Dispute</option>
+                    <option value="safety">Safety Hazard</option>
+                    <option value="weather">Weather / Act of God</option>
+                    <option value="legal">Permit / Legal Block</option>
+                    <option value="other">Other / Miscellaneous</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Priority</label>
+                <select id="issue-priority" class="form-input" data-vrules="required">
+                    <option value="LOW">Low - Minimal Impact</option>
+                    <option value="MEDIUM" selected>Medium - Schedule Risk</option>
+                    <option value="HIGH">High - Blocker / Critical</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Detailed Narrative / Description <span style="color:var(--red);">*</span></label>
+                <textarea id="issue-description" class="form-input" data-vrules="required|minLen:20" rows="5" 
+                    placeholder="Provide clear details on the issue, root cause, and immediate impact..." 
+                    oninput="window.app.pmModule.validateIssueInline()"></textarea>
+                <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px; display: flex; justify-content: space-between;">
                     <span>Minimum 20 characters required</span>
-                    <span id="issue-char-count" style="font-weight:600;">0 / 20</span>
+                    <span id="issue-char-count">0 / 20</span>
                 </div>
+                <div id="issue-description-error" class="v-msg v-msg-err" style="display:none; font-size:11px; margin-top:4px;"></div>
             </div>
 
-            <div class="form-group" style="margin-bottom:24px;">
+            <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Photo Evidence (Optional)</label>
-                <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:8px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;" onclick="document.getElementById('issue-photo').click()">
-                    <i class="fas fa-camera" style="font-size:24px; margin-bottom:8px;"></i>
-                    <div style="font-weight:600; font-size:13px;" id="issue-photo-label">Snap or Upload photo</div>
-                    <input type="file" id="issue-photo" accept="image/*" capture="environment" style="display:none;" onchange="window.app.handleIssuePhotoChange(this)">
-                    <div id="issue-photo-preview" style="display:none; margin-top:12px;">
-                        <img src="" style="max-width:100%; max-height:150px; border-radius:6px; box-shadow:var(--shadow-sm);">
-                    </div>
+                <div id="issue-photo-btn" onclick="document.getElementById('issue-photo-input').click()" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;">
+                    <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
+                    <div style="font-weight: 600; font-size: 12px;">Snap or Upload photo</div>
+                    <input type="file" id="issue-photo-input" accept="image/*" style="display:none;" onchange="window.app.pmModule.handleIssuePhoto(this)">
                 </div>
-                <div id="issue-photo-error" class="v-msg v-msg-err" style="display:none;">
-                    <i class="fas fa-exclamation-circle"></i> File too large. Maximum 5MB allowed.
-                </div>
+                <div id="issue-photo-preview" style="display:none; margin-top:12px;"></div>
             </div>
 
-            <button class="btn btn-primary" id="btn-submit-issue" style="width:100%; padding:14px; font-weight:700;" onclick="window.app.handleIssueSubmit()">Submit Issue Report</button>
+            <button id="btn-submit-issue" class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);" onclick="window.app.pmModule.handleSubmitIssue()">Submit Issue Report</button>
 
             <script>
-                // Initialize project selector
-                (function initIssueDrawer() {
-                    const projectId = window.currentIssueProjectId;
-                    const warningEl = document.getElementById('issue-no-project-warning');
+                (function() {
+                    const projectId = ${JSON.stringify(projectId)};
                     const selectorEl = document.getElementById('issue-project-selector');
                     const projectSelect = document.getElementById('issue-project');
-                    const projectSelectedEl = document.getElementById('issue-project-selected');
-                    const projectNameEl = document.getElementById('issue-project-name');
-                    const submitBtn = document.getElementById('btn-submit-issue');
+                    const infoEl = document.getElementById('issue-internal-info');
                     
-                    console.log('[Issue Init] currentIssueProjectId:', projectId, 'pmModule:', window.app?.pmModule);
+                    // Populate projects list from any available module
+                    const availableProjects = (window.app?.pmModule?.projects || window.app?.fmModule?.allProjects || window.app?.caModule?.allProjects || []);
                     
-                    if (!projectId) {
-                        // No project context - show selector and disable submit
-                        console.log('[Issue Init] No project, showing selector');
-                        if (selectorEl) selectorEl.style.display = 'block';
-                        if (warningEl) warningEl.style.display = 'block';
-                        if (submitBtn) {
-                            submitBtn.disabled = true;
-                            submitBtn.style.opacity = '0.5';
-                            submitBtn.style.cursor = 'not-allowed';
-                        }
-                        
-                        // Load and populate projects list
-                        if (window.app?.pmModule?.allProjects) {
-                            console.log('[Issue Init] Loading projects from pmModule:', (window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects.length);
-                            (window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects.forEach(p => {
-                                const option = document.createElement('option');
-                                option.value = p.id;
-                                option.textContent = p.code + ' - ' + p.name;
-                                option.dataset.projectCode = p.code;
-                                option.dataset.projectName = p.name;
-                                projectSelect.appendChild(option);
-                            });
-                        } else if (window.app?.pmModule) {
-                            // Try to load projects if available
-                            console.log('[Issue Init] pmModule available but allProjects not loaded');
-                            if (typeof (window.app.pmModule || window.app.fsModule || window.app.caModule).loadProjectsFromAPI === 'function') {
-                                (window.app.pmModule || window.app.fsModule || window.app.caModule).loadProjectsFromAPI().then(() => {
-                                    if ((window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects) {
-                                        projectSelect.innerHTML = '<option value="">-- Choose a Project --</option>';
-                                        (window.app.pmModule || window.app.fsModule || window.app.caModule).allProjects.forEach(p => {
-                                            const option = document.createElement('option');
-                                            option.value = p.id;
-                                            option.textContent = p.code + ' - ' + p.name;
-                                            option.dataset.projectCode = p.code;
-                                            option.dataset.projectName = p.name;
-                                            projectSelect.appendChild(option);
-                                        });
-                                    }
-                                });
-                            }
-                        }
-                        
-                        // Enable submit and show project name when project is selected
-                        projectSelect.addEventListener('change', function() {
-                            if (this.value) {
-                                const selectedOption = this.options[this.selectedIndex];
-                                const projectCode = selectedOption.dataset.projectCode;
-                                const projectName = selectedOption.dataset.projectName;
-                                
-                                window.currentIssueProjectId = parseInt(this.value);
-                                
-                                if (submitBtn) {
-                                    submitBtn.disabled = false;
-                                    submitBtn.style.opacity = '1';
-                                    submitBtn.style.cursor = 'pointer';
-                                }
-                                if (warningEl) warningEl.style.display = 'none';
-                                if (projectSelectedEl) projectSelectedEl.style.display = 'block';
-                                if (projectNameEl) projectNameEl.textContent = projectCode + ' - ' + projectName;
-                                
-                                console.log('[Issue Init] Project selected:', {
-                                    id: window.currentIssueProjectId,
-                                    code: projectCode,
-                                    name: projectName
-                                });
-                            } else {
-                                window.currentIssueProjectId = null;
-                                if (submitBtn) {
-                                    submitBtn.disabled = true;
-                                    submitBtn.style.opacity = '0.5';
-                                    submitBtn.style.cursor = 'not-allowed';
-                                }
-                                if (warningEl) warningEl.style.display = 'block';
-                                if (projectSelectedEl) projectSelectedEl.style.display = 'none';
-                            }
+                    if (projectSelect) {
+                        availableProjects.forEach(p => {
+                            const option = document.createElement('option');
+                            option.value = p.id;
+                            option.textContent = (p.code || 'PRJ') + ' - ' + p.name;
+                            if (projectId && parseInt(projectId) === parseInt(p.id)) option.selected = true;
+                            projectSelect.appendChild(option);
                         });
-                    } else {
-                        // Project already provided - hide selector
-                        console.log('[Issue Init] Project provided:', projectId);
-                        if (selectorEl) selectorEl.style.display = 'none';
-                        if (warningEl) warningEl.style.display = 'none';
-                        if (submitBtn) {
-                            submitBtn.disabled = false;
-                            submitBtn.style.opacity = '1';
-                            submitBtn.style.cursor = 'pointer';
-                        }
+                    }
+                    
+                    if (projectId) {
+                        const scopeWrapper = document.getElementById('issue-scope-wrapper');
+                        if (scopeWrapper && scopeWrapper.parentElement) scopeWrapper.parentElement.style.display = 'none';
+                        if (selectorEl) selectorEl.style.display = 'block';
                     }
                 })();
             </script>
         </div>
     `,
 
-  complaintDetails: (issue) => `
-        <div class="drawer-section">
-            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
-                <div>
-                    <div style="font-size:18px; font-weight:800; color:var(--slate-900);">Issue #${issue.id}</div>
-                    <div style="font-size:12px; color:var(--slate-500); margin-top:4px;">Reported by ${issue.reporter?.name || "Site Manager"} • ${issue.createdAt ? new Date(issue.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Recently"}</div>
-                </div>
-                <span class="status ${issue.status === "open" ? "pending" : "active"}" id="drawer_complaint_status" style="font-weight:700;">${issue.status.toUpperCase()}</span>
-            </div>
+    complaintDetails: (issue) => {
+        const notes = (issue.resolutionNotes || "").split("\n\n").filter(n => n.trim());
+        
+        return `
+            <div style="padding: 0; background: var(--slate-50); height: 100%; display: flex; flex-direction: column;">
+                <!-- Header Card -->
+                <div style="background: white; padding: 24px; border-bottom: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Issue # ${issue.id}</div>
+                            <h3 style="font-size: 20px; font-weight: 900; color: var(--slate-900);">${issue.category?.toUpperCase() || "SITE ISSUE"}</h3>
+                        </div>
+                        <span class="status ${issue.status === 'resolved' ? 'active' : 'pending'}" style="padding: 6px 16px; font-weight: 800; border-radius: 20px;">
+                            ${(issue.status || "OPEN").toUpperCase()}
+                        </span>
+                    </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
-                <div style="background:var(--slate-50); padding:12px; border-radius:8px; border:1px solid var(--slate-100);">
-                    <div class="stat-label" style="font-size:10px;">Category</div>
-                    <div style="font-size:13px; font-weight:700; margin-top:4px;">${issue.category}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: var(--slate-50); padding: 16px; border-radius: 12px; border: 1px solid var(--slate-200);">
+                        <div>
+                            <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">Reported By</div>
+                            <div style="font-weight: 700; font-size: 13px; color: var(--slate-700);">${issue.reporter?.name || "Site Manager"}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">Priority</div>
+                            <div style="font-weight: 800; font-size: 13px; color: ${issue.priority?.toUpperCase() === 'HIGH' ? 'var(--red)' : 'var(--amber-dark)'};">
+                                <i class="fas fa-circle" style="font-size: 8px; margin-right: 4px;"></i> ${issue.priority || "MEDIUM"}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div style="background:var(--red-light); padding:12px; border-radius:8px; border:1px solid var(--red-hover);">
-                    <div class="stat-label" style="font-size:10px; color:var(--red);">Priority</div>
-                    <div style="font-size:13px; font-weight:700; color:var(--red); margin-top:4px;">${issue.priority.toUpperCase()}</div>
+
+                <!-- Conversation History -->
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Original Narrative -->
+                    <div style="display: flex; gap: 12px;">
+                        <div style="width: 32px; height: 32px; background: var(--slate-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div style="background: white; padding: 16px; border-radius: 0 16px 16px 16px; border: 1px solid var(--slate-200); max-width: 85%; box-shadow: var(--shadow-sm);">
+                            <div style="font-size: 11px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px;">Original Report</div>
+                            <div style="font-size: 14px; color: var(--slate-700); line-height: 1.6;">${issue.description}</div>
+                        </div>
+                    </div>
+
+                    <!-- Resolution Thread -->
+                    ${notes.map((note, idx) => {
+                        const isSystem = note.includes("System") || note.includes("HQ") || note.includes("PM Response");
+                        return `
+                        <div style="display: flex; gap: 12px; ${!isSystem ? 'flex-direction: row-reverse;' : ''}">
+                            <div style="width: 32px; height: 32px; background: ${isSystem ? 'var(--slate-200)' : 'var(--orange-light)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; color: ${isSystem ? 'var(--slate-600)' : 'var(--orange)'}">
+                                <i class="fas ${isSystem ? 'fa-shield-halved' : 'fa-user-tie'}"></i>
+                            </div>
+                            <div style="background: ${isSystem ? 'white' : '#FFF7ED'}; padding: 16px; border-radius: ${isSystem ? '0 16px 16px 16px' : '16px 0 16px 16px'}; border: 1px solid ${isSystem ? 'var(--slate-200)' : 'var(--orange-hover)'}; max-width: 85%; box-shadow: var(--shadow-sm);">
+                                <div style="font-size: 14px; color: var(--slate-700); line-height: 1.6; white-space: pre-wrap;">${note}</div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('')}
                 </div>
-            </div>
 
-            <div style="margin-bottom:24px;">
-                <label class="form-label" style="color:var(--slate-400);">Narrative</label>
-                <p style="font-size:13px; line-height:1.6; color:var(--slate-700); background:var(--white); border:1px solid var(--slate-200); padding:16px; border-radius:8px; margin:0;">
-                    "${issue.description || "No description provided."}"
-                </p>
-            </div>
+                <!-- Response Input Area -->
+                ${(issue.status !== 'resolved' && issue.status !== 'closed') ? `
+                <div style="background: white; padding: 24px; border-top: 1px solid var(--slate-200); box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
+                    <div class="form-group" style="margin-bottom:20px;">
+                        <label class="form-label" style="font-size:10px; font-weight:700; color:var(--slate-400); text-transform:uppercase;">Response Notes</label>
+                        <textarea id="resolution-notes" class="form-input" style="height:120px; font-size:13px; line-height:1.5;" placeholder="What steps are being taken right now?" oninput="window.app.pmModule.validateResolutionInline()"></textarea>
+                        <div id="resolution-notes-error" class="v-msg v-msg-err" style="display:none; font-size:11px; margin-top:4px;"></div>
+                    </div>
 
-            ${issue.photoUrl ? `
-            <div style="margin-bottom:24px;">
-                <label class="form-label" style="color:var(--slate-400);">Photo Evidence</label>
-                <div style="border-radius:8px; overflow:hidden; border:1px solid var(--slate-200); background:var(--slate-50);">
-                    <img src="${issue.photoUrl}" style="width:100%; height:200px; object-fit:cover; display:block; cursor:zoom-in;" onclick="window.app.previewImage(this.src)" title="Click to enlarge">
-                    <div style="padding: 8px 12px; background: white; border-top: 1px solid var(--slate-200); display: flex; justify-content: flex-end;">
-                        <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="window.downloadDocument('${issue.photoUrl}', 'ISS-${issue.id}-evidence.jpg')">
-                            <i class="fas fa-download"></i> Download Full Image
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-primary" style="flex: 2; padding: 14px; font-weight: 800; font-size: 14px; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);" onclick="window.app.pmModule.handleResolveIssue(${issue.id})">
+                            Submit Response
+                        </button>
+                        <button class="btn btn-secondary" style="flex: 1; padding: 14px; font-weight: 700; color: var(--emerald-dark); border-color: var(--emerald-hover);" onclick="window.app.pmModule.handleCloseIssue(${issue.id})">
+                            Mark Closed
                         </button>
                     </div>
                 </div>
-            </div>
-            ` : ''}
-
-            ${((issue.status === 'open' || issue.status === 'investigating' || issue.status === 'in_progress') && window.app?.pmModule) ? `
-            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
-                <label class="form-label" style="margin-bottom:12px; font-weight:700;">Resolution Management</label>
-
-                <div class="form-group" style="margin-bottom:16px;">
-                    <label class="form-label" style="font-size:11px;">RESOLUTION STATUS</label>
-                    <select id="resolution-status" class="form-input">
-                        <option value="resolved" ${issue.status === 'resolved' ? 'selected' : ''}>Mark Resolved</option>
-                        <option value="in_progress" ${issue.status === 'in_progress' ? 'selected' : ''}>Set In Progress</option>
-                        <option value="investigating" ${issue.status === 'investigating' ? 'selected' : ''}>Mark as Investigating</option>
-                        <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>Close (No Action)</option>
-                    </select>
+                ` : `
+                <div style="background: var(--emerald-light); padding: 20px; border-top: 1px solid var(--emerald-hover); text-align: center; color: var(--emerald-dark); font-weight: 700;">
+                    <i class="fas fa-check-circle" style="margin-right:8px;"></i> This issue has been formally resolved and archived.
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label" style="font-size:11px;">INTERNAL RESOLUTION NOTES <span style="color:var(--red);">*</span></label>
-                    <textarea id="resolution-notes" class="form-input" rows="3" placeholder="Document the steps taken to resolve this issue..."
-                        oninput="window.app.pmModule.validateResolutionInline()"></textarea>
-                    <div id="resolution-notes-error" class="v-msg v-msg-err" style="display:none;">
-                        <i class="fas fa-exclamation-circle"></i> Notes must be at least 10 characters.
-                    </div>
-                    <div style="font-size:11px; color:var(--slate-400); margin-top:4px;">Minimum 10 characters required</div>
-                </div>
+                `}
             </div>
-            ` : (issue.status === 'open' || issue.status === 'investigating' || issue.status === 'in_progress') ? `
-            <div style="background:var(--blue-light); padding:16px; border-radius:8px; border:1px solid var(--blue); margin-bottom:24px;">
-                <label class="form-label" style="margin-bottom:8px; font-weight:700; color:var(--blue-dark);"><i class="fas fa-clock"></i> Status: ${issue.status === 'in_progress' ? 'Resolution In Progress' : 'Awaiting PM Review'}</label>
-                <div style="font-size:13px; color:var(--blue-dark); line-height:1.6;">
-                    ${issue.status === 'in_progress' ? 'The PM is currently working on this blocker.' : 'The Project Manager has been notified. Check back for resolution updates.'}
-                    ${issue.resolutionNotes ? `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--blue-hover); font-style:italic;">"${issue.resolutionNotes}"</div>` : ''}
-                </div>
-            </div>
-            ` : `
-            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:24px;">
-                <label class="form-label" style="margin-bottom:12px; font-weight:700;"><i class="fas fa-check-circle" style="color:var(--emerald);"></i> Resolution History</label>
-                <div style="font-size:13px; color:var(--slate-700); line-height:1.6;">
-                    ${issue.resolutionNotes || "This issue was resolved/closed."}
-                </div>
-                ${issue.resolvedAt ? `<div style="font-size:11px; color:var(--slate-500); margin-top:12px;">Resolved on ${new Date(issue.resolvedAt).toLocaleString()}</div>` : ""}
-            </div>
-            `}
-
-            <div style="border-top:1px solid var(--slate-200); padding-top:24px; display: flex; gap: 12px;">
-                <button class="btn btn-secondary" style="flex: 1; justify-content:center;" onclick="window.drawer.close()">Close</button>
-                ${((issue.status === 'open' || issue.status === 'investigating' || issue.status === 'in_progress') && window.app?.pmModule) ? `
-                <button class="btn btn-primary" style="flex: 1; justify-content:center; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.pmModule.handleResolveIssue('${issue.id}')">Submit Resolution</button>
-                ` : ""}
-            </div>
-        </div>
-    `,
+        `;
+    },
 
   // --- VEHICLE PROCUREMENT WORKFLOW ---
   requestNewVehicle: `
@@ -3767,225 +3021,6 @@ Contract Admin</textarea>
                 <input type="password" class="form-input" value="********" style="width:100%;">
             </div>
             <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="window.toast.show('SMTP Connection Tested & Saved', 'success'); window.drawer.close();">Test & Save</button>
-        </div>
-    `,
-
-  suspendProject: `
-        <div class="drawer-section">
-            <input type="hidden" id="suspend_project_id">
-            <div style="background:var(--orange-light); border:1px solid var(--orange); color:var(--orange-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;">
-                <i class="fas fa-exclamation-triangle"></i> This will halt all activities. Project Manager will be notified.
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; background:var(--slate-50);" readonly>
-            </div>
-            <div class="form-group" style="margin-bottom:20px;">
-                <label class="form-label">Reason for Suspension (Required)</label>
-                <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%;" placeholder="e.g. Budget overflow, safety violation, client request..."></textarea>
-            </div>
-            <button class="btn btn-secondary" style="width:100%; justify-content:center; color:var(--orange); border-color:var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSuspendProject()">Confirm Suspension</button>
-        </div>
-    `,
-
-  editProject: `
-        <div class="drawer-section" style="padding: 24px;">
-            <input type="hidden" id="edit_proj_id">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="edit_proj_name" class="form-input" style="width: 100%;">
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Client / Agency</label>
-                <input type="text" id="edit_proj_client" class="form-input" style="width: 100%;">
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label class="form-label">Budget (MWK)</label>
-                    <input type="number" id="edit_proj_budget" class="form-input" style="width: 100%;">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Status</label>
-                    <select id="edit_proj_status" class="form-input" style="width: 100%;">
-                        <option value="planning">Planning</option>
-                        <option value="active">Active</option>
-                        <option value="on_hold">On Hold</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div class="form-group">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" id="edit_proj_start" class="form-input" style="width: 100%;">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Target Completion</label>
-                    <input type="date" id="edit_proj_end" class="form-input" style="width: 100%;">
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Designated Supervisor</label>
-                <select id="edit_proj_supervisor" class="form-input" style="width: 100%;">
-                    <option value="">Loading supervisors...</option>
-                </select>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Site Location (Geofence)</label>
-                <div id="edit-project-map" style="height: 200px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--slate-200);"></div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--slate-500);">
-                    <span>Lat: <span id="edit_proj_lat">--</span></span>
-                    <span>Lng: <span id="edit_proj_lng">--</span></span>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project Master</button>
-        </div>
-    `,
-
-  completeMaintenance: (assetId) => `
-        <div class="drawer-section">
-            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Complete Maintenance: ${assetId}</h3>
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Maintenance Performed</label>
-                <textarea id="maint-summary" class="form-input" rows="3" style="width: 100%;" placeholder="Summary of work..."></textarea>
-            </div>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Cost (MWK)</label>
-                <input type="number" id="maint-cost" class="form-input" style="width: 100%;" placeholder="0.00">
-            </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
-        </div>
-    `,
-  initiateBCR: `
-        <div class="drawer-section">
-            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
-            <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
-            
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Project *</label>
-                <select id="bcr_project" class="form-input" style="width: 100%;">
-                    <option value="1">CEN-01 Unilia Library</option>
-                    <option value="2">MZ-05 Mzimba Clinic</option>
-                </select>
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Current Balance (MWK)</label>
-                <input type="text" class="form-input" value="16,000,000" disabled style="background: var(--slate-50);">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Required Uplift Amount (MWK) *</label>
-                <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0">
-                <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Amount to add to current project budget</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Justification / Reason *</label>
-                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices or Scope creep in foundation work..."></textarea>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">
-        </div>
-    `,
-
-  suspendProject: `
-        <div class="drawer-section">
-            <input type="hidden" id="suspend_project_id">
-            <div style="background:var(--orange-light); border:1px solid var(--orange); color:var(--orange-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;">
-                <i class="fas fa-exclamation-triangle"></i> This will halt all activities. Project Manager will be notified.
-            </div>
-            <div class="form-group" style="margin-bottom:16px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="suspend_project_name" class="form-input" style="width:100%; background:var(--slate-50);" readonly>
-            </div>
-            <div class="form-group" style="margin-bottom:20px;">
-                <label class="form-label">Reason for Suspension (Required)</label>
-                <textarea id="suspend_project_reason" class="form-input" rows="4" style="width:100%;" placeholder="e.g. Budget overflow, safety violation, client request..."></textarea>
-            </div>
-            <button class="btn btn-secondary" style="width:100%; justify-content:center; color:var(--orange); border-color:var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleSuspendProject()">Confirm Suspension</button>
-        </div>
-    `,
-
-  editProject: `
-        <div class="drawer-section" style="padding-bottom: 80px;">
-            <input type="hidden" id="edit_proj_id">
-            
-            <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
-                <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Project Identity Revision</div>
-                <div style="font-size: 11px; color: var(--slate-500);">Update core details and site staffing</div>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Name</label>
-                <input type="text" id="edit_proj_name" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Client Name</label>
-                <input type="text" id="edit_proj_client" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Allocated Budget (MWK)</label>
-                    <input type="number" id="edit_proj_budget" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-family: 'JetBrains Mono'; font-weight:700;">
-                </div>
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Project Status</label>
-                    <select id="edit_proj_status" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px; font-weight:600;">
-                        <option value="planning">PLANNING</option>
-                        <option value="active">ACTIVE</option>
-                        <option value="on_hold">ON HOLD</option>
-                        <option value="completed">COMPLETED</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Start Date</label>
-                    <input type="date" id="edit_proj_start" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                </div>
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Target End Date</label>
-                    <input type="date" id="edit_proj_end" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Assign Field Supervisor</label>
-                <select id="edit_proj_supervisor" class="form-input" style="width:100%; padding:10px; border:1px solid var(--slate-300); border-radius:6px;">
-                    <option value="">Loading supervisors...</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-                <div style="margin-bottom: 12px;">
-                    <label style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:4px;">
-                        <span>Geofence Radius (meters)</span>
-                        <span id="edit_proj_radius_val">500m</span>
-                    </label>
-                    <input type="range" id="edit_proj_radius_input" min="50" max="5000" step="50" value="500" style="width:100%; accent-color:var(--orange);" oninput="document.getElementById('edit_proj_radius_val').innerText = this.value + 'm'; if(window.app.pmModule && window.app.pmModule.geofenceCircle) { window.app.pmModule.geofenceCircle.setRadius(this.value); }">
-                </div>
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Site Location (Geofence)</label>
-                <div id="edit-project-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 8px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                    <div style="color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marked-alt"></i> Redrawing Map...</div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div style="font-size: 11px; color: var(--slate-500);">Lat: <span id="edit_proj_lat">--</span></div>
-                    <div style="font-size: 11px; color: var(--slate-500);">Long: <span id="edit_proj_lng">--</span></div>
-                </div>
-            </div>
-
-            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: white; border-top: 1px solid var(--slate-200); display: flex; gap: 12px; z-index: 10;">
-                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleUpdateProject()">Update Project Master</button>
-            </div>
         </div>
     `,
 
@@ -5095,24 +4130,6 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} window.app.pmModule.handleUpdateProject()">Update Project Master</button>
-        </div>
-    `,
-
-  suspendProject: `
-        <div style="padding: 24px;">
-            <input type="hidden" id="suspend_project_id">
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Project Name</label>
-                <input type="text" id="suspend_project_name" class="form-input" readonly style="width: 100%; background: var(--slate-50);">
-            </div>
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label">Suspension Reason</label>
-                <textarea id="suspend_project_reason" class="form-input" rows="5" placeholder="Document the reason for suspension (e.g. funding delay, site dispute)..." style="width: 100%;"></textarea>
-            </div>
-            <div style="background: var(--red-light); padding: 12px; border-radius: 6px; color: var(--red-dark); font-size: 12px; margin-bottom: 24px;">
-                <i class="fas fa-exclamation-triangle"></i> This will halt all active workflows and site reporting for this project.
-            </div>
-            <button class="btn btn-danger" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleSuspendProject()">Suspend Project Now</button>
         </div>
     `,
 

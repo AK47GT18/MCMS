@@ -1,17 +1,17 @@
-
 const fs = require('fs');
-const content = fs.readFileSync('c:\\Users\\USER\\Desktop\\MCMS\\main.js', 'utf8');
 
-function check(charOpen, charClose, name) {
-    let open = 0;
-    let close = 0;
-    for (let i = 0; i < content.length; i++) {
-        if (content[i] === charOpen) open++;
-        if (content[i] === charClose) close++;
+const code = fs.readFileSync('c:/Users/USER/Desktop/MCMS/components/DrawerTemplates.js', 'utf8');
+try {
+    // Replace export with something else to make it valid CJS for syntax check
+    const checkCode = code.replace(/export const /g, 'const ');
+    new Function(checkCode);
+    console.log('Success: No syntax errors found.');
+} catch (e) {
+    console.error('Syntax Error found:');
+    console.error(e);
+    // Find approximate line number
+    if (e.stack) {
+        console.error(e.stack);
     }
-    console.log(`${name}: open=${open}, close=${close}`);
+    process.exit(1);
 }
-
-check('{', '}', 'Braces');
-check('(', ')', 'Parens');
-check('[', ']', 'Brackets');

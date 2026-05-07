@@ -40,7 +40,8 @@ export const NAV_ITEMS = {
         { 
             section: 'Budget Control', 
             items: [
-                { label: 'PM Uplift Requests', icon: ICONS.plus, id: 'bcr' }
+                { label: 'PM Uplift Requests', icon: ICONS.plus, id: 'bcr' },
+                { label: 'Project Cost Ledger', icon: ICONS.finance, id: 'budget' }
             ]
         },
         { 

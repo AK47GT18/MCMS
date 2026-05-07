@@ -12,17 +12,36 @@ export const FD_Dashboard = {
                 ${StatCard({ title: 'Committed', value: this.formatCurrency(s.committed), subtext: 'In active vendor contracts', alertColor: 'blue' })}
                 ${StatCard({ title: 'EC Requests', value: s.ecRequests, subtext: 'Awaiting stock procurement', alertColor: 'orange' })}
                 ${StatCard({ title: 'PM Uplifts', value: s.pmUplifts, subtext: 'Pending additional funding', alertColor: 'red' })}
-                <div class="stat-card" style="border-left: 4px solid var(--orange);">
-                    <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700; margin-bottom: 8px;">Est. Monthly Burn</div>
-                    <div style="font-size: 24px; font-weight: 800; color: var(--slate-900);">${this.formatCurrency(s.committed * 0.12)}</div>
-                    <div style="display:flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; color:var(--red);">
-                        <i class="fas fa-arrow-trend-up"></i> 
-                        <span>High Velocity (+8% vs last mo)</span>
+                <div class="stat-card" style="border-left: 4px solid var(--orange); background: linear-gradient(to bottom right, #fff, #fff9f5);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Est. Monthly Burn</div>
+                        <i class="fas fa-fire-flame-curved" style="color: var(--orange); font-size: 14px; opacity: 0.5;"></i>
+                    </div>
+                    <div style="font-size: 26px; font-weight: 900; color: var(--slate-900); letter-spacing: -0.02em;">${this.formatCurrency(s.committed * 0.12)}</div>
+                    <div style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+                        <span style="background: var(--red-light); color: var(--red); padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; display: flex; align-items: center; gap: 4px;">
+                            <i class="fas fa-arrow-trend-up"></i> +8.2%
+                        </span>
+                        <span style="font-size: 11px; color: var(--slate-500); font-weight: 500;">vs last month</span>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="border-left: 4px solid var(--emerald); background: linear-gradient(to bottom right, #fff, #f6fdf9);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="font-size: 11px; color: var(--slate-500); text-transform: uppercase; font-weight: 700;">Cash Runway</div>
+                        <i class="fas fa-hourglass-half" style="color: var(--emerald); font-size: 14px; opacity: 0.5;"></i>
+                    </div>
+                    <div style="font-size: 26px; font-weight: 900; color: var(--slate-900); letter-spacing: -0.02em;">${s.committed > 0 ? (s.available / (s.committed * 0.12)).toFixed(1) : '∞'} <span style="font-size: 14px; font-weight: 700; color: var(--slate-400);">Mo</span></div>
+                    <div style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+                        <span style="background: var(--emerald-light); color: var(--emerald); padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; display: flex; align-items: center; gap: 4px;">
+                            <i class="fas fa-shield-check"></i> STABLE
+                        </span>
+                        <span style="font-size: 11px; color: var(--slate-500); font-weight: 500;">Operating liquidity</span>
                     </div>
                 </div>
             </div>
 
-            <div id="fm-projects-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+            <div id="fm-projects-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 24px; margin-top: 24px;">
                 <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--slate-400);">
                     <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
                     <div>Loading project budgets...</div>
@@ -113,40 +132,44 @@ export const FD_Dashboard = {
             const barColor = isCritical ? 'var(--red)' : 'var(--blue)';
 
             return `
-                <div class="data-card">
+                <div class="data-card project-card-fd" style="transition: all 0.2s ease; cursor: pointer; position: relative; overflow: hidden;">
                     <div style="padding: 24px;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div style="max-width: 70%;">
+                                <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">${project.code}</div>
+                                <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin: 0; line-height: 1.2;">${project.name}</h3>
+                                <div style="font-size: 12px; color: var(--slate-500); margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-tag" style="font-size: 10px;"></i>
+                                    <span>${project.projectType ? project.projectType.replace(/_/g, ' ') : 'Construction'}</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="status ${statusClass}" style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 10px; text-transform: uppercase;">
+                                    ${statusLabel}
+                                </span>
+                                <div style="font-size: 20px; font-weight: 900; color: var(--slate-900); margin-top: 8px; font-family: 'JetBrains Mono', monospace;">${utilPct}%</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 8px;">
+                            <div style="height: 8px; background: var(--slate-100); border-radius: 4px; overflow: hidden; display: flex;">
+                                <div style="width: ${Math.min(utilPct, 100)}%; background: ${barColor}; height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);" title="Spent: ${utilPct}%"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                             <div>
-                                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">${project.code} ${project.name}</h3>
-                                <div style="font-size: 12px; color: var(--slate-500);">${project.projectType ? project.projectType.replace(/_/g, ' ') : 'Construction'}</div>
+                                <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px;">Total Spent</div>
+                                <div style="font-size: 14px; font-weight: 800; color: var(--slate-800); font-family: 'JetBrains Mono', monospace;">${this.formatCurrency(budgetSpent)}</div>
                             </div>
-                            <span class="status ${statusClass}">${statusLabel} (${utilPct}%)</span>
-                        </div>
-
-                        <div style="margin-bottom: 24px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                <span style="color: var(--slate-600);">Budget Utilization</span>
-                                <span style="font-weight: 700; color: ${isCritical ? 'var(--red)' : 'var(--slate-900)'};">${utilPct}%</span>
+                            <div style="text-align: right;">
+                                <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px;">Remaining Funds</div>
+                                <div style="font-size: 14px; font-weight: 800; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'}; font-family: 'JetBrains Mono', monospace;">${this.formatCurrency(remaining)} <span style="font-size: 10px; font-weight: 700;">MWK</span></div>
                             </div>
-                            <div style="height: 12px; background: var(--slate-100); border-radius: 6px; overflow: hidden; display: flex;">
-                                <div style="width: ${Math.min(utilPct, 100)}%; background: ${barColor}; height: 100%;" title="Spent: ${utilPct}%"></div>
-                            </div>
-                            <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px;">
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <div style="width: 8px; height: 8px; background: ${barColor}; border-radius: 2px;"></div>
-                                    <span style="color: var(--slate-500);">Spent (${this.formatCurrency(budgetSpent)})</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 4px; margin-left: auto;">
-                                    <span style="font-weight: 700; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'};">Remaining: ${this.formatCurrency(remaining)} MWK</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 12px;" onclick="window.toast?.show('Opening Contracts Registry...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('contracts', '${project.id}')">Contracts</button>
-                            <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 12px; background: var(--orange); border-color: var(--orange);" onclick="window.toast?.show('Opening Uplift Section...', 'info'); (window.fmModule || window.app?.fmModule)?.switchView('bcr', '${project.id}')">Request Uplift</button>
                         </div>
                     </div>
+                    
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: ${barColor}; opacity: 0.3;"></div>
                 </div>
             `;
         }).join('');

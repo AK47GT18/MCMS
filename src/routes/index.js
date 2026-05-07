@@ -434,7 +434,12 @@ async function router(req, res) {
     }
     if (!id) {
       if (method === 'GET') return issuesController.getAll(req, res);
-      if (method === 'POST') return issuesController.create(req, res);
+      if (method === 'POST') {
+        return upload.single('photo')(req, res, (err) => {
+          if (err) return response.error(res, err.message, 400);
+          return issuesController.create(req, res);
+        });
+      }
       return methodNotAllowed(res, ['GET', 'POST']);
     }
     if (action === 'resolve' && method === 'POST') {

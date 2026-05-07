@@ -22,6 +22,7 @@ const getAll = asyncHandler(async (req, res) => {
     status: query.status,
     priority: query.priority,
     projectId: query.projectId ? parseInt(query.projectId) : undefined,
+    user
   });
   response.paginated(res, result.issues, result.page, result.limit, result.total);
 });
@@ -41,7 +42,15 @@ const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
   
-  const body = await parseBody(req);
+  const contentType = req.headers['content-type'] || '';
+  const isMultipart = contentType.includes('multipart/form-data');
+  const body = isMultipart ? (req.body || {}) : await parseBody(req);
+  
+  // Handle uploaded file path
+  if (req.file) {
+    body.photoUrl = `/uploads/documents/${req.file.filename}`;
+  }
+  
   const data = validateBody(body, createIssueSchema, res);
   if (!data) return;
   
@@ -72,7 +81,7 @@ const resolve = asyncHandler(async (req, res, id) => {
   if (!issueId) return;
   
   const body = await parseBody(req);
-  const result = await issuesService.resolve(issueId, body.resolutionNotes);
+  const result = await issuesService.resolve(issueId, body, user);
   response.success(res, result);
 });
 
@@ -84,7 +93,7 @@ const assign = asyncHandler(async (req, res, id) => {
   if (!issueId) return;
   
   const body = await parseBody(req);
-  const result = await issuesService.assign(issueId, body.assigneeId);
+  const result = await issuesService.assign(issueId, body.assigneeId, user);
   response.success(res, result);
 });
 

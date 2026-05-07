@@ -38,8 +38,8 @@ const issues = {
   /**
    * Resolve issue
    */
-  async resolve(id) {
-    return await client.post(`/issues/${id}/resolve`);
+  async resolve(id, data = {}) {
+    return await client.post(`/issues/${id}/resolve`, data);
   },
 
   /**

@@ -11,12 +11,24 @@ const emailService = require('../emails/email.service');
 const notifService = require('./notification.service');
 const auditService = require('./audit.service');
 
-async function getAll({ page = 1, limit = 20, status, priority, projectId }) {
+async function getAll({ page = 1, limit = 20, status, priority, projectId, user }) {
   const skip = (page - 1) * limit;
   const where = {};
   if (status) where.status = status;
   if (priority) where.priority = priority;
   if (projectId) where.projectId = projectId;
+  
+  // Role-based filtering
+  if (user && !['Operations Manager', 'Managing_Director', 'System_Technician', 'Operations_Manager', 'Managing Director', 'Finance_Director', 'Finance Director'].includes(user.role)) {
+    where.OR = [
+      { reportedBy: user.id },
+      { assignedTo: user.id },
+      { project: { managerId: user.id } },
+      { project: { fieldSupervisorId: user.id } },
+      // Show internal issues (no project) to all managers/supervisors for company-wide visibility
+      { projectId: null }
+    ];
+  }
   
   const [issues, total] = await Promise.all([
     prisma.issue.findMany({
@@ -24,8 +36,8 @@ async function getAll({ page = 1, limit = 20, status, priority, projectId }) {
       orderBy: { createdAt: 'desc' },
       include: {
         project: { select: { id: true, code: true, name: true } },
-        reporter: { select: { id: true, name: true } },
-        assignee: { select: { id: true, name: true } },
+        reporter: { select: { id: true, name: true, role: true } },
+        assignee: { select: { id: true, name: true, role: true } },
       },
     }),
     prisma.issue.count({ where }),
@@ -67,9 +79,9 @@ async function create(data, userId) {
     data.priority = priorityMap[data.priority.toLowerCase()] || data.priority;
   }
   
-  // Ensure projectId is provided and valid
-  if (!data.projectId || typeof data.projectId !== 'number') {
-    throw new AppError('Project ID is required and must be a valid number', 400);
+  // Optional: Ensure projectId is valid if provided
+  if (data.projectId && typeof data.projectId !== 'number') {
+    throw new AppError('Project ID must be a valid number', 400);
   }
 
   console.log('[Issue Service] Creating issue with:', {
@@ -103,46 +115,70 @@ async function create(data, userId) {
   // Send email notification to Project Manager (async, don't wait)
   (async () => {
     try {
-      if (!issue.project?.manager?.email) {
-        logger.warn('Cannot send PM notification - Project manager email not found', { 
-          projectId: issue.projectId,
-          hasProject: !!issue.project,
-          hasManager: !!issue.project?.manager
+      let pmEmail, pmName, projectName;
+      const reporterName = issue.reporter?.name || 'Team Member';
+
+      if (issue.project) {
+          pmEmail = issue.project.manager?.email;
+          pmName = issue.project.manager?.name || 'Project Manager';
+          projectName = issue.project.name || issue.project.code;
+      } else {
+          // Internal Issue - Notify Operations Manager
+          const opsManager = await prisma.user.findFirst({ where: { role: 'Operations Manager' } });
+          pmEmail = opsManager?.email;
+          pmName = opsManager?.name || 'Operations Manager';
+          projectName = 'Internal / HQ Operations';
+      }
+
+      if (!pmEmail) {
+        logger.warn('Cannot send issue notification - target email not found', { 
+          issueId: issue.id,
+          hasProject: !!issue.project
         });
         return;
       }
       
-      const pmName = issue.project.manager.name || 'Project Manager';
-      const reporterName = issue.reporter?.name || 'Team Member';
-      const projectName = issue.project.name || issue.project.code;
-      const pmEmail = issue.project.manager.email;
-      
-      logger.info('Sending PM notification', {
+      logger.info('Sending issue notification', {
         issueId: issue.id,
-        projectId: issue.projectId,
-        pmEmail: pmEmail
+        targetEmail: pmEmail
       });
       
       const result = await emailService.send({
         to: pmEmail,
         subject: `🚨 New Issue Reported: ${issue.issueCode} - ${projectName}`,
         html: `
-          <h2 style="color:#111827;">New Issue Reported</h2>
-          <p>Hello <strong>${pmName}</strong>,</p>
-          <p>A new issue has been reported on project <strong>${projectName}</strong> by <strong>${reporterName}</strong>.</p>
-          
-          <div style="background:#f8fafc; border-left:4px solid #f97316; padding:16px; margin:16px 0; border-radius:4px;">
-            <p><strong>Issue Code:</strong> ${issue.issueCode}</p>
-            <p><strong>Category:</strong> ${issue.category || 'General'}</p>
-            <p><strong>Priority:</strong> <span style="color:#dc2626; font-weight:bold;">${issue.priority || 'Medium'}</span></p>
-            <p><strong>Reported By:</strong> ${reporterName}</p>
-            <p><strong>Description:</strong></p>
-            <p style="color:#475569; font-style:italic;">${issue.description || 'No description provided'}</p>
+          <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+            <div style="background: #f8fafc; padding: 24px; border-radius: 8px; border-bottom: 4px solid #f97316;">
+              <h2 style="color: #0f172a; margin: 0; font-size: 20px;">🚨 Issue Alert</h2>
+              <p style="color: #64748b; margin: 4px 0 0; font-size: 14px;">MCMS Governance Pipeline</p>
+            </div>
+            
+            <div style="padding: 24px 0;">
+              <p style="font-size: 16px; line-height: 24px;">Hello <strong>${pmName}</strong>,</p>
+              <p style="font-size: 16px; line-height: 24px;">A new issue has been flagged for <strong>${projectName}</strong> by <strong>${reporterName}</strong>.</p>
+              
+              <div style="background: #fff; border: 1px solid #f1f5f9; border-radius: 8px; padding: 20px; margin: 24px 0; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);">
+                <div style="margin-bottom: 12px;">
+                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700;">Issue Reference</span>
+                  <div style="color: #0f172a; font-weight: 600;">${issue.issueCode}</div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700;">Priority Level</span>
+                  <div style="color: ${issue.priority === 'High' || issue.priority === 'Critical' ? '#dc2626' : '#f97316'}; font-weight: 700;">${issue.priority || 'Medium'}</div>
+                </div>
+                <div>
+                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700;">Narrative / Description</span>
+                  <div style="color: #334155; line-height: 1.6; margin-top: 4px;">${issue.description || 'No description provided'}</div>
+                </div>
+              </div>
+              
+              <a href="https://mcms.mkaka.mw/dashboard.html?view=issues&id=${issue.id}" style="display: inline-block; background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">View in Resolution Center</a>
+            </div>
+            
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; color: #94a3b8; font-size: 12px; text-align: center;">
+              <p>This is an automated governance notification from MKAKA MCMS. Please do not reply directly.</p>
+            </div>
           </div>
-          
-          <p>Please review and take action as needed.</p>
-          <hr style="border:none; border-top:1px solid #e2e8f0; margin:20px 0;">
-          <p style="color:#64748b; font-size:12px;">This is an automated notification from MCMS. Please do not reply to this email.</p>
         `,
       });
       
@@ -206,13 +242,25 @@ async function update(id, data) {
   return issue;
 }
 
-async function resolve(id, resolutionNotes) {
+async function resolve(id, data, user = null) {
+  const { status = 'resolved', resolutionNotes } = data;
+  
+  const existingIssue = await prisma.issue.findUnique({ where: { id } });
+  let combinedNotes = existingIssue.resolutionNotes || '';
+  
+  if (resolutionNotes) {
+    const timestamp = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const userName = user?.name || 'Management';
+    const newNoteEntry = `[${timestamp}] ${userName}: ${resolutionNotes}`;
+    combinedNotes = combinedNotes ? `${combinedNotes}\n\n${newNoteEntry}` : newNoteEntry;
+  }
+  
   const issue = await prisma.issue.update({
     where: { id },
     data: {
-      status: 'resolved',
-      resolutionNotes,
-      resolvedAt: new Date(),
+      status,
+      resolutionNotes: combinedNotes,
+      resolvedAt: status === 'resolved' ? new Date() : undefined,
     },
     include: {
       project: { select: { id: true, code: true, name: true } }
@@ -232,17 +280,16 @@ async function resolve(id, resolutionNotes) {
   }
 
   // Audit Log
-  const dbUser = await prisma.user.findFirst({ where: { id: issue.project.managerId } }); // Rough guess for who resolved
   await auditService.log({
-    userId: dbUser?.id, userName: dbUser?.name, userRole: dbUser?.role,
+    userId: user?.id, userName: user?.name, userRole: user?.role,
     action: 'RESOLVE_ISSUE', targetType: 'Issue', targetId: id, targetCode: issue.issueCode,
-    details: { resolutionNotes }
+    details: { status, resolutionNotes }
   });
 
   return issue;
 }
 
-async function assign(id, assigneeId) {
+async function assign(id, assigneeId, user = null) {
   const issue = await prisma.issue.update({
     where: { id },
     data: {
@@ -268,6 +315,7 @@ async function assign(id, assigneeId) {
 
   // Audit Log
   await auditService.log({
+    userId: user?.id, userName: user?.name, userRole: user?.role,
     action: 'ASSIGN_ISSUE', targetType: 'Issue', targetId: id, targetCode: issue.issueCode,
     details: { assigneeId }
   });

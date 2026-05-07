@@ -297,12 +297,12 @@ const extendProjectSchema = z.object({
 const createIssueSchema = z.object({
   issueCode: z.string().min(1).max(20).optional(),
   category: z.string().max(100).optional(),
-  projectId: z.number().int().positive('Project ID is required and must be a positive number'),
+  projectId: z.coerce.number().int().positive().optional().nullable(),
   siteLocation: z.string().max(100).optional(),
   priority: z.enum(['low', 'Low', 'medium', 'Medium', 'high', 'High', 'critical', 'Critical']).optional(),
   description: z.string().optional(),
-  photoUrl: z.string().url().optional(),
-  assignedTo: z.number().int().positive().optional(),
+  photoUrl: z.string().optional(),
+  assignedTo: z.coerce.number().int().positive().optional(),
 });
 
 const updateIssueSchema = z.object({

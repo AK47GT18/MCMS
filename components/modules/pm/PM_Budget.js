@@ -19,7 +19,7 @@ export const PM_Budget = {
                         <p style="font-size: 13px; color: var(--slate-500);">Comprehensive financial portfolio oversight and variance tracking.</p>
                     </div>
                     <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-secondary" onclick="window.app.pmModule.loadPortfolioData()">
+                        <button class="btn btn-secondary" onclick="(window.fmModule || window.pmModule || window.app?.fmModule || window.app?.pmModule).loadPortfolioData()">
                             <i class="fas fa-sync-alt"></i> Refresh Data
                         </button>
                     </div>
@@ -117,7 +117,7 @@ export const PM_Budget = {
                     MWK ${spent.toLocaleString()}
                 </td>
                 <td style="padding: 16px; text-align: right;">
-                    <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.openProjectLedger(${project.id})">
+                    <button class="btn btn-secondary btn-sm" onclick="(window.fmModule || window.pmModule || window.app?.fmModule || window.app?.pmModule).openProjectLedger(${project.id})">
                         <i class="fas fa-magnifying-glass-chart"></i> View Ledger
                     </button>
                 </td>

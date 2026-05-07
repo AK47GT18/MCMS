@@ -1,21 +1,48 @@
-
 const fs = require('fs');
-const content = fs.readFileSync('c:\\Users\\USER\\Desktop\\MCMS\\main.js', 'utf8');
+const code = fs.readFileSync('c:/Users/USER/Desktop/MCMS/components/DrawerTemplates.js', 'utf8');
 
-let open = 0;
-let close = 0;
-let lineNum = 0;
-const lines = content.split('\n');
+let stack = [];
+let i = 0;
 
-lines.forEach((line, index) => {
-    lineNum = index + 1;
-    const o = (line.match(/\{/g) || []).length;
-    const c = (line.match(/\}/g) || []).length;
-    open += o;
-    close += c;
-    if (close > open) {
-        console.log(`Mismatch at line ${lineNum}: open=${open}, close=${close}`);
+function parseCode(stopChar) {
+    while (i < code.length) {
+        const char = code[i];
+        if (char === stopChar) return;
+        
+        if (char === '`') {
+            i++;
+            while (i < code.length) {
+                if (code[i] === '`' && code[i-1] !== '\\') break;
+                if (code[i] === '$' && code[i+1] === '{') {
+                    i += 2;
+                    parseCode('}');
+                } else {
+                    i++;
+                }
+            }
+        } else if (char === '"' || char === "'") {
+            const quote = char;
+            i++;
+            while (i < code.length) {
+                if (code[i] === quote && code[i-1] !== '\\') break;
+                i++;
+            }
+        } else if (char === '{') {
+            stack.push(i);
+            i++;
+            parseCode('}');
+            if (code[i] === '}') {
+                stack.pop();
+            }
+        }
+        i++;
     }
-});
+}
 
-console.log(`Total: open=${open}, close=${close}`);
+parseCode();
+
+if (stack.length > 0) {
+    console.log('Unbalanced { at indices: ' + stack.join(', '));
+} else {
+    console.log('Braces are balanced.');
+}

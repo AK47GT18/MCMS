@@ -99,20 +99,12 @@ export const PM_FeatureHandlers = {
     async executeResolutionUpdate(id, status, notes) {
         try {
             window.toast.show('Updating issue status...', 'info');
-            await issues.update(id, {
+            await issues.resolve(id, {
                 status,
-                resolutionNotes: notes,
-                resolvedAt: status === 'resolved' ? new Date().toISOString() : null
+                resolutionNotes: notes
             });
 
-            // Audit Trail
-            client.post('/audit-logs', {
-                action: 'RESOLVE_ISSUE',
-                entityType: 'Issue',
-                entityId: id,
-                details: `Issue #${id} status set to ${status}. Notes: ${notes}`
-            }).catch(() => {});
-
+            // Refresh UI and Notify other modules
             window.toast.show('Issue updated successfully', 'success');
             window.drawer.close();
             if (this.currentView === 'issues') this.loadIssuesFromAPI();
@@ -125,12 +117,22 @@ export const PM_FeatureHandlers = {
         }
     },
 
+    async handleCloseIssue(id) {
+        window.modal.confirm(
+            'Confirm Closure',
+            'Are you sure you want to mark this issue as CLOSED? This indicates the problem has been fully resolved and requires no further action.',
+            async () => {
+                await this.executeResolutionUpdate(id, 'closed', 'Issue formally closed by Project Manager.');
+            }
+        );
+    },
+
     initIssueResolutionForm(issue) {
         setTimeout(() => {
             const notesEl = document.getElementById('resolution-notes');
-            if (notesEl && issue.resolutionNotes) notesEl.value = issue.resolutionNotes;
+            if (notesEl) notesEl.value = ''; // Always start with empty for new response
             const statusEl = document.getElementById('resolution-status');
-            if (statusEl && issue.status) statusEl.value = issue.status === 'open' ? 'in_progress' : issue.status;
+            if (statusEl && issue.status) statusEl.value = (issue.status === 'open' || issue.status === 'investigating') ? 'in_progress' : issue.status;
         }, 100);
     },
 
