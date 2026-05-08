@@ -599,7 +599,7 @@ export const DrawerTemplates = {
                     ${contract.contractType !== "project"
                 ? `
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Vendor / Party</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">${(contract.contractType === 'rental' || contract.type === 'rental' || contract.type === 'RENTAL') ? 'Rental Company' : 'Vendor / Party'}</div>
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 15px;">${contract.vendorName || "-"}</div>
                     </div>
                     `
@@ -623,7 +623,7 @@ export const DrawerTemplates = {
                         <div style="font-weight: 600; color: var(--slate-700);">${contract.endDate ? new Date(contract.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</div>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Procurement Variance</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">${(contract.contractType === 'rental' || contract.type === 'rental' || contract.type === 'RENTAL') ? 'Rental Rate Variance' : 'Procurement Variance'}</div>
                         ${(() => {
                 const market = Number(contract.marketValue || contract.project?.budgetTotal || 0);
                 const actual = Number(contract.value || 0);
@@ -661,7 +661,7 @@ export const DrawerTemplates = {
 
             <div style="padding: 24px;">
                 <!-- Materials Section -->
-                <div style="margin-bottom: 32px;">
+                <div style="margin-bottom: 32px; ${ (contract.contractType === 'vendor' || contract.contractType === 'rental' || contract.type === 'vendor' || contract.type === 'rental' || contract.type === 'VENDOR' || contract.type === 'RENTAL') ? 'display: none;' : '' }">
                     <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Procured Materials & Specs</h4>
                     <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm);">
                         <div style="padding: 10px 16px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
@@ -2119,6 +2119,7 @@ export const DrawerTemplates = {
             </div>
             
             <!-- Metadata Bar -->
+            ${(contract.type === 'project' || contract.contractType === 'project' || contract.type === 'master' || (!['vendor', 'rental', 'VENDOR', 'RENTAL'].includes(contract.type || contract.contractType || ''))) ? `
             <div style="display: flex; padding: 12px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); gap: 24px;">
                 <div>
                     <div style="font-size: 10px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Party A</div>
@@ -2127,9 +2128,10 @@ export const DrawerTemplates = {
                 <div style="width: 1px; background: var(--slate-200);"></div>
                 <div>
                     <div style="font-size: 10px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Contractor / Party B</div>
-                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${DrawerTemplates.escapeHTML(contract.contractor || "General Supplier")}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--slate-700);">${DrawerTemplates.escapeHTML(contract.contractor || contract.vendorName || "General Supplier")}</div>
                 </div>
             </div>
+            ` : ''}
 
             <!-- Content Area -->
             <div style="flex: 1; background: var(--slate-100); position: relative; min-height: 500px; display: flex; flex-direction: column;">
@@ -3634,7 +3636,7 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 12px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
-                <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
+                <input type="text" id="contract_vendor_phone" class="form-input" data-vrules="phone" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
             </div>
 
             <div class="form-group" style="margin-bottom: 12px;">
@@ -3784,7 +3786,7 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 12px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
-                <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
+                <input type="text" id="contract_vendor_phone" class="form-input" data-vrules="phone" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
             </div>
 
             <div class="form-group" style="margin-bottom: 12px;">

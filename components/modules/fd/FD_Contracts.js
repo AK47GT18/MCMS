@@ -164,13 +164,13 @@ export const FD_Contracts = {
         return (
           c.contractType === "supply" ||
           c.contractType === "vendor" ||
-          c.vendorId != null
+          (c.vendorId != null && c.contractType !== "rental" && c.contractType !== "RENTAL")
         );
       } else {
         return (
           c.contractType === "project" ||
           c.contractType === "client" ||
-          (c.vendorId == null && c.projectId != null)
+          (c.vendorId == null && c.projectId != null && c.contractType !== "rental" && c.contractType !== "RENTAL")
         );
       }
     });
@@ -325,6 +325,13 @@ export const FD_Contracts = {
         fileInput.onchange = (e) => {
           const file = e.target.files[0];
           if (file) {
+            if (file.size > 25 * 1024 * 1024) {
+              window.toast.show("File size exceeds 25MB limit. Please upload a smaller PDF.", "error");
+              e.target.value = "";
+              status.innerHTML = `<span style="color: var(--red); font-weight: 700;">File too large (>25MB)</span>`;
+              dropZone.style.borderColor = "var(--red)";
+              return;
+            }
             status.innerHTML = `<span style="color: var(--emerald);"><i class="fas fa-check-circle"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</span>`;
             dropZone.style.borderColor = "var(--emerald)";
             dropZone.style.background = "#F0FDF4";
@@ -820,6 +827,10 @@ export const FD_Contracts = {
     }
 
     const file = fileInput.files[0];
+    if (file && file.size > 25 * 1024 * 1024) {
+      window.toast.show("Contract document exceeds 25MB limit.", "error");
+      return;
+    }
     const contractValue = parseFloat(document.getElementById("contract_value")?.value || 0);
     const projectId = document.getElementById("contract_project")?.value;
 
@@ -837,7 +848,8 @@ export const FD_Contracts = {
       
       formData.append("projectId", projectId);
       formData.append("vendorName", document.getElementById("contract_vendor")?.value);
-      formData.append("vendorId", document.getElementById("contract_vendor_id")?.value || "");
+      const vId = document.getElementById("contract_vendor_id")?.value;
+      if (vId) formData.append("vendorId", vId);
       formData.append("vendorPhone", document.getElementById("contract_vendor_phone")?.value || "");
       formData.append("title", document.getElementById("contract_title")?.value);
       formData.append("value", contractValue);
@@ -848,10 +860,9 @@ export const FD_Contracts = {
       formData.append("document", file);
       formData.append(isRental ? 'equipmentList' : 'materialsList', JSON.stringify(items));
       
-      if (isRental) {
-          const refVal = document.getElementById("contract_ref")?.value || `REN-MOW-${Math.floor(1000 + Math.random() * 9000)}`;
-          formData.append("refCode", refVal);
-      }
+      const refCode = document.getElementById("contract_ref")?.value || 
+                      (isRental ? 'REN' : 'VND') + "-MOW-" + Math.floor(1000 + Math.random() * 9000);
+      formData.append("refCode", refCode);
 
       const res = await fetch("/api/v1/contracts", {
         method: "POST",
@@ -1317,74 +1328,42 @@ export const FD_Contracts = {
     }
   },
 
-  async completeContract(contractId) {
-    if (!confirm("Are you sure you want to mark this contract as 100% completed? This will close the contract and lock it for further changes.")) {
-      return;
-    }
-
-    try {
-      window.toast.show("Processing completion...", "info");
-      const token = localStorage.getItem("mcms_auth_token");
-      const res = await fetch(`/api/v1/contracts/${contractId}/complete`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-      
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to complete contract");
-      }
-
-      window.toast.show("Contract successfully marked as completed.", "success");
-      window.drawer.close();
-      await this.loadContractsData();
-
-      // Audit Log handled by backend service
-
-      // Notifications
-      const contract = (this.allContracts || []).find(c => c.id == contractId);
-      this.broadcastContractEvent("Contract Completed", 
-        `"${contract?.title || 'Contract'}" has been successfully completed and 100% fulfilled.`,
-        contract?.projectId,
-        ["Project Manager", "Finance Director"]
-      );
-      
-    } catch (e) {
-      window.toast.show(e.message, "error");
-    }
-  },
 
   renderRentalsTable() {
     const container = document.getElementById("contracts-table-container");
-    const rentals = this.data.vehicleRentals || [];
+    const requisitions = this.data.vehicleRentals || [];
+    const finalizedRentals = (this.allContracts || []).filter(c => c.contractType === 'rental' || c.contractType === 'RENTAL');
+    const rentals = [...requisitions, ...finalizedRentals];
 
     if (rentals.length === 0) {
-      container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size: 32px; margin-bottom: 12px;"></i><div>No vehicle rental requisitions found.</div></div>`;
+      container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size: 32px; margin-bottom: 12px;"></i><div>No vehicle rental requisitions or contracts found.</div></div>`;
       return;
     }
 
     const rows = rentals
       .map((item) => {
         let statusClass = "locked";
-        if (item.status === "Approved") statusClass = "active";
+        if (item.status === "Approved" || item.status === "Active" || item.status === "active") statusClass = "active";
         if (item.status === "Rejected") statusClass = "delayed";
-        if (item.status === "Pending") statusClass = "locked";
+        if (item.status === "Pending" || item.status === "Draft") statusClass = "locked";
+        if (item.endDate && new Date(item.endDate) <= new Date()) statusClass = "delayed";
+
+        const machineName = item.machineType || item.title || "Rental Equipment";
+        const rate = item.dailyRate || item.value || 0;
+        const duration = item.durationDays || (item.startDate && item.endDate ? Math.ceil((new Date(item.endDate) - new Date(item.startDate)) / (1000 * 60 * 60 * 24)) : "N/A");
 
         return `
-                <tr onclick="window.app.fmModule.openRentalReview(${item.id})">
-                    <td><span class="project-id">RENT-${item.id}</span></td>
+                <tr onclick="window.app.fmModule.viewContract(${item.id})">
+                    <td><span class="project-id">${item.refCode || item.contractCode || item.code || "RENT-" + item.id}</span></td>
                     <td>
-                        <div style="font-weight: 600;">${item.machineType}</div>
-                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">${item.vendorName || "Unassigned"}</div>
+                        <div style="font-weight: 600;">${machineName}</div>
+                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">${item.vendorName || item.vendor?.name || "Unassigned"}</div>
                     </td>
                     <td>${item.project?.name || "Multiple"}</td>
-                    <td style="font-family:'JetBrains Mono'; font-weight: 700;">MWK ${item.dailyRate.toLocaleString()}/day</td>
-                    <td>${item.durationDays} Days</td>
+                    <td style="font-family:'JetBrains Mono'; font-weight: 700;">MWK ${Number(rate).toLocaleString()}/day</td>
+                    <td>${duration} Days</td>
                     <td>
-                        <span class="status ${statusClass}">${(item.status || "Pending").toUpperCase()}</span>
+                        <span class="status ${statusClass}">${(item.status || "Active").toUpperCase()}</span>
                     </td>
                     <td style="text-align: right;">
                         <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">Review</button>

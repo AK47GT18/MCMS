@@ -155,17 +155,19 @@ export const PM_Contracts = {
 
     // Filter by tab type
     let filtered = (Array.isArray(this.allContracts) ? this.allContracts : []).filter((c) => {
-      if (this.currentContractTab === "vendor") {
+      if (this.currentContractTab === "rental") {
+        return c.contractType === "rental" || c.contractType === "RENTAL";
+      } else if (this.currentContractTab === "vendor") {
         return (
           c.contractType === "supply" ||
           c.contractType === "vendor" ||
-          c.vendorId != null
+          (c.vendorId != null && c.contractType !== "rental" && c.contractType !== "RENTAL")
         );
       } else {
         return (
           c.contractType === "project" ||
           c.contractType === "client" ||
-          (c.vendorId == null && c.projectId != null)
+          (c.vendorId == null && c.projectId != null && c.contractType !== "rental" && c.contractType !== "RENTAL")
         );
       }
     });
@@ -190,16 +192,18 @@ export const PM_Contracts = {
     const rows = filtered
       .map((item) => {
         if (this.currentContractTab === "rental") {
+          const machineName = item.machineType || item.title || "Rental Equipment";
+          const rate = item.dailyRate || item.value || 0;
           return `
                 <tr>
-                    <td><span class="project-id">${this.escapeHTML(item.refCode || "VRC-" + item.id)}</span></td>
-                    <td style="font-weight:600;">${this.escapeHTML(item.machineType)} ${item.plateNumber ? `(${item.plateNumber})` : ""}</td>
-                    <td>${this.escapeHTML(item.vendorName || item.vendor || "N/A")}</td>
-                    <td><span class="status active" style="background:var(--blue-light); color:var(--blue-dark);">${this.escapeHTML(item.type || "Rental")}</span></td>
-                    <td style="font-weight: 600; color: var(--orange);">MWK ${Number(item.dailyRate || 0).toLocaleString()}</td>
+                    <td><span class="project-id">${this.escapeHTML(item.refCode || item.code || "VRC-" + item.id)}</span></td>
+                    <td style="font-weight:600;">${this.escapeHTML(machineName)} ${item.plateNumber ? `(${item.plateNumber})` : ""}</td>
+                    <td>${this.escapeHTML(item.vendorName || item.vendor?.name || item.vendor || "N/A")}</td>
+                    <td><span class="status active" style="background:var(--blue-light); color:var(--blue-dark);">${this.escapeHTML(item.type || item.contractType || "Rental")}</span></td>
+                    <td style="font-weight: 600; color: var(--orange);">MWK ${Number(rate).toLocaleString()}</td>
                     <td>${item.endDate ? new Date(item.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="window.app.ecModule?.viewRentalDetails(${item.id})"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule?.viewContract(${item.id})"><i class="fas fa-eye"></i></button>
                     </td>
                 </tr>
             `;
@@ -324,8 +328,16 @@ export const PM_Contracts = {
     if (!dropZone || !fileInput) return;
     dropZone.onclick = () => fileInput.click();
     fileInput.onchange = (e) => {
-      if (e.target.files[0]) {
-        status.innerHTML = `<span style="color: var(--emerald); font-size: 12px;"><i class="fas fa-check-circle"></i> ${e.target.files[0].name}</span>`;
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 25 * 1024 * 1024) {
+          window.toast.show("File size exceeds 25MB limit. Please upload a smaller PDF.", "error");
+          e.target.value = "";
+          status.innerHTML = `<span style="color: var(--red); font-weight: 700;">File too large (>25MB)</span>`;
+          dropZone.style.borderColor = "var(--red)";
+          return;
+        }
+        status.innerHTML = `<span style="color: var(--emerald); font-size: 12px;"><i class="fas fa-check-circle"></i> ${file.name}</span>`;
         dropZone.style.borderColor = "var(--emerald)";
       }
     };
@@ -1292,6 +1304,10 @@ export const PM_Contracts = {
     }
 
     const file = fileInput.files[0];
+    if (file && file.size > 25 * 1024 * 1024) {
+      window.toast.show("Contract document exceeds 25MB limit.", "error");
+      return;
+    }
     const contractValue = parseFloat(document.getElementById("contract_value")?.value || 0);
     const projectId = document.getElementById("contract_project")?.value;
 
@@ -1309,7 +1325,8 @@ export const PM_Contracts = {
       
       formData.append("projectId", projectId);
       formData.append("vendorName", document.getElementById("contract_vendor")?.value);
-      formData.append("vendorId", document.getElementById("contract_vendor_id")?.value || "");
+      const vId = document.getElementById("contract_vendor_id")?.value;
+      if (vId) formData.append("vendorId", vId);
       formData.append("vendorPhone", document.getElementById("contract_vendor_phone")?.value || "");
       formData.append("title", document.getElementById("contract_title")?.value);
       formData.append("value", contractValue);
@@ -1320,10 +1337,9 @@ export const PM_Contracts = {
       formData.append("document", file);
       formData.append(isRental ? 'equipmentList' : 'materialsList', JSON.stringify(items));
       
-      if (isRental) {
-          const refVal = document.getElementById("contract_ref")?.value || `REN-PM-${Math.floor(1000 + Math.random() * 9000)}`;
-          formData.append("refCode", refVal);
-      }
+      const refCode = document.getElementById("contract_ref")?.value || 
+                      (isRental ? 'REN' : 'PM') + "-MOW-" + Math.floor(1000 + Math.random() * 9000);
+      formData.append("refCode", refCode);
 
       const res = await fetch("/api/v1/contracts", {
         method: "POST",
@@ -1502,122 +1518,6 @@ export const PM_Contracts = {
     }
   },
 
-  async submitContract() {
-    const data = {
-      projectId: document.getElementById("contract_project")?.value,
-      vendorName: document.getElementById("contract_vendor")?.value,
-      title: document.getElementById("contract_title")?.value,
-      value: parseFloat(document.getElementById("contract_value")?.value),
-      startDate: document.getElementById("contract_start")?.value,
-      endDate: document.getElementById("contract_end")?.value,
-      justification: document.getElementById("contract_justification")?.value,
-      retentionPercentage: parseFloat(
-        document.getElementById("contract_retention")?.value || 0,
-      ),
-      isTaxInclusive:
-        document.getElementById("contract_tax_inclusive")?.checked || false,
-      advancePaymentAmount: parseFloat(
-        document.getElementById("contract_advance")?.value || 0,
-      ),
-      guaranteeExpiry:
-        document.getElementById("contract_guarantee_expiry")?.value || null,
-    };
-
-    if (window.app && typeof window.app.validateForm === 'function') {
-      const formContainer = document.getElementById('drawer-content') || document.body;
-      if (!window.app.validateForm(formContainer)) return;
-    }
-
-    if (
-      !data.projectId ||
-      !data.vendorName ||
-      !data.title ||
-      !data.value ||
-      !data.justification
-    ) {
-      window.toast.show(
-        "Please fill all required fields, including justification.",
-        "warning",
-      );
-      return;
-    }
-
-    window.toast.show("Establishing contract...", "info");
-
-    try {
-      const token = localStorage.getItem("mcms_auth_token");
-      const res = await fetch("/api/v1/contracts", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          contractType: "vendor",
-          materialsList: JSON.stringify(Array.from(document.querySelectorAll('input[name="contract_material"]:checked')).map(cb => {
-            const idx = cb.value;
-            const q = parseFloat(document.getElementById(`m_qty_${idx}`)?.value || 0);
-            const p = parseFloat(document.getElementById(`m_price_${idx}`)?.value || 0);
-            const m = parseFloat(cb.dataset.market || 0);
-            return { name: cb.dataset.name, quantity: q, unit: cb.dataset.unit, unitPrice: p, marketPrice: m, variance: m - p, totalCost: p * q };
-          })),
-          refCode: "CON-" + Date.now().toString(36).toUpperCase(),
-        }),
-      });
-      if (!res.ok) throw new Error("System error creating contract");
-
-      // Send Notifications
-      const materials = data.materialsList ? JSON.parse(data.materialsList).map(m => m.name).join(", ") : "General Services";
-      this.sendContractNotification(
-        "Vendor Contract Established",
-        `New Vendor Contract established for "${data.title}" (Materials: ${materials}) by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}.`,
-      );
-
-      window.toast.show("Contract successfully established & archived", "success");
-      window.drawer.close();
-      if (this.loadContractsData) this.loadContractsData();
-
-      // Audit Log
-      client.post("/audit-logs", {
-        action: "CONTRACT_CREATED",
-        targetType: "CONTRACT",
-        details: { 
-          type: isRental ? 'RENTAL' : 'VENDOR', 
-          projectId: data.projectId, 
-          value: contractValue,
-          title: document.getElementById("contract_title")?.value
-        }
-      }).catch(e => console.warn("Audit failed", e));
-
-      // Notifications
-      const title = document.getElementById("contract_title")?.value;
-      const vendor = document.getElementById("contract_vendor")?.value;
-      this.broadcastContractEvent(
-        isRental ? "Rental Contract Established" : "Vendor Contract Established",
-        `New ${isRental ? 'Rental' : 'Vendor'} contract established with "${vendor}" for project context. Title: ${title}. Total Value: MWK ${contractValue.toLocaleString()}.`,
-        data.projectId,
-        ["Project Manager", "Finance Director", "Equipment Coordinator"]
-      );
-
-    } catch (err) {
-      window.toast.show(err.message, "error");
-    }
-  },
-
-  async sendContractNotification(title, message) {
-    try {
-      await client.post("/notifications/broadcast", {
-        title: title,
-        message: message,
-        roles: ["Project Manager", "Finance Director"],
-        priority: "high",
-        type: "contract",
-      });
-    } catch (err) {
-      console.warn("Broadcast notification failed:", err);
-    }
-  },
 
   openEditContractDrawer(contract) {
     window.drawer.open(
@@ -1766,45 +1666,7 @@ export const PM_Contracts = {
             </div>
         `;
   },
-  async searchVendors(query) {
-    const resultsContainer = document.getElementById("vendor_autocomplete_results");
-    if (!resultsContainer) return;
-    if (!query || query.length < 2) {
-      resultsContainer.style.display = "none";
-      return;
-    }
-    try {
-      const token = localStorage.getItem("mcms_auth_token");
-      const res = await fetch(`/api/v1/vendors/search?q=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const result = await res.json();
-      const vendors = result.data || result;
-      if (vendors.length === 0) {
-        resultsContainer.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--slate-500); font-size: 12px;">No matches found.</div>`;
-        resultsContainer.style.display = "block";
-        return;
-      }
-      resultsContainer.innerHTML = vendors.map(v => `
-        <div style="padding: 12px; border-bottom: 1px solid var(--slate-100); cursor: pointer;" 
-             onmousedown="(window.app.pmModule || window.app.fmModule).selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}', '${v.phone || ''}')">
-          <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${v.name}</div>
-          <div style="font-size: 11px; color: var(--slate-500);">${v.phone || 'No phone'}</div>
-        </div>
-      `).join('');
-      resultsContainer.style.display = "block";
-    } catch (e) { console.error(e); }
-  },
 
-  selectVendorAutocomplete(id, name, phone) {
-    const nameInput = document.getElementById("contract_vendor");
-    const idInput = document.getElementById("contract_vendor_id");
-    const phoneInput = document.getElementById("contract_vendor_phone");
-    if (nameInput) nameInput.value = name;
-    if (idInput) idInput.value = id;
-    if (phoneInput) phoneInput.value = phone || "";
-    document.getElementById("vendor_autocomplete_results").style.display = "none";
-  },
 
   async broadcastContractEvent(title, message, projectId, roles = [], excludeRoles = []) {
     try {
