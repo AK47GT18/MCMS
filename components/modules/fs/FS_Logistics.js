@@ -221,9 +221,11 @@ export const FS_Logistics = {
             category: type,
             itemName: selectEl.value,
             quantity: qty,
-            unit: selectedOption.dataset.unit || 'units',
+            unit: selectedOption.dataset.unit || (type === 'machinery' ? 'units' : ''),
             available: selectedOption.dataset.available !== 'false',
-            type: selectedOption.dataset.type || ''
+            type: selectedOption.dataset.type || '',
+            source: selectedOption.dataset.source || 'inventory',
+            approvedQty: selectedOption.dataset.approved || null
         };
 
         // Add to cart
@@ -234,6 +236,9 @@ export const FS_Logistics = {
         
         // Feedback
         if (window.toast) window.toast.show(`Added ${item.itemName} to list`, 'success');
+        
+        // Reset qty
+        qtyInput.value = type === 'machinery' ? '1' : '';
     },
 
     removeItemFromRequisition(index) {

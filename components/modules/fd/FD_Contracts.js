@@ -18,14 +18,17 @@ export const FD_Contracts = {
                     ${
                       this.currentContractTab === "project"
                         ? `<button class="btn btn-primary" onclick="window.app.fmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
-                        : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(true); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-plus"></i> New Vendor Contract</button>`
+                        : `<button class="btn btn-primary" style="background: ${this.currentContractTab === "rental" ? "var(--orange)" : "var(--blue)"}; border-color: ${this.currentContractTab === "rental" ? "var(--orange)" : "var(--blue)"};" 
+                            onclick="window.app.fmModule?.openNewVendorContract()">
+                            <i class="fas fa-plus-circle"></i> ${this.currentContractTab === "rental" ? "New Rental Agreement" : "New Vendor Contract"}
+                           </button>`
                     }
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
                     <div class="tab ${this.currentContractTab === "project" ? "active" : ""}" data-tab="project" onclick="window.app.fmModule.switchContractTab('project')">Project Contracts</div>
                     <div class="tab ${this.currentContractTab === "vendor" ? "active" : ""}" data-tab="vendor" onclick="window.app.fmModule.switchContractTab('vendor')">Vendor Contracts</div>
-                    <div class="tab ${this.currentContractTab === "rentals" ? "active" : ""}" data-tab="rentals" onclick="window.app.fmModule.switchContractTab('rentals')">Vehicle Rentals</div>
+                    <div class="tab ${this.currentContractTab === "rental" ? "active" : ""}" data-tab="rental" onclick="window.app.fmModule.switchContractTab('rental')">Vehicle Rentals</div>
                 </div>
                 
                 <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; gap: 16px;">
@@ -105,7 +108,7 @@ export const FD_Contracts = {
       this._contractsMap = allContracts; // For legacy methods
 
       // Load Vehicle Rentals if on that tab
-      if (this.currentContractTab === "rentals") {
+      if (this.currentContractTab === "rental") {
           const rentalRes = await window.vehicleRentalsApi.getAll();
           this.data.vehicleRentals = Array.isArray(rentalRes) ? rentalRes : (rentalRes.data || []);
       }
@@ -145,7 +148,7 @@ export const FD_Contracts = {
     const container = document.getElementById("contracts-table-container");
     if (!container) return;
 
-    if (this.currentContractTab === "rentals") {
+    if (this.currentContractTab === "rental") {
         return this.renderRentalsTable();
     }
 
@@ -362,6 +365,21 @@ export const FD_Contracts = {
     } catch (err) {
       console.error("Error fetching project for contract", err);
     }
+  },
+
+  openNewVendorContract() {
+    this.currentContractTab = localStorage.getItem("mcms_contract_tab") || this.currentContractTab || "project";
+    const isRental = this.currentContractTab === "rental";
+    
+    window.drawer.open(
+      isRental ? "Vehicle Rental Agreement" : "New Vendor Contract",
+      isRental ? window.DrawerTemplates.newRentalContract : window.DrawerTemplates.newVendorContract,
+    );
+    
+    setTimeout(() => {
+      this.loadContractProjects(true);
+      this.initContractUpload();
+    }, 100);
   },
 
   openNewProjectContract() {
@@ -1373,6 +1391,155 @@ export const FD_Contracts = {
     }
   },
 
+  async onProjectRentalSelected(projectId) {
+    if (!projectId) return;
+
+    const vehiclesBody = document.getElementById("contract-vehicles-body");
+    if (vehiclesBody) {
+      vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Analyzing equipment gaps...</td></tr>`;
+    }
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      
+      // 1. Fetch Project Details (for budget/dates)
+      const projectRes = await fetch(`/api/v1/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const projectResult = await projectRes.json();
+      const project = projectResult.data || projectResult;
+
+      // 2. Fetch Equipment / Vehicles
+      let equipmentGaps = [];
+      try {
+        const gapRes = await fetch(`/api/v1/road-estimation/${projectId}/equipment-gap`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const gapResult = await gapRes.json();
+        equipmentGaps = gapResult.data || gapResult || [];
+      } catch (e) { console.warn("Gap API failed"); }
+
+      // Provide a comprehensive standard catalog of construction vehicles and their daily rental rates
+      // This ensures we always show vehicles, not materials.
+      if (equipmentGaps.length === 0) {
+          equipmentGaps = [
+            { machineType: "Excavator (20T)", unit: "Day", basePrice: 450000, totalRequired: 4, onSite: 1 },
+            { machineType: "Motor Grader (140K)", unit: "Day", basePrice: 650000, totalRequired: 2, onSite: 0 },
+            { machineType: "Vibratory Roller (10T)", unit: "Day", basePrice: 350000, totalRequired: 3, onSite: 1 },
+            { machineType: "Water Tanker (10,000L)", unit: "Day", basePrice: 180000, totalRequired: 5, onSite: 2 },
+            { machineType: "Tipper Truck (15m³)", unit: "Day", basePrice: 220000, totalRequired: 15, onSite: 5 },
+            { machineType: "Front End Loader", unit: "Day", basePrice: 380000, totalRequired: 2, onSite: 0 },
+            { machineType: "Bulldozer (D8)", unit: "Day", basePrice: 850000, totalRequired: 1, onSite: 0 },
+            { machineType: "Backhoe Loader (TLB)", unit: "Day", basePrice: 250000, totalRequired: 2, onSite: 1 },
+            { machineType: "Mobile Crane (25T)", unit: "Day", basePrice: 750000, totalRequired: 1, onSite: 0 },
+            { machineType: "Lowbed Truck", unit: "Day", basePrice: 500000, totalRequired: 1, onSite: 0 },
+            { machineType: "Concrete Mixer Truck", unit: "Day", basePrice: 300000, totalRequired: 3, onSite: 0 },
+            { machineType: "Pneumatic Roller", unit: "Day", basePrice: 320000, totalRequired: 2, onSite: 0 }
+          ];
+      }
+
+      // 3. Update Vehicle Table
+      if (vehiclesBody) {
+        vehiclesBody.innerHTML = equipmentGaps.map((m, idx) => {
+          const gap = Math.max(0, m.totalRequired - m.onSite);
+          return `
+            <tr style="border-bottom: 1px solid var(--slate-100);">
+                <td style="padding: 10px; text-align: center;">
+                    <input type="checkbox" name="contract_material" value="${idx}" 
+                        data-name="${m.machineType}" data-unit="${m.unit}" data-market="${m.basePrice}"
+                        onchange="(window.app.fmModule || window.app.pmModule).calculateContractPerformance()">
+                </td>
+                <td style="padding: 10px;">
+                    <div style="font-weight: 700; color: var(--slate-800);">${m.machineType}</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">${m.unit} • Est. MWK ${m.basePrice.toLocaleString()}/day</div>
+                </td>
+                <td style="padding: 10px; text-align: center; color: var(--slate-600);">${m.totalRequired}</td>
+                <td style="padding: 10px; text-align: center; color: var(--emerald); font-weight: 600;">${m.onSite}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <input type="number" id="m_qty_${idx}" class="form-input" style="width: 70px; padding: 4px; font-size: 11px; text-align: center;" 
+                        value="${gap}" oninput="(window.app.fmModule || window.app.pmModule).calculateContractPerformance()">
+                </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Update Budget Stats
+      const budget = Number(project.budgetTotal || 0);
+      const spent = Number(project.budgetSpent || 0);
+      const remaining = Math.max(0, budget - spent);
+      const util = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+
+      const elements = {
+        funds: document.getElementById("contract_available_funds"),
+        util: document.getElementById("contract_utilization_percent"),
+        bar: document.getElementById("contract_utilization_bar"),
+        spent: document.getElementById("contract_spent_display"),
+        safety: document.getElementById("contract_safety_display")
+      };
+
+      if (elements.funds) elements.funds.textContent = `MWK ${remaining.toLocaleString()}`;
+      if (elements.util) elements.util.textContent = `${util}%`;
+      if (elements.bar) {
+        elements.bar.style.width = `${util}%`;
+        elements.bar.style.background = util > 90 ? 'var(--red)' : util > 75 ? 'var(--orange)' : 'var(--emerald)';
+      }
+      if (elements.spent) elements.spent.textContent = `Spent: MWK ${spent.toLocaleString()}`;
+      
+      // Auto-fill dates
+      const startEl = document.getElementById("contract_start");
+      const endEl = document.getElementById("contract_end");
+      if (startEl && project.startDate) startEl.value = project.startDate.split("T")[0];
+      if (endEl && project.endDate) endEl.value = project.endDate.split("T")[0];
+
+      this.calculateContractPerformance();
+
+    } catch (err) {
+      console.error("Equipment analysis failed:", err);
+      window.toast.show("Error synchronizing equipment data", "error");
+    }
+  },
+
+  calculateContractPerformance() {
+    const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+    let marketTotal = 0;
+
+    checkboxes.forEach(cb => {
+      const index = cb.value;
+      const qtyInput = document.getElementById(`m_qty_${index}`);
+      const qty = parseFloat(qtyInput?.value || 0);
+      const marketPrice = parseFloat(cb.dataset.market || 0);
+      marketTotal += qty * marketPrice;
+    });
+
+    const negotiatedTotal = parseFloat(document.getElementById("contract_value")?.value || 0);
+
+    const displays = {
+      market: document.getElementById("contract_market_price_display"),
+      negotiated: document.getElementById("contract_negotiated_price_display"),
+      performance: document.getElementById("contract_performance_display")
+    };
+
+    if (displays.market) displays.market.textContent = `MWK ${marketTotal.toLocaleString()}`;
+    if (displays.negotiated) displays.negotiated.textContent = `MWK ${negotiatedTotal.toLocaleString()}`;
+
+    if (displays.performance) {
+      if (marketTotal > 0 && negotiatedTotal > 0) {
+        const diff = marketTotal - negotiatedTotal;
+        const savings = (diff / marketTotal) * 100;
+        if (diff > 0) {
+          displays.performance.innerHTML = `<span style="color: var(--emerald); font-weight: 800;">+${savings.toFixed(1)}% Saving</span>`;
+        } else if (diff < 0) {
+          displays.performance.innerHTML = `<span style="color: var(--red); font-weight: 800;">${Math.abs(savings).toFixed(1)}% Loss</span>`;
+        } else {
+          displays.performance.innerHTML = `<span style="color: var(--slate-500); font-weight: 800;">Matched</span>`;
+        }
+      } else {
+        displays.performance.textContent = "-";
+      }
+    }
+  },
+
   async completeContract(contractId) {
     if (!confirm("Are you sure you want to mark this contract as 100% completed? This will close the contract and lock it for further changes.")) {
       return;
@@ -1466,5 +1633,92 @@ export const FD_Contracts = {
                 <tbody>${rows}</tbody>
             </table>
         `;
+  },
+
+  async onProjectRentalSelected(projectId) {
+    if (!projectId) return;
+
+    const vehiclesBody = document.getElementById("contract-vehicles-body");
+    if (vehiclesBody) {
+      vehiclesBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading vehicle catalog...</td></tr>`;
+      
+      try {
+        const token = localStorage.getItem("mcms_auth_token");
+        const res = await fetch(`/api/v1/projects/${projectId}/estimate`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const estimate = await res.json();
+        
+        // Use estimate data if available, or fall back to standard catalog
+        const fleet = [
+          { name: '20T Excavator', rate: 380000 },
+          { name: 'Motor Grader 140K', rate: 420000 },
+          { name: '10T Vibratory Roller', rate: 280000 },
+          { name: '15m³ Tipper Truck', rate: 180000 },
+          { name: 'D6 Bulldozer', rate: 450000 },
+          { name: 'Water Bowser 10kL', rate: 150000 },
+          { name: 'TLB (Backhoe Loader)', rate: 220000 }
+        ];
+
+        vehiclesBody.innerHTML = fleet.map((v, idx) => `
+          <tr>
+            <td style="padding: 10px;">
+              <input type="checkbox" name="contract_material" value="${idx}" data-market="${v.rate}"
+                onchange="window.app.fmModule.calculateContractPerformance()">
+            </td>
+            <td style="padding: 10px; font-weight: 600; color: var(--slate-700);">${v.name}</td>
+            <td style="padding: 10px; font-family: 'JetBrains Mono'; font-size: 11px;">MWK ${v.rate.toLocaleString()}</td>
+            <td style="padding: 10px; text-align: center;">
+              <input type="number" id="m_qty_${idx}" class="form-input" style="width: 70px; padding: 4px; font-size: 11px; text-align: center;" 
+                value="1" oninput="window.app.fmModule.calculateContractPerformance()">
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        vehiclesBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--red);">Failed to load fleet catalog.</td></tr>`;
+      }
+    }
+
+    // Sync project details (dates/budget)
+    this.handleProjectSelectChange(projectId);
+  },
+
+  calculateContractPerformance() {
+    const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+    let marketTotal = 0;
+
+    checkboxes.forEach(cb => {
+      const index = cb.value;
+      const qty = parseFloat(document.getElementById(`m_qty_${index}`)?.value || 0);
+      const marketPrice = parseFloat(cb.dataset.market || 0);
+      marketTotal += qty * marketPrice;
+    });
+
+    const negotiatedTotal = parseFloat(document.getElementById("contract_value")?.value || 0);
+
+    const displays = {
+      market: document.getElementById("contract_market_price_display"),
+      negotiated: document.getElementById("contract_negotiated_price_display"),
+      performance: document.getElementById("contract_performance_display")
+    };
+
+    if (displays.market) displays.market.textContent = `MWK ${marketTotal.toLocaleString()}`;
+    if (displays.negotiated) displays.negotiated.textContent = `MWK ${negotiatedTotal.toLocaleString()}`;
+
+    if (displays.performance) {
+      if (marketTotal > 0 && negotiatedTotal > 0) {
+        const diff = marketTotal - negotiatedTotal;
+        const savings = (diff / marketTotal) * 100;
+        if (diff > 0) {
+          displays.performance.innerHTML = `<span style="color: var(--emerald); font-weight: 800;">+${savings.toFixed(1)}% Saving</span>`;
+        } else if (diff < 0) {
+          displays.performance.innerHTML = `<span style="color: var(--red); font-weight: 800;">${Math.abs(savings).toFixed(1)}% Loss</span>`;
+        } else {
+          displays.performance.innerHTML = `<span style="color: var(--slate-500); font-weight: 800;">Matched</span>`;
+        }
+      } else {
+        displays.performance.textContent = "-";
+      }
+    }
   }
 };

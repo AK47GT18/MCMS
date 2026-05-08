@@ -203,6 +203,18 @@ const ACCESSORY_PRICING = {
     { name: 'Bus Shelter (Modern)', unit: 'Unit', qtyPerKm: 2, costLow: 1200000, costHigh: 2500000 },
     { name: 'Concrete Slab (bus bay)', unit: 'm²', qtyPerKm: 80, costLow: 28000, costHigh: 45000 },
     { name: 'Bollards (Stainless)', unit: 'Unit', qtyPerKm: 12, costLow: 45000, costHigh: 85000 },
+  ],
+  'fleet_excavator': [
+    { name: 'Hydraulic Excavator (Rental)', unit: 'Days', qtyPerKm: 12, costLow: 280000, costHigh: 380000 },
+  ],
+  'fleet_grader': [
+    { name: 'Motor Grader (Rental)', unit: 'Days', qtyPerKm: 18, costLow: 320000, costHigh: 420000 },
+  ],
+  'fleet_roller': [
+    { name: 'Vibratory Roller (Rental)', unit: 'Days', qtyPerKm: 15, costLow: 180000, costHigh: 280000 },
+  ],
+  'fleet_tipper': [
+    { name: 'Dump Truck 15m³ (Rental)', unit: 'Days', qtyPerKm: 45, costLow: 120000, costHigh: 180000 },
   ]
 };
 

@@ -907,9 +907,11 @@ model VehicleRentalContract {
   machineType   String                  @map("machine_type") @db.VarChar(50)
   contractType  VehicleContractTypeEnum @default(rental) @map("contract_type")
   vendorName    String                  @map("vendor_name") @db.VarChar(255)
-  dailyRate     Decimal?                @map("daily_rate") @db.Decimal(18, 2)
-  totalValue    Decimal?                @map("total_value") @db.Decimal(18, 2)
-  purchasePrice Decimal?                @map("purchase_price") @db.Decimal(18, 2)
+  dailyRate         Decimal?                @map("daily_rate") @db.Decimal(18, 2)
+  mobilisationFee   Decimal?                @default(0) @map("mobilisation_fee") @db.Decimal(18, 2)
+  demobilisationFee Decimal?                @default(0) @map("demobilisation_fee") @db.Decimal(18, 2)
+  totalValue        Decimal?                @map("total_value") @db.Decimal(18, 2)
+  purchasePrice     Decimal?                @map("purchase_price") @db.Decimal(18, 2)
   startDate     DateTime                @map("start_date") @db.Date
   endDate       DateTime                @map("end_date") @db.Date
   returnDate    DateTime?               @map("return_date") @db.Date

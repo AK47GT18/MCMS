@@ -12,7 +12,7 @@ import contracts from "../../../src/api/contracts.api.js";
 
 export const PM_Contracts = {
   getContractsView() {
-    this.currentContractTab = this.currentContractTab || "project";
+    this.currentContractTab = localStorage.getItem("mcms_contract_tab") || "project";
     this.projectFilter = "";
     this.vendorFilter = "";
 
@@ -22,12 +22,14 @@ export const PM_Contracts = {
             <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Contract Registry & Legal Repository</div>
-
+                    <div style="display: flex; gap: 12px;">
+                    </div>
                 </div>
                 
                 <div class="tabs" style="margin-bottom: 0; padding: 0 24px; border-bottom: 1px solid var(--slate-200);">
                     <div class="tab ${this.currentContractTab === "project" ? "active" : ""}" data-tab="project" onclick="window.app.pmModule.switchContractTab('project')">Project Contracts</div>
                     <div class="tab ${this.currentContractTab === "vendor" ? "active" : ""}" data-tab="vendor" onclick="window.app.pmModule.switchContractTab('vendor')">Vendor Contracts</div>
+                    <div class="tab ${this.currentContractTab === "rental" ? "active" : ""}" data-tab="rental" onclick="window.app.pmModule.switchContractTab('rental')">Vehicle Rentals</div>
                 </div>
                 
                 <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; gap: 16px;">
@@ -55,6 +57,7 @@ export const PM_Contracts = {
 
   switchContractTab(tab) {
     this.currentContractTab = tab;
+    localStorage.setItem("mcms_contract_tab", tab);
     this.projectFilter = "";
     this.vendorFilter = "";
     if (window.app) window.app.loadPage("contracts");
@@ -93,12 +96,17 @@ export const PM_Contracts = {
         })
         .catch((e) => console.error("Error loading projects for filter", e));
 
-      // Load contracts
-      const response = await contracts.getAll({ limit: 20 });
-      const data = response.data || response;
-      const allContracts = Array.isArray(data) ? data : data.contracts || [];
-
-      // Store raw contracts
+      // Load contracts based on tab
+      let allContracts = [];
+      if (this.currentContractTab === "rental") {
+        const response = await window.vehicleRentalsApi.getAll({ limit: 50 });
+        allContracts = response.data || response || [];
+      } else {
+        const response = await contracts.getAll({ limit: 50 });
+        const data = response.data || response;
+        allContracts = Array.isArray(data) ? data : data.contracts || [];
+      }
+      
       this.allContracts = allContracts;
 
       // Populate vendor filter dynamically from contracts
@@ -146,7 +154,7 @@ export const PM_Contracts = {
     }
 
     // Filter by tab type
-    let filtered = this.allContracts.filter((c) => {
+    let filtered = (Array.isArray(this.allContracts) ? this.allContracts : []).filter((c) => {
       if (this.currentContractTab === "vendor") {
         return (
           c.contractType === "supply" ||
@@ -181,6 +189,22 @@ export const PM_Contracts = {
 
     const rows = filtered
       .map((item) => {
+        if (this.currentContractTab === "rental") {
+          return `
+                <tr>
+                    <td><span class="project-id">${this.escapeHTML(item.refCode || "VRC-" + item.id)}</span></td>
+                    <td style="font-weight:600;">${this.escapeHTML(item.machineType)} ${item.plateNumber ? `(${item.plateNumber})` : ""}</td>
+                    <td>${this.escapeHTML(item.vendorName || item.vendor || "N/A")}</td>
+                    <td><span class="status active" style="background:var(--blue-light); color:var(--blue-dark);">${this.escapeHTML(item.type || "Rental")}</span></td>
+                    <td style="font-weight: 600; color: var(--orange);">MWK ${Number(item.dailyRate || 0).toLocaleString()}</td>
+                    <td>${item.endDate ? new Date(item.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.ecModule?.viewRentalDetails(${item.id})"><i class="fas fa-eye"></i></button>
+                    </td>
+                </tr>
+            `;
+        }
+
         const isLocked = item.items?.some((i) => Number(i.receivedQty) > 0);
         return `
                 <tr style="${isLocked ? "background: var(--slate-50);" : ""}">
@@ -208,10 +232,10 @@ export const PM_Contracts = {
                 <thead>
                     <tr>
                         <th>Contract ID</th>
-                        <th>Title</th>
-                        ${this.currentContractTab === "vendor" ? "<th>Vendor</th>" : ""}
+                        <th>${this.currentContractTab === "rental" ? "Machine Type" : "Title"}</th>
+                        ${this.currentContractTab === "vendor" || this.currentContractTab === "rental" ? "<th>Vendor</th>" : ""}
                         <th>Type</th>
-                        <th>Version</th>
+                        <th>${this.currentContractTab === "rental" ? "Daily Rate" : "Version"}</th>
                         <th>End Date</th>
                         <th>Action</th>
                     </tr>
@@ -277,7 +301,7 @@ export const PM_Contracts = {
 
       // Get IDs of projects that already have a master contract
       const projectsWithMaster = new Set(
-        (this.allContracts || [])
+        (Array.isArray(this.allContracts) ? this.allContracts : [])
           .filter(c => c.contractType === 'project' || c.contractType === 'client')
           .map(c => c.projectId)
       );
@@ -685,6 +709,128 @@ export const PM_Contracts = {
     }, 100);
   },
 
+  openNewVendorContract() {
+    this.currentContractTab = localStorage.getItem("mcms_contract_tab") || "project";
+    const isRental = this.currentContractTab === "rental";
+    window.drawer.open(
+      isRental ? "Vehicle Rental Agreement" : "New Vendor Contract",
+      isRental ? window.DrawerTemplates.newRentalContract : window.DrawerTemplates.newVendorContract,
+    );
+    setTimeout(() => {
+      this.loadContractProjects();
+      this.initMasterContractUpload();
+    }, 100);
+  },
+
+  async onProjectRentalSelected(projectId) {
+    if (!projectId) return;
+
+    const vehiclesBody = document.getElementById("contract-vehicles-body");
+    if (vehiclesBody) {
+      vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Analyzing equipment gaps...</td></tr>`;
+    }
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      
+      // 1. Fetch Project Details (for budget/dates)
+      const projectRes = await fetch(`/api/v1/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const projectResult = await projectRes.json();
+      const project = projectResult.data || projectResult;
+
+      // 2. Fetch Equipment / Vehicles
+      let equipmentGaps = [];
+      try {
+        const gapRes = await fetch(`/api/v1/road-estimation/${projectId}/equipment-gap`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const gapResult = await gapRes.json();
+        equipmentGaps = gapResult.data || gapResult || [];
+      } catch (e) { console.warn("Gap API failed"); }
+
+      // Provide a comprehensive standard catalog of construction vehicles and their daily rental rates
+      // This ensures we always show vehicles, not materials.
+      if (equipmentGaps.length === 0) {
+          equipmentGaps = [
+            { machineType: "Excavator (20T)", unit: "Day", basePrice: 450000, totalRequired: 4, onSite: 1 },
+            { machineType: "Motor Grader (140K)", unit: "Day", basePrice: 650000, totalRequired: 2, onSite: 0 },
+            { machineType: "Vibratory Roller (10T)", unit: "Day", basePrice: 350000, totalRequired: 3, onSite: 1 },
+            { machineType: "Water Tanker (10,000L)", unit: "Day", basePrice: 180000, totalRequired: 5, onSite: 2 },
+            { machineType: "Tipper Truck (15m³)", unit: "Day", basePrice: 220000, totalRequired: 15, onSite: 5 },
+            { machineType: "Front End Loader", unit: "Day", basePrice: 380000, totalRequired: 2, onSite: 0 },
+            { machineType: "Bulldozer (D8)", unit: "Day", basePrice: 850000, totalRequired: 1, onSite: 0 },
+            { machineType: "Backhoe Loader (TLB)", unit: "Day", basePrice: 250000, totalRequired: 2, onSite: 1 },
+            { machineType: "Mobile Crane (25T)", unit: "Day", basePrice: 750000, totalRequired: 1, onSite: 0 },
+            { machineType: "Lowbed Truck", unit: "Day", basePrice: 500000, totalRequired: 1, onSite: 0 },
+            { machineType: "Concrete Mixer Truck", unit: "Day", basePrice: 300000, totalRequired: 3, onSite: 0 },
+            { machineType: "Pneumatic Roller", unit: "Day", basePrice: 320000, totalRequired: 2, onSite: 0 }
+          ];
+      }
+
+      // 3. Update Vehicle Table
+      if (vehiclesBody) {
+        vehiclesBody.innerHTML = equipmentGaps.map((m, idx) => {
+          const gap = Math.max(0, m.totalRequired - m.onSite);
+          return `
+            <tr style="border-bottom: 1px solid var(--slate-100);">
+                <td style="padding: 10px; text-align: center;">
+                    <input type="checkbox" name="contract_material" value="${idx}" 
+                        data-name="${m.machineType}" data-unit="${m.unit}" data-market="${m.basePrice}"
+                        onchange="window.app.pmModule.calculateContractPerformance()">
+                </td>
+                <td style="padding: 10px;">
+                    <div style="font-weight: 700; color: var(--slate-800);">${m.machineType}</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">${m.unit} • Est. MWK ${m.basePrice.toLocaleString()}/day</div>
+                </td>
+                <td style="padding: 10px; text-align: center; color: var(--slate-600);">${m.totalRequired}</td>
+                <td style="padding: 10px; text-align: center; color: var(--emerald); font-weight: 600;">${m.onSite}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <input type="number" id="m_qty_${idx}" class="form-input" style="width: 70px; padding: 4px; font-size: 11px; text-align: center;" 
+                        value="${gap}" oninput="window.app.pmModule.calculateContractPerformance()">
+                </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Update Budget Stats (reuse existing logic if IDs match)
+      const budget = Number(project.budgetTotal || 0);
+      const spent = Number(project.budgetSpent || 0);
+      const remaining = Math.max(0, budget - spent);
+      const util = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+
+      const elements = {
+        funds: document.getElementById("contract_available_funds"),
+        util: document.getElementById("contract_utilization_percent"),
+        bar: document.getElementById("contract_utilization_bar"),
+        spent: document.getElementById("contract_spent_display"),
+        safety: document.getElementById("contract_safety_display")
+      };
+
+      if (elements.funds) elements.funds.textContent = `MWK ${remaining.toLocaleString()}`;
+      if (elements.util) elements.util.textContent = `${util}%`;
+      if (elements.bar) {
+        elements.bar.style.width = `${util}%`;
+        elements.bar.style.background = util > 90 ? 'var(--red)' : util > 75 ? 'var(--orange)' : 'var(--emerald)';
+      }
+      if (elements.spent) elements.spent.textContent = `Spent: MWK ${spent.toLocaleString()}`;
+      
+      // Auto-fill dates
+      const startEl = document.getElementById("contract_start");
+      const endEl = document.getElementById("contract_end");
+      if (startEl && project.startDate) startEl.value = project.startDate.split("T")[0];
+      if (endEl && project.endDate) endEl.value = project.endDate.split("T")[0];
+
+      this.calculateContractPerformance();
+
+    } catch (err) {
+      console.error("Equipment analysis failed:", err);
+      window.toast.show("Error synchronizing equipment data", "error");
+    }
+  },
+
   initMasterContractUpload() {
     const dropZone = document.getElementById("contract-drop-zone");
     const fileInput = document.getElementById("contract_document");
@@ -707,12 +853,10 @@ export const PM_Contracts = {
     if (!projectId) return;
 
     // Show loading in fields
-    const sumEl = document.getElementById("contract_value") || document.getElementById("edit_contract_value");
-    const startEl = document.getElementById("contract_start") || document.getElementById("edit_contract_start");
-    const endEl = document.getElementById("contract_end") || document.getElementById("edit_contract_end");
-    const codeEl = document.getElementById("contract_ref");
-
-    if (sumEl) sumEl.disabled = true;
+    const materialsBody = document.getElementById("contract-materials-body");
+    if (materialsBody) {
+      materialsBody.innerHTML = `<tr><td colspan="5" style="padding: 24px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading materials...</td></tr>`;
+    }
 
     try {
       const token = localStorage.getItem("mcms_auth_token");
@@ -722,24 +866,148 @@ export const PM_Contracts = {
       const result = await res.json();
       const project = result.data || result;
 
-      if (sumEl) {
-        sumEl.value = project.contractValue || project.budgetTotal || 0;
-        sumEl.disabled = false;
-      }
-      if (startEl && project.startDate) {
-        startEl.value = project.startDate.split("T")[0];
-      }
-      if (endEl && project.endDate) {
-        endEl.value = project.endDate.split("T")[0];
-      }
-      if (codeEl) {
-        codeEl.value = project.code || "";
+      // 1. Fetch Project Materials (Strict Filter)
+      const allEstimations = project.estimations || [];
+      const projectMaterials = allEstimations.length > 0 
+        ? allEstimations.filter(e => {
+            const name = (e.materialName || e.title || "").toLowerCase();
+            const unit = (e.unit || "").toLowerCase();
+            // Stricter Material Check: Must NOT be hire/rental and unit must be a physical quantity
+            const isService = name.includes("hire") || name.includes("lease") || name.includes("rental") || 
+                             name.includes("mobilization") || name.includes("construction") || name.includes("survey");
+            const isEquipmentUnit = unit.includes("day") || unit.includes("hour") || unit.includes("km");
+            
+            return !isService && !isEquipmentUnit;
+          })
+        : [
+            { materialName: "Gravel (Fill)", unit: "m3", basePrice: 8925, totalRequired: 31250 },
+            { materialName: "Natural Gravel", unit: "m3", basePrice: 12600, totalRequired: 22500 },
+            { materialName: "Crushed Stone (G2)", unit: "m3", basePrice: 26250, totalRequired: 18750 },
+            { materialName: "Bitumen (80/100)", unit: "Liters", basePrice: 1890, totalRequired: 562500 },
+            { materialName: "Concrete (Class 25)", unit: "m3", basePrice: 157500, totalRequired: 5000 },
+            { materialName: "Road Paint", unit: "Liters", basePrice: 5775, totalRequired: 2500 }
+          ];
+
+      // 2. Fetch Existing Contracts to calc "Already Contracted"
+      const contractsRes = await fetch(`/api/v1/contracts?projectId=${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const contractsResult = await contractsRes.json();
+      const existingContracts = Array.isArray(contractsResult.data) ? contractsResult.data : (Array.isArray(contractsResult) ? contractsResult : []);
+
+      const contractedMap = {};
+      existingContracts.forEach(c => {
+        (c.items || []).forEach(item => {
+          const name = item.materialName || item.title;
+          contractedMap[name] = (contractedMap[name] || 0) + Number(item.quantity || 0);
+        });
+      });
+
+      // 3. Update Material Table
+      if (materialsBody) {
+        materialsBody.innerHTML = projectMaterials.map((m, idx) => {
+          const already = contractedMap[m.materialName] || 0;
+          const remaining = Math.max(0, m.totalRequired - already);
+          return `
+            <tr style="border-bottom: 1px solid var(--slate-100);">
+                <td style="padding: 10px; text-align: center;">
+                    <input type="checkbox" name="contract_material" value="${idx}" 
+                        data-name="${m.materialName}" data-unit="${m.unit}" data-market="${m.basePrice}"
+                        onchange="window.app.pmModule.calculateContractPerformance()">
+                </td>
+                <td style="padding: 10px;">
+                    <div style="font-weight: 700; color: var(--slate-800);">${m.materialName}</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">${m.unit} • Est. MWK ${m.basePrice.toLocaleString()}/unit</div>
+                </td>
+                <td style="padding: 10px; text-align: center; color: var(--slate-600);">${m.totalRequired.toLocaleString()}</td>
+                <td style="padding: 10px; text-align: center; color: var(--orange); font-weight: 600;">${already.toLocaleString()}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <input type="number" id="m_qty_${idx}" class="form-input" style="width: 70px; padding: 4px; font-size: 11px; text-align: center;" 
+                        value="${remaining}" oninput="window.app.pmModule.calculateContractPerformance()">
+                </td>
+            </tr>
+          `;
+        }).join('');
       }
 
-      window.toast.show(`Auto-filled details for ${project.name}`, "info");
+      // 4. Update Budget Control Stats
+      const budget = Number(project.budgetTotal || 0);
+      const spent = Number(project.budgetSpent || 0);
+      const remainingFunds = Math.max(0, budget - spent);
+      const util = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+
+      const elements = {
+        funds: document.getElementById("contract_available_funds"),
+        util: document.getElementById("contract_utilization_percent"),
+        bar: document.getElementById("contract_utilization_bar"),
+        spent: document.getElementById("contract_spent_display"),
+        safety: document.getElementById("contract_safety_display")
+      };
+
+      if (elements.funds) elements.funds.textContent = `MWK ${remainingFunds.toLocaleString()}`;
+      if (elements.util) elements.util.textContent = `${util}%`;
+      if (elements.bar) {
+        elements.bar.style.width = `${util}%`;
+        elements.bar.style.background = util > 90 ? 'var(--red)' : util > 75 ? 'var(--orange)' : 'var(--emerald)';
+      }
+      if (elements.spent) elements.spent.textContent = `Spent: MWK ${spent.toLocaleString()}`;
+      if (elements.safety) {
+        const safe = 100 - util;
+        elements.safety.textContent = `${safe}% Safe`;
+        elements.safety.style.color = safe < 10 ? 'var(--red)' : safe < 25 ? 'var(--orange)' : 'var(--emerald)';
+      }
+
+      // 5. Dates
+      const startEl = document.getElementById("contract_start");
+      const endEl = document.getElementById("contract_end");
+      if (startEl && project.startDate) startEl.value = project.startDate.split("T")[0];
+      if (endEl && project.endDate) endEl.value = project.endDate.split("T")[0];
+
+      this.calculateContractPerformance();
+      window.toast.show(`Project context established for ${project.name}`, "info");
+
     } catch (err) {
       console.error("Auto-fill failed:", err);
-      if (sumEl) sumEl.disabled = false;
+      window.toast.show("Error synchronizing project data", "error");
+    }
+  },
+
+  calculateContractPerformance() {
+    const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+    let marketTotal = 0;
+
+    checkboxes.forEach(cb => {
+      const index = cb.value;
+      const qty = parseFloat(document.getElementById(`m_qty_${index}`)?.value || 0);
+      const marketPrice = parseFloat(cb.dataset.market || 0);
+      marketTotal += qty * marketPrice;
+    });
+
+    const negotiatedTotal = parseFloat(document.getElementById("contract_value")?.value || 0);
+
+    const displays = {
+      market: document.getElementById("contract_market_price_display"),
+      negotiated: document.getElementById("contract_negotiated_price_display"),
+      performance: document.getElementById("contract_performance_display")
+    };
+
+    if (displays.market) displays.market.textContent = `MWK ${marketTotal.toLocaleString()}`;
+    if (displays.negotiated) displays.negotiated.textContent = `MWK ${negotiatedTotal.toLocaleString()}`;
+
+    if (displays.performance) {
+      if (marketTotal > 0 && negotiatedTotal > 0) {
+        const diff = marketTotal - negotiatedTotal;
+        const savings = (diff / marketTotal) * 100;
+        if (diff > 0) {
+          displays.performance.innerHTML = `<span style="color: var(--emerald); font-weight: 800;">+${savings.toFixed(1)}% Saving</span>`;
+        } else if (diff < 0) {
+          displays.performance.innerHTML = `<span style="color: var(--red); font-weight: 800;">${Math.abs(savings).toFixed(1)}% Loss</span>`;
+        } else {
+          displays.performance.innerHTML = `<span style="color: var(--slate-500); font-weight: 800;">Matched</span>`;
+        }
+      } else {
+        displays.performance.textContent = "-";
+      }
     }
   },
 

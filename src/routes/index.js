@@ -363,7 +363,7 @@ async function router(req, res) {
   // ============================================
   // VEHICLE RENTAL ROUTES
   // ============================================
-  if (resource === 'vehicle-rentals') {
+  if (resource === 'vehicle-rentals' || resource === 'vehicle-contracts') {
     if (id === 'config') {
       if (method === 'GET') return vehicleRentalController.getPriceConfigs(req, res);
       if (method === 'POST') return vehicleRentalController.updatePriceConfig(req, res);
@@ -386,11 +386,11 @@ async function router(req, res) {
     if (action === 'shift' && method === 'POST') {
       return vehicleRentalController.shift(req, res, id);
     }
-    if (action === 'return' && method === 'POST') {
+    if ((action === 'return' && method === 'POST') || (action === 'collect' && (method === 'POST' || method === 'PATCH'))) {
       return vehicleRentalController.markReturned(req, res, id);
     }
     if (method === 'GET') return vehicleRentalController.getAll(req, res); // Default for GET /vehicle-rentals/:id
-    return methodNotAllowed(res, ['GET', 'POST']);
+    return methodNotAllowed(res, ['GET', 'POST', 'PATCH']);
   }
   
   // ============================================

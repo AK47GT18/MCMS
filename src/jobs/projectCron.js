@@ -2,12 +2,17 @@ const cron = require('node-cron');
 const { prisma } = require('../config/database');
 const emailService = require('../emails/email.service');
 const logger = require('../utils/logger');
+const vehicleRentalService = require('../services/vehicleRental.service');
+const contractExpiryCron = require('../cron/contractExpiry.cron');
 
 /**
  * Initialize all project-related cron jobs
  */
 function initProjectJobs() {
   logger.info('Initializing project cron jobs...');
+  
+  // Initialize vehicle rental expiry cron
+  contractExpiryCron.init();
 
   // Run every day at 08:00 AM
   cron.schedule('0 8 * * *', async () => {

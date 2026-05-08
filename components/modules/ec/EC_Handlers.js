@@ -1383,5 +1383,35 @@ export const EC_Handlers = {
             console.error('Rental submission failed:', error);
             window.toast.show('Submission failed: ' + error.message, 'error');
         }
+    },
+
+    async handleConfirmReturned(contractId, machineType) {
+        if (!confirm(`Are you sure you want to confirm collection of ${machineType} from the site? This will finalize the contract lifecycle.`)) {
+            return;
+        }
+
+        try {
+            window.toast.show('Processing return confirmation...', 'info');
+            
+            const res = await client.patch(`/vehicle-contracts/${contractId}/collect`);
+            
+            if (res.error) throw new Error(res.error);
+
+            window.toast.show(`${machineType} successfully marked as returned.`, 'success');
+            
+            // Log audit
+            client.post('/audit-logs', {
+                action: 'CONFIRM_RENTAL_RETURN',
+                entityType: 'VehicleRentalContract',
+                entityId: parseInt(contractId),
+                details: `EC confirmed collection of ${machineType} from project site.`
+            }).catch(() => {});
+
+            // Refresh data
+            this._loadAssets(); 
+        } catch (error) {
+            console.error('Return confirmation failed:', error);
+            window.toast.show('Action failed: ' + (error.message || 'Server error'), 'error');
+        }
     }
 };

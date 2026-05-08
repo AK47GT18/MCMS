@@ -71,51 +71,69 @@ export class FieldSupervisorDashboard {
     async _cacheRequisitionData() {
         if (!this.assignedProject) return;
         
-        const roadType = this.assignedProject?.roadSpecification?.roadType || 'RT-5';
-        const phase = this.assignedProject.currentPhase || 1;
-
-        console.log('[FS] Caching requisition data for:', roadType);
+        const projectId = this.assignedProject.id;
+        console.log('[FS] Caching real project-scoped requisition data for project:', projectId);
 
         try {
-            // 1. Get recommendations (purely from mapping, no API needed)
-            const resources = getRecommendedResources(roadType, phase);
-            
-            // Populate them immediately so the drawer isn't empty
-            this.assignedProject.recommendedMachines = resources.machinery.map(m => ({
-                ...m,
-                available: true // Default to true while loading
-            }));
-            this.assignedProject.recommendedMaterials = resources.materials.map(m => ({
-                ...m
-            }));
+            // Fetch everything in parallel
+            const [roadSpec, ownedAssets, rentalContracts] = await Promise.all([
+                client.get(`/road-specifications?projectId=${projectId}`).catch(() => null),
+                client.get(`/assets?projectId=${projectId}`).catch(() => []),
+                client.get(`/vehicle-contracts?projectId=${projectId}&status=active`).catch(() => [])
+            ]);
 
-            // 2. Fetch availability (async/background)
-            Promise.all([
-                client.get('/inventory').catch(() => []),
-                assets.getAll().catch(() => [])
-            ]).then(([inventoryRes, assetsRes]) => {
-                const inventory = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes.data || inventoryRes.items || []);
-                const allAssets = Array.isArray(assetsRes) ? assetsRes : (assetsRes.data || assetsRes.items || []);
+            // 1. Process Materials from Road Specification
+            // This ensures FS only requests what the PM approved
+            const layers = roadSpec?.layers || [];
+            const accessories = roadSpec?.accessories || [];
 
-                if (allAssets.length > 0) {
-                    this.assignedProject.recommendedMachines = resources.machinery.map(m => {
-                        const models = m.model.split(' / ').map(s => s.trim());
-                        const availableAssets = allAssets.filter(a => models.includes(a.name) && a.status === 'available');
-                        return {
-                            ...m,
-                            available: availableAssets.length > 0,
-                            availableCount: availableAssets.length
-                        };
-                    });
-                    // Refresh view if drawer is open? Or just let it be.
-                }
-            });
+            this.assignedProject.recommendedMaterials = [
+                ...layers.map(l => ({
+                    name: l.materialType,
+                    unit: l.unit,
+                    approvedQty: Number(l.totalQuantity),
+                    phase: l.phaseNumber,
+                    phaseName: l.phaseName || `Phase ${l.phaseNumber}`
+                })),
+                ...accessories.map(a => ({
+                    name: a.itemName,
+                    unit: a.unit,
+                    approvedQty: Number(a.totalQuantity),
+                    category: a.category,
+                    phaseName: 'Road Furniture & Accessories'
+                }))
+            ];
 
-            console.log('[FS] Recommended machines loaded:', this.assignedProject.recommendedMachines.length);
+            // 2. Process Machinery (Owned + Rented)
+            const ownedList = Array.isArray(ownedAssets) ? ownedAssets : (ownedAssets.data || []);
+            const rentalList = Array.isArray(rentalContracts) ? rentalContracts : (rentalContracts.contracts || []);
+
+            this.assignedProject.recommendedMachines = [
+                ...ownedList.map(a => ({
+                    name: a.name,
+                    type: a.category,
+                    code: a.assetCode,
+                    source: 'owned',
+                    available: a.status === 'available',
+                    status: a.status
+                })),
+                ...rentalList.map(c => ({
+                    name: `${c.machineType} (${c.vendorName})`,
+                    type: c.machineType,
+                    code: c.refCode,
+                    source: 'rental',
+                    available: c.status === 'active',
+                    expiresAt: c.endDate,
+                    vendor: c.vendorName
+                }))
+            ];
+
+            console.log(`[FS] Cache complete: ${this.assignedProject.recommendedMaterials.length} materials, ${this.assignedProject.recommendedMachines.length} machines.`);
         } catch (e) {
-            console.error('[FS] Critical failure in requisition caching:', e);
-            this.assignedProject.recommendedMachines = this.assignedProject.recommendedMachines || [];
+            console.error('[FS] Failed to cache requisition data:', e);
+            // Fallback to empty if critical fail
             this.assignedProject.recommendedMaterials = this.assignedProject.recommendedMaterials || [];
+            this.assignedProject.recommendedMachines = this.assignedProject.recommendedMachines || [];
         }
     }
 

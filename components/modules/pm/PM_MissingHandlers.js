@@ -680,7 +680,7 @@ export const PM_MissingHandlers = {
                 <tr style="opacity: ${item.approved ? '1' : '0.5'}; transition: opacity 0.2s;">
                     <td>
                         <div style="font-weight:600; font-size:12px; color:var(--slate-800);">${this.escapeHTML(item.itemName || item.materialType)}</div>
-                        <div style="font-size:10px; color:var(--slate-500);">${type === 'layer' ? 'Phase ' + item.phaseNumber : 'Accessory'}</div>
+                        <div style="font-size:10px; color:var(--slate-500);">${type === 'layer' ? 'Phase ' + item.phaseNumber : (item.category?.startsWith('fleet') ? 'Fleet/Machinery' : 'Accessory')}</div>
                     </td>
                     <td style="font-family:'JetBrains Mono'; font-size:11px;">
                         <input type="number" step="any" value="${item.totalQuantity}" 
@@ -736,9 +736,19 @@ export const PM_MissingHandlers = {
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Cost per meter</div>
-                    <div id="receipt-cost-meter" style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">${this.formatMWKFull(dynamicCostPerMeter)}</div>
+            <div id="receipt-cost-meter" style="font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono';">${this.formatMWKFull(dynamicCostPerMeter)}</div>
                 </div>
             </div>
+
+            ${this.wizardState.projectId ? `
+            <div style="margin-top: 16px;">
+                <button class="btn btn-secondary" style="width: 100%; justify-content: center; border-style: dashed; border-color: var(--slate-300); color: var(--slate-600);" 
+                    onclick="window.app.pmModule.handleRunGapAnalysis('${this.wizardState.projectId}')">
+                    <i class="fas fa-microchip" style="margin-right: 8px;"></i> Run Logistics Gap Analysis
+                </button>
+                <div style="font-size: 10px; color: var(--slate-400); text-align: center; margin-top: 6px;">Check current fleet availability against these requirements.</div>
+            </div>
+            ` : ''}
         `;
 
         this.checkBudgetReconciliation();
@@ -1132,6 +1142,28 @@ export const PM_MissingHandlers = {
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
             }
+        }
+    },
+    
+    async handleRunGapAnalysis(projectId) {
+        if (!projectId) {
+            window.toast.show('Project ID missing. Save project first.', 'warning');
+            return;
+        }
+
+        try {
+            window.toast.show('Analyzing requirements vs. fleet holdings...', 'info');
+            
+            // Re-use the existing API utility
+            const data = await window.vehicleRentalsApi.getGapAnalysis(projectId);
+            
+            window.drawer.open('Equipment Needs vs. Holdings', window.DrawerTemplates.projectEquipmentGap({
+                ...data,
+                projectId
+            }));
+        } catch (error) {
+            console.error('Gap analysis failed:', error);
+            window.toast.show('Analysis failed: ' + (error.message || 'Server error'), 'error');
         }
     }
 };

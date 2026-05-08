@@ -37,7 +37,9 @@ async function create(data, userId) {
     notes,
     documentUrl,
     fileName,
-    phaseNumber
+    phaseNumber,
+    mobilisationFee = 0,
+    demobilisationFee = 0
   } = data;
 
   // Validate machine type
@@ -51,7 +53,8 @@ async function create(data, userId) {
   let totalValue = data.totalValue;
   if (contractType === 'rental' && !totalValue && dailyRate && startDate && endDate) {
     const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)));
-    totalValue = Number(dailyRate) * days;
+    const hireCost = Number(dailyRate) * days;
+    totalValue = hireCost + Number(mobilisationFee) + Number(demobilisationFee);
   }
 
   const contract = await prisma.vehicleRentalContract.create({
@@ -70,6 +73,8 @@ async function create(data, userId) {
       documentUrl,
       fileName,
       phaseNumber: phaseNumber ? parseInt(phaseNumber) : null,
+      mobilisationFee: parseFloat(mobilisationFee),
+      demobilisationFee: parseFloat(demobilisationFee),
       createdById: userId,
       status: 'pending_approval' // FD must approve
     }
@@ -272,6 +277,70 @@ async function updatePriceConfig(machineType, data, userId) {
   });
 }
 
+/**
+ * Mark a rental vehicle as collected by EC (final step in return)
+ */
+async function markCollected(id, userId) {
+  return await prisma.vehicleRentalContract.update({
+    where: { id: parseInt(id) },
+    data: {
+      status: 'returned',
+      notes: { append: `\n[Collected by EC ${userId} on ${new Date().toISOString()}]` }
+    }
+  });
+}
+
+/**
+ * Get contracts expiring within a certain number of days
+ */
+async function getExpiringContracts(days) {
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + days);
+  
+  // Set to end of day
+  targetDate.setHours(23, 59, 59, 999);
+  
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  return await prisma.vehicleRentalContract.findMany({
+    where: {
+      endDate: {
+        gte: startOfDay,
+        lte: targetDate
+      },
+      status: { in: ['active', 'renewed', 'shifted'] }
+    },
+    include: {
+      project: { select: { name: true, code: true, fieldSupervisorId: true } }
+    }
+  });
+}
+
+/**
+ * Auto-expire contracts whose endDate has passed
+ */
+async function autoExpireContracts() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expired = await prisma.vehicleRentalContract.findMany({
+    where: {
+      endDate: { lt: today },
+      status: { in: ['active', 'renewed', 'shifted'] }
+    }
+  });
+
+  if (expired.length === 0) return 0;
+
+  await prisma.vehicleRentalContract.updateMany({
+    where: { id: { in: expired.map(e => e.id) } },
+    data: { status: 'expired' }
+  });
+
+  return expired.length;
+}
+
 module.exports = {
   create,
   approve,
@@ -279,6 +348,9 @@ module.exports = {
   renew,
   shift,
   markReturned,
+  markCollected,
+  getExpiringContracts,
+  autoExpireContracts,
   getAll,
   getPriceConfigs,
   updatePriceConfig
