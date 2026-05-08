@@ -9,8 +9,23 @@ export const FS_Dashboard = {
         const lowStock = inventoryEntries.some(([, i]) => i.qty === 0);
         const inTransitCount = this.siteAssets.filter(a => a.status === 'in_transit').length;
         const isCompleted = this.assignedProject?.status === 'completed';
+        const notificationsEnabled = window.Notification && Notification.permission === 'granted';
 
         return `
+            ${!notificationsEnabled ? `
+                <div style="background: var(--blue-50); border: 1px solid var(--blue-200); border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; animation: slideDown 0.4s ease-out;">
+                    <div style="width: 40px; height: 40px; background: var(--blue-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue-600); flex-shrink: 0;">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800; font-size: 14px; color: var(--blue-900);">Enable Real-Time Alerts</div>
+                        <div style="font-size: 12px; color: var(--blue-700);">Receive instant notifications for material dispatches and emergency SOS alerts from your site.</div>
+                    </div>
+                    <button class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;" onclick="window.requestNotificationPermission()">
+                        Enable Now
+                    </button>
+                </div>
+            ` : ''}
             ${isCompleted ? `
                 <div style="background: #FFFBEB; border: 1px solid #FEF3C7; border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
                     <div style="width: 40px; height: 40px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #D97706; flex-shrink: 0;">
@@ -199,7 +214,15 @@ export const FS_Dashboard = {
 
             // Initialize map if on dashboard
             if (this.currentView === 'dashboard') {
-                setTimeout(() => this.initGeofenceMap(), 500);
+                setTimeout(() => this.initGeofenceMap(), 800);
+                // Secondary check for slow loads
+                setTimeout(() => {
+                    const mapContainer = document.getElementById('fs-geofence-map');
+                    if (mapContainer && !mapContainer.querySelector('.leaflet-container')) {
+                        console.log('[FS Map] Retrying initialization...');
+                        this.initGeofenceMap();
+                    }
+                }, 2000);
             }
         } catch (error) {
             console.error('[FS] Failed to load assigned project:', error);
@@ -271,6 +294,13 @@ export const FS_Dashboard = {
         if (overlay) overlay.style.display = 'none';
 
         // NOTE: Auto-watching removed in favor of manual verifyLocation()
+        
+        // Final layout sync to prevent gray tiles/blank map
+        setTimeout(() => {
+            if (this.geofenceMap) {
+                this.geofenceMap.invalidateSize();
+            }
+        }, 300);
     },
 
     async verifyLocation() {

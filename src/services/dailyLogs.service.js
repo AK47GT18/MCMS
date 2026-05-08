@@ -177,15 +177,14 @@ async function create(data, userId) {
   
   logger.info('Daily log created', { logId: log.id, projectId: data.projectId });
 
-  // Notification to PM
-  if (project.managerId) {
-    await notifService.create({
-      userId: project.managerId,
-      type: 'info', icon: 'fa-clipboard-check',
-      title: 'New Daily Log Submitted',
-      message: `${log.submitter.name} submitted a log for ${log.project.code} on ${new Date(log.logDate).toLocaleDateString()}.`
-    });
-  }
+  // Notification to all Project Managers (Ensuring PM A and B both receive it)
+  await notifService.notifyRole('Project_Manager', {
+    type: 'info', 
+    icon: 'fa-clipboard-check',
+    title: 'New Daily Log Submitted',
+    message: `${log.submitter.name} submitted a log for ${log.project.code} on ${new Date(log.logDate).toLocaleDateString()}.`,
+    link: `/dashboard.html?page=daily_logs&projectId=${log.projectId}&logId=${log.id}`
+  });
 
   // Audit Log
   const user = await prisma.user.findUnique({ where: { id: userId } });

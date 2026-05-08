@@ -368,7 +368,7 @@ export const FS_Tasks = {
     },
 
     submitDailyProgressLog(btn) {
-        if (window.validatePhotos && !window.validatePhotos('progressLog')) return;
+        if (window.validatePhotos && !window.validatePhotos('dailyLog')) return;
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying site coordinates...';
         btn.disabled = true;

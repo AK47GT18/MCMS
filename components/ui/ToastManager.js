@@ -16,7 +16,7 @@ export class ToastManager {
         }
     }
 
-    show(message, type = 'info', duration = 3000) {
+    show(message, type = 'info', duration = 5000) {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         

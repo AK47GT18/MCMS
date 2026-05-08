@@ -807,6 +807,17 @@ tbody td {
     }
 }
 
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Mobile Nav */
 .mobile-nav {
     display: none;
@@ -1040,17 +1051,29 @@ tbody td {
     border: 1px solid var(--slate-200);
     box-shadow: var(--shadow-md);
     border-radius: 8px;
-    padding: 12px 16px;
-    min-width: 300px;
-    max-width: 400px;
+    padding: 16px 20px 16px 36px;
+    min-width: 320px;
+    max-width: 420px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     pointer-events: auto;
-    /* Re-enable pointer events for toasts */
+    position: relative;
     transform: translateX(120%);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
     opacity: 0;
+    overflow: hidden;
+}
+
+.toast::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    z-index: 5;
 }
 
 .toast.show {
@@ -1089,33 +1112,17 @@ tbody td {
 }
 
 /* Toast Types */
-.toast-success {
-    border-left: 4px solid var(--emerald);
-}
+.toast-success::before { background: var(--emerald); box-shadow: 0 0 0 4px var(--emerald-light); }
+.toast-success .toast-icon { color: var(--emerald); }
 
-.toast-success .toast-icon {
-    color: var(--emerald);
-}
+.toast-error::before { background: var(--red); box-shadow: 0 0 0 4px var(--red-light); }
+.toast-error .toast-icon { color: var(--red); }
 
-.toast-error {
-    border-left: 4px solid var(--red);
-}
+.toast-warning::before { background: var(--amber); box-shadow: 0 0 0 4px var(--amber-light); }
+.toast-warning .toast-icon { color: var(--amber); }
 
-.toast-error .toast-icon {
-    color: var(--red);
-}
-
-.toast-warning {
-    border-left: 4px solid var(--amber);
-}
-
-.toast-warning .toast-icon {
-    color: var(--amber);
-}
-
-.toast-info {
-    border-left: 4px solid var(--blue);
-}
+.toast-info::before { background: var(--blue); box-shadow: 0 0 0 4px var(--blue-light); }
+.toast-info .toast-icon { color: var(--blue); }
 
 /* --- NOTIFICATION DROPDOWN --- */
 .notification-dropdown {

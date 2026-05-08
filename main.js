@@ -158,16 +158,23 @@ async function initPushNotifications(registration) {
     }
 
     try {
+        console.log('[Push] Initializing... Current permission:', Notification.permission);
+        
         // Check if we already have a subscription
         const existingSub = await registration.pushManager.getSubscription();
+        
         if (existingSub) {
-            console.log('[Push] User already subscribed');
+            console.log('[Push] User already subscribed to endpoint:', existingSub.endpoint);
+            // Verify with server if we want to be sure, but for now just stashing locally
             return;
         }
 
         // Auto-subscribe if permission already granted
         if (Notification.permission === 'granted') {
+            console.log('[Push] Permission already granted, auto-subscribing...');
             subscribeUserToPush(registration);
+        } else if (Notification.permission === 'default') {
+            console.log('[Push] Permission is default. Waiting for user interaction.');
         }
     } catch (err) {
         console.error('[Push] Init error:', err);
@@ -176,10 +183,20 @@ async function initPushNotifications(registration) {
 
 async function subscribeUserToPush(registration) {
     try {
+        console.log('[Push] Subscribing user...');
+        
         // 1. Get public key from server
         const keyResponse = await fetch('/api/v1/push/key');
-        const { data } = await keyResponse.json();
-        const publicKey = data.publicKey;
+        if (!keyResponse.ok) throw new Error('Failed to fetch public key');
+        
+        const resJson = await keyResponse.json();
+        const publicKey = resJson.data?.publicKey || resJson.publicKey;
+        
+        if (!publicKey) {
+            throw new Error('VAPID Public Key missing from server response');
+        }
+
+        console.log('[Push] Using VAPID Key:', publicKey.substring(0, 10) + '...');
 
         // 2. Subscribe with the key
         const subscription = await registration.pushManager.subscribe({
@@ -187,11 +204,11 @@ async function subscribeUserToPush(registration) {
             applicationServerKey: urlBase64ToUint8Array(publicKey)
         });
 
-        console.log('[Push] Subscription successful:', subscription);
+        console.log('[Push] Subscription successful, sending to server...');
 
         // 3. Send subscription to server
         const token = localStorage.getItem('mcms_auth_token');
-        await fetch('/api/v1/push/subscribe', {
+        const syncResponse = await fetch('/api/v1/push/subscribe', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -200,14 +217,46 @@ async function subscribeUserToPush(registration) {
             body: JSON.stringify(subscription)
         });
 
+        if (!syncResponse.ok) {
+            const errData = await syncResponse.json();
+            throw new Error(errData.message || 'Failed to sync subscription with server');
+        }
+
+        console.log('[Push] Server sync complete.');
         window.toast?.show('Notifications enabled successfully', 'success');
     } catch (err) {
         console.error('[Push] Subscription failed:', err);
         if (Notification.permission === 'denied') {
-            console.warn('[Push] Permission for notifications was denied');
+            window.toast?.show('Notification permission blocked by browser.', 'error');
+        } else {
+            window.toast?.show('Failed to enable notifications: ' + err.message, 'error');
         }
     }
 }
+
+/**
+ * Manual trigger for notification permission
+ */
+window.requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+        window.toast?.show('Notifications not supported by this browser.', 'error');
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        console.log('[Push] Permission requested:', permission);
+        
+        if (permission === 'granted') {
+            const registration = await navigator.serviceWorker.ready;
+            await subscribeUserToPush(registration);
+        } else if (permission === 'denied') {
+            window.toast?.show('Notification permission denied. Please enable in browser settings.', 'warning');
+        }
+    } catch (err) {
+        console.error('[Push] Permission request error:', err);
+    }
+};
 
 // Utility to convert VAPID key
 function urlBase64ToUint8Array(base64String) {

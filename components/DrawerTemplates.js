@@ -1510,7 +1510,11 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    dailyProgressLog: (taskId = null) => `
+    dailyProgressLog: (arg) => {
+        const data = (typeof arg === 'object' && arg !== null) ? arg : { taskId: arg };
+        const taskId = data.taskId || "";
+        const taskName = data.taskName || "Select Task...";
+        return `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <input type="hidden" id="daily-log-task-id" value="${taskId || ""}" />
@@ -1565,14 +1569,14 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom: 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <label class="form-label" style="margin:0;">Progress Photos</label>
-                    <span id="photo-counter-progressLog" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
+                    <span id="photo-counter-dailyLog" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
                 </div>
-                <label id="photo-add-btn-progressLog" onclick="return window.handleCameraClick(event, 'progressLog')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                <label id="photo-add-btn-dailyLog" onclick="return window.handleCameraClick(event, 'dailyLog')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
                     <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
                     <div style="font-weight: 600; font-size: 11px;">Tap to Take Photo (max 10)</div>
-                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'progressLog')">
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'dailyLog')">
                 </label>
-                <div id="photo-preview-progressLog" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                <div id="photo-preview-dailyLog" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
                     <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>
                 </div>
             </div>
@@ -1631,7 +1635,8 @@ export const DrawerTemplates = {
                 <i class="fas fa-cloud-upload-alt"></i> Submit Progress Log
             </button>
         </div>
-    `,
+        `;
+    },
 
     dailyProgressLogHistory: (logs = []) => `
         <div class="drawer-section" style="padding-top: 12px;">
