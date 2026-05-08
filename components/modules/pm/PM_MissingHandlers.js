@@ -606,6 +606,7 @@ export const PM_MissingHandlers = {
         }
 
         const payload = {
+            projectId: this.wizardState.projectId,
             roadType: document.getElementById('road_type').value,
             lengthKm: parseFloat(document.getElementById('road_length').value),
             widthM: parseFloat(document.getElementById('road_width').value),
@@ -624,7 +625,8 @@ export const PM_MissingHandlers = {
             this.wizardState.roadEstimatePreview = {
                 ...result,
                 layers: (result.layers || []).map(l => ({...l, approved: true})),
-                accessories: (result.accessories || []).map(a => ({...a, approved: true}))
+                accessories: (result.accessories || []).map(a => ({...a, approved: true})),
+                equipment: (result.equipment || []).map(e => ({...e, approved: true}))
             };
 
             this.renderBudgetReceipt();
@@ -670,41 +672,61 @@ export const PM_MissingHandlers = {
         
         const renderRow = (item, index, type) => {
             if (item.approved) {
-                currentlyApprovedLow += parseFloat(item.totalCostLow);
+                currentlyApprovedLow += parseFloat(item.totalCostLow || (item.totalCostHigh * 0.8));
                 currentlyApprovedHigh += parseFloat(item.totalCostHigh);
             }
             
             const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             
             return `
-                <tr style="opacity: ${item.approved ? '1' : '0.5'}; transition: opacity 0.2s;">
-                    <td>
+                <tr style="opacity: ${item.approved ? '1' : '0.5'}; transition: opacity 0.2s; border-bottom: 1px solid var(--slate-100);">
+                    <td style="padding: 12px 8px;">
                         <div style="font-weight:600; font-size:12px; color:var(--slate-800);">${this.escapeHTML(item.itemName || item.materialType)}</div>
-                        <div style="font-size:10px; color:var(--slate-500);">${type === 'layer' ? 'Phase ' + item.phaseNumber : (item.category?.startsWith('fleet') ? 'Fleet/Machinery' : 'Accessory')}</div>
+                        <div style="font-size:10px; color:var(--slate-500);">
+                            ${type === 'layer' ? 'Phase ' + item.phaseNumber : 
+                              (type === 'equipment' ? (item.isOwned ? '<span style="color:var(--emerald); font-weight:700;"><i class="fas fa-check-circle"></i> OWNED</span>' : '<span style="color:var(--orange); font-weight:700;"><i class="fas fa-truck-loading"></i> HIRE</span>') : 'Accessory')}
+                        </div>
                     </td>
-                    <td style="font-family:'JetBrains Mono'; font-size:11px;">
-                        <input type="number" step="any" value="${item.totalQuantity}" 
-                            style="width:80px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px; position:relative; z-index:5;"
-                            onclick="event.stopPropagation()"
-                            onchange="(window.app.pmModule || window.app.fsModule || window.app.caModule).updateItemQuantity('${type}', ${index}, this.value)">
-                        ${item.unit}
+                    <td style="padding: 12px 8px; font-family:'JetBrains Mono'; font-size:11px; white-space: nowrap;">
+                        ${type === 'equipment' ? `
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <input type="number" step="1" min="1" value="${item.machineCount}" 
+                                    style="width:35px; padding:4px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:10px; text-align:center;"
+                                    title="Quantity of machines"
+                                    onchange="window.app.pmModule.updateEquipmentQuantity(${index}, 'count', this.value)">
+                                <span style="font-size:10px; color:var(--slate-400);">x</span>
+                                <input type="number" step="1" min="1" value="${item.machineDays}" 
+                                    style="width:45px; padding:4px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:10px; text-align:center;"
+                                    title="Duration in days"
+                                    onchange="window.app.pmModule.updateEquipmentQuantity(${index}, 'days', this.value)">
+                                <span style="font-size:10px; color:var(--slate-400);">days</span>
+                            </div>
+                        ` : `
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <input type="number" step="any" value="${item.totalQuantity}" 
+                                    style="width:70px; padding:4px 8px; border:1px solid var(--slate-300); border-radius:4px; font-weight:700; font-family:'JetBrains Mono'; font-size:11px;"
+                                    onchange="window.app.pmModule.updateItemQuantity('${type}', ${index}, this.value)">
+                                <span style="font-size:10px; color:var(--slate-400);">${item.unit}</span>
+                            </div>
+                        `}
                     </td>
-                    <td style="font-family:'JetBrains Mono'; font-size:11px; font-weight:700; text-align:right;">
-                        <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow)} -</span> 
+                    <td style="padding: 12px 8px; font-family:'JetBrains Mono'; font-size:11px; font-weight:700; text-align:right;">
+                        ${item.mobilization > 0 ? `<div style="font-size:9px; color:var(--orange); font-weight:500;">+Mob: ${formatter.format(item.mobilization)}</div>` : ''}
+                        <span style="color:var(--slate-400); font-size:10px;">${formatter.format(item.totalCostLow || (item.totalCostHigh * 0.8))} -</span> 
                         <span style="font-weight:700; margin-left:4px;">${formatter.format(item.totalCostHigh)}</span>
                     </td>
-                    <td style="text-align:right;">
+                    <td style="padding: 12px 8px; text-align:right;">
                         <input type="checkbox" ${item.approved ? 'checked' : ''} 
-                            style="width:18px; height:18px; accent-color:var(--emerald); cursor:pointer; position:relative; z-index:5;"
-                            onclick="event.stopPropagation()"
-                            onchange="(window.app.pmModule || window.app.fsModule || window.app.caModule).toggleReceiptItem('${type}', ${index})">
+                            style="width:18px; height:18px; accent-color:var(--emerald); cursor:pointer;"
+                            onchange="window.app.pmModule.toggleReceiptItem('${type}', ${index})">
                     </td>
                 </tr>
             `;
         };
 
-        const layersRows = est.layers.map((l, i) => renderRow(l, i, 'layer')).join('');
-        const accRows = est.accessories.map((a, i) => renderRow(a, i, 'accessory')).join('');
+        const layersRows = (est.layers || []).map((l, i) => renderRow(l, i, 'layer')).join('');
+        const accRows = (est.accessories || []).map((a, i) => renderRow(a, i, 'accessory')).join('');
+        const equipmentRows = (est.equipment || []).map((e, i) => renderRow(e, i, 'equipment')).join('');
 
         this.wizardState.currentlyApprovedHigh = currentlyApprovedHigh;
 
@@ -723,8 +745,9 @@ export const PM_MissingHandlers = {
                         </tr>
                     </thead>
                     <tbody>
-                        ${layersRows}
+                        ${layersRows || '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--slate-400);">No materials calculated for this spec.</td></tr>'}
                         ${accRows}
+                        ${equipmentRows}
                     </tbody>
                 </table>
             </div>
@@ -757,7 +780,8 @@ export const PM_MissingHandlers = {
     toggleReceiptItem(type, index) {
         if (!this.wizardState.roadEstimatePreview) return;
         
-        const list = type === 'layer' ? this.wizardState.roadEstimatePreview.layers : this.wizardState.roadEstimatePreview.accessories;
+        const est = this.wizardState.roadEstimatePreview;
+        const list = type === 'layer' ? est.layers : (type === 'accessory' ? est.accessories : est.equipment);
         list[index].approved = !list[index].approved;
         
         this.renderBudgetReceipt();
@@ -766,7 +790,7 @@ export const PM_MissingHandlers = {
     updateItemQuantity(type, index, value) {
         if (!this.wizardState.roadEstimatePreview) return;
         const est = this.wizardState.roadEstimatePreview;
-        const list = type === 'layer' ? est.layers : est.accessories;
+        const list = type === 'layer' ? est.layers : (type === 'accessory' ? est.accessories : est.equipment);
         const item = list[index];
         const qty = parseFloat(value) || 0;
         
@@ -777,7 +801,7 @@ export const PM_MissingHandlers = {
         
         // Update ONLY the cost cell for this row (don't re-render the whole table)
         const formatter = new Intl.NumberFormat('en-MW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        const rowIndex = type === 'layer' ? index : est.layers.length + index;
+        const rowIndex = type === 'layer' ? index : (type === 'accessory' ? est.layers.length + index : est.layers.length + (est.accessories?.length || 0) + index);
         const rows = document.querySelectorAll('#estimation-receipt-container tbody tr');
         if (rows[rowIndex]) {
             const costCell = rows[rowIndex].querySelectorAll('td')[2]; // 3rd column = Est. MWK
@@ -794,6 +818,7 @@ export const PM_MissingHandlers = {
         let totalLow = 0;
         est.layers.forEach(l => { if (l.approved) { totalHigh += l.totalCostHigh; totalLow += l.totalCostLow; } });
         est.accessories.forEach(a => { if (a.approved) { totalHigh += a.totalCostHigh; totalLow += a.totalCostLow; } });
+        (est.equipment || []).forEach(e => { if (e.approved) { totalHigh += e.totalCostHigh; totalLow += e.totalCostLow; } });
         
         this.wizardState.currentlyApprovedHigh = totalHigh;
         
@@ -808,6 +833,28 @@ export const PM_MissingHandlers = {
         }
         
         this.checkBudgetReconciliation();
+        this.saveWizardCache();
+    },
+
+    updateEquipmentQuantity(index, field, value) {
+        if (!this.wizardState.roadEstimatePreview) return;
+        const est = this.wizardState.roadEstimatePreview;
+        const item = est.equipment[index];
+        const val = parseFloat(value) || 1;
+
+        if (field === 'count') item.machineCount = val;
+        if (field === 'days') item.machineDays = val;
+
+        // Mobilisation fee + (Daily Rate × Days × Quantity)
+        const dailyRate = item.unitCostHigh;
+        const mobFee = item.mobilization || 0;
+        
+        item.totalCostHigh = mobFee + (dailyRate * item.machineDays * item.machineCount);
+        item.totalCostLow = item.totalCostHigh * 0.8;
+        item.isManualOverride = true;
+
+        // Re-render receipt to update all totals and row state
+        this.renderBudgetReceipt();
         this.saveWizardCache();
     },
 
@@ -1138,13 +1185,35 @@ export const PM_MissingHandlers = {
             }
             window.toast.show(error.message, 'error');
         } finally {
+            const btn = document.getElementById('wizard-submit');
             if(btn) {
                 btn.disabled = false;
-                btn.innerHTML = originalContent;
+                btn.innerHTML = 'Initialize Project & Archive Master';
             }
         }
     },
-    
+
+    resetWizardCache() {
+        localStorage.removeItem('mcms_wizard_cache');
+        this.wizardState = {
+            currentStep: 1,
+            roadType: '',
+            accessories: [],
+            projectId: null,
+            roadEstimatePreview: null
+        };
+        window.drawer.close();
+        window.toast.show("Wizard cache cleared", "success");
+        // Re-open to fresh state
+        setTimeout(() => {
+            if (window.app.pmModule.openNewProjectWizard) {
+                window.app.pmModule.openNewProjectWizard();
+            } else {
+                window.location.reload();
+            }
+        }, 100);
+    },
+
     async handleRunGapAnalysis(projectId) {
         if (!projectId) {
             window.toast.show('Project ID missing. Save project first.', 'warning');

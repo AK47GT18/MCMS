@@ -420,19 +420,89 @@ async function calculateEstimate(input) {
   const grandTotalLow = layersTotalLow + accessoriesTotalLow;
   const grandTotalHigh = layersTotalHigh + accessoriesTotalHigh;
 
-  // 3. Equipment Calculation (New)
+  // 3. Equipment Calculation (Smart Gap Analysis)
   let equipmentBudget = 0;
   let equipmentDetails = null;
+  const generatedEquipment = [];
+  const MOBILIZATION_FEE = 350000; // Flat benchmark per machine rental
   
   try {
+    const projectDays = 180; // Default for simulation
+    
     if (input.projectId) {
       equipmentDetails = await equipmentRequirements.analyzeEquipmentGap(input.projectId);
-      equipmentBudget = equipmentDetails.totalEquipmentBudget;
+      
+      // Handle OWNED items (internal rates)
+      if (equipmentDetails.owned && equipmentDetails.owned.length > 0) {
+        equipmentDetails.owned.forEach(item => {
+          const internalRate = item.dailyRate * 0.45; // Internal = 45% of wet hire (fuel/operator/maintenance)
+          const rentalCost = internalRate * item.estimatedDays;
+          
+          generatedEquipment.push({
+            category: 'fleet_owned',
+            itemName: item.label + ' (Internal/Owned)',
+            unit: 'Days',
+            machineCount: 1,
+            machineDays: item.estimatedDays,
+            unitCostHigh: internalRate,
+            totalCostHigh: rentalCost,
+            mobilization: 0,
+            approved: true,
+            isFleet: true,
+            isOwned: true
+          });
+          equipmentBudget += rentalCost;
+        });
+      }
+
+      // Handle HIRED items (market rates + mobilization)
+      if (equipmentDetails.needsRental && equipmentDetails.needsRental.length > 0) {
+        equipmentDetails.needsRental.forEach(item => {
+          const rentalCost = MOBILIZATION_FEE + (item.dailyRate * item.estimatedDays);
+          
+          generatedEquipment.push({
+            category: 'fleet_hired',
+            itemName: item.label + ' (Hire Required)',
+            unit: 'Days',
+            machineCount: 1,
+            machineDays: item.estimatedDays,
+            unitCostHigh: item.dailyRate,
+            totalCostHigh: rentalCost,
+            mobilization: MOBILIZATION_FEE,
+            approved: true,
+            isFleet: true,
+            isOwned: false
+          });
+          equipmentBudget += rentalCost;
+        });
+      }
     } else {
-      // For simulation/calculation without project context
+      // For simulation/calculation without project context (Default to everything as Hire)
       const reqMachines = equipmentRequirements.getRequiredEquipment(roadType);
-      // Fallback: 180 days simulation
-      equipmentBudget = reqMachines.reduce((sum, m) => sum + (m.defaultDailyRate * 180), 0);
+      const simulationDays = 180;
+      
+      reqMachines.forEach(m => {
+        const totalPhases = (equipmentRequirements.ROAD_TYPE_EQUIPMENT_PHASES[roadType] || []).length;
+        const machinePhaseCount = m.phases.length;
+        const estimatedDays = Math.ceil((machinePhaseCount / totalPhases) * simulationDays);
+        const rentalCost = MOBILIZATION_FEE + (m.defaultDailyRate * estimatedDays);
+        
+        generatedEquipment.push({
+          category: 'fleet_sim',
+          itemName: m.label + ' (Est. Hire)',
+          unit: 'Days',
+          machineCount: 1,
+          machineDays: estimatedDays,
+          unitCostHigh: m.defaultDailyRate,
+          totalCostHigh: rentalCost,
+          mobilization: MOBILIZATION_FEE,
+          approved: true,
+          isFleet: true,
+          isOwned: false
+        });
+        equipmentBudget += rentalCost;
+      });
+
       equipmentDetails = {
         required: reqMachines,
         totalEquipmentBudget: equipmentBudget,
@@ -450,12 +520,13 @@ async function calculateEstimate(input) {
     terrain,
     geographicZone: input.geographicZone,
     nearestTownKm,
-    estimatedTotalLow: grandTotalLow + equipmentBudget,
+    estimatedTotalLow: grandTotalLow + (equipmentBudget * 0.8),
     estimatedTotalHigh: grandTotalHigh + equipmentBudget,
-    costPerMeterLow: (grandTotalLow + equipmentBudget) / (lengthKm * 1000),
+    costPerMeterLow: (grandTotalLow + equipmentBudget * 0.8) / (lengthKm * 1000),
     costPerMeterHigh: (grandTotalHigh + equipmentBudget) / (lengthKm * 1000),
     layers: generatedLayers,
     accessories: generatedAccessories,
+    equipment: generatedEquipment, 
     equipmentBudget,
     equipmentDetails
   };
