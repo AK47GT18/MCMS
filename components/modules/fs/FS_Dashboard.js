@@ -323,8 +323,8 @@ export const FS_Dashboard = {
     classifyAccuracy(accuracy) {
         if (accuracy <= 25) return { label: 'Excellent', color: 'var(--emerald)', bg: 'var(--emerald-light)', toastType: 'success' };
         if (accuracy <= 75) return { label: 'Good', color: 'var(--blue)', bg: 'var(--blue-light)', toastType: 'success' };
-        if (accuracy <= 150) return { label: 'Moderate', color: 'var(--amber)', bg: 'var(--amber-light)', toastType: 'warning' };
-        if (accuracy <= 500) return { label: 'Poor', color: 'var(--orange)', bg: 'var(--orange-light)', toastType: 'warning' };
+        if (accuracy <= 150) return { label: 'Moderate', color: 'var(--amber)', bg: 'var(--amber-light)', toastType: 'success' }; // Success, but warn label
+        if (accuracy <= 500) return { label: 'Poor', color: 'var(--orange)', bg: 'var(--orange-light)', toastType: 'success' }; // Success, but warn label
         return { label: 'IP-Based', color: 'var(--red)', bg: 'var(--red-light)', toastType: 'error' };
     },
 

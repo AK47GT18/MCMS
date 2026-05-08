@@ -423,6 +423,7 @@ model DailyLog {
   locationSource     String?             @map("location_source") @db.VarChar(50)
   deviceType         String?             @map("device_type") @db.VarChar(50)
   locationCapturedAt DateTime?           @map("location_captured_at") @db.Timestamptz(6)
+  locationFlagged    Boolean             @default(false) @map("location_flagged")
   activePhase      String?               @map("active_phase") @db.VarChar(100)
   activeTask       String?               @map("active_task") @db.VarChar(255)
   workProgress     Int?                  @map("work_progress")

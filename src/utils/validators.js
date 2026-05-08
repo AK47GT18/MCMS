@@ -276,6 +276,7 @@ const createDailyLogSchema = z.object({
   locationSource: z.string().optional(),
   deviceType: z.string().optional(),
   locationCapturedAt: z.string().optional(),
+  locationFlagged: z.boolean().optional(),
   photos: z.array(z.any()).optional(), // Added for evidence
 });
 

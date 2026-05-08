@@ -235,6 +235,7 @@ CREATE TABLE daily_logs (
     device_type VARCHAR(50),
     location_captured_at TIMESTAMPTZ,
     location_verified BOOLEAN DEFAULT FALSE,
+    location_flagged BOOLEAN DEFAULT FALSE,
     is_sos BOOLEAN DEFAULT FALSE,
     pm_approved BOOLEAN DEFAULT FALSE,
     pm_approved_at TIMESTAMPTZ,

@@ -235,9 +235,13 @@ export const FS_Tasks = {
 
             const distToSite = this.calculateDistance(latitude, longitude, parseFloat(project.lat), parseFloat(project.lng));
             const effectiveDist = distToSite - accuracy; // User's possible closest point to site
-            const allowedRadius = project.radius || 500;
+            
+            // Desktop Leniency: Add a 250m "Hardware Buffer" for PC users who lack GPS
+            const isDesktop = !/Android|iPhone|iPad/i.test(navigator.userAgent);
+            const hardwareBuffer = isDesktop ? 250 : 0;
+            const allowedRadius = (project.radius || 500) + hardwareBuffer;
 
-            console.log(`[FS GPS] Distance: ${Math.round(distToSite)}m, Accuracy: ±${Math.round(accuracy)}m, Effective: ${Math.round(effectiveDist)}m`);
+            console.log(`[FS GPS] Device: ${isDesktop ? 'Desktop' : 'Mobile'}, Distance: ${Math.round(distToSite)}m, Accuracy: ±${Math.round(accuracy)}m, Effective: ${Math.round(effectiveDist)}m, Allowed: ${allowedRadius}m`);
 
             // Policy Rejection
             if (accuracy > 500) {
@@ -261,8 +265,9 @@ export const FS_Tasks = {
                 submissionLng: longitude,
                 submissionAccuracy: Math.round(accuracy),
                 locationSource: accuracy < 75 ? 'GPS/WiFi' : 'Triangulated',
-                deviceType: /Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-                locationCapturedAt: new Date(capturedAt).toISOString()
+                deviceType: isDesktop ? 'desktop' : 'mobile',
+                locationCapturedAt: new Date(capturedAt).toISOString(),
+                locationFlagged: accuracy > 150 // Mark for PM review if accuracy is Poor
             };
 
             // Add extra fields if payload override provided

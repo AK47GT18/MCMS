@@ -73,14 +73,20 @@ async function create(data, userId) {
       const accuracy = Number(data.submissionAccuracy || 0);
       const effectiveDistance = geofenceResult.distanceMeters - accuracy;
       
-      if (effectiveDistance > (project.radius || 500)) {
+      // Desktop Leniency: Apply 250m hardware buffer for non-mobile devices
+      const isDesktop = data.deviceType === 'desktop';
+      const hardwareBuffer = isDesktop ? 250 : 0;
+      const allowedRadius = (project.radius || 500) + hardwareBuffer;
+
+      if (effectiveDistance > allowedRadius) {
         throw new AppError(`Submission rejected: You are outside the project geofence (approx. ${Math.round(effectiveDistance)}m away).`, 400);
       }
       
-      logger.info('Geofence boundary pass via Accuracy Buffer', { 
+      logger.info('Geofence boundary pass via Adaptive Buffer', { 
         distance: geofenceResult.distanceMeters, 
         accuracy, 
-        effectiveDistance 
+        effectiveDistance,
+        isDesktop
       });
     }
 
@@ -144,6 +150,7 @@ async function create(data, userId) {
       locationSource: data.locationSource,
       deviceType: data.deviceType,
       locationCapturedAt: data.locationCapturedAt ? new Date(data.locationCapturedAt) : null,
+      locationFlagged: data.locationFlagged || false,
       locationVerified,
       ...(expenseItems && expenseItems.length > 0 && {
         expenses: {
