@@ -1611,9 +1611,25 @@ export const DrawerTemplates = {
                     <!-- Machinery usage rows will be injected here -->
                     <div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery usage logged today.</div>
                 </div>
+                <div id="log-location-status" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 11px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 700; color: var(--slate-600);">LOCATION VERIFICATION</span>
+                        <span id="drawer-gps-badge" style="font-weight: 700;">
+                            ${window.app.fsModule?.bestPosition ? `<i class="fas fa-check-circle" style="color:var(--emerald);"></i> Verified` : `<i class="fas fa-exclamation-triangle" style="color:var(--orange);"></i> Not Synced`}
+                        </span>
+                    </div>
+                    <div style="color: var(--slate-500); line-height: 1.4;">
+                        ${window.app.fsModule?.bestPosition ? 
+                            `Accuracy: ±${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` : 
+                            `Please ensure you have synced your location on the dashboard map before submitting.`}
+                    </div>
+                </div>
             </div>
 
-            <button id="daily-log-submit-btn" class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" onclick="window.app.fsModule?.submitDailyProgressLog(this)"><i class="fas fa-map-marker-alt"></i> Submit Update (Requires GPS)</button>
+            <button id="daily-log-submit-btn" class="btn btn-primary" style="width:100%; padding:14px; background:var(--emerald); border-color:var(--emerald);" 
+                onclick="window.app.fsModule?.submitDailyProgressLog(this)">
+                <i class="fas fa-cloud-upload-alt"></i> Submit Progress Log
+            </button>
         </div>
     `,
 

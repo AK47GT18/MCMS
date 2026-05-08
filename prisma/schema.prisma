@@ -398,7 +398,7 @@ model Transaction {
 }
 
 model DailyLog {
-  id               Int                   @id @default(autoincrement())
+  id                 Int                   @id @default(autoincrement())
   projectId        Int                   @map("project_id")
   submittedBy      Int?                  @map("submitted_by")
   logDate          DateTime              @map("log_date") @db.Date
@@ -419,6 +419,10 @@ model DailyLog {
   locationVerified Boolean               @default(false) @map("location_verified")
   submissionLat    Decimal?              @map("submission_lat") @db.Decimal(10, 8)
   submissionLng    Decimal?              @map("submission_lng") @db.Decimal(11, 8)
+  submissionAccuracy Int?                @map("submission_accuracy")
+  locationSource     String?             @map("location_source") @db.VarChar(50)
+  deviceType         String?             @map("device_type") @db.VarChar(50)
+  locationCapturedAt DateTime?           @map("location_captured_at") @db.Timestamptz(6)
   activePhase      String?               @map("active_phase") @db.VarChar(100)
   activeTask       String?               @map("active_task") @db.VarChar(255)
   workProgress     Int?                  @map("work_progress")

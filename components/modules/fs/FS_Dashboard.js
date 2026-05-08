@@ -108,6 +108,11 @@ export const FS_Dashboard = {
                         <div id="map-loading-overlay" style="position: absolute; inset: 0; background: rgba(255,255,255,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--slate-500);">
                             <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Initializing Map...
                         </div>
+                        <div id="map-sync-overlay" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 900; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; gap: 12px; display: none;">
+                            <i class="fas fa-satellite-dish fa-spin" style="font-size: 32px;"></i>
+                            <div style="font-weight: 700; font-size: 14px;">Syncing High-Precision GPS...</div>
+                            <div style="font-size: 11px; opacity: 0.8;">Refining coordinates (8s window)</div>
+                        </div>
                         <div id="distance-indicator" style="position: absolute; bottom: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; display: none;">
                             Distance to Site: <span id="site-distance-val">--</span>
                         </div>
@@ -117,12 +122,17 @@ export const FS_Dashboard = {
                             <span id="gps-status-badge" style="padding: 4px 8px; background: var(--slate-100); border-radius: 4px; font-weight: 700; font-size: 10px; color: var(--slate-600);">
                                 <i class="fas fa-satellite-dish"></i> GPS Standby
                             </span>
-                            <button id="btn-refresh-gps" class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.refreshGPS()">
-                                <i class="fas fa-sync"></i> Refresh GPS
-                            </button>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px; color: var(--blue);" onclick="window.app.fsModule.showPCLocationGuidance()" title="PC Location Help">
+                                    <i class="fas fa-question-circle"></i> Desktop Fix
+                                </button>
+                                <button id="btn-refresh-gps" class="btn btn-primary" style="padding: 4px 12px; font-size: 10px;" onclick="window.app.fsModule.verifyLocation()">
+                                    <i class="fas fa-sync"></i> Sync Location
+                                </button>
+                            </div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--slate-100); pt-2; margin-top: 4px; padding-top: 8px;">
-                            <span><i class="fas fa-info-circle"></i> Submission allowed within the circle.</span>
+                            <span><i class="fas fa-info-circle"></i> Verify location before submitting logs.</span>
                             <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule.initGeofenceMap()"><i class="fas fa-undo"></i> Reset View</button>
                         </div>
                     </div>
@@ -214,7 +224,7 @@ export const FS_Dashboard = {
 
         console.log('[FS Map] Initializing for:', name, projectLat, projectLng);
 
-        // Initialize Leaflet
+        // Initialize map
         this.geofenceMap = Leaflet.map('fs-geofence-map', {
             zoomControl: false,
             attributionControl: false
@@ -239,20 +249,83 @@ export const FS_Dashboard = {
         const overlay = document.getElementById('map-loading-overlay');
         if (overlay) overlay.style.display = 'none';
 
-        // Attempt to show user's current location with continuous watching
-        if (navigator.geolocation) {
-            this._watchId = navigator.geolocation.watchPosition((pos) => {
-                this.updateUserPosition(pos);
-            }, (err) => {
-                console.warn('[FS Map] Could not get user location:', err);
-                const statusEl = document.getElementById('gps-status-badge');
-                if (statusEl) {
-                    statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> GPS Precision Low';
-                    statusEl.style.background = 'var(--red-light)';
-                    statusEl.style.color = 'var(--red)';
-                }
-            }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+        // NOTE: Auto-watching removed in favor of manual verifyLocation()
+    },
+
+    async verifyLocation() {
+        if (!navigator.geolocation) {
+            window.toast?.show('Geolocation not supported.', 'error');
+            return;
         }
+
+        const badge = document.getElementById('gps-status-badge');
+        const btn = document.getElementById('btn-refresh-gps');
+        const overlay = document.getElementById('map-sync-overlay');
+        
+        if (badge) badge.innerHTML = '<i class="fas fa-satellite-dish fa-spin"></i> Syncing...';
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Verifying...';
+            btn.disabled = true;
+        }
+        if (overlay) overlay.style.display = 'flex';
+
+        this.bestPosition = null;
+        this.verificationStartTime = Date.now();
+        
+        console.log('[FS GPS] Starting 8s verification window...');
+
+        return new Promise((resolve) => {
+            const watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const elapsed = Date.now() - this.verificationStartTime;
+                    console.log(`[FS GPS] Reading: ${Math.round(pos.coords.accuracy)}m (${elapsed}ms)`);
+                    
+                    if (!this.bestPosition || pos.coords.accuracy < this.bestPosition.coords.accuracy) {
+                        this.bestPosition = pos;
+                        this.updateUserPosition(pos);
+                    }
+
+                    // Early exit if we hit perfect precision
+                    if (pos.coords.accuracy < 10 && elapsed > 2000) {
+                        cleanup();
+                    }
+                },
+                (err) => {
+                    console.warn('[FS GPS] Watch error:', err);
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+
+            const timeoutId = setTimeout(cleanup, 8000);
+
+            function cleanup() {
+                navigator.geolocation.clearWatch(watchId);
+                clearTimeout(timeoutId);
+                
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-sync"></i> Sync Location';
+                    btn.disabled = false;
+                }
+                if (overlay) overlay.style.display = 'none';
+
+                if (window.app.fsModule.bestPosition) {
+                    const acc = window.app.fsModule.bestPosition.coords.accuracy;
+                    const status = window.app.fsModule.classifyAccuracy(acc);
+                    window.toast?.show(`Location Verified: ${status.label} (±${Math.round(acc)}m)`, status.toastType);
+                } else {
+                    window.toast?.show('Verification failed. Check device GPS.', 'error');
+                }
+                resolve(window.app.fsModule.bestPosition);
+            }
+        });
+    },
+
+    classifyAccuracy(accuracy) {
+        if (accuracy <= 25) return { label: 'Excellent', color: 'var(--emerald)', bg: 'var(--emerald-light)', toastType: 'success' };
+        if (accuracy <= 75) return { label: 'Good', color: 'var(--blue)', bg: 'var(--blue-light)', toastType: 'success' };
+        if (accuracy <= 150) return { label: 'Moderate', color: 'var(--amber)', bg: 'var(--amber-light)', toastType: 'warning' };
+        if (accuracy <= 500) return { label: 'Poor', color: 'var(--orange)', bg: 'var(--orange-light)', toastType: 'warning' };
+        return { label: 'IP-Based', color: 'var(--red)', bg: 'var(--red-light)', toastType: 'error' };
     },
 
     updateUserPosition(pos) {
@@ -307,11 +380,14 @@ export const FS_Dashboard = {
         // Update status badge
         const badge = document.getElementById('gps-status-badge');
         if (badge) {
-            const isGood = accuracy < 100;
-            badge.innerHTML = `<i class="fas fa-${isGood ? 'check-circle' : 'exclamation-circle'}"></i> ${isGood ? 'High Precision' : 'Low Precision'} (${Math.round(accuracy)}m)`;
-            badge.style.background = isGood ? 'var(--emerald-light)' : 'var(--orange-light)';
-            badge.style.color = isGood ? 'var(--emerald)' : 'var(--orange)';
+            const status = this.classifyAccuracy(accuracy);
+            badge.innerHTML = `<i class="fas fa-location-crosshairs"></i> ${status.label} Precision (±${Math.round(accuracy)}m)`;
+            badge.style.background = status.bg;
+            badge.style.color = status.color;
         }
+
+        // Store sync time
+        this.lastLocationSync = new Date();
     },
 
     calculateDistance(lat1, lon1, lat2, lon2) {
@@ -362,42 +438,33 @@ export const FS_Dashboard = {
     },
 
     refreshGPS() {
-        const btn = document.getElementById('btn-refresh-gps');
-        if (btn) btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Locating...';
-        
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const { latitude, longitude, accuracy } = pos.coords;
-                console.log('[FS GPS] Refreshed:', latitude, longitude, 'Accuracy:', accuracy);
+        this.verifyLocation();
+    },
+
+    showPCLocationGuidance() {
+        window.drawer.open('Desktop Location Help', `
+            <div style="padding: 24px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <i class="fas fa-laptop-code" style="font-size: 48px; color: var(--blue);"></i>
+                    <h3 style="margin-top: 16px; font-weight: 800;">Desktop Geolocation</h3>
+                </div>
                 
-                if (this.geofenceMap) {
-                    const Leaflet = window.MKAKA_L || window.L;
-                    Leaflet.circleMarker([latitude, longitude], {
-                        radius: 8,
-                        fillColor: '#3b82f6',
-                        color: '#fff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 1
-                    }).addTo(this.geofenceMap).bindTooltip("Refreshed Location").openTooltip();
-                    
-                    this.geofenceMap.panTo([latitude, longitude]);
-                }
+                <p style="font-size: 14px; color: var(--slate-600); line-height: 1.6; margin-bottom: 20px;">
+                    Unlike phones, desktop PCs often lack GPS hardware. Browsers estimate your location using your IP address, which in Malawi often defaults to <strong>Lilongwe</strong>.
+                </p>
 
-                const badge = document.getElementById('gps-status-badge');
-                if (badge) {
-                    badge.innerHTML = `<i class="fas fa-check-circle"></i> Live GPS Active (${Math.round(accuracy)}m)`;
-                    badge.style.background = 'var(--emerald-light)';
-                    badge.style.color = 'var(--emerald)';
-                }
+                <div style="background: var(--slate-50); border-radius: 12px; padding: 16px; border: 1px solid var(--slate-200); margin-bottom: 24px;">
+                    <div style="font-weight: 700; font-size: 13px; margin-bottom: 12px; color: var(--slate-800);">How to improve accuracy:</div>
+                    <ul style="padding-left: 20px; font-size: 13px; color: var(--slate-600); display: flex; flex-direction: column; gap: 10px;">
+                        <li><strong>Enable Wi-Fi:</strong> Even if using Ethernet, keeping Wi-Fi "On" allows the browser to see nearby networks for triangulation.</li>
+                        <li><strong>OS Location Services:</strong> Ensure "Location" is ON in Windows/macOS privacy settings.</li>
+                        <li><strong>Move Near a Window:</strong> If using a laptop, this helps capture satellite signals.</li>
+                    </ul>
+                </div>
 
-                if (btn) btn.innerHTML = '<i class="fas fa-sync"></i> Refresh GPS';
-                window.toast.show('Location updated successfully.', 'success');
-            }, (err) => {
-                if (btn) btn.innerHTML = '<i class="fas fa-sync"></i> Refresh GPS';
-                window.toast.show('GPS Refresh failed: ' + err.message, 'error');
-            }, { enableHighAccuracy: true });
-        }
+                <button class="btn btn-primary" style="width: 100%;" onclick="window.drawer.close()">Got it</button>
+            </div>
+        `);
     },
 
     viewLogHistory() {

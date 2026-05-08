@@ -272,6 +272,10 @@ const createDailyLogSchema = z.object({
   progressIncrement: z.number().int().min(0).max(100).optional(),
   submissionLat: z.coerce.number().optional(),
   submissionLng: z.coerce.number().optional(),
+  submissionAccuracy: z.coerce.number().optional(),
+  locationSource: z.string().optional(),
+  deviceType: z.string().optional(),
+  locationCapturedAt: z.string().optional(),
   photos: z.array(z.any()).optional(), // Added for evidence
 });
 

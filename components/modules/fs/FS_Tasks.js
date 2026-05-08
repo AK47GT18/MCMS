@@ -199,40 +199,70 @@ export const FS_Tasks = {
 
     async handleDailyLogSubmit(payloadOverride = null) {
         try {
-            // Get location if available
-            let lat = null, lng = null;
-            if (navigator.geolocation) {
-                try {
-                    console.log('[FS] Verifying site coordinates...');
-                    const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: true,
-                            timeout: 10000
-                        });
+            console.log('[FS] Initiating secure site log submission...');
+            
+            // 1. Get Location (Prefer cached bestPosition from dashboard sync)
+            let pos = this.bestPosition;
+            
+            // 2. Fallback: If no sync, try one-shot (less accurate but required for flow)
+            if (!pos && navigator.geolocation) {
+                console.log('[FS] No cached sync found. Attempting quick location capture...');
+                pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 30000 // allow 30s old cache for speed
                     });
-                    lat = pos.coords.latitude;
-                    lng = pos.coords.longitude;
-                } catch (e) {
-                    console.warn('GPS capture failed:', e);
-                    if (e.code === 1) {
-                        throw new Error('Location permission denied. Please enable GPS in your browser/device settings to submit logs.');
-                    }
-                    throw new Error('Could not verify location. Please ensure location services are enabled and you have internet/GPS connection.');
-                }
-            } else {
-                throw new Error('Geolocation is not supported by your browser.');
+                });
             }
 
-            console.log('[FS] Uploading site log...');
+            if (!pos) {
+                throw new Error('Location verification required. Please click "Sync Location" on the dashboard first.');
+            }
 
-            // Build payload
+            const { latitude, longitude, accuracy } = pos.coords;
+            const capturedAt = pos.timestamp || Date.now();
+
+            // 3. Temporal Validation (Anti-Spoofing)
+            const ageMs = Date.now() - capturedAt;
+            if (ageMs > 120000) { // 2 minutes
+                throw new Error('Location data is too old. Please re-sync your location on the dashboard.');
+            }
+
+            // 4. Adaptive Thresholds & Geofence Logic
+            const project = this.assignedProject;
+            if (!project) throw new Error('Project context missing.');
+
+            const distToSite = this.calculateDistance(latitude, longitude, parseFloat(project.lat), parseFloat(project.lng));
+            const effectiveDist = distToSite - accuracy; // User's possible closest point to site
+            const allowedRadius = project.radius || 500;
+
+            console.log(`[FS GPS] Distance: ${Math.round(distToSite)}m, Accuracy: ±${Math.round(accuracy)}m, Effective: ${Math.round(effectiveDist)}m`);
+
+            // Policy Rejection
+            if (accuracy > 500) {
+                throw new Error('Likely IP-based location detected. Please enable Wi-Fi or move near a window to improve precision (±500m required).');
+            }
+
+            if (effectiveDist > allowedRadius) {
+                const overage = Math.round(effectiveDist - allowedRadius);
+                throw new Error(`Submission rejected: You are outside the project geofence (approx. ${overage}m away).`);
+            }
+
+            // 5. Build Payload with Metadata
             const payload = {
-                projectId: this.assignedProject?.id || 1, // Fallback for testing
+                projectId: project.id,
                 logDate: new Date().toISOString().split('T')[0],
                 narrative: payloadOverride?.narrative || document.getElementById('daily-narrative')?.value || 'Daily Progress',
                 status: 'submitted',
-                submissionLat: lat,
-                submissionLng: lng
+                
+                // Location Metadata (Enterprise Grade)
+                submissionLat: latitude,
+                submissionLng: longitude,
+                submissionAccuracy: Math.round(accuracy),
+                locationSource: accuracy < 75 ? 'GPS/WiFi' : 'Triangulated',
+                deviceType: /Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+                locationCapturedAt: new Date(capturedAt).toISOString()
             };
 
             // Add extra fields if payload override provided

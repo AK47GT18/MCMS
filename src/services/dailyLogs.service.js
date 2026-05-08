@@ -69,12 +69,30 @@ async function create(data, userId) {
     );
 
     if (!geofenceResult.isWithin) {
-      if (geofenceResult.distanceMeters === null) {
-        throw new AppError('Submission rejected: Project coordinates are not configured in the system.', 400);
-      } else {
-        throw new AppError(`Submission rejected: You are outside the project geofence (${Math.round(geofenceResult.distanceMeters)}m away).`, 400);
+      // ENTERPRISE LOGIC: Use Effective Distance (Distance - Accuracy)
+      const accuracy = Number(data.submissionAccuracy || 0);
+      const effectiveDistance = geofenceResult.distanceMeters - accuracy;
+      
+      if (effectiveDistance > (project.radius || 500)) {
+        throw new AppError(`Submission rejected: You are outside the project geofence (approx. ${Math.round(effectiveDistance)}m away).`, 400);
+      }
+      
+      logger.info('Geofence boundary pass via Accuracy Buffer', { 
+        distance: geofenceResult.distanceMeters, 
+        accuracy, 
+        effectiveDistance 
+      });
+    }
+
+    // --- ANTI-SPOOFING: Temporal Validation ---
+    if (data.locationCapturedAt) {
+      const capturedAt = new Date(data.locationCapturedAt).getTime();
+      const now = Date.now();
+      if (now - capturedAt > 120000) { // 2 minutes
+        throw new AppError('Submission rejected: Location data is stale (> 2 mins). Please re-sync location.', 400);
       }
     }
+
     locationVerified = true;
   } else {
     throw new AppError('Location coordinates are required to submit a daily log.', 400);
@@ -122,6 +140,10 @@ async function create(data, userId) {
       logDate: new Date(data.logDate),
       submissionLat,
       submissionLng,
+      submissionAccuracy: data.submissionAccuracy,
+      locationSource: data.locationSource,
+      deviceType: data.deviceType,
+      locationCapturedAt: data.locationCapturedAt ? new Date(data.locationCapturedAt) : null,
       locationVerified,
       ...(expenseItems && expenseItems.length > 0 && {
         expenses: {
