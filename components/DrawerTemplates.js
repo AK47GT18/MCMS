@@ -1150,15 +1150,9 @@ export const DrawerTemplates = {
 
             <!-- STEP 3: Accessories Checklist -->
             <div id="wizard-pane-3" class="wizard-pane" style="display:none; animation: fadeIn 0.3s ease;">
-                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Step 3: Road Accessories & Safety</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Select additional features required for this specification.</div>
-                    </div>
-                    <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 11px; color: var(--red); border-color: var(--red-light);" 
-                        onclick="if(confirm('Reset all wizard progress?')) window.app.pmModule.resetWizardCache()">
-                        <i class="fas fa-trash-alt"></i> Reset
-                    </button>
+                <div style="margin-bottom: 20px; padding: 12px; background: var(--slate-50); border-radius: 8px;">
+                    <div style="font-weight: 700; color: var(--slate-700); font-size: 14px;">Step 3: Road Accessories & Safety</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">Select additional features required for this specification.</div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
@@ -1203,7 +1197,44 @@ export const DrawerTemplates = {
                     </label>
                 </div>
 
-                <!-- Note removed as requested -->
+                <div style="margin-bottom: 20px; padding: 12px; background: #fff7ed; border-radius: 8px; border: 1px solid #ffedd5;">
+                    <div style="font-weight: 700; color: #9a3412; font-size: 14px;">Fleet & Heavy Equipment</div>
+                    <div style="font-size: 11px; color: #c2410c;">Select core machinery required for this road type.</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="fleet_excavator" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Excavator Group</div>
+                            <div style="font-size:10px; color:var(--slate-500);">20T/30T digging & loading</div>
+                        </div>
+                    </label>
+                    
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="fleet_grader" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Motor Grader</div>
+                            <div style="font-size:10px; color:var(--slate-500);">140K precision levelling</div>
+                        </div>
+                    </label>
+
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="fleet_roller" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Compaction Fleet</div>
+                            <div style="font-size:10px; color:var(--slate-500);">10T Vibratory & Pneumatic</div>
+                        </div>
+                    </label>
+
+                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                        <input type="checkbox" name="road_acc" value="fleet_tipper" style="margin-top:3px; accent-color:var(--orange);">
+                        <div>
+                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Haulage Group</div>
+                            <div style="font-size:10px; color:var(--slate-500);">15m³ Tipper Truck fleet</div>
+                        </div>
+                    </label>
+                </div>
 
                 <div style="margin-bottom: 20px;">
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:8px;">Street Lighting Option</label>
@@ -1221,19 +1252,9 @@ export const DrawerTemplates = {
                 <div id="budget_recon_banner" style="background: var(--red-light); padding: 12px; border-radius: 8px; border: 1px solid var(--red-hover); margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
                     <i id="budget_recon_icon" class="fas fa-lock" style="color: var(--red); font-size: 20px;"></i>
                     <div style="flex:1;">
-                        <div id="budget_recon_title" style="font-weight: 700; color: var(--red-dark); font-size: 14px; display:flex; justify-content:space-between; align-items:center;">
+                        <div id="budget_recon_title" style="font-weight: 700; color: var(--red-dark); font-size: 14px; display:flex; justify-content:space-between;">
                             <span>Budget Reconciliation</span>
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px; height:24px; border-style:dashed;" 
-                                    onclick="window.app.pmModule.generateEstimatedReceipt()">
-                                    <i class="fas fa-sync-alt"></i> Refresh
-                                </button>
-                                <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px; height:24px; color:var(--red); border-color:var(--red-light);" 
-                                    onclick="if(confirm('Reset all wizard progress?')) window.app.pmModule.resetWizardCache()">
-                                    <i class="fas fa-trash-alt"></i> Reset
-                                </button>
-                                <span id="budget_gap_indicator" style="margin-left:8px;">MWK 0.00 Gap</span>
-                            </div>
+                            <span id="budget_gap_indicator">MWK 0.00 Gap</span>
                         </div>
                         <div id="budget_recon_hint" style="font-size: 11px; color: var(--red);">Toggle items off if the estimate exceeds your allocated budget.</div>
                     </div>
