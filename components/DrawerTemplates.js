@@ -1654,11 +1654,98 @@ export const DrawerTemplates = {
         }
             </div>
             
-            <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
-                <i class="fas fa-arrow-left"></i> Back to Current Log
-            </button>
         </div>
     `,
+
+    dailyLogDetails: (log) => {
+        const photos = log.photos || [];
+        const machinery = log.assetUsage || [];
+        const isFlagged = log.locationFlagged;
+
+        return `
+            <div class="drawer-section" style="padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Report Date</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${new Date(log.logDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Completion</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald);">${log.progressCompletion || 0}%</div>
+                    </div>
+                </div>
+
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 8px;">Site Narrative</div>
+                    <div style="font-size: 14px; line-height: 1.6; color: var(--slate-800); font-weight: 500;">
+                        ${log.narrative || 'No narrative provided for this log.'}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between;">
+                        <span>Site Photos (${photos.length})</span>
+                    </div>
+                    ${photos.length > 0 ? `
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                            ${photos.map((p, idx) => `
+                                <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--slate-200); background: var(--slate-100); aspect-ratio: 1/1;">
+                                    <img src="${p.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.utils.viewImage('${p.dataUrl}')">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 8px; background: rgba(0,0,0,0.5); color: white; font-size: 9px;">
+                                        Photo ${idx + 1}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div style="padding: 24px; text-align: center; background: var(--slate-50); border-radius: 8px; color: var(--slate-400); border: 1px dashed var(--slate-200);">
+                            <i class="fas fa-image" style="font-size: 24px; margin-bottom: 8px;"></i>
+                            <div style="font-size: 12px;">No photos uploaded.</div>
+                        </div>
+                    `}
+                </div>
+
+                ${machinery.length > 0 ? `
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 12px;">Machinery Utilization</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${machinery.map(m => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: white; border: 1px solid var(--slate-200); border-radius: 8px;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">Asset ID: ${m.assetId}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">Operator: ${m.operator || 'Unspecified'}</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 13px; font-weight: 700; color: var(--blue);">${m.hoursUsed} hrs</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">${m.fuelConsumed || 0}L Fuel</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div style="padding: 16px; border-radius: 12px; background: ${isFlagged ? 'var(--orange-light)' : 'var(--emerald-light)'}; border: 1px solid ${isFlagged ? 'var(--orange)' : 'var(--emerald)'}; color: ${isFlagged ? 'var(--orange-dark)' : 'var(--emerald-dark)'}; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i class="fas ${isFlagged ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size: 20px;"></i>
+                        <div>
+                            <div style="font-weight: 800; font-size: 13px;">GPS ${isFlagged ? 'Warning' : 'Verified'}</div>
+                            <div style="font-size: 11px; opacity: 0.9;">
+                                ${isFlagged 
+                                    ? `Submission flagged: Distance outside work zone or low accuracy detected.` 
+                                    : `This report was verified within the project geofence with high precision.`}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 10px; font-family: monospace;">
+                        Lat: ${log.submissionLat?.toFixed(6) || 'N/A'}, Lng: ${log.submissionLng?.toFixed(6) || 'N/A'} (±${log.submissionAccuracy || '??'}m)
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" onclick="window.drawer.close()">Close Details</button>
+            </div>
+        `;
+    },
 
     logEquipmentUsage: `
          <div class="drawer-section">
@@ -2753,7 +2840,11 @@ Contract Admin</textarea>
 
             <div id="issue-project-selector" style="margin-bottom: 20px; display: ${projectId ? 'block' : 'none'};">
                 <label class="form-label">Affected Project <span style="color:var(--red);">*</span></label>
-                <select id="issue-project" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)">
+                <div id="issue-project-locked" style="display: none; background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); font-weight: 600; color: var(--slate-700);">
+                    <i class="fas fa-building" style="margin-right: 8px; color: var(--slate-400);"></i>
+                    <span id="locked-project-name">Loading...</span>
+                </div>
+                <select id="issue-project" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="display: block;">
                     <option value="">Select Project...</option>
                 </select>
                 <div class="v-msg v-msg-err" style="display:none; font-size:11px; margin-top:4px;">Please select the project being impacted.</div>
@@ -2790,7 +2881,7 @@ Contract Admin</textarea>
                 <label class="form-label">Detailed Narrative / Description <span style="color:var(--red);">*</span></label>
                 <textarea id="issue-description" class="form-input" data-vrules="required|minLen:20" rows="5" 
                     placeholder="Provide clear details on the issue, root cause, and immediate impact..." 
-                    oninput="window.app.pmModule.validateIssueInline()"></textarea>
+                    oninput="(window.app.pmModule || window.app.fsModule)?.validateIssueInline()"></textarea>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px; display: flex; justify-content: space-between;">
                     <span>Minimum 20 characters required</span>
                     <span id="issue-char-count">0 / 20</span>
@@ -2802,38 +2893,75 @@ Contract Admin</textarea>
                 <label class="form-label">Photo Evidence (Optional)</label>
                 <div id="issue-photo-btn" onclick="document.getElementById('issue-photo-input').click()" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;">
                     <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
-                    <div style="font-weight: 600; font-size: 12px;">Snap or Upload photo</div>
-                    <input type="file" id="issue-photo-input" accept="image/*" style="display:none;" onchange="window.app.pmModule.handleIssuePhoto(this)">
+                    <div style="font-weight: 600; font-size: 12px;">Snap or Upload photo for fs report for the current project their on and also internal only just for fs</div>
+                    <input type="file" id="issue-photo-input" accept="image/*" style="display:none;" onchange="(window.app.pmModule || window.app.fsModule)?.handleIssuePhoto(this)">
                 </div>
                 <div id="issue-photo-preview" style="display:none; margin-top:12px;"></div>
             </div>
 
-            <button id="btn-submit-issue" class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);" onclick="window.app.pmModule.handleSubmitIssue()">Submit Issue Report</button>
+            <button id="btn-submit-issue" class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);" onclick="window.app.handleIssueSubmit()">Submit Issue Report</button>
 
             <script>
                 (function() {
-                    const projectId = ${JSON.stringify(projectId)};
+                    let projectId = ${JSON.stringify(projectId)};
+                    // Auto-detect project if not passed (e.g. from generic mobile menu)
+                    if (!projectId && window.app?.fsModule?.assignedProject?.id) {
+                        projectId = window.app.fsModule.assignedProject.id;
+                    }
+                    
                     const selectorEl = document.getElementById('issue-project-selector');
                     const projectSelect = document.getElementById('issue-project');
                     const infoEl = document.getElementById('issue-internal-info');
+                    const scopeInput = document.getElementById('issue-scope');
                     
-                    // Populate projects list from any available module
+                    window.app.toggleIssueScope = (scope) => {
+                        const projectBtn = document.getElementById('scope-project');
+                        const internalBtn = document.getElementById('scope-internal');
+                        const lockedEl = document.getElementById('issue-project-locked');
+                        
+                        if (scope === 'project') {
+                            projectBtn.classList.add('active');
+                            internalBtn.classList.remove('active');
+                            scopeInput.value = 'project';
+                            
+                            if (projectId) {
+                                selectorEl.style.display = 'block';
+                                projectSelect.style.display = 'none';
+                                if (lockedEl) lockedEl.style.display = 'block';
+                            } else {
+                                selectorEl.style.display = 'block';
+                                projectSelect.style.display = 'block';
+                                if (lockedEl) lockedEl.style.display = 'none';
+                            }
+                            if (infoEl) infoEl.style.display = 'none';
+                        } else {
+                            projectBtn.classList.remove('active');
+                            internalBtn.classList.add('active');
+                            scopeInput.value = 'internal';
+                            selectorEl.style.display = 'none';
+                            if (infoEl) infoEl.style.display = 'block';
+                        }
+                    };
+
+                    // Populate projects list
                     const availableProjects = (window.app?.pmModule?.projects || window.app?.fmModule?.allProjects || window.app?.caModule?.allProjects || []);
-                    
                     if (projectSelect) {
                         availableProjects.forEach(p => {
                             const option = document.createElement('option');
                             option.value = p.id;
                             option.textContent = (p.code || 'PRJ') + ' - ' + p.name;
-                            if (projectId && parseInt(projectId) === parseInt(p.id)) option.selected = true;
+                            if (projectId && parseInt(projectId) === parseInt(p.id)) {
+                                option.selected = true;
+                                const lockedName = document.getElementById('locked-project-name');
+                                if (lockedName) lockedName.textContent = (p.code || 'PRJ') + ' - ' + p.name;
+                            }
                             projectSelect.appendChild(option);
                         });
                     }
-                    
+
+                    // Initial state
                     if (projectId) {
-                        const scopeWrapper = document.getElementById('issue-scope-wrapper');
-                        if (scopeWrapper && scopeWrapper.parentElement) scopeWrapper.parentElement.style.display = 'none';
-                        if (selectorEl) selectorEl.style.display = 'block';
+                        window.app.toggleIssueScope('project');
                     }
                 })();
             </script>

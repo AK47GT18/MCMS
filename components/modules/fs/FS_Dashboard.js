@@ -46,10 +46,10 @@ export const FS_Dashboard = {
             </div>
 
             <div class="stats-grid action-tiles" style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-                <div class="stat-card" style="border: 1px solid var(--slate-200); ${isCompleted ? 'opacity: 0.6; cursor: not-allowed;' : 'cursor: pointer;'}" 
-                    onclick="${isCompleted ? "window.toast.show('Progress logging is disabled for completed projects.', 'warning')" : "window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())"}">
-                    <div style="color: var(--orange); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-camera"></i></div>
-                    <div style="font-weight: 800; font-size: 13px;">Daily Log</div>
+                <div class="stat-card" style="border: 1px solid var(--slate-200); cursor: pointer;" 
+                    onclick="window.app.fsModule.switchView('daily_progress')">
+                    <div style="color: var(--orange); margin-bottom: 12px; font-size: 20px;"><i class="fas fa-clipboard-check"></i></div>
+                    <div style="font-weight: 800; font-size: 13px;">Daily Progress</div>
                 </div>
                 <div class="stat-card" style="border: 1px solid var(--slate-200); ${isCompleted ? 'opacity: 0.6; cursor: not-allowed;' : 'cursor: pointer;'}" 
                     onclick="${isCompleted ? "window.toast.show('New requests are disabled for completed projects.', 'warning')" : "window.app.fsModule.openResourceRequestDrawer()"}">
@@ -158,7 +158,21 @@ export const FS_Dashboard = {
             });
             const logs = Array.isArray(result) ? result : (result.data || []);
             this.dailyLogsCount = logs.length;
-            this._refreshCurrentView();
+            // Update the stat counter in-place to avoid destroying the map DOM
+            const statEl = document.querySelector('.stat-card .stat-value');
+            if (statEl && this.currentView === 'dashboard') {
+                // Find the "Site Logs" stat card and update its value
+                const statCards = document.querySelectorAll('.stat-card');
+                statCards.forEach(card => {
+                    const label = card.querySelector('.stat-label');
+                    if (label && label.textContent.trim() === 'Site Logs') {
+                        const val = card.querySelector('.stat-value');
+                        if (val) val.textContent = this.dailyLogsCount;
+                    }
+                });
+            } else {
+                this._refreshCurrentView();
+            }
         } catch (error) {
             console.error('[FS] Failed to load dashboard stats:', error);
         }
@@ -199,9 +213,16 @@ export const FS_Dashboard = {
             return;
         }
 
+        // Prevent duplicate initialization when map is already live on this container
+        if (this.geofenceMap && mapContainer.querySelector('.leaflet-container, .leaflet-pane')) {
+            console.log('[FS Map] Already initialized, skipping.');
+            return;
+        }
+
         // Clear existing map instance if any
         if (this.geofenceMap) {
-            this.geofenceMap.remove();
+            try { this.geofenceMap.remove(); } catch(e) {}
+            this.geofenceMap = null;
         }
 
         const { lat, lng, radius, name } = this.assignedProject;

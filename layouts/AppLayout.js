@@ -41,8 +41,8 @@ export class AppLayout {
         if (currentUser.role === ROLES.FIELD_SUPERVISOR && allItems.length > 5) {
             mobileItems = allItems.slice(0, 4);
             mobileItems.push({
-                label: 'Reporting',
-                icon: '<i class="fas fa-clipboard-check"></i>',
+                label: 'Governance',
+                icon: '<i class="fas fa-headset"></i>',
                 id: 'mobile_reporting',
                 action: 'drawer',
                 drawerId: 'reportingMenu'
@@ -695,6 +695,7 @@ export class AppLayout {
         modal.confirm('Sign Out', 'Are you sure you want to sign out?', () => {
             window.toast.show('Signing out...', 'info');
             localStorage.removeItem('mcms_auth_token');
+            localStorage.removeItem('mcms_last_page');
             // Disconnect WebSocket gracefully
             if (window.realtime) window.realtime.disconnect();
             setTimeout(() => {

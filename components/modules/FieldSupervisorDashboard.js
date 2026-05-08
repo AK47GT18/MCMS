@@ -211,6 +211,7 @@ export class FieldSupervisorDashboard {
             case 'gantt': contentHTML = this.getGanttView(); break;
             case 'equipment': contentHTML = this.getEquipmentView(); break;
             case 'logistics': contentHTML = this.getLogisticsView(); break;
+            case 'daily_progress': contentHTML = this.getDailyProgressView(); break;
             case 'reporting': contentHTML = this.getReportingView(); break;
             default: contentHTML = this.getDashboardView();
         }
@@ -283,9 +284,9 @@ export class FieldSupervisorDashboard {
                     
                     <!-- Desktop-only Actions in Header -->
                     <div class="hidden-mobile" style="display:flex; gap:8px;">
-                        <button class="btn btn-secondary" onclick="window.app.openIssueDrawer(window.app.fsModule.assignedProject?.id, 'Report Site Issue')">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>Report Issue</span>
+                        <button class="btn btn-secondary" onclick="window.app.fsModule.switchView('reporting')">
+                            <i class="fas fa-headset"></i>
+                            <span>Governance</span>
                         </button>
                         <button class="btn btn-secondary" onclick="window.app.fsModule.openResourceRequestDrawer()">
                             <i class="fas fa-plus-circle"></i>
@@ -305,67 +306,168 @@ export class FieldSupervisorDashboard {
 
     getReportingView() {
         // Trigger data load after render
-        setTimeout(() => this.loadReportingData('incidents'), 0);
+        setTimeout(() => this.loadReportingData('issues'), 0);
 
         return `
-            <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 20px; font-weight: 800; color: var(--slate-900); margin-bottom: 4px;">Safety & Issues Center</h2>
-                <p style="font-size: 13px; color: var(--slate-500);">Track incidents and reported issues across your site.</p>
-            </div>
+            <div class="view-content" style="padding: 24px;">
+                <div class="data-card shadow-sm" style="background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--slate-200);">
+                    <div style="padding: 20px; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between; align-items: center; background: var(--slate-50);">
+                        <div>
+                            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--slate-900);">Governance & Reported Issues</h3>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--slate-500);">Track blockers and PM responses to your site reports.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="issue-category-filter" class="form-input" style="padding: 6px 12px; font-size: 11px; width: auto; height: 32px;" onchange="window.app.fsModule.loadReportingData('issues')">
+                                <option value="all">All Categories</option>
+                                <option value="Material Shortage">Material Shortage</option>
+                                <option value="Weather Delay">Weather Delay</option>
+                                <option value="Equipment Breakdown">Equipment Breakdown</option>
+                                <option value="Technical Clarification">Technical Clarification</option>
+                                <option value="Labor Dispute">Labor Dispute</option>
+                            </select>
+                            <select id="issue-status-filter" class="form-input" style="padding: 6px 12px; font-size: 11px; width: auto; height: 32px;" onchange="window.app.fsModule.loadReportingData('issues')">
+                                <option value="all">All Statuses</option>
+                                <option value="open">Open Blockers</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" style="height: 32px;" onclick="window.app.fsModule.loadReportingData('issues')">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                            <button class="btn btn-action btn-sm" style="height: 32px;" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint(window.app.fsModule.assignedProject?.id))">
+                                <i class="fas fa-plus"></i> Report Issue
+                            </button>
+                        </div>
+                    </div>
 
-            <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--slate-200); padding-bottom: 0;">
-                <button id="tab_incidents" class="btn" style="padding: 10px 20px; font-weight: 700; font-size: 13px; border: none; border-bottom: 3px solid var(--red); color: var(--red); background: transparent; border-radius: 0; cursor: pointer;"
-                    onclick="window.app.fsModule.switchReportingTab('incidents')">
-                    <i class="fas fa-helmet-safety" style="margin-right: 6px;"></i> Safety Incidents
-                </button>
-                <button id="tab_issues" class="btn" style="padding: 10px 20px; font-weight: 700; font-size: 13px; border: none; border-bottom: 3px solid transparent; color: var(--slate-400); background: transparent; border-radius: 0; cursor: pointer;"
-                    onclick="window.app.fsModule.switchReportingTab('issues')">
-                    <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Reported Issues
-                </button>
-                <div style="margin-left: auto; display: flex; gap: 8px;">
-                    <button class="btn btn-primary" id="reporting_new_btn" style="padding: 8px 16px; font-size: 12px; background: var(--red); border-color: var(--red);"
-                        onclick="window.drawer.open('Report Safety Incident', window.DrawerTemplates.safetyIncident())">
-                        <i class="fas fa-plus"></i> Report New
-                    </button>
-                </div>
-            </div>
-
-            <div id="reporting-table-container" style="border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden; background: white;">
-                <div style="padding: 40px; text-align: center; color: var(--slate-400);">
-                    <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
-                    <div>Loading reports...</div>
+                    <div id="reporting-table-container">
+                        <div style="padding: 60px; text-align: center; color: var(--slate-400);">
+                            <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                            <div>Loading reports...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
     }
 
-    switchReportingTab(tab) {
-        const incBtn = document.getElementById('tab_incidents');
-        const issBtn = document.getElementById('tab_issues');
-        const newBtn = document.getElementById('reporting_new_btn');
+    getDailyProgressView() {
+        setTimeout(() => this.loadDailyProgressData(), 0);
+        return `
+            <div class="view-content" style="padding: 24px;">
+                <div class="data-card shadow-sm" style="background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--slate-200);">
+                    <div style="padding: 20px; border-bottom: 1px solid var(--slate-100); display: flex; justify-content: space-between; align-items: center; background: var(--slate-50);">
+                        <div>
+                            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--slate-900);">Daily Progress Reports</h3>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--slate-500);">Historical record of site activity and work logs.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="btn btn-secondary btn-sm" style="height: 32px;" onclick="window.app.fsModule.loadDailyProgressData()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                            <button class="btn btn-action btn-sm" style="height: 32px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                                <i class="fas fa-plus"></i> Submit Daily Report
+                            </button>
+                        </div>
+                    </div>
 
-        if (tab === 'incidents') {
-            incBtn.style.borderBottomColor = 'var(--red)';
-            incBtn.style.color = 'var(--red)';
-            issBtn.style.borderBottomColor = 'transparent';
-            issBtn.style.color = 'var(--slate-400)';
-            newBtn.style.background = 'var(--red)';
-            newBtn.style.borderColor = 'var(--red)';
-            newBtn.innerHTML = '<i class="fas fa-plus"></i> Report New';
-            newBtn.onclick = () => window.drawer.open('Report Safety Incident', window.DrawerTemplates.safetyIncident());
-        } else {
-            issBtn.style.borderBottomColor = 'var(--amber)';
-            issBtn.style.color = 'var(--amber-dark, #92400e)';
-            incBtn.style.borderBottomColor = 'transparent';
-            incBtn.style.color = 'var(--slate-400)';
-            newBtn.style.background = 'var(--amber)';
-            newBtn.style.borderColor = 'var(--amber)';
-            newBtn.innerHTML = '<i class="fas fa-plus"></i> Report Issue';
-            newBtn.onclick = () => window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint);
-        }
-
-        this.loadReportingData(tab);
+                    <div id="daily-progress-table-container">
+                        <div style="padding: 60px; text-align: center; color: var(--slate-400);">
+                            <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i>
+                            <div>Loading reports...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
+
+    async loadDailyProgressData() {
+        const container = document.getElementById('daily-progress-table-container');
+        if (!container) return;
+
+        try {
+            const res = await client.get('/daily-logs', { projectId: this.assignedProject?.id });
+            const data = Array.isArray(res) ? res : (res.data || []);
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 60px; text-align: center; color: var(--slate-400);">
+                        <i class="fas fa-clipboard-list" style="font-size: 40px; margin-bottom: 16px; opacity: 0.3;"></i>
+                        <div style="font-weight: 700; font-size: 14px;">No progress reports found.</div>
+                        <div style="font-size: 12px; margin-top: 4px;">Click "Submit Daily Report" to log your first update.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            this.renderDailyProgressTable(container, data);
+        } catch (err) {
+            console.error('[FS] Error loading daily logs:', err);
+            container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--red);">Failed to load data.</div>`;
+        }
+    }
+
+    renderDailyProgressTable(container, logs) {
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Progress</th>
+                            <th>Narrative</th>
+                            <th>GPS Status</th>
+                            <th>Evidence</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${logs.sort((a,b) => new Date(b.logDate) - new Date(a.logDate)).map(log => {
+                            const isFlagged = log.locationFlagged;
+                            return `
+                                <tr>
+                                    <td style="font-weight: 700;">${new Date(log.logDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <div style="flex:1; height:6px; background:var(--slate-100); border-radius:3px; overflow:hidden;">
+                                                <div style="width:${log.progressCompletion || 0}%; height:100%; background:var(--emerald);"></div>
+                                            </div>
+                                            <span style="font-size:11px; font-weight:700;">${log.progressCompletion || 0}%</span>
+                                        </div>
+                                    </td>
+                                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px;">
+                                        ${log.narrative || '—'}
+                                    </td>
+                                    <td>
+                                        ${isFlagged 
+                                            ? `<span class="badge badge-warning" style="font-size: 10px;"><i class="fas fa-exclamation-triangle"></i> Flagged</span>` 
+                                            : `<span class="badge badge-success" style="font-size: 10px;"><i class="fas fa-check-circle"></i> Verified</span>`}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        ${(log.photos && log.photos.length > 0) ? `
+                                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                                <i class="fas fa-images" style="color: var(--blue);"></i>
+                                                <span style="font-size: 10px; font-weight: 700; color: var(--slate-500);">${log.photos.length}</span>
+                                            </div>
+                                        ` : '<span style="color: var(--slate-300);">—</span>'}
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" 
+                                            onclick='window.drawer.open("Log Details", window.DrawerTemplates.dailyLogDetails(${JSON.stringify(log).replace(/"/g, '&quot;')}))'>
+                                            <i class="fas fa-eye"></i> View Report
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // switchReportingTab removed as Governance is now the primary center
 
     async loadReportingData(tab) {
         const container = document.getElementById('reporting-table-container');
@@ -374,110 +476,78 @@ export class FieldSupervisorDashboard {
         container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size: 24px; color: var(--orange); margin-bottom: 12px;"></i><div>Loading...</div></div>`;
 
         try {
-            const endpoint = tab === 'incidents' ? '/safety-incidents' : '/issues';
-            const res = await client.get(endpoint, { projectId: this.assignedProject?.id });
-            const data = Array.isArray(res) ? res : (res.data || []);
+            const res = await client.get('/issues', { projectId: this.assignedProject?.id });
+            const filterStatus = document.getElementById('issue-status-filter')?.value || 'all';
+            const filterCategory = document.getElementById('issue-category-filter')?.value || 'all';
+            let data = Array.isArray(res) ? res : (res.data || []);
 
-            if (data.length === 0) {
-                const icon = tab === 'incidents' ? 'fa-shield-check' : 'fa-check-circle';
-                const msg = tab === 'incidents' ? 'No safety incidents reported.' : 'No issues reported.';
-                const color = tab === 'incidents' ? 'var(--emerald)' : 'var(--blue)';
-                container.innerHTML = `
-                    <div style="padding: 60px; text-align: center; color: var(--slate-400);">
-                        <i class="fas ${icon}" style="font-size: 40px; margin-bottom: 16px; color: ${color};"></i>
-                        <div style="font-weight: 700; font-size: 14px;">${msg}</div>
-                        <div style="font-size: 12px; margin-top: 4px;">All clear on your site.</div>
-                    </div>
-                `;
-                return;
+            if (filterStatus !== 'all') {
+                data = data.filter(i => (i.status || 'open').toLowerCase() === filterStatus);
+            }
+            if (filterCategory !== 'all') {
+                data = data.filter(i => i.type === filterCategory || i.category === filterCategory);
             }
 
-            if (tab === 'incidents') {
-                this.renderIncidentsTable(container, data);
-            } else {
-                this.renderIssuesTable(container, data);
-            }
+            this.renderIssuesTable(container, data);
         } catch (err) {
             console.error(`[FS] Error loading ${tab}:`, err);
             container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--red);"><i class="fas fa-exclamation-circle" style="font-size: 24px; margin-bottom: 8px;"></i><div>Failed to load data.</div></div>`;
         }
     }
 
-    renderIncidentsTable(container, incidents) {
-        container.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: var(--slate-50); border-bottom: 2px solid var(--slate-200); text-align: left;">
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">ID</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Date</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Type</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Priority</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Status</th>
-                        <th style="padding: 14px 16px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${incidents.map(inc => {
-                        const statusClass = (inc.status || 'pending').toLowerCase() === 'resolved' ? 'active' : 'pending';
-                        const priorityColor = (inc.priority || 'high').toLowerCase() === 'high' ? 'var(--red)' : (inc.priority || '').toLowerCase() === 'medium' ? 'var(--amber)' : 'var(--emerald)';
-                        return `
-                            <tr style="border-bottom: 1px solid var(--slate-100); cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-                                <td style="padding: 14px 16px; font-weight: 700; font-size: 13px; color: var(--slate-900);">${inc.id || '—'}</td>
-                                <td style="padding: 14px 16px; font-size: 12px; color: var(--slate-600);">${new Date(inc.createdAt || Date.now()).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'})}</td>
-                                <td style="padding: 14px 16px; font-size: 13px; font-weight: 600;">${inc.type || 'Injury'}</td>
-                                <td style="padding: 14px 16px;"><span style="color: ${priorityColor}; font-weight: 700; font-size: 12px; text-transform: uppercase;">${inc.priority || 'High'}</span></td>
-                                <td style="padding: 14px 16px;"><span class="status ${statusClass}" style="font-size: 11px;">${(inc.status || 'PENDING').toUpperCase()}</span></td>
-                                <td style="padding: 14px 16px; text-align: right;">
-                                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick='event.stopPropagation(); window.drawer.open("Incident Thread", window.DrawerTemplates.safetyIncident(${JSON.stringify(inc).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
-                                        <i class="fas fa-comments"></i> Thread
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        `;
-    }
-
     renderIssuesTable(container, issues) {
         container.innerHTML = `
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: var(--slate-50); border-bottom: 2px solid var(--slate-200); text-align: left;">
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">ID</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Date</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Category</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Priority</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Status</th>
-                        <th style="padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">PM Response</th>
-                        <th style="padding: 14px 16px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${issues.map(issue => {
-                        const statusClass = (issue.status || 'open').toLowerCase() === 'resolved' ? 'active' : (issue.status || '').toLowerCase() === 'in_progress' ? 'locked' : 'pending';
-                        const priorityColor = (issue.priority || 'medium').toLowerCase() === 'high' ? 'var(--red)' : (issue.priority || '').toLowerCase() === 'medium' ? 'var(--amber)' : 'var(--emerald)';
-                        return `
-                            <tr style="border-bottom: 1px solid var(--slate-100); cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-                                <td style="padding: 14px 16px; font-weight: 700; font-size: 13px; color: var(--slate-900);">#${issue.id || '—'}</td>
-                                <td style="padding: 14px 16px; font-size: 12px; color: var(--slate-600);">${new Date(issue.createdAt || Date.now()).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'})}</td>
-                                <td style="padding: 14px 16px; font-size: 13px; font-weight: 600;">${issue.category || 'General'}</td>
-                                <td style="padding: 14px 16px;"><span style="color: ${priorityColor}; font-weight: 700; font-size: 12px; text-transform: uppercase;">${issue.priority || 'Medium'}</span></td>
-                                <td style="padding: 14px 16px;"><span class="status ${statusClass}" style="font-size: 11px;">${(issue.status || 'OPEN').toUpperCase()}</span></td>
-                                <td style="padding: 14px 16px; font-size: 12px; color: var(--slate-500); font-style: italic; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    ${issue.resolutionNotes || 'Awaiting response...'}
-                                </td>
-                                <td style="padding: 14px 16px; text-align: right;">
-                                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick='event.stopPropagation(); window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/'/g, "&#39;").replace(/"/g, "&quot;")}))'>
-                                        <i class="fas fa-eye"></i> Details
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Evidence</th>
+                            <th>Description</th>
+                            <th>Latest Response</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${issues.length === 0 
+                            ? '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--slate-400);">No issues reported by you.</td></tr>'
+                            : issues.map(issue => {
+                            const statusClass = (issue.status || 'open').toLowerCase() === 'resolved' ? 'active' : (issue.status || '').toLowerCase() === 'in_progress' ? 'locked' : 'pending';
+                            return `
+                                <tr>
+                                    <td style="font-weight: 700;">#${issue.id || '—'}</td>
+                                    <td>
+                                        <span class="badge" style="background: var(--slate-100); color: var(--slate-600); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                                            ${issue.category || issue.type || 'General'}
+                                        </span>
+                                    </td>
+                                    <td><span class="status ${statusClass}" style="font-size: 10px; font-weight: 700;">${(issue.status || 'OPEN').toUpperCase()}</span></td>
+                                    <td style="text-align: center;">
+                                        ${issue.photoUrl || (issue.photos && issue.photos.length > 0) ? `
+                                            <i class="fas fa-image" style="color: var(--blue); cursor: pointer;" title="View Evidence" 
+                                               onclick='window.viewDocument("${issue.photoUrl || issue.photos[0]}", "Evidence Preview")'></i>
+                                        ` : '<span style="color: var(--slate-300);">—</span>'}
+                                    </td>
+                                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px;">
+                                        ${issue.description || 'No description provided'}
+                                    </td>
+                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; color: var(--slate-500); font-size: 12px;">
+                                        ${issue.resolutionNotes || '<span style="opacity: 0.5;">Pending PM review...</span>'}
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" 
+                                            onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/"/g, '&quot;')}))'>
+                                            <i class="fas fa-eye"></i> View Thread
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
     }
 

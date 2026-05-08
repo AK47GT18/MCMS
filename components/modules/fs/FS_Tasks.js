@@ -248,41 +248,38 @@ export const FS_Tasks = {
                 throw new Error('Likely IP-based location detected. Please enable Wi-Fi or move near a window to improve precision (±500m required).');
             }
 
+            let outsideFence = false;
+            let overage = 0;
             if (effectiveDist > allowedRadius) {
-                const overage = Math.round(effectiveDist - allowedRadius);
-                throw new Error(`Submission rejected: You are outside the project geofence (approx. ${overage}m away).`);
+                outsideFence = true;
+                overage = Math.round(effectiveDist - allowedRadius);
+                console.warn(`[FS GPS] Submission outside geofence: ${overage}m overage.`);
             }
 
             // 5. Build Payload with Metadata
+            const progressValue = payloadOverride?.progressIncrement || document.getElementById('daily-progress-increment')?.value || 0;
             const payload = {
                 projectId: project.id,
                 logDate: new Date().toISOString().split('T')[0],
                 narrative: payloadOverride?.narrative || document.getElementById('daily-narrative')?.value || 'Daily Progress',
                 status: 'submitted',
+                progressCompletion: parseInt(progressValue),
                 
-                // Location Metadata (Enterprise Grade)
+                // Location Metadata
                 submissionLat: latitude,
                 submissionLng: longitude,
                 submissionAccuracy: Math.round(accuracy),
                 locationSource: accuracy < 75 ? 'GPS/WiFi' : 'Triangulated',
                 deviceType: isDesktop ? 'desktop' : 'mobile',
                 locationCapturedAt: new Date(capturedAt).toISOString(),
-                locationFlagged: accuracy > 150 // Mark for PM review if accuracy is Poor
+                locationFlagged: outsideFence || accuracy > 150
             };
 
-            // Add extra fields if payload override provided
+            // ... (rest of payload logic)
             if (payloadOverride) {
                 if (payloadOverride.taskId) payload.task_id = parseInt(payloadOverride.taskId);
-                if (payloadOverride.progressIncrement) payload.progressIncrement = parseInt(payloadOverride.progressIncrement);
                 if (payloadOverride.expenseItems) payload.expenseItems = payloadOverride.expenseItems;
                 if (payloadOverride.sos) payload.isSos = true;
-                
-                // Active Sync Metadata
-                if (payloadOverride.phaseId) {
-                    const phase = this.taskConfig?.phases?.find(p => p.id === payloadOverride.phaseId);
-                    payload.activePhase = phase ? phase.name : payloadOverride.phaseId;
-                }
-                if (payloadOverride.taskName) payload.activeTask = payloadOverride.taskName;
             }
 
             // --- HARDENING: Attach Evidence Photos ---
@@ -307,15 +304,56 @@ export const FS_Tasks = {
                 }).filter(a => a.assetId > 0);
             }
 
-            await dailyLogs.create(payload);
+            const response = await dailyLogs.create(payload);
             
+            // 6. Post-Submission: Audit Logs & Notifications
+            const currentUser = window.app.currentUser || { name: 'Field Supervisor' };
+            
+            // Audit Log: Progress Submission
+            await client.post('/audit-logs', {
+                action: 'DAILY_LOG_SUBMITTED',
+                userId: currentUser.id,
+                details: `Progress Report: ${payload.progressCompletion}% complete. Narrative: ${payload.narrative.substring(0, 50)}...`,
+                severity: 'INFO',
+                projectId: project.id
+            });
+
+            // Audit Log: Geofence Violation (if applicable)
+            if (outsideFence) {
+                await client.post('/audit-logs', {
+                    action: 'GEOFENCE_VIOLATION',
+                    userId: currentUser.id,
+                    details: `Daily Log submitted from outside work zone. Distance: ${Math.round(distToSite)}m (Overage: ${overage}m). Lat: ${latitude}, Lng: ${longitude}`,
+                    severity: 'WARNING',
+                    projectId: project.id
+                });
+            }
+
+            // Notifications to PMs
+            try {
+                const pmNotification = {
+                    title: `Daily Progress: ${project.code} - ${payload.progressCompletion}%`,
+                    message: `${currentUser.name} has submitted a daily log for ${project.name}. Narrative: ${payload.narrative}`,
+                    type: 'DAILY_LOG',
+                    projectId: project.id,
+                    urgent: payload.isSos
+                };
+                
+                // Simulate sending to PM A and B
+                await client.post('/notifications', { ...pmNotification, recipientRole: 'PROJECT_MANAGER' });
+                // If there's an email system, it would be triggered here
+                console.log('[FS] Notifications dispatched to Project Management.');
+            } catch (notifyErr) {
+                console.error('[FS] Failed to dispatch PM notifications:', notifyErr);
+            }
+
             // Clear gallery on success
             window.photoGalleries['dailyLog'] = [];
             if (typeof window.renderPhotoGallery === 'function') window.renderPhotoGallery('dailyLog');
             
-            console.log('[FS] Daily progress logged successfully');
+            window.toast?.show(`Daily log submitted successfully ${outsideFence ? '(Flagged: Outside Geofence)' : ''}`, outsideFence ? 'warning' : 'success');
             window.drawer.close();
-            this._loadDashboardStats(); // Refresh stats 
+            this._loadDashboardStats(); 
         } catch (error) {
             console.error('Log submission error:', error);
             let errorMsg = error.response?.data?.message || error.message || 'Failed to submit log';

@@ -101,8 +101,8 @@ export const NAV_ITEMS = {
         {
             section: 'Reporting',
             items: [
-                { label: 'Daily Logs', icon: '<i class="fas fa-camera"></i>', id: 'reports', action: 'drawer', drawerId: 'dailyReport' }, 
-                { label: 'Safety & Issues', icon: '<i class="fas fa-helmet-safety"></i>', id: 'reporting' }
+                { label: 'Daily Progress', icon: '<i class="fas fa-clipboard-check"></i>', id: 'daily_progress' },
+                { label: 'Governance Center', icon: '<i class="fas fa-headset"></i>', id: 'reporting' }
             ]
         }
     ],

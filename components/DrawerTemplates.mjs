@@ -365,10 +365,10 @@ export const DrawerTemplates = {
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <div style="margin-bottom: 24px; text-align: center;">
                 <div style="width: 48px; height: 48px; background: var(--slate-100); color: var(--slate-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px;">
-                    <i class="fas fa-clipboard-list"></i>
+                    <i class="fas fa-headset"></i>
                 </div>
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">Project Reporting</h3>
-                <p style="font-size: 13px; color: var(--slate-500);">Select a report type to submit</p>
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--slate-900);">Governance & Site Controls</h3>
+                <p style="font-size: 13px; color: var(--slate-500);">Monitor blockers and site integrity</p>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -392,22 +392,12 @@ export const DrawerTemplates = {
                     </div>
                 </button>
 
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Safety Incident', window.DrawerTemplates.safetyIncident())">
-                    <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-helmet-safety"></i>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Safety Incident</div>
-                        <div style="font-size: 11px; color: var(--slate-500);">Report injuries or near-misses</div>
-                    </div>
-                </button>
-
-                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint)">
+                <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.open('Report Issue', window.DrawerTemplates.submitComplaint(window.app.fsModule?.assignedProject?.id))">
                     <div style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); color: var(--amber); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
                     <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Report Issue / Delay</div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Report Issue / Blocker</div>
                         <div style="font-size: 11px; color: var(--slate-500);">Log site delays or technical issues</div>
                     </div>
                 </button>
@@ -3249,7 +3239,7 @@ Contract Admin</textarea>
                 <label class="form-label">Photo Evidence (Optional)</label>
                 <div style="border:2px dashed var(--slate-300); padding:20px; text-align:center; border-radius:8px; color:var(--slate-500); background:var(--slate-50); cursor:pointer;" onclick="window.toast.show('Camera launched', 'info')">
                     <i class="fas fa-camera" style="font-size:24px; margin-bottom:8px;"></i>
-                    <div style="font-weight:600; font-size:13px;">Snap or Upload photo</div>
+                    <div style="font-weight:600; font-size:13px;">Snap or Upload photo for fs report for the current project their on and also internal only just for fs</div>
                 </div>
             </div>
 
