@@ -332,7 +332,7 @@ export const PM_Contracts = {
 
     const valueInput = document.getElementById("contract_value");
     if (valueInput) {
-      valueInput.oninput = () => this.calculateContractValue(true);
+      valueInput.oninput = () => this.calculateContractPerformance();
     }
   },
 
@@ -715,6 +715,7 @@ export const PM_Contracts = {
     window.drawer.open(
       isRental ? "Vehicle Rental Agreement" : "New Vendor Contract",
       isRental ? window.DrawerTemplates.newRentalContract : window.DrawerTemplates.newVendorContract,
+      'lg'
     );
     setTimeout(() => {
       this.loadContractProjects();
@@ -972,23 +973,195 @@ export const PM_Contracts = {
     }
   },
 
+  async onProjectContractSelected(projectId) {
+    if (!projectId) return;
+    const materialsBody = document.getElementById('contract-materials-body');
+    if (!materialsBody) return;
+
+    materialsBody.innerHTML = `<tr><td colspan="6" style="padding:24px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Analyzing material gaps...</td></tr>`;
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const resp = await fetch(`/api/v1/projects/${projectId}/materials`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const result = await resp.json();
+
+      // API returns: { success: true, data: { project, budgetSummary, materials: [...] } }
+      const payload = result.data || result;
+      const materials = Array.isArray(payload) ? payload : (payload.materials || []);
+
+      // Store budget from this response so we don't need a separate call
+      if (payload.budgetSummary) {
+        this.currentProjectBudget = payload.budgetSummary;
+      }
+
+      if (!materials || materials.length === 0) {
+        materialsBody.innerHTML = `<tr><td colspan="6" style="padding:24px; text-align:center; color:var(--slate-400);">No baseline materials found for this project.</td></tr>`;
+        return;
+      }
+
+      materialsBody.innerHTML = materials.map((m, idx) => {
+        const contracted = m.contractedQuantity || 0;
+        const required = m.quantity || 0;
+        const gap = Math.max(0, required - contracted);
+        const isSurplus = gap <= 0;
+        const unitCost = m.unitCostHigh || 0;
+
+        return `
+          <tr style="border-bottom: 1px solid var(--slate-100); background: ${isSurplus ? '#f8fafc' : 'white'};">
+            <td style="padding: 12px; text-align: center;">
+              <input type="checkbox" name="contract_material" value="${idx}" 
+                data-name="${m.name}" data-market="${unitCost}" data-unit="${m.unit || ''}"
+                style="width: 16px; height: 16px; cursor: pointer;"
+                onchange="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
+            </td>
+            <td style="padding: 12px;">
+              <div style="font-weight: 700; color: var(--slate-800);">${m.name}</div>
+              <div style="font-size: 10px; color: var(--slate-500);">${m.unit || ''} • Rate: MWK ${unitCost.toLocaleString()}</div>
+            </td>
+            <td style="padding: 12px; text-align: center; color: var(--slate-600); font-weight: 600;">${required.toLocaleString()}</td>
+            <td style="padding: 12px; text-align: center; color: var(--slate-400);">${contracted.toLocaleString()}</td>
+            <td style="padding: 12px; text-align: center;">
+               <span style="padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; background: ${isSurplus ? '#ecfdf5' : '#fff1f2'}; color: ${isSurplus ? '#059669' : '#e11d48'};">
+                ${isSurplus ? 'SURPLUS' : 'GAP: ' + gap.toLocaleString()}
+               </span>
+            </td>
+            <td style="padding: 12px; text-align: center;">
+              <input type="number" id="m_qty_${idx}" class="form-input" 
+                style="width: 70px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
+                value="${gap}" oninput="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      this.calculateContractPerformance();
+    } catch (err) {
+      console.error(err);
+      materialsBody.innerHTML = `<tr><td colspan="6" style="padding:24px; text-align:center; color:var(--red);">Failed to load material requirements.</td></tr>`;
+    }
+  },
+
+  async onProjectRentalSelected(projectId) {
+    if (!projectId) return;
+    const vehiclesBody = document.getElementById('contract-vehicles-body');
+    if (!vehiclesBody) return;
+
+    vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Analyzing fleet requirements...</td></tr>`;
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const resp = await fetch(`/api/v1/projects/${projectId}/equipment-gap`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const result = await resp.json();
+      const payload = result.data || result;
+      let gaps = [];
+      
+      if (payload.needsRental) {
+        gaps = payload.needsRental;
+      } else if (Array.isArray(payload)) {
+        gaps = payload;
+      } else if (payload.data && Array.isArray(payload.data)) {
+        gaps = payload.data;
+      }
+
+      if (!gaps || gaps.length === 0) {
+        vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--slate-400);">No equipment gaps identified for this project.</td></tr>`;
+        return;
+      }
+
+      vehiclesBody.innerHTML = gaps.map((v, idx) => {
+        const name = v.label || v.name || v.type;
+        const rate = v.dailyRate || v.rate || 0;
+        const gap = v.estimatedDays || 1; 
+
+        return `
+          <tr style="border-bottom: 1px solid var(--slate-100);">
+            <td style="padding: 12px; text-align: center;">
+              <input type="checkbox" name="contract_material" value="${idx}" 
+                data-name="${name}" data-market="${rate}"
+                style="width: 16px; height: 16px; cursor: pointer;"
+                onchange="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
+            </td>
+            <td style="padding: 12px;">
+              <div style="font-weight: 700; color: var(--slate-800);">${name}</div>
+              <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${rate.toLocaleString()}/day</div>
+            </td>
+            <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--slate-600);">${gap}</td>
+            <td style="padding: 12px; text-align: center; color: var(--slate-400);">0</td>
+            <td style="padding: 12px; text-align: center;">
+              <input type="number" id="m_qty_${idx}" class="form-input" 
+                style="width: 60px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
+                value="${gap}" oninput="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Generate Reference Code
+      const refInput = document.getElementById("contract_ref");
+      if (refInput) refInput.value = `REN-PM-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      this.fetchBudgetStatus(projectId);
+    } catch (err) {
+      console.error(err);
+      vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--red);">Failed to analyze fleet requirements.</td></tr>`;
+    }
+  },
+
+  async fetchBudgetStatus(projectId) {
+    try {
+        const token = localStorage.getItem("mcms_auth_token");
+        const resp = await fetch(`/api/v1/projects/${projectId}/budget`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await resp.json();
+        this.currentProjectBudget = result.data || result.budgetSummary || result;
+        this.calculateContractPerformance();
+    } catch (e) {
+        console.warn("Failed to fetch project budget", e);
+    }
+  },
+
   calculateContractPerformance() {
     const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
     let marketTotal = 0;
 
+    // Sum market value from checked materials (qty * unit cost)
     checkboxes.forEach(cb => {
       const index = cb.value;
-      const qty = parseFloat(document.getElementById(`m_qty_${index}`)?.value || 0);
+      const qtyInput = document.getElementById(`m_qty_${index}`);
+      const qty = parseFloat(qtyInput?.value || 0);
       const marketPrice = parseFloat(cb.dataset.market || 0);
       marketTotal += qty * marketPrice;
     });
 
-    const negotiatedTotal = parseFloat(document.getElementById("contract_value")?.value || 0);
+    // Handle Rental Duration Multiplier
+    if (this.currentContractTab === "rental") {
+      const startInput = document.getElementById("contract_start");
+      const endInput = document.getElementById("contract_end");
+      if (startInput?.value && endInput?.value) {
+        const start = new Date(startInput.value);
+        const end = new Date(endInput.value);
+        const diffTime = end - start;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+        if (diffDays > 0) {
+          marketTotal *= diffDays;
+          console.log(`[Performance] Rental Duration: ${diffDays} days. Total Baseline: ${marketTotal}`);
+        }
+      }
+    }
+
+    const valueInput = document.getElementById("contract_value");
+    const negotiatedTotal = parseFloat(valueInput?.value || 0);
 
     const displays = {
-      market: document.getElementById("contract_market_price_display"),
-      negotiated: document.getElementById("contract_negotiated_price_display"),
-      performance: document.getElementById("contract_performance_display")
+      market: document.getElementById("contract_market_price_display") || document.getElementById("total-market-value"),
+      negotiated: document.getElementById("contract_negotiated_price_display") || document.getElementById("total-negotiated-value"),
+      performance: document.getElementById("contract_performance_display") || document.getElementById("performance-status"),
+      performanceBadge: document.getElementById("procurement-performance-badge")
     };
 
     if (displays.market) displays.market.textContent = `MWK ${marketTotal.toLocaleString()}`;
@@ -998,19 +1171,193 @@ export const PM_Contracts = {
       if (marketTotal > 0 && negotiatedTotal > 0) {
         const diff = marketTotal - negotiatedTotal;
         const savings = (diff / marketTotal) * 100;
+        
         if (diff > 0) {
           displays.performance.innerHTML = `<span style="color: var(--emerald); font-weight: 800;">+${savings.toFixed(1)}% Saving</span>`;
+          if (displays.performanceBadge) {
+              displays.performanceBadge.style.background = "var(--emerald-light)";
+              displays.performanceBadge.style.borderColor = "var(--emerald-hover)";
+          }
         } else if (diff < 0) {
-          displays.performance.innerHTML = `<span style="color: var(--red); font-weight: 800;">${Math.abs(savings).toFixed(1)}% Loss</span>`;
+          displays.performance.innerHTML = `<span style="color: var(--red); font-weight: 800;">${Math.abs(savings).toFixed(1)}% Over Market</span>`;
+          if (displays.performanceBadge) {
+              displays.performanceBadge.style.background = "var(--red-light)";
+              displays.performanceBadge.style.borderColor = "var(--red-hover)";
+          }
         } else {
           displays.performance.innerHTML = `<span style="color: var(--slate-500); font-weight: 800;">Matched</span>`;
+          if (displays.performanceBadge) {
+              displays.performanceBadge.style.background = "var(--slate-50)";
+              displays.performanceBadge.style.borderColor = "var(--slate-200)";
+          }
         }
+      } else if (negotiatedTotal > 0) {
+        displays.performance.innerHTML = `<span style="color: var(--blue); font-weight: 800;">MWK ${negotiatedTotal.toLocaleString()}</span>`;
       } else {
         displays.performance.textContent = "-";
       }
     }
+
+    // Budget Utilization Bars & Safety Metrics
+    if (this.currentProjectBudget) {
+        const spent = Number(this.currentProjectBudget.spent || 0);
+        const total = Number(this.currentProjectBudget.total || 0);
+        const remainingBudget = Number(this.currentProjectBudget.remaining || 0);
+        const newTotalSpent = spent + negotiatedTotal;
+        const newPercent = (newTotalSpent / total) * 100;
+        const newRemaining = total - newTotalSpent;
+
+        const availFunds = document.getElementById("contract_available_funds");
+        const utilPercent = document.getElementById("contract_utilization_percent");
+        const utilBar = document.getElementById("contract_utilization_bar");
+        const spentDisplay = document.getElementById("contract_spent_display");
+        const safetyDisplay = document.getElementById("contract_safety_display");
+        const submitBtn = document.querySelector('button[onclick*="submitContract"]');
+
+        if (availFunds) {
+            availFunds.textContent = `MWK ${newRemaining.toLocaleString()}`;
+            availFunds.style.color = newRemaining < 0 ? 'var(--red)' : 'var(--slate-900)';
+        }
+        if (utilPercent) {
+            utilPercent.textContent = `${newPercent.toFixed(1)}%`;
+            utilPercent.style.color = newPercent > 90 ? 'var(--red)' : 'var(--emerald)';
+        }
+        if (utilBar) {
+            utilBar.style.width = `${Math.min(newPercent, 100)}%`;
+            utilBar.style.background = newPercent > 90 ? 'var(--red)' : 'var(--emerald)';
+        }
+        if (spentDisplay) spentDisplay.textContent = `New Projected Spend: MWK ${newTotalSpent.toLocaleString()}`;
+        if (safetyDisplay) {
+            safetyDisplay.textContent = newRemaining < 0 ? 'Budget Exceeded' : (100 - newPercent).toFixed(1) + '% Fiscal Safety';
+            safetyDisplay.style.color = newRemaining < 0 ? 'var(--red)' : 'var(--emerald)';
+        }
+
+        // Lock button and show deficit if budget exceeded
+        if (negotiatedTotal > remainingBudget && remainingBudget > 0) {
+            const deficit = negotiatedTotal - remainingBudget;
+            if (submitBtn) {
+                submitBtn.style.opacity = "0.7";
+                submitBtn.style.background = "var(--slate-400)";
+                submitBtn.innerHTML = `<i class="fas fa-lock"></i> Budget Exceeded (Deficit: ${deficit.toLocaleString()})`;
+            }
+            if (valueInput) {
+                valueInput.style.color = "var(--red)";
+                valueInput.style.borderColor = "var(--red)";
+            }
+        } else if (submitBtn) {
+            submitBtn.style.opacity = "1";
+            submitBtn.style.background = ""; // Revert to CSS default
+            submitBtn.innerHTML = `<i class="fas fa-file-contract"></i> Establish Contract`;
+            if (valueInput) {
+                valueInput.style.color = "";
+                valueInput.style.borderColor = "";
+            }
+        }
+    }
   },
 
+  async submitContract() {
+    const isRental = !!document.getElementById('contract-vehicles-body');
+    const formContainer = document.querySelector('.drawer-content') || document.body;
+    
+    // 1. Full Form Validation using global Validator
+    if (window.V && !window.V.validateForm(formContainer)) {
+      window.toast.show("Please correct the highlighted errors.", "warning");
+      return;
+    }
+
+    // 2. Extract Items (Materials or Equipment)
+    const selectedCheckboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+    if (selectedCheckboxes.length === 0) {
+      window.toast.show(`Please select at least one ${isRental ? 'machine' : 'material'} to include.`, "error");
+      return;
+    }
+
+    const items = Array.from(selectedCheckboxes).map(cb => {
+      const idx = cb.value;
+      const qtyInput = document.getElementById(`m_qty_${idx}`);
+      return {
+        [isRental ? 'name' : 'materialName']: cb.dataset.name,
+        quantity: parseFloat(qtyInput?.value || 0),
+        unit: cb.dataset.unit || (isRental ? 'Day' : 'Unit'),
+        unitPrice: parseFloat(cb.dataset.market || 0)
+      };
+    });
+
+    // 3. Document Check
+    const fileInput = document.getElementById("contract_document");
+    if (!fileInput?.files?.[0]) {
+      window.toast.show("Signed agreement document is required.", "error");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const contractValue = parseFloat(document.getElementById("contract_value")?.value || 0);
+    const projectId = document.getElementById("contract_project")?.value;
+
+    // 4. Budget Check
+    const remainingBudget = Number(this.currentProjectBudget?.remaining || 0);
+    if (contractValue > remainingBudget && remainingBudget > 0) {
+        if (!confirm(`This contract (MWK ${contractValue.toLocaleString()}) exceeds the available project budget. Proceed anyway?`)) return;
+    }
+
+    window.toast.show("Archiving contract...", "info");
+
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const formData = new FormData();
+      
+      formData.append("projectId", projectId);
+      formData.append("vendorName", document.getElementById("contract_vendor")?.value);
+      formData.append("vendorId", document.getElementById("contract_vendor_id")?.value || "");
+      formData.append("vendorPhone", document.getElementById("contract_vendor_phone")?.value || "");
+      formData.append("title", document.getElementById("contract_title")?.value);
+      formData.append("value", contractValue);
+      formData.append("startDate", document.getElementById("contract_start")?.value);
+      formData.append("endDate", document.getElementById("contract_end")?.value);
+      formData.append("justification", document.getElementById("contract_justification")?.value);
+      formData.append("contractType", isRental ? "rental" : "vendor");
+      formData.append("document", file);
+      formData.append(isRental ? 'equipmentList' : 'materialsList', JSON.stringify(items));
+      
+      if (isRental) {
+          const refVal = document.getElementById("contract_ref")?.value || `REN-PM-${Math.floor(1000 + Math.random() * 9000)}`;
+          formData.append("refCode", refVal);
+      }
+
+      const res = await fetch("/api/v1/contracts", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Submission failed");
+      }
+
+      window.toast.show("Contract successfully established & archived", "success");
+      window.drawer.close();
+      if (this.loadContractsData) this.loadContractsData();
+      
+      // Audit Log
+      fetch("/api/v1/audit-logs", {
+        method: "POST",
+        headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            action: "CONTRACT_CREATED",
+            targetType: "CONTRACT",
+            details: { type: isRental ? 'RENTAL' : 'VENDOR', projectId, value: contractValue }
+        })
+      }).catch(e => console.warn("Audit failed", e));
+
+    } catch (err) {
+      window.toast.show(err.message, "error");
+    }
+  },
   async submitProjectContract() {
     console.log("[DEBUG] PM_Contracts: submitProjectContract started");
 
@@ -1227,9 +1574,32 @@ export const PM_Contracts = {
         `New Vendor Contract established for "${data.title}" (Materials: ${materials}) by ${window.currentUser?.name}. Value: MWK ${data.value.toLocaleString()}.`,
       );
 
-      window.toast.show("Contract established successfully", "success");
+      window.toast.show("Contract successfully established & archived", "success");
       window.drawer.close();
-      this.loadContractsData();
+      if (this.loadContractsData) this.loadContractsData();
+
+      // Audit Log
+      client.post("/audit-logs", {
+        action: "CONTRACT_CREATED",
+        targetType: "CONTRACT",
+        details: { 
+          type: isRental ? 'RENTAL' : 'VENDOR', 
+          projectId: data.projectId, 
+          value: contractValue,
+          title: document.getElementById("contract_title")?.value
+        }
+      }).catch(e => console.warn("Audit failed", e));
+
+      // Notifications
+      const title = document.getElementById("contract_title")?.value;
+      const vendor = document.getElementById("contract_vendor")?.value;
+      this.broadcastContractEvent(
+        isRental ? "Rental Contract Established" : "Vendor Contract Established",
+        `New ${isRental ? 'Rental' : 'Vendor'} contract established with "${vendor}" for project context. Title: ${title}. Total Value: MWK ${contractValue.toLocaleString()}.`,
+        data.projectId,
+        ["Project Manager", "Finance Director", "Equipment Coordinator"]
+      );
+
     } catch (err) {
       window.toast.show(err.message, "error");
     }
@@ -1396,20 +1766,72 @@ export const PM_Contracts = {
             </div>
         `;
   },
+  async searchVendors(query) {
+    const resultsContainer = document.getElementById("vendor_autocomplete_results");
+    if (!resultsContainer) return;
+    if (!query || query.length < 2) {
+      resultsContainer.style.display = "none";
+      return;
+    }
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const res = await fetch(`/api/v1/vendors/search?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const result = await res.json();
+      const vendors = result.data || result;
+      if (vendors.length === 0) {
+        resultsContainer.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--slate-500); font-size: 12px;">No matches found.</div>`;
+        resultsContainer.style.display = "block";
+        return;
+      }
+      resultsContainer.innerHTML = vendors.map(v => `
+        <div style="padding: 12px; border-bottom: 1px solid var(--slate-100); cursor: pointer;" 
+             onmousedown="(window.app.pmModule || window.app.fmModule).selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}', '${v.phone || ''}')">
+          <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${v.name}</div>
+          <div style="font-size: 11px; color: var(--slate-500);">${v.phone || 'No phone'}</div>
+        </div>
+      `).join('');
+      resultsContainer.style.display = "block";
+    } catch (e) { console.error(e); }
+  },
 
-  escapeHTML(str) {
-    return (
-      str?.toString().replace(
-        /[&<>"']/g,
-        (m) =>
-          ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;",
-          })[m],
-      ) || ""
-    );
+  selectVendorAutocomplete(id, name, phone) {
+    const nameInput = document.getElementById("contract_vendor");
+    const idInput = document.getElementById("contract_vendor_id");
+    const phoneInput = document.getElementById("contract_vendor_phone");
+    if (nameInput) nameInput.value = name;
+    if (idInput) idInput.value = id;
+    if (phoneInput) phoneInput.value = phone || "";
+    document.getElementById("vendor_autocomplete_results").style.display = "none";
+  },
+
+  async broadcastContractEvent(title, message, projectId, roles = [], excludeRoles = []) {
+    try {
+      const token = localStorage.getItem("mcms_auth_token");
+      const payload = {
+        title,
+        message,
+        roles,
+        priority: "high",
+        type: "contract",
+        isEmail: true
+      };
+
+      if (projectId) {
+        const projectRes = await fetch(`/api/v1/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const projectData = await projectRes.json();
+        const project = projectData.data || projectData;
+        if (project.fieldSupervisorId) {
+          payload.users = [project.fieldSupervisorId];
+        }
+      }
+
+      await client.post("/notifications/broadcast", payload);
+    } catch (err) {
+      console.warn("Notification broadcast failed", err);
+    }
   },
 };

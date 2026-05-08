@@ -1,4 +1,4 @@
-export const DrawerTemplates = {
+﻿export const DrawerTemplates = {
     escapeHTML(str) {
         if (!str) return "";
         return String(str)
@@ -35,7 +35,7 @@ export const DrawerTemplates = {
                             <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
                                 <div>
                                     <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${item.type}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">Requirement: ${item.required} • Owned: ${item.owned}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">Requirement: ${item.required} ΓÇó Owned: ${item.owned}</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-weight: 800; color: ${item.gap > 0 ? '#F97316' : '#059669'}; font-size: 14px;">
@@ -127,11 +127,11 @@ export const DrawerTemplates = {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${data.machineType}</div>
-                            <div style="font-size: 12px; color: var(--slate-500);">${data.contractType} • ${data.vendorName}</div>
+                            <div style="font-size: 12px; color: var(--slate-500);">${data.contractType} ΓÇó ${data.vendorName}</div>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 18px; font-weight: 800; color: var(--orange);">MWK ${data.dailyRate.toLocaleString()}</div>
-                            <div style="font-size: 11px; color: var(--slate-500);">Per Day • ${data.durationDays} Days</div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Per Day ΓÇó ${data.durationDays} Days</div>
                         </div>
                     </div>
                 </div>
@@ -206,7 +206,7 @@ export const DrawerTemplates = {
                         </div>
                         <div>
                             <div style="font-size: 14px; font-weight: 800; color: var(--slate-800);">${fileName}</div>
-                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 600; text-transform: uppercase;">${fileExt} Document • Secure Viewer</div>
+                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 600; text-transform: uppercase;">${fileExt} Document ΓÇó Secure Viewer</div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px;">
@@ -248,7 +248,7 @@ export const DrawerTemplates = {
                 </div>
                 
                 <div style="padding: 12px 24px; background: white; border-top: 1px solid var(--slate-200); font-size: 11px; color: var(--slate-400); display: flex; justify-content: space-between; align-items: center;">
-                    <div>MCMS Secure Document Pipeline • AES-256 Encrypted</div>
+                    <div>MCMS Secure Document Pipeline ΓÇó AES-256 Encrypted</div>
                     <div style="display: flex; gap: 16px;">
                         <span><i class="fas fa-shield-alt"></i> Verified Integrity</span>
                         <span><i class="fas fa-history"></i> Version 1.0</span>
@@ -305,7 +305,7 @@ export const DrawerTemplates = {
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Unit</label>
                     <select id="price-unit" class="form-input" style="width: 100%;">
                         <option value="Bag" ${data.unit === "Bag" ? "selected" : ""}>Bag</option>
-                        <option value="m3" ${data.unit === "m3" ? "selected" : ""}>m³</option>
+                        <option value="m3" ${data.unit === "m3" ? "selected" : ""}>m┬│</option>
                         <option value="ton" ${data.unit === "ton" ? "selected" : ""}>Tonne</option>
                         <option value="litres" ${data.unit === "litres" ? "selected" : ""}>Litres</option>
                         <option value="m" ${data.unit === "m" ? "selected" : ""}>Meter (m)</option>
@@ -754,8 +754,8 @@ export const DrawerTemplates = {
                     <div style="flex: 1;">
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || "Master_Agreement_Signed.pdf"}</div>
                         <div style="font-size: 11px; color: var(--slate-500);">
-                            <span style="font-weight: 700; color: var(--orange);">Version v${currentVersionNum}</span> • 
-                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${(latestVersion?.createdBy?.name) || contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> • 
+                            <span style="font-weight: 700; color: var(--orange);">Version v${currentVersionNum}</span> ΓÇó 
+                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${(latestVersion?.createdBy?.name) || contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> ΓÇó 
                             ${latestVersion ? new Date(latestVersion.createdAt).toLocaleDateString() : (contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : new Date().toLocaleDateString())}
                         </div>
                     </div>
@@ -784,7 +784,7 @@ export const DrawerTemplates = {
                                             <div style="font-size: 14px; font-weight: 700; color: var(--slate-800);">${v.fileName || (contract.contractType === "project" ? "Master_Agreement_V" + v.versionNumber + ".pdf" : "Contract_V" + v.versionNumber + ".pdf")}</div>
                                             <div style="font-size: 12px; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
                                                 <i class="fas fa-user-circle" style="font-size: 11px;"></i>
-                                                ${v.createdBy?.name || window.currentUser?.name || "Authorized Official"} • ${new Date(v.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                                                ${v.createdBy?.name || window.currentUser?.name || "Authorized Official"} ΓÇó ${new Date(v.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                                             </div>
                                         </div>
                                     </div>
@@ -1014,7 +1014,7 @@ export const DrawerTemplates = {
                 </div>
                 <!-- Final Step -->
                 <div class="wizard-step step-5" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; opacity:0.4;">
-                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">✓</div>
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">Γ£ô</div>
                     <div style="font-size:10px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Submit</div>
                 </div>
             </div>
@@ -1193,45 +1193,6 @@ export const DrawerTemplates = {
                         <div>
                             <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Transit Facilities</div>
                             <div style="font-size:10px; color:var(--slate-500);">Bus bays and passenger shelters</div>
-                        </div>
-                    </label>
-                </div>
-
-                <div style="margin-bottom: 20px; padding: 12px; background: #fff7ed; border-radius: 8px; border: 1px solid #ffedd5;">
-                    <div style="font-weight: 700; color: #9a3412; font-size: 14px;">Fleet & Heavy Equipment</div>
-                    <div style="font-size: 11px; color: #c2410c;">Select core machinery required for this road type.</div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_excavator" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Excavator Group</div>
-                            <div style="font-size:10px; color:var(--slate-500);">20T/30T digging & loading</div>
-                        </div>
-                    </label>
-                    
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_grader" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Motor Grader</div>
-                            <div style="font-size:10px; color:var(--slate-500);">140K precision levelling</div>
-                        </div>
-                    </label>
-
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_roller" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Compaction Fleet</div>
-                            <div style="font-size:10px; color:var(--slate-500);">10T Vibratory & Pneumatic</div>
-                        </div>
-                    </label>
-
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_tipper" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Haulage Group</div>
-                            <div style="font-size:10px; color:var(--slate-500);">15m³ Tipper Truck fleet</div>
                         </div>
                     </label>
                 </div>
@@ -1549,11 +1510,7 @@ export const DrawerTemplates = {
         </div>
     `,
 
-    dailyProgressLog: (arg) => {
-        const data = (typeof arg === 'object' && arg !== null) ? arg : { taskId: arg };
-        const taskId = data.taskId || "";
-        const taskName = data.taskName || "Select Task...";
-        return `
+    dailyProgressLog: (taskId = null) => `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <input type="hidden" id="daily-log-task-id" value="${taskId || ""}" />
@@ -1608,14 +1565,14 @@ export const DrawerTemplates = {
             <div class="form-group" style="margin-bottom: 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <label class="form-label" style="margin:0;">Progress Photos</label>
-                    <span id="photo-counter-dailyLog" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
+                    <span id="photo-counter-progressLog" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
                 </div>
-                <label id="photo-add-btn-dailyLog" onclick="return window.handleCameraClick(event, 'dailyLog')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
+                <label id="photo-add-btn-progressLog" onclick="return window.handleCameraClick(event, 'progressLog')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
                     <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
                     <div style="font-weight: 600; font-size: 11px;">Tap to Take Photo (max 10)</div>
-                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'dailyLog')">
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.handlePhotoCapture(this, 'progressLog')">
                 </label>
-                <div id="photo-preview-dailyLog" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
+                <div id="photo-preview-progressLog" style="display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;">
                     <div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>
                 </div>
             </div>
@@ -1663,7 +1620,7 @@ export const DrawerTemplates = {
                     </div>
                     <div style="color: var(--slate-500); line-height: 1.4;">
                         ${window.app.fsModule?.bestPosition ? 
-                            `Accuracy: ±${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` : 
+                            `Accuracy: ┬▒${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` : 
                             `Please ensure you have synced your location on the dashboard map before submitting.`}
                     </div>
                 </div>
@@ -1674,8 +1631,7 @@ export const DrawerTemplates = {
                 <i class="fas fa-cloud-upload-alt"></i> Submit Progress Log
             </button>
         </div>
-        `;
-    },
+    `,
 
     dailyProgressLogHistory: (logs = []) => `
         <div class="drawer-section" style="padding-top: 12px;">
@@ -1698,98 +1654,11 @@ export const DrawerTemplates = {
         }
             </div>
             
+            <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                <i class="fas fa-arrow-left"></i> Back to Current Log
+            </button>
         </div>
     `,
-
-    dailyLogDetails: (log) => {
-        const photos = log.photos || [];
-        const machinery = log.assetUsage || [];
-        const isFlagged = log.locationFlagged;
-
-        return `
-            <div class="drawer-section" style="padding-top: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                    <div>
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Report Date</div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${new Date(log.logDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Completion</div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald);">${log.progressCompletion || 0}%</div>
-                    </div>
-                </div>
-
-                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                    <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 8px;">Site Narrative</div>
-                    <div style="font-size: 14px; line-height: 1.6; color: var(--slate-800); font-weight: 500;">
-                        ${log.narrative || 'No narrative provided for this log.'}
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 24px;">
-                    <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between;">
-                        <span>Site Photos (${photos.length})</span>
-                    </div>
-                    ${photos.length > 0 ? `
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                            ${photos.map((p, idx) => `
-                                <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--slate-200); background: var(--slate-100); aspect-ratio: 1/1;">
-                                    <img src="${p.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.utils.viewImage('${p.dataUrl}')">
-                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 8px; background: rgba(0,0,0,0.5); color: white; font-size: 9px;">
-                                        Photo ${idx + 1}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <div style="padding: 24px; text-align: center; background: var(--slate-50); border-radius: 8px; color: var(--slate-400); border: 1px dashed var(--slate-200);">
-                            <i class="fas fa-image" style="font-size: 24px; margin-bottom: 8px;"></i>
-                            <div style="font-size: 12px;">No photos uploaded.</div>
-                        </div>
-                    `}
-                </div>
-
-                ${machinery.length > 0 ? `
-                    <div style="margin-bottom: 24px;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 12px;">Machinery Utilization</div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            ${machinery.map(m => `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: white; border: 1px solid var(--slate-200); border-radius: 8px;">
-                                    <div>
-                                        <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">Asset ID: ${m.assetId}</div>
-                                        <div style="font-size: 11px; color: var(--slate-500);">Operator: ${m.operator || 'Unspecified'}</div>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        <div style="font-size: 13px; font-weight: 700; color: var(--blue);">${m.hoursUsed} hrs</div>
-                                        <div style="font-size: 11px; color: var(--slate-500);">${m.fuelConsumed || 0}L Fuel</div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-
-                <div style="padding: 16px; border-radius: 12px; background: ${isFlagged ? 'var(--orange-light)' : 'var(--emerald-light)'}; border: 1px solid ${isFlagged ? 'var(--orange)' : 'var(--emerald)'}; color: ${isFlagged ? 'var(--orange-dark)' : 'var(--emerald-dark)'}; margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <i class="fas ${isFlagged ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size: 20px;"></i>
-                        <div>
-                            <div style="font-weight: 800; font-size: 13px;">GPS ${isFlagged ? 'Warning' : 'Verified'}</div>
-                            <div style="font-size: 11px; opacity: 0.9;">
-                                ${isFlagged 
-                                    ? `Submission flagged: Distance outside work zone or low accuracy detected.` 
-                                    : `This report was verified within the project geofence with high precision.`}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 10px; font-family: monospace;">
-                        Lat: ${log.submissionLat?.toFixed(6) || 'N/A'}, Lng: ${log.submissionLng?.toFixed(6) || 'N/A'} (±${log.submissionAccuracy || '??'}m)
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%;" onclick="window.drawer.close()">Close Details</button>
-            </div>
-        `;
-    },
 
     logEquipmentUsage: `
          <div class="drawer-section">
@@ -2146,7 +2015,7 @@ export const DrawerTemplates = {
                                     <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber || idx + 1}</div>
                                     <div>
                                         <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${DrawerTemplates.escapeHTML(v.fileName || "Contract_Revision.pdf")}</div>
-                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || "System")} • ${new Date(v.createdAt).toLocaleDateString()}</div>
+                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || "System")} ΓÇó ${new Date(v.createdAt).toLocaleDateString()}</div>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
@@ -2454,15 +2323,15 @@ export const DrawerTemplates = {
                 <div id="asset-maintenance-history" style="font-size: 12px;">
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--slate-100);">
                         <div><span style="font-weight: 600;">500 Hour Service</span> <span class="status active" style="font-size: 9px; padding: 1px 6px;">Preventive</span></div>
-                        <div style="color: var(--slate-500);">Dec 15, 2025 • MWK 1.2M</div>
+                        <div style="color: var(--slate-500);">Dec 15, 2025 ΓÇó MWK 1.2M</div>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--slate-100);">
                         <div><span style="font-weight: 600;">Oil & Filter Change</span> <span class="status active" style="font-size: 9px; padding: 1px 6px;">Preventive</span></div>
-                        <div style="color: var(--slate-500);">Oct 02, 2025 • MWK 450K</div>
+                        <div style="color: var(--slate-500);">Oct 02, 2025 ΓÇó MWK 450K</div>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                         <div><span style="font-weight: 600;">Hydraulic Hose Repair</span> <span class="status pending" style="font-size: 9px; padding: 1px 6px;">Corrective</span></div>
-                        <div style="color: var(--slate-500);">Aug 18, 2025 • MWK 890K</div>
+                        <div style="color: var(--slate-500);">Aug 18, 2025 ΓÇó MWK 890K</div>
                     </div>
                 </div>
             </div>
@@ -2594,7 +2463,7 @@ export const DrawerTemplates = {
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:18px;">Performance Bond</div>
-                <div style="font-size:13px; color:var(--slate-500);">Unilia Construction • NB-BND-2024-889</div>
+                <div style="font-size:13px; color:var(--slate-500);">Unilia Construction ΓÇó NB-BND-2024-889</div>
             </div>
              <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
                  <div class="stat-card" style="padding:12px;">
@@ -2649,7 +2518,7 @@ Contract Admin</textarea>
                 <i class="fas fa-gavel" style="color:var(--red); font-size:20px;"></i>
                 <div>
                     <div style="font-weight:700; color:var(--red); font-size:14px;">Regulatory Breach Alert</div>
-                    <div style="font-size:11px; color:var(--red);">Apex Security • Workers Comp</div>
+                    <div style="font-size:11px; color:var(--red);">Apex Security ΓÇó Workers Comp</div>
                 </div>
             </div>
             
@@ -2884,11 +2753,7 @@ Contract Admin</textarea>
 
             <div id="issue-project-selector" style="margin-bottom: 20px; display: ${projectId ? 'block' : 'none'};">
                 <label class="form-label">Affected Project <span style="color:var(--red);">*</span></label>
-                <div id="issue-project-locked" style="display: none; background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); font-weight: 600; color: var(--slate-700);">
-                    <i class="fas fa-building" style="margin-right: 8px; color: var(--slate-400);"></i>
-                    <span id="locked-project-name">Loading...</span>
-                </div>
-                <select id="issue-project" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="display: block;">
+                <select id="issue-project" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)">
                     <option value="">Select Project...</option>
                 </select>
                 <div class="v-msg v-msg-err" style="display:none; font-size:11px; margin-top:4px;">Please select the project being impacted.</div>
@@ -2925,7 +2790,7 @@ Contract Admin</textarea>
                 <label class="form-label">Detailed Narrative / Description <span style="color:var(--red);">*</span></label>
                 <textarea id="issue-description" class="form-input" data-vrules="required|minLen:20" rows="5" 
                     placeholder="Provide clear details on the issue, root cause, and immediate impact..." 
-                    oninput="(window.app.pmModule || window.app.fsModule)?.validateIssueInline()"></textarea>
+                    oninput="window.app.pmModule.validateIssueInline()"></textarea>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px; display: flex; justify-content: space-between;">
                     <span>Minimum 20 characters required</span>
                     <span id="issue-char-count">0 / 20</span>
@@ -2937,75 +2802,38 @@ Contract Admin</textarea>
                 <label class="form-label">Photo Evidence (Optional)</label>
                 <div id="issue-photo-btn" onclick="document.getElementById('issue-photo-input').click()" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer;">
                     <i class="fas fa-camera" style="font-size: 18px; margin-bottom: 4px;"></i>
-                    <div style="font-weight: 600; font-size: 12px;">Snap or Upload photo for fs report for the current project their on and also internal only just for fs</div>
-                    <input type="file" id="issue-photo-input" accept="image/*" style="display:none;" onchange="(window.app.pmModule || window.app.fsModule)?.handleIssuePhoto(this)">
+                    <div style="font-weight: 600; font-size: 12px;">Snap or Upload photo</div>
+                    <input type="file" id="issue-photo-input" accept="image/*" style="display:none;" onchange="window.app.pmModule.handleIssuePhoto(this)">
                 </div>
                 <div id="issue-photo-preview" style="display:none; margin-top:12px;"></div>
             </div>
 
-            <button id="btn-submit-issue" class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);" onclick="window.app.handleIssueSubmit()">Submit Issue Report</button>
+            <button id="btn-submit-issue" class="btn btn-primary" style="width: 100%; background: var(--red); border-color: var(--red); justify-content: center; padding: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);" onclick="window.app.pmModule.handleSubmitIssue()">Submit Issue Report</button>
 
             <script>
                 (function() {
-                    let projectId = ${JSON.stringify(projectId)};
-                    // Auto-detect project if not passed (e.g. from generic mobile menu)
-                    if (!projectId && window.app?.fsModule?.assignedProject?.id) {
-                        projectId = window.app.fsModule.assignedProject.id;
-                    }
-                    
+                    const projectId = ${JSON.stringify(projectId)};
                     const selectorEl = document.getElementById('issue-project-selector');
                     const projectSelect = document.getElementById('issue-project');
                     const infoEl = document.getElementById('issue-internal-info');
-                    const scopeInput = document.getElementById('issue-scope');
                     
-                    window.app.toggleIssueScope = (scope) => {
-                        const projectBtn = document.getElementById('scope-project');
-                        const internalBtn = document.getElementById('scope-internal');
-                        const lockedEl = document.getElementById('issue-project-locked');
-                        
-                        if (scope === 'project') {
-                            projectBtn.classList.add('active');
-                            internalBtn.classList.remove('active');
-                            scopeInput.value = 'project';
-                            
-                            if (projectId) {
-                                selectorEl.style.display = 'block';
-                                projectSelect.style.display = 'none';
-                                if (lockedEl) lockedEl.style.display = 'block';
-                            } else {
-                                selectorEl.style.display = 'block';
-                                projectSelect.style.display = 'block';
-                                if (lockedEl) lockedEl.style.display = 'none';
-                            }
-                            if (infoEl) infoEl.style.display = 'none';
-                        } else {
-                            projectBtn.classList.remove('active');
-                            internalBtn.classList.add('active');
-                            scopeInput.value = 'internal';
-                            selectorEl.style.display = 'none';
-                            if (infoEl) infoEl.style.display = 'block';
-                        }
-                    };
-
-                    // Populate projects list
+                    // Populate projects list from any available module
                     const availableProjects = (window.app?.pmModule?.projects || window.app?.fmModule?.allProjects || window.app?.caModule?.allProjects || []);
+                    
                     if (projectSelect) {
                         availableProjects.forEach(p => {
                             const option = document.createElement('option');
                             option.value = p.id;
                             option.textContent = (p.code || 'PRJ') + ' - ' + p.name;
-                            if (projectId && parseInt(projectId) === parseInt(p.id)) {
-                                option.selected = true;
-                                const lockedName = document.getElementById('locked-project-name');
-                                if (lockedName) lockedName.textContent = (p.code || 'PRJ') + ' - ' + p.name;
-                            }
+                            if (projectId && parseInt(projectId) === parseInt(p.id)) option.selected = true;
                             projectSelect.appendChild(option);
                         });
                     }
-
-                    // Initial state
+                    
                     if (projectId) {
-                        window.app.toggleIssueScope('project');
+                        const scopeWrapper = document.getElementById('issue-scope-wrapper');
+                        if (scopeWrapper && scopeWrapper.parentElement) scopeWrapper.parentElement.style.display = 'none';
+                        if (selectorEl) selectorEl.style.display = 'block';
                     }
                 })();
             </script>
@@ -3553,7 +3381,7 @@ Contract Admin</textarea>
                 <div id="contract-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
                     <i class="fas fa-file-signature" style="font-size: 32px; color: var(--orange); margin-bottom: 12px;"></i>
                     <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Click to upload signed legal PDF</div>
-                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB • Secure Pipeline</div>
+                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB ΓÇó Secure Pipeline</div>
                     <input type="file" id="contract_document" accept=".pdf" style="display: none;">
                 </div>
             </div>
@@ -3564,294 +3392,6 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-
-    newVendorContract: `
-        <div style="padding: 24px;">
-            <div style="margin-bottom: 16px; padding: 12px; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; display: flex; gap: 10px; align-items: center;">
-                <i class="fas fa-file-invoice-dollar" style="color: var(--blue); font-size: 24px;"></i>
-                <div>
-                    <div style="font-weight: 800; color: #1e40af; font-size: 15px;">Create Material Supply Contract</div>
-                    <div style="font-size: 11px; color: var(--blue-dark);">Select a project, choose materials, and assign a vendor</div>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Project</label>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--blue); padding: 2px 6px; border: 1px solid var(--blue-light); border-radius: 4px; background: #f0f9ff;"
-                            onclick="(window.app?.pmModule || window.app?.fmModule)?.onProjectContractSelected(document.getElementById('contract_project').value)">
-                            <i class="fas fa-sync-alt" style="margin-right: 4px;"></i> Refresh
-                        </button>
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--slate-500); padding: 2px 6px; border: 1px solid var(--slate-200); border-radius: 4px; background: var(--slate-50);"
-                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule)?.openNewVendorContract()">
-                            <i class="fas fa-undo" style="margin-right: 4px;"></i> Reset
-                        </button>
-                    </div>
-                </div>
-                <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.onProjectContractSelected(this.value)">
-                    <option value="">Select Target Project...</option>
-                </select>
-            </div>
-
-            <!-- Material Selection Table -->
-            <div style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Select Materials for This Contract</label>
-                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow-x: auto;">
-                    <table style="width: 100%; min-width: 650px; border-collapse: collapse; font-size: 12px;">
-                        <thead>
-                            <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
-                                <th style="padding: 10px; text-align: left; width: 40px;"></th>
-                                <th style="padding: 10px; text-align: left;">Material Name</th>
-                                <th style="padding: 10px; text-align: center;">Total Required</th>
-                                <th style="padding: 10px; text-align: center;">Already Contracted</th>
-                                <th style="padding: 10px; text-align: center;">Status</th>
-                                <th style="padding: 10px; text-align: center; width: 80px;">New Qty</th>
-                            </tr>
-                        </thead>
-                        <tbody id="contract-materials-body">
-                            <tr>
-                                <td colspan="6" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view materials</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div style="font-size: 11px; color: var(--slate-500); margin-top: 8px; font-style: italic;">Check the materials this vendor will supply</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px; position: relative;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name</label>
-                <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" 
-                    oninput="window.V?.checkField(this)" 
-                    onkeyup="(window.app?.pmModule || window.app?.fmModule)?.searchVendors(this.value)"
-                    autocomplete="off"
-                    style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type new vendor name...">
-                <input type="hidden" id="contract_vendor_id">
-                <div id="vendor_autocomplete_results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-300); border-radius: 8px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
-                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Select existing or type to create a new vendor.</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
-                <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title</label>
-                <input type="text" id="contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. Bitumen Supply Agreement">
-            </div>
-
-            <!-- Financial Performance Summary -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; padding: 12px; background: var(--slate-50); border-radius: 10px; border: 1px solid var(--slate-200);">
-                <div>
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Market Price</div>
-                    <div id="contract_market_price_display" style="font-size: 14px; font-weight: 800; color: var(--slate-900);">MWK 0</div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Negotiated Price</div>
-                    <div id="contract_negotiated_price_display" style="font-size: 14px; font-weight: 800; color: var(--slate-900);">MWK 0</div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Performance</div>
-                    <div id="contract_performance_display" style="font-size: 14px; font-weight: 800; color: var(--slate-400);">-</div>
-                </div>
-            </div>
-
-            <!-- Budget Control -->
-            <div style="margin-bottom: 16px; padding: 12px; border: 1px solid var(--slate-200); border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <div>
-                        <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Funds</div>
-                        <div id="contract_available_funds" style="font-size: 18px; font-weight: 900; color: var(--slate-900);">MWK 0</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Utilization</div>
-                        <div id="contract_utilization_percent" style="font-size: 18px; font-weight: 900; color: var(--emerald);">0%</div>
-                    </div>
-                </div>
-                <div style="height: 8px; background: var(--slate-100); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                    <div id="contract_utilization_bar" style="height: 100%; width: 0%; background: var(--emerald); transition: width 0.3s ease;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
-                    <span id="contract_spent_display" style="color: var(--slate-500);">Spent: MWK 0</span>
-                    <span id="contract_safety_display" style="color: var(--emerald); font-weight: 600;">100% Safe</span>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK)</label>
-                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
-                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
-                </div>
-                <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
-                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes</label>
-                <textarea id="contract_justification" class="form-input" data-vrules="required|minWords:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Explain why this contract is being established or modified..."></textarea>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Document (PDF/DOC)</label>
-                <div id="contract-drop-zone" style="border: 2px dashed var(--blue); border-radius: 12px; padding: 32px; text-align: center; background: #f0f7ff; cursor: pointer;">
-                    <i class="fas fa-file-upload" style="font-size: 32px; color: var(--blue); margin-bottom: 12px;"></i>
-                    <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #1e40af;">Drag and drop file here or browse</div>
-                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">PDF or Word documents (Max 10MB)</div>
-                    <input type="file" id="contract_document" accept=".pdf,.doc,.docx" style="display: none;">
-                </div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px;"
-                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} (window.app?.pmModule || window.app?.fmModule)?.submitContract()">
-                <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Establish Vendor Contract
-            </button>
-        </div>
-    `,
-
-    newRentalContract: `
-        <div style="padding: 24px;">
-            <div style="margin-bottom: 16px; padding: 12px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 10px; align-items: center;">
-                <i class="fas fa-truck-pickup" style="color: var(--orange); font-size: 24px;"></i>
-                <div>
-                    <div style="font-weight: 800; color: #9a3412; font-size: 15px;">Create Vehicle Rental Contract</div>
-                    <div style="font-size: 11px; color: #c2410c;">Select a project, choose machines, and assign a rental vendor</div>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Project</label>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 2px 6px; border: 1px solid #ffedd5; border-radius: 4px; background: #fff7ed;"
-                            onclick="(window.app?.pmModule || window.app?.fmModule)?.onProjectRentalSelected(document.getElementById('contract_project').value)">
-                            <i class="fas fa-sync-alt" style="margin-right: 4px;"></i> Refresh
-                        </button>
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--slate-500); padding: 2px 6px; border: 1px solid var(--slate-200); border-radius: 4px; background: var(--slate-50);"
-                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule)?.openNewVendorContract()">
-                            <i class="fas fa-undo" style="margin-right: 4px;"></i> Reset
-                        </button>
-                    </div>
-                </div>
-                <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.onProjectRentalSelected(this.value)">
-                    <option value="">Select Target Project...</option>
-                </select>
-            </div>
-
-            <!-- Vehicle Selection Table -->
-            <div style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Select Vehicles/Machines for This Contract</label>
-                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow-x: auto;">
-                    <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px;">
-                        <thead>
-                            <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
-                                <th style="padding: 10px; text-align: left; width: 40px;"></th>
-                                <th style="padding: 10px; text-align: left;">Machine / Equipment</th>
-                                <th style="padding: 10px; text-align: center;">Total Required</th>
-                                <th style="padding: 10px; text-align: center;">On Site</th>
-                                <th style="padding: 10px; text-align: center; width: 80px;">Rental Qty</th>
-                            </tr>
-                        </thead>
-                        <tbody id="contract-vehicles-body">
-                            <tr>
-                                <td colspan="5" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view required equipment</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div style="font-size: 11px; color: var(--slate-500); margin-top: 8px; font-style: italic;">Check the machines this rental vendor will supply</div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px; position: relative;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Rental Vendor Name</label>
-                <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" 
-                    oninput="window.V?.checkField(this)" 
-                    onkeyup="(window.app?.pmModule || window.app?.fmModule)?.searchVendors(this.value)"
-                    autocomplete="off"
-                    style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type rental company name...">
-                <input type="hidden" id="contract_vendor_id">
-                <div id="vendor_autocomplete_results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-300); border-radius: 8px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
-                <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title</label>
-                <input type="text" id="contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. Heavy Equipment Rental Agreement">
-            </div>
-
-            <!-- Financial Performance Summary -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; padding: 12px; background: var(--slate-50); border-radius: 10px; border: 1px solid var(--slate-200);">
-                <div>
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Baseline Rate</div>
-                    <div id="contract_market_price_display" style="font-size: 14px; font-weight: 800; color: var(--slate-900);">MWK 0</div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Negotiated Total</div>
-                    <div id="contract_negotiated_price_display" style="font-size: 14px; font-weight: 800; color: var(--slate-900);">MWK 0</div>
-                </div>
-                <div>
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Variance</div>
-                    <div id="contract_performance_display" style="font-size: 14px; font-weight: 800; color: var(--slate-400);">-</div>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Mobilization Date</label>
-                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
-                </div>
-                <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Demobilization</label>
-                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
-                </div>
-            </div>
-
-            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;">
-                <i class="fas fa-info-circle" style="color: #0284c7; margin-top: 2px;"></i>
-                <div style="font-size: 11px; color: #0369a1; line-height: 1.5;">
-                    <strong>Baseline Calculation:</strong> The baseline rate is automatically calculated based on the <strong>Daily Market Rate × Selected Qty × Duration (Days)</strong>. Use this to compare against your negotiated rental sum.
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Rental Sum (MWK)</label>
-                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes</label>
-                <textarea id="contract_justification" class="form-input" data-vrules="required|minWords:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Why are these vehicles being rented?"></textarea>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Signed Rental Agreement (PDF)</label>
-                <div id="contract-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
-                    <i class="fas fa-file-contract" style="font-size: 32px; color: var(--orange); margin-bottom: 12px;"></i>
-                    <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Drag and drop file here or browse</div>
-                    <input type="file" id="contract_document" accept=".pdf" style="display: none;">
-                </div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px; background: var(--orange); border-color: var(--orange);"
-                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} (window.app?.pmModule || window.app?.fmModule).submitContract()">
-                <i class="fas fa-truck-moving" style="margin-right: 8px;"></i> Establish Rental Contract
-            </button>
-        </div>
-    `,
-
 
     newVendor: `
         <div style="padding: 24px;">
@@ -4111,7 +3651,7 @@ Contract Admin</textarea>
                 </div>
                 <div>
                     <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin: 0;">Resource Requisition</h3>
-                    <div style="font-size: 12px; color: var(--slate-500);">Project: ${projectData.name || 'Current Site'}</div>
+                    <div style="font-size: 12px; color: var(--slate-500);">Add multiple items to your request</div>
                 </div>
             </div>
 
@@ -4134,22 +3674,18 @@ Contract Admin</textarea>
             </div>
 
             <div id="fs_resource_selector_box" style="padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-300); margin-bottom: 20px;">
-                <!-- Machinery View -->
                 <div id="fs_machinery_req_view">
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Project-Scoped Equipment</label>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Equipment Model</label>
                     <select id="fs_mac_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        <option value="" disabled selected>Select assigned machine...</option>
                         ${(projectData?.recommendedMachines || []).length > 0
             ? (projectData.recommendedMachines || [])
                 .map(
                     (m) => `
-                            <option value="${m.name}" data-available="${m.available}" data-type="${m.type}" data-source="${m.source}">
-                                ${m.available ? "✅" : "⏳"} ${m.name} [${m.source === 'owned' ? 'OWNED' : 'RENTAL'}]
-                            </option>
+                            <option value="${m.model}" data-available="${m.available}" data-type="${m.type}">${m.available ? "(Available)" : "(Waitlist)"} ${m.type}: ${m.model}</option>
                         `,
                 )
                 .join("")
-            : `<option value="" disabled>No equipment assigned to this project yet.</option>`
+            : `<option value="" disabled>No machinery mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
         }
                     </select>
                     
@@ -4159,60 +3695,57 @@ Contract Admin</textarea>
                             <input type="number" id="fs_mac_qty" class="form-input" value="1" min="1" style="width: 100%; border-radius: 8px; padding: 8px;">
                         </div>
                         <button class="btn" onclick="window.app.fsModule?.addItemToRequisition('machinery')" style="margin-top: 20px; background: var(--slate-900); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px;">
-                            <i class="fas fa-plus"></i> Add
+                            <i class="fas fa-plus"></i> Add Item
                         </button>
                     </div>
                 </div>
 
-                <!-- Materials View (Grouped by Phase) -->
                 <div id="fs_material_req_view" style="display: none;">
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Approved Material List</label>
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Material Type</label>
                     <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        <option value="" disabled selected>Select from road spec...</option>
-                        ${(() => {
-                const materials = projectData?.recommendedMaterials || [];
-                const phases = [...new Set(materials.map(m => m.phaseName))];
-                return phases.map(phase => `
-                            <optgroup label="${phase}">
-                                ${materials.filter(m => m.phaseName === phase).map(m => `
-                                    <option value="${m.name}" data-unit="${m.unit}" data-approved="${m.approvedQty}">${m.name} (Max: ${m.approvedQty} ${m.unit})</option>
-                                `).join('')}
-                            </optgroup>
-                        `).join('');
-            })()}
+                        ${(projectData?.recommendedMaterials || []).length > 0
+            ? (projectData.recommendedMaterials || [])
+                .map(
+                    (m) => `
+                            <option value="${m.name}" data-unit="${m.unit}">${m.name} (${m.unit})</option>
+                        `,
+                )
+                .join("")
+            : `<option value="" disabled>No materials mapped for ${projectData?.roadSpecification?.roadType || "RT-5"}</option>`
+        }
                     </select>
 
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
                         <div style="flex: 1;">
                             <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 4px; text-transform: uppercase;">Amount</label>
-                            <input type="number" id="fs_mat_qty" class="form-input" value="" placeholder="0.0" min="0.1" step="0.1" style="width: 100%; border-radius: 8px; padding: 8px;">
+                            <input type="number" id="fs_mat_qty" class="form-input" value="1" min="1" step="0.1" style="width: 100%; border-radius: 8px; padding: 8px;">
                         </div>
                         <button class="btn" onclick="window.app.fsModule?.addItemToRequisition('material')" style="margin-top: 20px; background: var(--slate-900); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px;">
-                            <i class="fas fa-plus"></i> Add
+                            <i class="fas fa-plus"></i> Add Item
                         </button>
                     </div>
                 </div>
             </div>
 
             <div id="fs_requisition_items_list" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-700); margin-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid var(--slate-100); padding-bottom: 8px;">Request Summary (0 Items)</label>
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-700); margin-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid var(--slate-100); padding-bottom: 8px;">Selected Items (0)</label>
                 <div id="fs_items_container" style="display: flex; flex-direction: column; gap: 8px; min-height: 40px;">
-                    <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; font-style: italic;">No items added to current draft.</div>
+                    <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; font-style: italic;">No items added yet.</div>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 32px; padding: 16px; background: #FFF9F5; border-radius: 12px; border: 1px solid #FFE5D4;">
-                <label class="form-label" style="color: var(--orange-dark); font-weight: 700; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block;">Operational Urgency</label>
+                <label class="form-label" style="color: var(--orange-dark); font-weight: 700; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block;">Overall Priority</label>
                 <select id="fs_req_urgency" class="form-input" style="width: 100%; border: none; background: transparent; font-weight: 700; color: var(--slate-800);">
-                    <option value="normal">Routine Supply (72h Cycle)</option>
-                    <option value="urgent">Critical Path Blocker (Next 24h)</option>
+                    <option value="normal">Normal (Scheduled)</option>
+                    <option value="urgent"> Urgent (Impacts Critical Path)</option>
                 </select>
             </div>
 
             <button class="btn" style="width: 100%; padding: 16px; background: var(--orange); border: none; border-radius: 12px; color: white; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3); transition: transform 0.2s;" 
                 onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'"
                 onclick="window.app.fsModule?.handleSubmitRequisition()">
-                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Dispatch Request to EC
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit Requisition
             </button>
         </div>
     `,
@@ -4230,7 +3763,7 @@ Contract Admin</textarea>
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" data-vrules="required" style="width: 100%;" 
                     min="${new Date().toISOString().slice(0, 16)}" onchange="window.V?.checkField(this); document.getElementById('eta_error').style.display='none'">
-                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
+                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">ΓÜá Please set a valid future arrival time.</div>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
             </div>
 
@@ -4704,7 +4237,7 @@ Contract Admin</textarea>
             </div>
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Password (Leave blank to keep current)</label>
-                <input type="password" id="edit_user_pass" name="password" class="form-input" placeholder="••••••••" style="width: 100%;">
+                <input type="password" id="edit_user_pass" name="password" class="form-input" placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó" style="width: 100%;">
             </div>
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUserFormSubmit()">Save User Changes</button>
         </div>
@@ -4797,20 +4330,17 @@ Contract Admin</textarea>
                     <div>
                         <div style="font-size: 13px; font-weight: 700;">${p.manager?.name || p.managerName || "Unassigned"}</div>
                         <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">
-                            ${p.manager ? `${p.manager.email || 'No email'} ${p.manager.phone ? '• ' + p.manager.phone : ''}` : 'No contact details available'}
+                            ${p.manager ? `${p.manager.email || 'No email'} ${p.manager.phone ? 'ΓÇó ' + p.manager.phone : ''}` : 'No contact details available'}
                         </div>
                         <div style="font-size: 10px; font-weight: 700; color: var(--blue); margin-top: 4px; text-transform: uppercase;">Supervisor</div>
                     </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 12px; margin-top: 12px;">
+            <div style="display: flex; gap: 12px;">
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.openEditProjectDrawer('${p.id}')"><i class="fas fa-edit"></i> Edit Master</button>
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.openExtendProjectDrawer('${p.id}')"><i class="fas fa-calendar-plus"></i> Extend</button>
             </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 12px; background: var(--blue); border-color: var(--blue);" onclick="window.app.pmModule.handleRunGapAnalysis('${p.id}')">
-                <i class="fas fa-microchip" style="margin-right: 8px;"></i> Run Equipment Gap Analysis
-            </button>
         </div>
     `,
 
@@ -4878,7 +4408,7 @@ Contract Admin</textarea>
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;"
                     min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">
-                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
+                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">ΓÜá Please set a valid future arrival time.</div>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
             </div>
 
@@ -5624,7 +5154,7 @@ Contract Admin</textarea>
                                     </div>
                                     <div>
                                         <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.name}</div>
-                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} • ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
+                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} ΓÇó ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
                                     </div>
                                 </div>
                                 <span style="font-size: 10px; font-weight: 800; color: var(--emerald); background: #F0FDF4; padding: 4px 8px; border-radius: 6px;">DEPLOYED</span>
@@ -5642,7 +5172,7 @@ Contract Admin</textarea>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--slate-50);">
                                 <div>
                                     <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${c.item || 'Generic Resource'}</div>
-                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} • ${c.user || 'System'}</div>
+                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} ΓÇó ${c.user || 'System'}</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-weight: 800; color: ${c.type === 'IN' ? 'var(--emerald)' : 'var(--orange)'};">

@@ -1,4 +1,4 @@
-export const DrawerTemplates = {
+﻿export const DrawerTemplates = {
     escapeHTML(str) {
         if (!str) return "";
         return String(str)
@@ -35,7 +35,7 @@ export const DrawerTemplates = {
                             <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
                                 <div>
                                     <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${item.type}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">Requirement: ${item.required} • Owned: ${item.owned}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">Requirement: ${item.required} ΓÇó Owned: ${item.owned}</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-weight: 800; color: ${item.gap > 0 ? '#F97316' : '#059669'}; font-size: 14px;">
@@ -127,11 +127,11 @@ export const DrawerTemplates = {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div style="font-size: 20px; font-weight: 800; color: var(--slate-900);">${data.machineType}</div>
-                            <div style="font-size: 12px; color: var(--slate-500);">${data.contractType} • ${data.vendorName}</div>
+                            <div style="font-size: 12px; color: var(--slate-500);">${data.contractType} ΓÇó ${data.vendorName}</div>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 18px; font-weight: 800; color: var(--orange);">MWK ${data.dailyRate.toLocaleString()}</div>
-                            <div style="font-size: 11px; color: var(--slate-500);">Per Day • ${data.durationDays} Days</div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Per Day ΓÇó ${data.durationDays} Days</div>
                         </div>
                     </div>
                 </div>
@@ -206,7 +206,7 @@ export const DrawerTemplates = {
                         </div>
                         <div>
                             <div style="font-size: 14px; font-weight: 800; color: var(--slate-800);">${fileName}</div>
-                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 600; text-transform: uppercase;">${fileExt} Document • Secure Viewer</div>
+                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 600; text-transform: uppercase;">${fileExt} Document ΓÇó Secure Viewer</div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px;">
@@ -248,7 +248,7 @@ export const DrawerTemplates = {
                 </div>
                 
                 <div style="padding: 12px 24px; background: white; border-top: 1px solid var(--slate-200); font-size: 11px; color: var(--slate-400); display: flex; justify-content: space-between; align-items: center;">
-                    <div>MCMS Secure Document Pipeline • AES-256 Encrypted</div>
+                    <div>MCMS Secure Document Pipeline ΓÇó AES-256 Encrypted</div>
                     <div style="display: flex; gap: 16px;">
                         <span><i class="fas fa-shield-alt"></i> Verified Integrity</span>
                         <span><i class="fas fa-history"></i> Version 1.0</span>
@@ -305,7 +305,7 @@ export const DrawerTemplates = {
                     <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Unit</label>
                     <select id="price-unit" class="form-input" style="width: 100%;">
                         <option value="Bag" ${data.unit === "Bag" ? "selected" : ""}>Bag</option>
-                        <option value="m3" ${data.unit === "m3" ? "selected" : ""}>m³</option>
+                        <option value="m3" ${data.unit === "m3" ? "selected" : ""}>m┬│</option>
                         <option value="ton" ${data.unit === "ton" ? "selected" : ""}>Tonne</option>
                         <option value="litres" ${data.unit === "litres" ? "selected" : ""}>Litres</option>
                         <option value="m" ${data.unit === "m" ? "selected" : ""}>Meter (m)</option>
@@ -754,8 +754,8 @@ export const DrawerTemplates = {
                     <div style="flex: 1;">
                         <div style="font-weight: 700; color: var(--slate-800); font-size: 14px;">${contract.fileName || "Master_Agreement_Signed.pdf"}</div>
                         <div style="font-size: 11px; color: var(--slate-500);">
-                            <span style="font-weight: 700; color: var(--orange);">Version v${currentVersionNum}</span> • 
-                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${(latestVersion?.createdBy?.name) || contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> • 
+                            <span style="font-weight: 700; color: var(--orange);">Version v${currentVersionNum}</span> ΓÇó 
+                            Uploaded By: <span style="font-weight: 600; color: var(--slate-700);">${(latestVersion?.createdBy?.name) || contract.createdBy?.name || window.currentUser?.name || "Authorized Official"}</span> ΓÇó 
                             ${latestVersion ? new Date(latestVersion.createdAt).toLocaleDateString() : (contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : new Date().toLocaleDateString())}
                         </div>
                     </div>
@@ -784,7 +784,7 @@ export const DrawerTemplates = {
                                             <div style="font-size: 14px; font-weight: 700; color: var(--slate-800);">${v.fileName || (contract.contractType === "project" ? "Master_Agreement_V" + v.versionNumber + ".pdf" : "Contract_V" + v.versionNumber + ".pdf")}</div>
                                             <div style="font-size: 12px; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
                                                 <i class="fas fa-user-circle" style="font-size: 11px;"></i>
-                                                ${v.createdBy?.name || window.currentUser?.name || "Authorized Official"} • ${new Date(v.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                                                ${v.createdBy?.name || window.currentUser?.name || "Authorized Official"} ΓÇó ${new Date(v.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                                             </div>
                                         </div>
                                     </div>
@@ -1014,7 +1014,7 @@ export const DrawerTemplates = {
                 </div>
                 <!-- Final Step -->
                 <div class="wizard-step step-5" style="z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; opacity:0.4;">
-                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">✓</div>
+                    <div class="step-circle" style="width:24px; height:24px; border-radius:50%; background:var(--slate-200); color:var(--slate-500); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid white;">Γ£ô</div>
                     <div style="font-size:10px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Submit</div>
                 </div>
             </div>
@@ -1231,7 +1231,7 @@ export const DrawerTemplates = {
                         <input type="checkbox" name="road_acc" value="fleet_tipper" style="margin-top:3px; accent-color:var(--orange);">
                         <div>
                             <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Haulage Group</div>
-                            <div style="font-size:10px; color:var(--slate-500);">15m³ Tipper Truck fleet</div>
+                            <div style="font-size:10px; color:var(--slate-500);">15m┬│ Tipper Truck fleet</div>
                         </div>
                     </label>
                 </div>
@@ -1663,7 +1663,7 @@ export const DrawerTemplates = {
                     </div>
                     <div style="color: var(--slate-500); line-height: 1.4;">
                         ${window.app.fsModule?.bestPosition ? 
-                            `Accuracy: ±${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` : 
+                            `Accuracy: ┬▒${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` : 
                             `Please ensure you have synced your location on the dashboard map before submitting.`}
                     </div>
                 </div>
@@ -1782,7 +1782,7 @@ export const DrawerTemplates = {
                         </div>
                     </div>
                     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 10px; font-family: monospace;">
-                        Lat: ${log.submissionLat?.toFixed(6) || 'N/A'}, Lng: ${log.submissionLng?.toFixed(6) || 'N/A'} (±${log.submissionAccuracy || '??'}m)
+                        Lat: ${log.submissionLat?.toFixed(6) || 'N/A'}, Lng: ${log.submissionLng?.toFixed(6) || 'N/A'} (┬▒${log.submissionAccuracy || '??'}m)
                     </div>
                 </div>
 
@@ -2146,7 +2146,7 @@ export const DrawerTemplates = {
                                     <div style="font-size: 11px; font-weight: 800; color: var(--slate-400);">V${v.versionNumber || idx + 1}</div>
                                     <div>
                                         <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${DrawerTemplates.escapeHTML(v.fileName || "Contract_Revision.pdf")}</div>
-                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || "System")} • ${new Date(v.createdAt).toLocaleDateString()}</div>
+                                        <div style="font-size: 10px; color: var(--slate-400);">By ${DrawerTemplates.escapeHTML(v.createdBy?.name || v.createdByName || "System")} ΓÇó ${new Date(v.createdAt).toLocaleDateString()}</div>
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 4px;">
@@ -2454,15 +2454,15 @@ export const DrawerTemplates = {
                 <div id="asset-maintenance-history" style="font-size: 12px;">
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--slate-100);">
                         <div><span style="font-weight: 600;">500 Hour Service</span> <span class="status active" style="font-size: 9px; padding: 1px 6px;">Preventive</span></div>
-                        <div style="color: var(--slate-500);">Dec 15, 2025 • MWK 1.2M</div>
+                        <div style="color: var(--slate-500);">Dec 15, 2025 ΓÇó MWK 1.2M</div>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--slate-100);">
                         <div><span style="font-weight: 600;">Oil & Filter Change</span> <span class="status active" style="font-size: 9px; padding: 1px 6px;">Preventive</span></div>
-                        <div style="color: var(--slate-500);">Oct 02, 2025 • MWK 450K</div>
+                        <div style="color: var(--slate-500);">Oct 02, 2025 ΓÇó MWK 450K</div>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                         <div><span style="font-weight: 600;">Hydraulic Hose Repair</span> <span class="status pending" style="font-size: 9px; padding: 1px 6px;">Corrective</span></div>
-                        <div style="color: var(--slate-500);">Aug 18, 2025 • MWK 890K</div>
+                        <div style="color: var(--slate-500);">Aug 18, 2025 ΓÇó MWK 890K</div>
                     </div>
                 </div>
             </div>
@@ -2594,7 +2594,7 @@ export const DrawerTemplates = {
         <div class="drawer-section">
             <div style="margin-bottom:16px;">
                 <div style="font-weight:700; font-size:18px;">Performance Bond</div>
-                <div style="font-size:13px; color:var(--slate-500);">Unilia Construction • NB-BND-2024-889</div>
+                <div style="font-size:13px; color:var(--slate-500);">Unilia Construction ΓÇó NB-BND-2024-889</div>
             </div>
              <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
                  <div class="stat-card" style="padding:12px;">
@@ -2649,7 +2649,7 @@ Contract Admin</textarea>
                 <i class="fas fa-gavel" style="color:var(--red); font-size:20px;"></i>
                 <div>
                     <div style="font-weight:700; color:var(--red); font-size:14px;">Regulatory Breach Alert</div>
-                    <div style="font-size:11px; color:var(--red);">Apex Security • Workers Comp</div>
+                    <div style="font-size:11px; color:var(--red);">Apex Security ΓÇó Workers Comp</div>
                 </div>
             </div>
             
@@ -3553,7 +3553,7 @@ Contract Admin</textarea>
                 <div id="contract-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
                     <i class="fas fa-file-signature" style="font-size: 32px; color: var(--orange); margin-bottom: 12px;"></i>
                     <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Click to upload signed legal PDF</div>
-                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB • Secure Pipeline</div>
+                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Max size 25MB ΓÇó Secure Pipeline</div>
                     <input type="file" id="contract_document" accept=".pdf" style="display: none;">
                 </div>
             </div>
@@ -3567,7 +3567,7 @@ Contract Admin</textarea>
 
     newVendorContract: `
         <div style="padding: 24px;">
-            <div style="margin-bottom: 16px; padding: 12px; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; display: flex; gap: 10px; align-items: center;">
+            <div style="margin-bottom: 24px; padding: 16px; background: #eff6ff; border-radius: 12px; border: 1px solid #dbeafe; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-file-invoice-dollar" style="color: var(--blue); font-size: 24px;"></i>
                 <div>
                     <div style="font-weight: 800; color: #1e40af; font-size: 15px;">Create Material Supply Contract</div>
@@ -3575,20 +3575,8 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Project</label>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--blue); padding: 2px 6px; border: 1px solid var(--blue-light); border-radius: 4px; background: #f0f9ff;"
-                            onclick="(window.app?.pmModule || window.app?.fmModule)?.onProjectContractSelected(document.getElementById('contract_project').value)">
-                            <i class="fas fa-sync-alt" style="margin-right: 4px;"></i> Refresh
-                        </button>
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--slate-500); padding: 2px 6px; border: 1px solid var(--slate-200); border-radius: 4px; background: var(--slate-50);"
-                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule)?.openNewVendorContract()">
-                            <i class="fas fa-undo" style="margin-right: 4px;"></i> Reset
-                        </button>
-                    </div>
-                </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
                 <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
                     onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.onProjectContractSelected(this.value)">
                     <option value="">Select Target Project...</option>
@@ -3596,23 +3584,22 @@ Contract Admin</textarea>
             </div>
 
             <!-- Material Selection Table -->
-            <div style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Select Materials for This Contract</label>
-                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow-x: auto;">
-                    <table style="width: 100%; min-width: 650px; border-collapse: collapse; font-size: 12px;">
+            <div style="margin-bottom: 24px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Select Materials for This Contract *</label>
+                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                         <thead>
                             <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
                                 <th style="padding: 10px; text-align: left; width: 40px;"></th>
                                 <th style="padding: 10px; text-align: left;">Material Name</th>
                                 <th style="padding: 10px; text-align: center;">Total Required</th>
                                 <th style="padding: 10px; text-align: center;">Already Contracted</th>
-                                <th style="padding: 10px; text-align: center;">Status</th>
                                 <th style="padding: 10px; text-align: center; width: 80px;">New Qty</th>
                             </tr>
                         </thead>
                         <tbody id="contract-materials-body">
                             <tr>
-                                <td colspan="6" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view materials</td>
+                                <td colspan="5" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view materials</td>
                             </tr>
                         </tbody>
                     </table>
@@ -3620,30 +3607,24 @@ Contract Admin</textarea>
                 <div style="font-size: 11px; color: var(--slate-500); margin-top: 8px; font-style: italic;">Check the materials this vendor will supply</div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px; position: relative;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name</label>
-                <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" 
-                    oninput="window.V?.checkField(this)" 
-                    onkeyup="(window.app?.pmModule || window.app?.fmModule)?.searchVendors(this.value)"
-                    autocomplete="off"
-                    style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type new vendor name...">
-                <input type="hidden" id="contract_vendor_id">
-                <div id="vendor_autocomplete_results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-300); border-radius: 8px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor/Supplier Name *</label>
+                <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type new vendor name...">
                 <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Select existing or type to create a new vendor.</div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
+            <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
                 <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title</label>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
                 <input type="text" id="contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. Bitumen Supply Agreement">
             </div>
 
             <!-- Financial Performance Summary -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; padding: 12px; background: var(--slate-50); border-radius: 10px; border: 1px solid var(--slate-200);">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
                 <div>
                     <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Market Price</div>
                     <div id="contract_market_price_display" style="font-size: 14px; font-weight: 800; color: var(--slate-900);">MWK 0</div>
@@ -3659,7 +3640,7 @@ Contract Admin</textarea>
             </div>
 
             <!-- Budget Control -->
-            <div style="margin-bottom: 16px; padding: 12px; border: 1px solid var(--slate-200); border-radius: 12px;">
+            <div style="margin-bottom: 24px; padding: 16px; border: 1px solid var(--slate-200); border-radius: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div>
                         <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Available Funds</div>
@@ -3679,29 +3660,29 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK)</label>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Contract Sum (MWK) *</label>
                 <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
                 <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date</label>
-                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Start Date *</label>
+                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
                 <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date</label>
-                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">End Date *</label>
+                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes</label>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
                 <textarea id="contract_justification" class="form-input" data-vrules="required|minWords:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Explain why this contract is being established or modified..."></textarea>
             </div>
 
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Document (PDF/DOC)</label>
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Document (PDF/DOC) *</label>
                 <div id="contract-drop-zone" style="border: 2px dashed var(--blue); border-radius: 12px; padding: 32px; text-align: center; background: #f0f7ff; cursor: pointer;">
                     <i class="fas fa-file-upload" style="font-size: 32px; color: var(--blue); margin-bottom: 12px;"></i>
                     <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #1e40af;">Drag and drop file here or browse</div>
@@ -3719,7 +3700,7 @@ Contract Admin</textarea>
 
     newRentalContract: `
         <div style="padding: 24px;">
-            <div style="margin-bottom: 16px; padding: 12px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 10px; align-items: center;">
+            <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
                 <i class="fas fa-truck-pickup" style="color: var(--orange); font-size: 24px;"></i>
                 <div>
                     <div style="font-weight: 800; color: #9a3412; font-size: 15px;">Create Vehicle Rental Contract</div>
@@ -3727,20 +3708,8 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Project</label>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 2px 6px; border: 1px solid #ffedd5; border-radius: 4px; background: #fff7ed;"
-                            onclick="(window.app?.pmModule || window.app?.fmModule)?.onProjectRentalSelected(document.getElementById('contract_project').value)">
-                            <i class="fas fa-sync-alt" style="margin-right: 4px;"></i> Refresh
-                        </button>
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--slate-500); padding: 2px 6px; border: 1px solid var(--slate-200); border-radius: 4px; background: var(--slate-50);"
-                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule)?.openNewVendorContract()">
-                            <i class="fas fa-undo" style="margin-right: 4px;"></i> Reset
-                        </button>
-                    </div>
-                </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project *</label>
                 <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
                     onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.onProjectRentalSelected(this.value)">
                     <option value="">Select Target Project...</option>
@@ -3748,10 +3717,10 @@ Contract Admin</textarea>
             </div>
 
             <!-- Vehicle Selection Table -->
-            <div style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Select Vehicles/Machines for This Contract</label>
-                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow-x: auto;">
-                    <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px;">
+            <div style="margin-bottom: 24px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Select Vehicles/Machines for This Contract *</label>
+                <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                         <thead>
                             <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
                                 <th style="padding: 10px; text-align: left; width: 40px;"></th>
@@ -3771,29 +3740,23 @@ Contract Admin</textarea>
                 <div style="font-size: 11px; color: var(--slate-500); margin-top: 8px; font-style: italic;">Check the machines this rental vendor will supply</div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px; position: relative;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Rental Vendor Name</label>
-                <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" 
-                    oninput="window.V?.checkField(this)" 
-                    onkeyup="(window.app?.pmModule || window.app?.fmModule)?.searchVendors(this.value)"
-                    autocomplete="off"
-                    style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type rental company name...">
-                <input type="hidden" id="contract_vendor_id">
-                <div id="vendor_autocomplete_results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-300); border-radius: 8px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Rental Vendor Name *</label>
+                <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type rental company name...">
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
+            <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Vendor Phone Number</label>
                 <input type="text" id="contract_vendor_phone" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. +265 99 123 4567">
             </div>
 
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title</label>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Contract Title *</label>
                 <input type="text" id="contract_title" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="e.g. Heavy Equipment Rental Agreement">
             </div>
 
             <!-- Financial Performance Summary -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; padding: 12px; background: var(--slate-50); border-radius: 10px; border: 1px solid var(--slate-200);">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px solid var(--slate-200);">
                 <div>
                     <div style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Baseline Rate</div>
                     <div id="contract_market_price_display" style="font-size: 14px; font-weight: 800; color: var(--slate-900);">MWK 0</div>
@@ -3808,36 +3771,29 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Rental Sum (MWK) *</label>
+                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule).calculateContractPerformance()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
                 <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Mobilization Date</label>
-                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Mobilization Date *</label>
+                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
                 <div>
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Demobilization</label>
-                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Demobilization *</label>
+                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this)" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
             </div>
 
-            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;">
-                <i class="fas fa-info-circle" style="color: #0284c7; margin-top: 2px;"></i>
-                <div style="font-size: 11px; color: #0369a1; line-height: 1.5;">
-                    <strong>Baseline Calculation:</strong> The baseline rate is automatically calculated based on the <strong>Daily Market Rate × Selected Qty × Duration (Days)</strong>. Use this to compare against your negotiated rental sum.
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Rental Sum (MWK)</label>
-                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes</label>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Justification/Notes *</label>
                 <textarea id="contract_justification" class="form-input" data-vrules="required|minWords:3" oninput="window.V?.checkField(this)" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: 8px;" rows="2" placeholder="Why are these vehicles being rented?"></textarea>
             </div>
 
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Signed Rental Agreement (PDF)</label>
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Signed Rental Agreement (PDF) *</label>
                 <div id="contract-drop-zone" style="border: 2px dashed var(--orange); border-radius: 12px; padding: 32px; text-align: center; background: #fffaf5; cursor: pointer;">
                     <i class="fas fa-file-contract" style="font-size: 32px; color: var(--orange); margin-bottom: 12px;"></i>
                     <div id="contract-file-status" style="font-size: 13px; font-weight: 700; color: #9a3412;">Drag and drop file here or browse</div>
@@ -4144,7 +4100,7 @@ Contract Admin</textarea>
                 .map(
                     (m) => `
                             <option value="${m.name}" data-available="${m.available}" data-type="${m.type}" data-source="${m.source}">
-                                ${m.available ? "✅" : "⏳"} ${m.name} [${m.source === 'owned' ? 'OWNED' : 'RENTAL'}]
+                                ${m.available ? "Γ£à" : "ΓÅ│"} ${m.name} [${m.source === 'owned' ? 'OWNED' : 'RENTAL'}]
                             </option>
                         `,
                 )
@@ -4230,7 +4186,7 @@ Contract Admin</textarea>
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" data-vrules="required" style="width: 100%;" 
                     min="${new Date().toISOString().slice(0, 16)}" onchange="window.V?.checkField(this); document.getElementById('eta_error').style.display='none'">
-                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
+                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">ΓÜá Please set a valid future arrival time.</div>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
             </div>
 
@@ -4704,7 +4660,7 @@ Contract Admin</textarea>
             </div>
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Password (Leave blank to keep current)</label>
-                <input type="password" id="edit_user_pass" name="password" class="form-input" placeholder="••••••••" style="width: 100%;">
+                <input type="password" id="edit_user_pass" name="password" class="form-input" placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó" style="width: 100%;">
             </div>
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.pmModule.handleUserFormSubmit()">Save User Changes</button>
         </div>
@@ -4797,7 +4753,7 @@ Contract Admin</textarea>
                     <div>
                         <div style="font-size: 13px; font-weight: 700;">${p.manager?.name || p.managerName || "Unassigned"}</div>
                         <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">
-                            ${p.manager ? `${p.manager.email || 'No email'} ${p.manager.phone ? '• ' + p.manager.phone : ''}` : 'No contact details available'}
+                            ${p.manager ? `${p.manager.email || 'No email'} ${p.manager.phone ? 'ΓÇó ' + p.manager.phone : ''}` : 'No contact details available'}
                         </div>
                         <div style="font-size: 10px; font-weight: 700; color: var(--blue); margin-top: 4px; text-transform: uppercase;">Supervisor</div>
                     </div>
@@ -4878,7 +4834,7 @@ Contract Admin</textarea>
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;"
                     min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">
-                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
+                <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">ΓÜá Please set a valid future arrival time.</div>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
             </div>
 
@@ -5624,7 +5580,7 @@ Contract Admin</textarea>
                                     </div>
                                     <div>
                                         <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.name}</div>
-                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} • ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
+                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} ΓÇó ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
                                     </div>
                                 </div>
                                 <span style="font-size: 10px; font-weight: 800; color: var(--emerald); background: #F0FDF4; padding: 4px 8px; border-radius: 6px;">DEPLOYED</span>
@@ -5642,7 +5598,7 @@ Contract Admin</textarea>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--slate-50);">
                                 <div>
                                     <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${c.item || 'Generic Resource'}</div>
-                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} • ${c.user || 'System'}</div>
+                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} ΓÇó ${c.user || 'System'}</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-weight: 800; color: ${c.type === 'IN' ? 'var(--emerald)' : 'var(--orange)'};">

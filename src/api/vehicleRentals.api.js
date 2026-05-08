@@ -9,7 +9,7 @@ window.vehicleRentalsApi = {
   async getAll(params = {}) {
     const query = new URLSearchParams(params).toString();
     const res = await fetch(`/api/v1/vehicle-rentals?${query}`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
     });
     return await res.json();
   },
@@ -22,7 +22,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify(data)
     });
@@ -37,7 +37,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify(data)
     });
@@ -52,7 +52,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify(data)
     });
@@ -67,7 +67,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify(data)
     });
@@ -82,7 +82,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify(data)
     });
@@ -97,7 +97,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify({ returnDate })
     });
@@ -109,7 +109,7 @@ window.vehicleRentalsApi = {
    */
   async getPriceConfigs() {
     const res = await fetch('/api/v1/vehicle-rentals/config', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
     });
     return await res.json();
   },
@@ -122,7 +122,7 @@ window.vehicleRentalsApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}`
       },
       body: JSON.stringify(data)
     });
@@ -134,7 +134,7 @@ window.vehicleRentalsApi = {
    */
   async getGapAnalysis(projectId) {
     const res = await fetch(`/api/v1/road-estimation/${projectId}/equipment-gap`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
     });
     return await res.json();
   }
