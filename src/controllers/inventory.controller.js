@@ -216,10 +216,20 @@ const initiateReturn = asyncHandler(async (req, res) => {
   response.success(res, result, 'Reverse dispatch completed successfully');
 });
 
+const getAllLogs = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director', 'Field_Supervisor'])) return;
+
+  const logs = await inventoryService.getAllLogs();
+  response.success(res, logs);
+});
+
 module.exports = {
   getBySector,
   getByProject,
   getAll,
+  getAllLogs,
   distribute,
   consume,
   getIncomingShipments,

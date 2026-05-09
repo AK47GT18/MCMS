@@ -748,9 +748,19 @@ export const FD_Contracts = {
     const items = Array.from(selectedCheckboxes).map(cb => {
       const idx = cb.value;
       const qtyInput = document.getElementById(`m_qty_${idx}`);
+      const units = parseFloat(qtyInput?.value || 1);
+      const start = new Date(document.getElementById("contract_start")?.value);
+      const end = new Date(document.getElementById("contract_end")?.value);
+      
+      let effectiveQty = units;
+      if (isRental && !isNaN(start) && !isNaN(end) && end >= start) {
+          const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+          effectiveQty = units * days;
+      }
+
       return {
-        [isRental ? 'name' : 'materialName']: cb.dataset.name,
-        quantity: parseFloat(qtyInput?.value || 0),
+        materialName: cb.dataset.name,
+        quantity: effectiveQty,
         unit: cb.dataset.unit || (isRental ? 'Day' : 'Unit'),
         unitPrice: parseFloat(cb.dataset.market || 0)
       };
@@ -1415,28 +1425,29 @@ export const FD_Contracts = {
           vehiclesBody.innerHTML = gaps.map((v, idx) => {
             const name = v.label || v.name || v.type;
             const rate = v.dailyRate || v.rate || 0;
-            const gap = v.estimatedDays || 1; 
+            const totalRequired = v.estimatedDays || 1; 
 
             return `
               <tr style="border-bottom: 1px solid var(--slate-100);">
                 <td style="padding: 12px 10px; text-align: center;">
-                  <input type="checkbox" name="contract_material" value="${idx}" data-market="${rate}" data-duration="${gap}"
+                  <input type="checkbox" name="contract_material" value="${idx}" data-market="${rate}" data-gap="${totalRequired}" data-name="${name}" data-unit="Day"
                     style="width: 16px; height: 16px;"
-                    onchange="window.app.fmModule.calculateContractPerformance()">
+                    onchange="const cbs = document.querySelectorAll('input[name=\\'contract_material\\']'); cbs.forEach(cb => { if(cb !== this) cb.checked = false; }); window.app.fmModule.calculateContractPerformance()">
                 </td>
                 <td style="padding: 12px 10px;">
                   <div style="font-weight: 700; color: var(--slate-800);">${name}</div>
                   <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${rate.toLocaleString()}/day</div>
                 </td>
-                <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--slate-600);">
-                  ${gap} Days
+                <td style="padding: 12px 10px; text-align: center;">
+                  <div id="rental_days_display_${idx}" style="font-weight: 700; color: var(--slate-800);">0 Days</div>
+                  <div style="font-size: 10px; color: var(--slate-500);">Est: ${totalRequired} Days</div>
                 </td>
                 <td style="padding: 12px 10px; text-align: center;">
                   <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
                     <input type="number" id="m_qty_${idx}" class="form-input" 
                       style="width: 60px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
                       value="1" min="1" oninput="window.app.fmModule.calculateContractPerformance()">
-                    <span style="font-size: 10px; color: var(--slate-500);">Unit(s)</span>
+                    <span style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Unit(s)</span>
                   </div>
                 </td>
               </tr>
@@ -1484,19 +1495,45 @@ export const FD_Contracts = {
       marketTotal += qty * marketPrice;
     });
 
-    // Handle Rental Duration Multiplier
+    // Handle Rental Duration Multiplier & Row Updates
     if (this.currentContractTab === "rental") {
       const startInput = document.getElementById("contract_start");
       const endInput = document.getElementById("contract_end");
+      let diffDays = 0;
+      
       if (startInput?.value && endInput?.value) {
         const start = new Date(startInput.value);
         const end = new Date(endInput.value);
         const diffTime = end - start;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
-        if (diffDays > 0) {
-          marketTotal *= diffDays;
-          console.log(`[Performance] Rental Duration: ${diffDays} days. Total Baseline: ${marketTotal}`);
+        diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+        
+        if (diffDays <= 0) {
+            window.toast.show("Demobilization date must be after mobilization", "warning");
+            diffDays = 0;
         }
+      }
+
+      // Update individual row day displays and validate against gap
+      checkboxes.forEach(cb => {
+          const index = cb.value;
+          const display = document.getElementById(`rental_days_display_${index}`);
+          const gap = parseFloat(cb.dataset.gap || 9999);
+          
+          if (display) {
+              display.textContent = `${diffDays} Day${diffDays === 1 ? '' : 's'}`;
+              
+              if (diffDays > gap) {
+                  display.style.color = 'var(--red)';
+                  display.innerHTML += ` <span style="font-size:10px; display:block; color:var(--red); font-weight:700;"><i class="fas fa-exclamation-circle"></i> Exceeds Gap (${gap})</span>`;
+                  window.toast.show(`Contract duration (${diffDays} days) exceeds required gap (${gap} days) for this machine.`, "error");
+              } else {
+                  display.style.color = diffDays > 0 ? 'var(--emerald)' : 'var(--slate-400)';
+              }
+          }
+      });
+
+      if (diffDays > 0) {
+        marketTotal *= diffDays;
       }
     }
 

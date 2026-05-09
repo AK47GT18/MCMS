@@ -491,10 +491,43 @@ async function receiveShipment(contractItemId, receivedQty, userId) {
   return updatedItem;
 }
 
+async function getAllLogs(limit = 100) {
+  const logs = await prisma.inventoryLog.findMany({
+    orderBy: { timestamp: 'desc' },
+    take: limit,
+    include: {
+      user: { select: { id: true, name: true, role: true } },
+      inventory: {
+        include: {
+          sector: {
+            include: { project: { select: { id: true, name: true, code: true } } }
+          }
+        }
+      }
+    }
+  });
+
+  return logs.map(log => ({
+    id: log.id,
+    type: log.type,
+    quantity: log.quantity,
+    timestamp: log.timestamp,
+    reference: log.reference,
+    notes: log.notes,
+    user: log.user,
+    materialName: log.inventory.materialName,
+    unit: log.inventory.unit,
+    sectorName: log.inventory.sector.name,
+    projectName: log.inventory.sector.project?.name,
+    projectCode: log.inventory.sector.project?.code
+  }));
+}
+
 module.exports = {
   getBySector,
   getByProject,
   getAll,
+  getAllLogs,
   distribute,
   consume,
   getIncomingShipments,

@@ -4119,7 +4119,7 @@ Contract Admin</textarea>
                                 <th style="padding: 10px; text-align: left; width: 40px;"></th>
                                 <th style="padding: 10px; text-align: left;">Machine / Equipment</th>
                                 <th style="padding: 10px; text-align: center;">Days Required</th>
-                                <th style="padding: 10px; text-align: center; width: 80px;">Rental Qty</th>
+                                <th style="padding: 10px; text-align: center; width: 100px;">Rental Qty</th>
                             </tr>
                         </thead>
                         <tbody id="contract-vehicles-body">

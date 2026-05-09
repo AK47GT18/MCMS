@@ -7,5 +7,6 @@ export default {
     distribute: (data, options = {}) => client.post('/inventory/distribute', data, options),
     consume: (data, options = {}) => client.post('/inventory/consume', data, options),
     getIncomingShipments: (options = {}) => client.get('/inventory/incoming-shipments', options),
-    receiveShipment: (data, options = {}) => client.post('/inventory/receive-shipment', data, options)
+    receiveShipment: (data, options = {}) => client.post('/inventory/receive-shipment', data, options),
+    getLogs: (options = {}) => client.get('/inventory/logs', options)
 };

@@ -623,10 +623,24 @@ export const PM_Contracts = {
         const materials = Array.from(checkboxes).map(cb => {
           const index = cb.value;
           const qtyInput = document.getElementById(`m_qty_${index}`);
+          const units = parseFloat(qtyInput?.value || 1);
+          
+          let effectiveQty = units;
+          if (data.contractType === "rental" || data.contractType === "vendor") { // Check if we have dates for multiplier
+              const start = new Date(startDateRaw);
+              const end = new Date(endDateRaw);
+              if (!isNaN(start) && !isNaN(end) && end >= start) {
+                  const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                  if (days > 0 && cb.dataset.unit === "Day") {
+                      effectiveQty = units * days;
+                  }
+              }
+          }
+
           return {
             materialName: cb.dataset.name,
-            quantity: parseFloat(qtyInput?.value || 0),
-            unit: cb.dataset.unit,
+            quantity: effectiveQty,
+            unit: cb.dataset.unit || "Day",
             unitPrice: parseFloat(cb.dataset.market || 0)
           };
         });
@@ -790,18 +804,23 @@ export const PM_Contracts = {
             <tr style="border-bottom: 1px solid var(--slate-100);">
                 <td style="padding: 10px; text-align: center;">
                     <input type="checkbox" name="contract_material" value="${idx}" 
-                        data-name="${m.machineType}" data-unit="${m.unit}" data-market="${m.basePrice}"
-                        onchange="window.app.pmModule.calculateContractPerformance()">
+                        data-name="${m.machineType}" data-unit="${m.unit}" data-market="${m.basePrice}" data-gap="${gap}"
+                        onchange="const cbs = document.querySelectorAll('input[name=\\'contract_material\\']'); cbs.forEach(cb => { if(cb !== this) cb.checked = false; }); window.app.pmModule.calculateContractPerformance()">
                 </td>
                 <td style="padding: 10px;">
                     <div style="font-weight: 700; color: var(--slate-800);">${m.machineType}</div>
-                    <div style="font-size: 10px; color: var(--slate-500);">${m.unit} • Est. MWK ${m.basePrice.toLocaleString()}/day</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${m.basePrice.toLocaleString()}/day</div>
                 </td>
-                <td style="padding: 10px; text-align: center; color: var(--slate-600);">${m.totalRequired}</td>
-                <td style="padding: 10px; text-align: center; color: var(--emerald); font-weight: 600;">${m.onSite}</td>
                 <td style="padding: 10px; text-align: center;">
-                    <input type="number" id="m_qty_${idx}" class="form-input" style="width: 70px; padding: 4px; font-size: 11px; text-align: center;" 
-                        value="${gap}" oninput="window.app.pmModule.calculateContractPerformance()">
+                    <div id="rental_days_display_${idx}" style="font-weight: 700; color: var(--slate-800);">0 Days</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">Est: ${m.totalRequired} ${m.unit}s</div>
+                </td>
+                <td style="padding: 10px; text-align: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        <input type="number" id="m_qty_${idx}" class="form-input" style="width: 70px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
+                            value="1" min="1" oninput="window.app.pmModule.calculateContractPerformance()">
+                        <span style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">Unit(s)</span>
+                    </div>
                 </td>
             </tr>
           `;
@@ -1150,19 +1169,45 @@ export const PM_Contracts = {
       marketTotal += qty * marketPrice;
     });
 
-    // Handle Rental Duration Multiplier
+    // Handle Rental Duration Multiplier & Row Updates
     if (this.currentContractTab === "rental") {
       const startInput = document.getElementById("contract_start");
       const endInput = document.getElementById("contract_end");
+      let diffDays = 0;
+      
       if (startInput?.value && endInput?.value) {
         const start = new Date(startInput.value);
         const end = new Date(endInput.value);
         const diffTime = end - start;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
-        if (diffDays > 0) {
-          marketTotal *= diffDays;
-          console.log(`[Performance] Rental Duration: ${diffDays} days. Total Baseline: ${marketTotal}`);
+        diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+        
+        if (diffDays <= 0) {
+           window.toast.show("Demobilization must be after mobilization date", "warning");
+           diffDays = 0;
         }
+      }
+
+      // Update individual row day displays and validate against gap
+      checkboxes.forEach(cb => {
+          const index = cb.value;
+          const display = document.getElementById(`rental_days_display_${index}`);
+          const gap = parseFloat(cb.dataset.gap || 9999);
+          
+          if (display) {
+              display.textContent = `${diffDays} Day${diffDays === 1 ? '' : 's'}`;
+              
+              if (diffDays > gap) {
+                  display.style.color = 'var(--red)';
+                  display.innerHTML += ` <span style="font-size:10px; display:block; color:var(--red); font-weight:700;"><i class="fas fa-exclamation-circle"></i> Exceeds Gap (${gap})</span>`;
+                  window.toast.show(`Contract duration (${diffDays} days) exceeds required gap (${gap} days) for this machine.`, "error");
+              } else {
+                  display.style.color = diffDays > 0 ? 'var(--emerald)' : 'var(--slate-400)';
+              }
+          }
+      });
+
+      if (diffDays > 0) {
+        marketTotal *= diffDays;
       }
     }
 

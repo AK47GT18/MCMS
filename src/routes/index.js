@@ -572,6 +572,9 @@ async function router(req, res) {
     if (!id && method === 'GET') {
       return inventoryController.getAll(req, res);
     }
+    if (id === 'logs' && method === 'GET') {
+      return inventoryController.getAllLogs(req, res);
+    }
     if ((id === 'distribute' || id === 'dispatch') && method === 'POST') {
       return inventoryController.distribute(req, res);
     }
