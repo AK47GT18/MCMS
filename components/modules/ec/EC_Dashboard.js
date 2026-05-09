@@ -172,6 +172,43 @@ export const EC_Dashboard = {
                     </div>
                 </div>
             </div>
+            <!-- Rental Renewal & Expiry Timeline (New) -->
+            <div style="background: white; padding: 32px; border-radius: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--slate-200);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="width: 8px; height: 8px; background: var(--orange); border-radius: 50%;"></span>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.1em;">Logistics Timeline</div>
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: 900; color: var(--slate-900); margin: 0;">Renew or Extend Rental Timeline</h3>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${(this.rentalContracts || []).filter(c => c.status === 'active' || c.status === 'Active').slice(0, 5).map(c => {
+                        const isExpired = c.endDate ? new Date(c.endDate) < new Date() : false;
+                        const daysLeft = c.endDate ? Math.ceil((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+                        return `
+                            <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: ${daysLeft <= 3 ? '#FFF7ED' : 'var(--slate-50)'}; border-radius: 16px; border: 1px solid ${daysLeft <= 3 ? '#FED7AA' : 'var(--slate-100)'};">
+                                <div style="width: 40px; height: 40px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: ${daysLeft <= 3 ? 'var(--orange)' : 'var(--slate-400)'}; flex-shrink: 0;">
+                                    <i class="fas fa-calendar-day"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 800; color: var(--slate-800); font-size: 13px;">${c.machineType || c.title}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 600;">${c.project?.name || 'Unknown Project'} • Expires: ${c.endDate ? new Date(c.endDate).toLocaleDateString() : 'N/A'}</div>
+                                </div>
+                                <div style="text-align: right; flex-shrink: 0;">
+                                    <div style="font-size: 14px; font-weight: 900; color: ${daysLeft <= 3 ? 'var(--red)' : 'var(--slate-700)'};">${daysLeft <= 0 ? 'OVERDUE' : daysLeft + 'd left'}</div>
+                                    <button class="btn btn-sm" style="font-size: 10px; padding: 4px 8px; margin-top: 4px; border-color: var(--slate-300);" onclick="window.app.ecModule.openConfirmReturnDrawer({contractId: '${c.id}', machineName: '${(c.machineType || c.title || '').replace(/'/g, "\\'")}', sourceModel: '${c._sourceModel || 'contract'}'})">Manage</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                    ${(this.rentalContracts || []).length === 0 ? `
+                        <div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 12px;">No active rentals in timeline.</div>
+                    ` : ''}
+                </div>
+            </div>
         `;
     },
 

@@ -22,7 +22,9 @@ export const FD_Contracts = {
                             ? `<button class="btn btn-primary" onclick="window.app.fmModule?.openNewVendorContract()">
                                 <i class="fas fa-plus-circle"></i> New Vendor Contract
                                </button>`
-                            : ""
+                            : `<button class="btn btn-primary" style="background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.openNewVendorContract()">
+                                <i class="fas fa-truck-loading"></i> New Rental Contract
+                               </button>`
                           )
                     }
                 </div>
@@ -413,73 +415,7 @@ export const FD_Contracts = {
     }
   },
 
-  async onProjectRentalSelected(projectId) {
-    if (!projectId) return;
-    const vehiclesBody = document.getElementById('contract-vehicles-body');
-    if (!vehiclesBody) return;
 
-    vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Analyzing fleet requirements...</td></tr>`;
-
-    try {
-      const token = localStorage.getItem("mcms_auth_token");
-      const resp = await fetch(`/api/v1/projects/${projectId}/equipment-gap`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const result = await resp.json();
-      const payload = result.data || result;
-      let gaps = [];
-      
-      if (payload.needsRental) {
-        gaps = payload.needsRental;
-      } else if (Array.isArray(payload)) {
-        gaps = payload;
-      } else if (payload.data && Array.isArray(payload.data)) {
-        gaps = payload.data;
-      }
-
-      if (!gaps || gaps.length === 0) {
-        vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--slate-400);">No equipment gaps identified for this project.</td></tr>`;
-        return;
-      }
-
-      vehiclesBody.innerHTML = gaps.map((v, idx) => {
-        const name = v.label || v.name || v.type;
-        const rate = v.dailyRate || v.rate || 0;
-        const gap = v.estimatedDays || 1; 
-
-        return `
-          <tr style="border-bottom: 1px solid var(--slate-100);">
-            <td style="padding: 12px; text-align: center;">
-              <input type="checkbox" name="contract_material" value="${idx}" 
-                data-name="${name}" data-market="${rate}"
-                style="width: 16px; height: 16px; cursor: pointer;"
-                onchange="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
-            </td>
-            <td style="padding: 12px;">
-              <div style="font-weight: 700; color: var(--slate-800);">${name}</div>
-              <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${rate.toLocaleString()}/day</div>
-            </td>
-            <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--slate-600);">${gap}</td>
-            <td style="padding: 12px; text-align: center; color: var(--slate-400);">0</td>
-            <td style="padding: 12px; text-align: center;">
-              <input type="number" id="m_qty_${idx}" class="form-input" 
-                style="width: 60px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
-                value="${gap}" oninput="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      // Generate Reference Code
-      const refInput = document.getElementById("contract_ref");
-      if (refInput) refInput.value = `REN-MOW-${Math.floor(1000 + Math.random() * 9000)}`;
-
-      this.fetchBudgetStatus(projectId);
-    } catch (err) {
-      console.error(err);
-      vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--red);">Failed to analyze fleet requirements.</td></tr>`;
-    }
-  },
 
   async fetchBudgetStatus(projectId) {
     try {
@@ -1424,14 +1360,16 @@ export const FD_Contracts = {
       
       try {
         const token = localStorage.getItem("mcms_auth_token");
-        // Fetch estimate and budget
-        const [estRes, budgetRes] = await Promise.all([
+        // Fetch estimate, budget, and equipment gaps
+        const [estRes, budgetRes, gapRes] = await Promise.all([
           fetch(`/api/v1/projects/${projectId}/estimate`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`/api/v1/projects/${projectId}/materials`, { headers: { Authorization: `Bearer ${token}` } })
+          fetch(`/api/v1/projects/${projectId}/materials`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`/api/v1/road-estimation/${projectId}/equipment-gap`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
         
         const estimate = await estRes.json();
         const budgetData = await budgetRes.json();
+        const gapData = await gapRes.json();
         
         // Store budget for calculation check
         this.currentProjectBudget = budgetData.data?.budgetSummary || budgetData.budgetSummary || {};
@@ -1464,41 +1402,47 @@ export const FD_Contracts = {
             `;
         }
         
-        // Use estimate data if available, or fall back to standard catalog
-        const fleet = [
-          { name: '20T Excavator', rate: 380000 },
-          { name: 'Motor Grader 140K', rate: 420000 },
-          { name: '10T Vibratory Roller', rate: 280000 },
-          { name: '15m³ Tipper Truck', rate: 180000 },
-          { name: 'D6 Bulldozer', rate: 450000 },
-          { name: 'Water Bowser 10kL', rate: 150000 },
-          { name: 'TLB (Backhoe Loader)', rate: 220000 }
-        ];
+        // Use real equipment gaps from the project plan
+        const payload = gapData.data || gapData;
+        let gaps = [];
+        if (payload.needsRental) gaps = payload.needsRental;
+        else if (Array.isArray(payload)) gaps = payload;
+        else if (payload.data && Array.isArray(payload.data)) gaps = payload.data;
 
-        vehiclesBody.innerHTML = fleet.map((v, idx) => `
-          <tr style="border-bottom: 1px solid var(--slate-100);">
-            <td style="padding: 12px 10px; text-align: center;">
-              <input type="checkbox" name="contract_material" value="${idx}" data-market="${v.rate}"
-                style="width: 16px; height: 16px;"
-                onchange="window.app.fmModule.calculateContractPerformance()">
-            </td>
-            <td style="padding: 12px 10px;">
-              <div style="font-weight: 700; color: var(--slate-800);">${v.name}</div>
-              <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${v.rate.toLocaleString()}/day</div>
-            </td>
-            <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 600;">
-              ${v.required || '1'}
-            </td>
-            <td style="padding: 12px 10px; text-align: center; color: var(--slate-400);">
-              ${v.onSite || '0'}
-            </td>
-            <td style="padding: 12px 10px; text-align: center;">
-              <input type="number" id="m_qty_${idx}" class="form-input" 
-                style="width: 60px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
-                value="1" oninput="window.app.fmModule.calculateContractPerformance()">
-            </td>
-          </tr>
-        `).join('');
+        if (!gaps || gaps.length === 0) {
+          vehiclesBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--slate-400);">No equipment gaps identified for this project.</td></tr>`;
+        } else {
+          vehiclesBody.innerHTML = gaps.map((v, idx) => {
+            const name = v.label || v.name || v.type;
+            const rate = v.dailyRate || v.rate || 0;
+            const gap = v.estimatedDays || 1; 
+
+            return `
+              <tr style="border-bottom: 1px solid var(--slate-100);">
+                <td style="padding: 12px 10px; text-align: center;">
+                  <input type="checkbox" name="contract_material" value="${idx}" data-market="${rate}" data-duration="${gap}"
+                    style="width: 16px; height: 16px;"
+                    onchange="window.app.fmModule.calculateContractPerformance()">
+                </td>
+                <td style="padding: 12px 10px;">
+                  <div style="font-weight: 700; color: var(--slate-800);">${name}</div>
+                  <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${rate.toLocaleString()}/day</div>
+                </td>
+                <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--slate-600);">
+                  ${gap} Days
+                </td>
+                <td style="padding: 12px 10px; text-align: center;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <input type="number" id="m_qty_${idx}" class="form-input" 
+                      style="width: 60px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
+                      value="1" min="1" oninput="window.app.fmModule.calculateContractPerformance()">
+                    <span style="font-size: 10px; color: var(--slate-500);">Unit(s)</span>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
       } catch (err) {
         vehiclesBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--red);">Failed to load fleet catalog.</td></tr>`;
       }

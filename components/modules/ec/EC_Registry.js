@@ -323,37 +323,143 @@ export const EC_Registry = {
 
     async submitRentalProcurementRequisition() {
         const projectId = document.getElementById('req_rental_project')?.value;
-        const machineType = document.getElementById('req_rental_machine')?.value;
+        const selectedVehicles = Array.from(document.querySelectorAll('input[name="req_vehicles"]:checked')).map(v => ({
+            type: v.value,
+            phase: v.getAttribute('data-phase'),
+            duration: v.getAttribute('data-duration')
+        }));
+        
         const startDate = document.getElementById('req_rental_start')?.value;
         const endDate = document.getElementById('req_rental_end')?.value;
         const urgency = document.querySelector('input[name="rental_urgency"]:checked')?.value;
         const notes = document.getElementById('req_rental_notes')?.value;
 
-        if (!projectId || !machineType || !startDate || !endDate) {
-            window.toast.show('Please fill in all required fields (Project, Machine, Dates).', 'error');
+        // Validation
+        if (!projectId) {
+            window.toast.show('Please select a project first.', 'error');
+            return;
+        }
+        if (selectedVehicles.length === 0) {
+            window.toast.show('Please select at least one vehicle from the project plan.', 'error');
+            return;
+        }
+        if (!startDate || !endDate) {
+            window.toast.show('Please specify the required dates.', 'error');
             return;
         }
 
         window.toast.show('Submitting procurement requisition...', 'info');
         try {
+            const vehicleList = selectedVehicles.map(v => `${v.type} (${v.phase})`).join(', ');
+            
             // Create a procurement requisition
             await client.post('/requisitions', {
                 projectId: parseInt(projectId),
                 type: 'rental_procurement',
                 priority: urgency === 'Standard' ? 'medium' : urgency === 'Urgent' ? 'high' : 'critical',
-                items: [{
-                    itemName: `Rental: ${machineType}`,
+                items: selectedVehicles.map(v => ({
+                    itemName: `Rental: ${v.type}`,
                     quantity: 1,
                     unit: 'Unit'
-                }],
-                notes: `[RENTAL PROCUREMENT REQ] Machine: ${machineType}. Required: ${startDate} to ${endDate}. Urgency: ${urgency}. ${notes || ''}`
+                })),
+                notes: `[RENTAL PROCUREMENT REQ] Vehicles: ${vehicleList}. Required: ${startDate} to ${endDate}. Urgency: ${urgency}. ${notes || ''}`
             });
 
             window.toast.show('Rental procurement requisition submitted successfully!', 'success');
             window.drawer.close();
+            if (this._refreshCurrentView) this._refreshCurrentView();
         } catch (err) {
             console.error('Rental requisition failed:', err);
             window.toast.show('Failed to submit requisition.', 'error');
+        }
+    },
+
+    async _onRentalProjectChange(projectId) {
+        if (!projectId) {
+            const summaryContainer = document.getElementById('project_materials_summary');
+            if (summaryContainer) summaryContainer.style.display = 'none';
+            return;
+        }
+
+        try {
+            // Fetch project specification to see planned equipment and materials
+            // Fetch project specification to see planned equipment gaps
+            const res = await client.get(`/road-estimation/${projectId}`);
+            const gapRes = await client.get(`/road-estimation/${projectId}/equipment-gap`);
+            
+            const payload = gapRes.data || gapRes;
+            let gaps = [];
+            if (payload.needsRental) gaps = payload.needsRental;
+            else if (Array.isArray(payload)) gaps = payload;
+            else if (payload.data && Array.isArray(payload.data)) gaps = payload.data;
+            
+            const summaryContainer = document.getElementById('project_materials_summary');
+            const listContent = document.getElementById('materials_list_content');
+            
+            if (gaps && gaps.length > 0) {
+                summaryContainer.style.display = 'block';
+
+                listContent.innerHTML = gaps.map((v, idx) => {
+                    const machine = v.label || v.name || v.type;
+                    const duration = v.estimatedDays || 14;
+                    
+                    return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border-radius: 10px; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm); position: relative; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; width: 100%;" class="vehicle-check-label">
+                                <input type="checkbox" name="req_vehicles" value="${machine}" data-duration="${duration}" style="accent-color: var(--indigo-600); width: 16px; height: 16px;" onchange="window.app.ecModule?._onVehicleSelectionChange(this)">
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 14px; font-weight: 800; color: var(--slate-900); display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-truck-monster" style="color: var(--indigo-500);"></i>
+                                        ${machine}
+                                    </div>
+                                    <div style="font-size: 10px; color: var(--slate-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
+                                        Identified in Project Equipment Baseline
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0; padding-left: 12px; border-left: 1px solid var(--slate-100);">
+                            <div style="font-size: 12px; font-weight: 800; color: var(--indigo-600);"><i class="far fa-calendar-alt"></i> ${duration} Total Days</div>
+                            <div style="font-size: 9px; color: var(--emerald-600); font-weight: 700; margin-top: 2px;">Project Baseline</div>
+                        </div>
+                    </div>
+                `}).join('');
+            } else {
+                summaryContainer.style.display = 'none';
+            }
+
+        } catch (err) {
+            console.error('Failed to load project plan items:', err);
+        }
+    },
+
+    _onVehicleSelectionChange(checkbox) {
+        const labels = document.querySelectorAll('.vehicle-check-label');
+        labels.forEach(l => {
+            const cb = l.querySelector('input');
+            if (cb.checked) {
+                l.style.borderColor = 'var(--indigo-500)';
+                l.style.background = 'var(--indigo-50)';
+            } else {
+                l.style.borderColor = 'var(--slate-200)';
+                l.style.background = 'var(--slate-50)';
+            }
+        });
+
+        // Auto-update duration if it's the first selection
+        const checked = document.querySelectorAll('input[name="req_vehicles"]:checked');
+        if (checked.length > 0) {
+            const first = checked[0];
+            const duration = parseInt(first.getAttribute('data-duration'));
+            const startInput = document.getElementById('req_rental_start');
+            const endInput = document.getElementById('req_rental_end');
+            
+            if (startInput.value && !endInput.value) {
+                const start = new Date(startInput.value);
+                start.setDate(start.getDate() + duration);
+                endInput.value = start.toISOString().split('T')[0];
+            }
         }
     },
 

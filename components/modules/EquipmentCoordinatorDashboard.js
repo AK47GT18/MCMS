@@ -130,14 +130,6 @@ export class EquipmentCoordinatorDashboard {
                         <i class="fas fa-exclamation-triangle"></i>
                         <span>Report Issue</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="window.app.ecModule?.openDispatchDrawer()">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>Immediate Dispatch</span>
-                    </button>
-                    <button class="btn btn-action" onclick="window.app.ecModule?.syncFMProcurement()">
-                        <i class="fas fa-sync"></i>
-                        <span>Sync FM Receipts</span>
-                    </button>
                   </div>
                 </div>
             </div>

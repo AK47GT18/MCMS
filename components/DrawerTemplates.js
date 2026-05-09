@@ -215,18 +215,16 @@ export const DrawerTemplates = {
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label class="form-label" style="font-weight: 700;">Select Project <span style="color: var(--red);">*</span></label>
-                    <select id="req_rental_project" class="form-input" style="width: 100%;">
+                    <select id="req_rental_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule?._onRentalProjectChange(this.value)">
                         <option value="">Select Project...</option>
                         ${projects.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join('')}
                     </select>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label class="form-label" style="font-weight: 700;">Required Machine Type <span style="color: var(--red);">*</span></label>
-                    <select id="req_rental_machine" class="form-input" style="width: 100%;">
-                        <option value="">Select Machine Type...</option>
-                        ${machineTypes.map(m => `<option value="${m}">${m}</option>`).join('')}
-                    </select>
+
+                <div id="project_materials_summary" style="margin-bottom: 24px; display: none; background: #F8FAFC; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 12px;">Select Vehicles from Project Plan <span style="color: var(--red);">*</span></div>
+                    <div id="materials_list_content" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
@@ -4070,14 +4068,13 @@ Contract Admin</textarea>
                             <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
                                 <th style="padding: 10px; text-align: left; width: 40px;"></th>
                                 <th style="padding: 10px; text-align: left;">Machine / Equipment</th>
-                                <th style="padding: 10px; text-align: center;">Total Required</th>
-                                <th style="padding: 10px; text-align: center;">On Site</th>
+                                <th style="padding: 10px; text-align: center;">Days Required</th>
                                 <th style="padding: 10px; text-align: center; width: 80px;">Rental Qty</th>
                             </tr>
                         </thead>
                         <tbody id="contract-vehicles-body">
                             <tr>
-                                <td colspan="5" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view required equipment</td>
+                                <td colspan="4" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view required equipment</td>
                             </tr>
                         </tbody>
                     </table>

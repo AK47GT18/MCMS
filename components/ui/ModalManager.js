@@ -129,6 +129,38 @@ export class ModalManager {
         });
     }
 
+    selection(title, message, choices, onCancel) {
+        // choices: [{ text, className, icon, onClick }]
+        this.show({
+            type: 'info',
+            title,
+            message: `
+                <div style="margin-bottom: 20px;">${message}</div>
+                <div class="modal-selection-list" style="display:flex; flex-direction:column; gap:10px;">
+                    ${choices.map((c, i) => `
+                        <button class="btn ${c.className || 'btn-secondary'} modal-choice-${i}" style="justify-content:flex-start; padding: 12px 16px; width: 100%;">
+                            <i class="fas ${c.icon || 'fa-chevron-right'}" style="margin-right: 12px; width: 16px;"></i>
+                            <div style="text-align: left;">
+                                <div style="font-weight: 600;">${c.text}</div>
+                                ${c.description ? `<div style="font-size: 11px; opacity: 0.8;">${c.description}</div>` : ''}
+                            </div>
+                        </button>
+                    `).join('')}
+                </div>
+            `,
+            confirmText: 'Cancel',
+            onConfirm: onCancel
+        });
+
+        choices.forEach((c, i) => {
+            const btn = document.querySelector(`.modal-choice-${i}`);
+            btn?.addEventListener('click', () => {
+                this.close();
+                if (c.onClick) c.onClick();
+            });
+        });
+    }
+
     close() {
         const overlay = document.getElementById('modal-overlay');
         const container = document.getElementById('modal-container');
