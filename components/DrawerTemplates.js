@@ -5576,8 +5576,10 @@ Contract Admin</textarea>
     `,
 
     auditDetails: (log) => {
-        const details =
-            typeof log.details === "string" ? JSON.parse(log.details) : log.details;
+        let details = log.details;
+        if (typeof details === "string") {
+            try { details = JSON.parse(details); } catch(e) {}
+        }
 
         const getAuditSummaryHTML = () => {
             if (!details) return "";

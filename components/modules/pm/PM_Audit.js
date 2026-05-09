@@ -50,9 +50,10 @@ export const PM_Audit = {
             const select = document.getElementById('audit-action-filter');
             if (!select) return;
             
+            const actionsList = Array.isArray(actions) ? actions : (actions.data || []);
             const current = select.value;
             select.innerHTML = '<option value="all">All Actions</option>' + 
-                actions.map(a => `<option value="${a}" ${current === a ? 'selected' : ''}>${a.replace(/_/g, ' ')}</option>`).join('');
+                actionsList.map(a => `<option value="${a}" ${current === a ? 'selected' : ''}>${a.replace(/_/g, ' ')}</option>`).join('');
         } catch (error) {
             console.error('Failed to load audit actions:', error);
         }
