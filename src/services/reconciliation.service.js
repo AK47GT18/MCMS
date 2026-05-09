@@ -121,13 +121,14 @@ async function lockReconciliation(projectId, approver) {
   // Generate the snapshot for auditing
   const report = await getProjectReconciliation(projectId);
 
-  await auditService.log(
-    approver.id,
-    'LOCK_RECONCILIATION',
-    'Project',
-    projectId,
-    { snapshot: report.reconciliation }
-  );
+  await auditService.log({
+    userId: approver.id,
+    action: 'LOCK_RECONCILIATION',
+    targetType: 'Project',
+    targetId: projectId,
+    targetCode: project.code || `PRJ-${projectId}`,
+    details: { snapshot: report.reconciliation }
+  });
 
   return { message: 'Reconciliation locked and audited successfully', projectId };
 }

@@ -101,40 +101,43 @@ export const FD_Handlers = {
             return;
         }
 
-        const confirm = window.confirm(`Bulk Approve ${toApprove.length} requisitions? (Items over-budget will be skipped)`);
-        if (!confirm) return;
+        window.modal.confirm(
+            "Bulk Approval Confirmation",
+            `Are you sure you want to bulk approve <strong>${toApprove.length}</strong> requisitions? Items that are significantly over-budget will be skipped for manual review.`,
+            async () => {
+                window.toast.show(`Bulk approving ${toApprove.length} items...`, 'info');
 
-        window.toast.show(`Bulk approving ${toApprove.length} items...`, 'info');
-
-        try {
-            const promises = toApprove.map(async (req) => {
-                if (req.isReplenishment) {
-                    return client.post(`/replenishment/${req.id}/finance-action`, { 
-                        action: 'approve', 
-                        financeComments: 'Bulk approved by Finance Director',
-                        estimatedCost: req.totalAmount 
+                try {
+                    const promises = toApprove.map(async (req) => {
+                        if (req.isReplenishment) {
+                            return client.post(`/replenishment/${req.id}/finance-action`, { 
+                                action: 'approve', 
+                                financeComments: 'Bulk approved by Finance Director',
+                                estimatedCost: req.totalAmount 
+                            });
+                        } else {
+                            return client.post(`/requisitions/${req.id}/approve`);
+                        }
                     });
-                } else {
-                    return client.post(`/requisitions/${req.id}/approve`);
+
+                    await Promise.all(promises);
+                    
+                    window.toast.show(`Successfully approved ${toApprove.length} requisitions.`, 'success');
+                    
+                    // Log to Audit
+                    client.post('/audit-logs', {
+                        action: 'BULK_APPROVE_REQUISITIONS',
+                        targetType: 'REQUISITION',
+                        details: { count: toApprove.length, actor: window.currentUser?.name }
+                    }).catch(e => console.warn('Audit failed', e));
+
+                    this.loadPendingRequisitions();
+                } catch (error) {
+                    console.error('Bulk approval error:', error);
+                    window.toast.show('Some items failed to approve. Please refresh.', 'error');
                 }
-            });
-
-            await Promise.all(promises);
-            
-            window.toast.show(`Successfully approved ${toApprove.length} requisitions.`, 'success');
-            
-            // Log to Audit
-            client.post('/audit-logs', {
-                action: 'BULK_APPROVE_REQUISITIONS',
-                targetType: 'REQUISITION',
-                details: { count: toApprove.length, actor: window.currentUser?.name }
-            }).catch(e => console.warn('Audit failed', e));
-
-            this.loadPendingRequisitions();
-        } catch (error) {
-            console.error('Bulk approval error:', error);
-            window.toast.show('Some items failed to approve. Please refresh.', 'error');
-        }
+            }
+        );
     },
 
     async handleRentalAction(rentalId, action) {

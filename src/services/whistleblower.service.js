@@ -17,7 +17,13 @@ async function create(data) {
   
   // Note: We only log audit to the user if they were not anonymous
   if (!isAnon && data.reporterId) {
-    await auditService.log(data.reporterId, 'CREATE_WHISTLEBLOWER_REPORT', 'WhistleblowerReport', report.id, { category: data.category });
+    await auditService.log({
+      userId: data.reporterId,
+      action: 'CREATE_WHISTLEBLOWER_REPORT',
+      targetType: 'WhistleblowerReport',
+      targetId: report.id,
+      details: { category: data.category }
+    });
   }
 
   return report;
@@ -42,7 +48,13 @@ async function updateStatus(id, status, approverId) {
   });
   
   if (approverId) {
-    await auditService.log(approverId, 'UPDATE_WHISTLEBLOWER_STATUS', 'WhistleblowerReport', report.id, { newStatus: status });
+    await auditService.log({
+      userId: approverId,
+      action: 'UPDATE_WHISTLEBLOWER_STATUS',
+      targetType: 'WhistleblowerReport',
+      targetId: report.id,
+      details: { newStatus: status }
+    });
   }
   
   return report;

@@ -996,6 +996,7 @@ enum ContractStatusEnum {
   expired
   cancelled
   terminated
+  completed
 
   @@map("contract_status_enum")
 }

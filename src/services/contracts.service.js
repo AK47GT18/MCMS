@@ -331,19 +331,19 @@ async function create(data, userId) {
       });
 
       // Audit Trail
-      await auditService.log(
-        userId, 
-        'CONTRACT_CREATED', 
-        'Contract', 
-        contract.id,
-        { 
-          refCode: contract.refCode,
+      await auditService.log({
+        userId: userId,
+        action: 'CREATE_CONTRACT',
+        targetType: 'Contract',
+        targetId: contract.id,
+        targetCode: contract.refCode,
+        details: {
+          projectId: data.projectId,
           title: contract.title,
-          value: Number(contract.value || 0),
-          justification: data.justification,
-          creatorRole: creator?.role
+          value: Number(contract.value),
+          type: contract.contractType
         }
-      );
+      });
 
       // Email Notifications
       if (creator) {
@@ -471,7 +471,14 @@ async function update(id, data, userId) {
   logger.info('Contract updated and version record created', { contractId: id, version: nextVersionNum, isLocked });
   
   if (userId) {
-    await auditService.log(userId, 'UPDATE_CONTRACT', 'Contract', id, { ...data, isLocked });
+    await auditService.log({
+      userId: userId,
+      action: 'UPDATE_CONTRACT',
+      targetType: 'Contract',
+      targetId: id,
+      targetCode: contract.refCode,
+      details: { ...data, isLocked }
+    });
   }
   
   // Role-based Notifications (PM <-> FD)
@@ -530,7 +537,14 @@ async function remove(id, userId) {
   logger.info('Contract deleted', { contractId: id });
   
   if (userId) {
-    await auditService.log(userId, 'DELETE_CONTRACT', 'Contract', id, {});
+    await auditService.log({
+      userId: userId,
+      action: 'DELETE_CONTRACT',
+      targetType: 'Contract',
+      targetId: id,
+      targetCode: contract.refCode,
+      details: { refCode: contract.refCode, title: contract.title }
+    });
   }
 }
 
@@ -564,7 +578,14 @@ async function approve(id, userId) {
   logger.info('Contract approved', { contractId: id, approvedBy: userId });
 
   if (userId) {
-    await auditService.log(userId, 'APPROVE_CONTRACT', 'Contract', id, { previousStatus: contract.status });
+    await auditService.log({
+      userId: userId,
+      action: 'APPROVE_CONTRACT',
+      targetType: 'Contract',
+      targetId: id,
+      targetCode: contract.refCode,
+      details: { previousStatus: contract.status }
+    });
   }
 
   // Notify CA or other stakeholders if needed
@@ -628,11 +649,13 @@ async function rateVendor(contractId, { rating, comment }, userId) {
   });
 
   if (userId) {
-    await auditService.log(userId, 'RATE_VENDOR', 'Contract', contractId, {
-      vendorId: contract.vendorId,
-      vendorName: contract.vendor?.name,
-      rating,
-      comment
+    await auditService.log({
+      userId: userId,
+      action: 'RATE_VENDOR',
+      targetType: 'Contract',
+      targetId: contractId,
+      targetCode: contract.refCode,
+      details: { rating, comment }
     });
   }
 
@@ -747,12 +770,18 @@ async function terminate(contractId, { reason, receivedItems }, user) {
   await prisma.$transaction(txOps);
 
   if (user?.id) {
-    await auditService.log(user.id, 'TERMINATE_CONTRACT', 'Contract', contractId, {
-      refCode: contract.refCode,
-      reason,
-      oldValue: Number(contract.value),
-      newValue: finalValue,
-      newStatus
+    await auditService.log({
+      userId: user.id,
+      action: 'TERMINATE_CONTRACT',
+      targetType: 'Contract',
+      targetId: contractId,
+      targetCode: contract.refCode,
+      details: {
+        reason,
+        oldValue: Number(contract.value),
+        newValue: finalValue,
+        newStatus
+      }
     });
   }
 
@@ -832,9 +861,15 @@ async function complete(contractId, user) {
   ]);
 
   if (user?.id) {
-    await auditService.log(user.id, 'COMPLETE_CONTRACT', 'Contract', contractId, {
-      refCode: contract.refCode,
-      value: Number(contract.value)
+    await auditService.log({
+      userId: user.id,
+      action: 'COMPLETE_CONTRACT',
+      targetType: 'Contract',
+      targetId: contractId,
+      targetCode: contract.refCode,
+      details: {
+        value: Number(contract.value)
+      }
     });
   }
 

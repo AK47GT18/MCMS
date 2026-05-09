@@ -6,6 +6,7 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
+const auditService = require('./audit.service');
 
 async function getAll({ page = 1, limit = 20, status }) {
   const skip = (page - 1) * limit;
@@ -44,6 +45,16 @@ async function create(data, userId) {
     },
   });
   logger.info('Procurement request created', { reqId: request.id, reqCode: request.reqCode });
+  
+  await auditService.log({
+    userId,
+    action: 'CREATE_PROCUREMENT_REQUEST',
+    targetType: 'ProcurementRequest',
+    targetId: request.id,
+    targetCode: request.reqCode,
+    details: { ...data }
+  });
+
   return request;
 }
 
@@ -57,6 +68,16 @@ async function pmApprove(id, comments) {
     },
   });
   logger.info('Procurement PM approved', { reqId: id });
+
+  await auditService.log({
+    userId: request.pmReviewedBy || null,
+    action: 'PM_APPROVE_PROCUREMENT',
+    targetType: 'ProcurementRequest',
+    targetId: id,
+    targetCode: request.reqCode,
+    details: { comments }
+  });
+
   return request;
 }
 
@@ -70,6 +91,16 @@ async function pmReject(id, comments) {
     },
   });
   logger.info('Procurement PM rejected', { reqId: id });
+
+  await auditService.log({
+    userId: request.pmReviewedBy || null,
+    action: 'PM_REJECT_PROCUREMENT',
+    targetType: 'ProcurementRequest',
+    targetId: id,
+    targetCode: request.reqCode,
+    details: { comments }
+  });
+
   return request;
 }
 
@@ -83,6 +114,16 @@ async function financeApprove(id, comments) {
     },
   });
   logger.info('Procurement finance approved', { reqId: id });
+
+  await auditService.log({
+    userId: request.financeReviewedBy || null,
+    action: 'FD_APPROVE_PROCUREMENT',
+    targetType: 'ProcurementRequest',
+    targetId: id,
+    targetCode: request.reqCode,
+    details: { comments }
+  });
+
   return request;
 }
 
@@ -96,6 +137,16 @@ async function financeReject(id, comments) {
     },
   });
   logger.info('Procurement finance rejected', { reqId: id });
+
+  await auditService.log({
+    userId: request.financeReviewedBy || null,
+    action: 'FD_REJECT_PROCUREMENT',
+    targetType: 'ProcurementRequest',
+    targetId: id,
+    targetCode: request.reqCode,
+    details: { comments }
+  });
+
   return request;
 }
 

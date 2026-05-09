@@ -40,6 +40,22 @@ async function initiateReturn(data, user) {
 
     logger.info(`Reverse Dispatch completed: ${quantity} ${outResult.inventory.unit} of ${materialName} returned from sector ${fromSectorId} to ${toSectorId}`);
 
+    // Audit Log
+    const auditService = require('./audit.service');
+    await auditService.log({
+        userId: user?.id,
+        action: 'MATERIAL_RETURN',
+        targetType: 'Inventory',
+        targetId: inResult.inventory.id,
+        targetCode: materialName,
+        details: {
+            fromSector: fromSectorId,
+            toSector: toSectorId,
+            quantity,
+            reference
+        }
+    });
+
     return { outResult, inResult };
 }
 

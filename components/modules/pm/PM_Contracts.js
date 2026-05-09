@@ -1314,9 +1314,17 @@ export const PM_Contracts = {
     // 4. Budget Check
     const remainingBudget = Number(this.currentProjectBudget?.remaining || 0);
     if (contractValue > remainingBudget && remainingBudget > 0) {
-        if (!confirm(`This contract (MWK ${contractValue.toLocaleString()}) exceeds the available project budget. Proceed anyway?`)) return;
+        window.modal.confirm(
+            "Budget Exceeded",
+            `This contract (MWK ${contractValue.toLocaleString()}) exceeds the available project budget (Remaining: MWK ${remainingBudget.toLocaleString()}). Proceed anyway?`,
+            () => this.executeSubmitContract(isRental, items, contractValue, file, projectId)
+        );
+    } else {
+        this.executeSubmitContract(isRental, items, contractValue, file, projectId);
     }
+  },
 
+  async executeSubmitContract(isRental, items, contractValue, file, projectId) {
     window.toast.show("Archiving contract...", "info");
 
     try {

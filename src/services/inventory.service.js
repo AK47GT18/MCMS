@@ -7,6 +7,7 @@ const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const logger = require('../utils/logger');
 const emailService = require('../emails/email.service');
+const auditService = require('./audit.service');
 
 /**
  * Get all inventory records for a sector
@@ -80,6 +81,24 @@ async function distribute(data, user) {
     }
   });
 
+  // Audit log
+  if (user?.id) {
+    await auditService.log({
+      userId: user.id,
+      action: quantity > 0 ? 'MATERIAL_STOCK_IN' : 'MATERIAL_STOCK_OUT',
+      targetType: 'Inventory',
+      targetId: inventory.id,
+      targetCode: materialName,
+      details: {
+        sectorId,
+        quantity,
+        unit,
+        reference,
+        notes
+      }
+    });
+  }
+
   logger.info(`Stock distributed: ${quantity} ${unit} of ${materialName} to sector ${sectorId}`);
 
   // Send dispersion email
@@ -150,10 +169,26 @@ async function consume(data, user) {
       type: 'OUT',
       quantity,
       reference,
-      notes,
-      dispatchedBy: data.dispatchedBy
+      notes
     }
   });
+
+  // Audit log
+  if (user?.id) {
+    await auditService.log({
+      userId: user.id,
+      action: 'MATERIAL_CONSUMPTION',
+      targetType: 'Inventory',
+      targetId: inventory.id,
+      targetCode: materialName,
+      details: {
+        sectorId,
+        quantity,
+        reference,
+        notes
+      }
+    });
+  }
 
   // Record Material Usage for Progress Tracking
   await prisma.materialUsage.create({
@@ -416,6 +451,23 @@ async function receiveShipment(contractItemId, receivedQty, userId) {
     }
   } catch (err) {
     logger.error('Fulfillment check failed', err);
+  }
+
+  // Audit Log
+  if (userId) {
+    await auditService.log({
+      userId: userId,
+      action: 'CONTRACT_MATERIAL_RECEIPT',
+      targetType: 'ContractItem',
+      targetId: item.id,
+      targetCode: item.materialName,
+      details: {
+        contractId: item.contractId,
+        receivedQty,
+        totalReceived: item.receivedQty + receivedQty,
+        contractRef: item.contract.refCode
+      }
+    });
   }
 
   return updatedItem;

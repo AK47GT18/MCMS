@@ -201,7 +201,14 @@ async function create(data, userId) {
   });
 
   if (userId) {
-    await auditService.log(userId, 'CREATE_VENDOR', 'Vendor', vendor.id, { name: vendor.name });
+    await auditService.log({
+      userId: userId,
+      action: 'CREATE_VENDOR',
+      targetType: 'Vendor',
+      targetId: vendor.id,
+      targetCode: vendor.name,
+      details: { name: vendor.name }
+    });
   }
 
   return vendor;
@@ -219,7 +226,14 @@ async function update(id, data, userId) {
   });
 
   if (userId) {
-    await auditService.log(userId, 'UPDATE_VENDOR', 'Vendor', vendor.id, data);
+    await auditService.log({
+      userId: userId,
+      action: 'UPDATE_VENDOR',
+      targetType: 'Vendor',
+      targetId: vendor.id,
+      targetCode: vendor.name,
+      details: data
+    });
   }
 
   return vendor;
@@ -240,7 +254,12 @@ async function remove(id, userId) {
   });
 
   if (userId) {
-    await auditService.log(userId, 'DELETE_VENDOR', 'Vendor', parseInt(id));
+    await auditService.log({
+      userId: userId,
+      action: 'DELETE_VENDOR',
+      targetType: 'Vendor',
+      targetId: parseInt(id)
+    });
   }
 
   return true;

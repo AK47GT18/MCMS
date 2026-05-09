@@ -4,7 +4,13 @@ const auditService = require('./audit.service');
 
 async function create(data) {
   const incident = await prisma.safetyIncident.create({ data });
-  await auditService.log(data.reporterId, 'CREATE_SAFETY_INCIDENT', 'SafetyIncident', incident.id, { type: incident.type });
+  await auditService.log({
+    userId: data.reporterId,
+    action: 'CREATE_SAFETY_INCIDENT',
+    targetType: 'SafetyIncident',
+    targetId: incident.id,
+    details: { type: incident.type }
+  });
   return incident;
 }
 
@@ -37,7 +43,13 @@ async function updateStatus(id, status, approverId) {
   });
   
   if (approverId) {
-    await auditService.log(approverId, 'UPDATE_SAFETY_STATUS', 'SafetyIncident', incident.id, { newStatus: status });
+    await auditService.log({
+      userId: approverId,
+      action: 'UPDATE_SAFETY_STATUS',
+      targetType: 'SafetyIncident',
+      targetId: incident.id,
+      details: { newStatus: status }
+    });
   }
   
   return incident;

@@ -792,7 +792,6 @@ export const FD_Contracts = {
     }
   },
 
-
   async submitContract() {
     const isRental = !!document.getElementById('contract-vehicles-body');
     const formContainer = document.querySelector('.drawer-content') || document.body;
@@ -828,26 +827,31 @@ export const FD_Contracts = {
       return;
     }
 
-    const file = fileInput.files[0];
-    if (file && file.size > 25 * 1024 * 1024) {
-      window.toast.show("Contract document exceeds 25MB limit.", "error");
-      return;
-    }
     const contractValue = parseFloat(document.getElementById("contract_value")?.value || 0);
-    const projectId = document.getElementById("contract_project")?.value;
-
+    
     // 4. Budget Check
     const remainingBudget = Number(this.currentProjectBudget?.remaining || 0);
     if (contractValue > remainingBudget && remainingBudget > 0) {
-        if (!confirm(`This contract (MWK ${contractValue.toLocaleString()}) exceeds the available project budget. Proceed anyway?`)) return;
+        window.modal.confirm(
+            "Budget Exceeded",
+            `This contract (MWK ${contractValue.toLocaleString()}) exceeds the available project budget (Remaining: MWK ${remainingBudget.toLocaleString()}). Do you want to override and proceed anyway?`,
+            () => this.executeSubmitContract(isRental, items, contractValue)
+        );
+    } else {
+        this.executeSubmitContract(isRental, items, contractValue);
     }
+  },
 
+  async executeSubmitContract(isRental, items, contractValue) {
     window.toast.show("Archiving contract...", "info");
 
     try {
       const token = localStorage.getItem("mcms_auth_token");
       const formData = new FormData();
       
+      const fileInput = document.getElementById("contract_document");
+      const projectId = document.getElementById("contract_project")?.value;
+
       formData.append("projectId", projectId);
       formData.append("vendorName", document.getElementById("contract_vendor")?.value);
       const vId = document.getElementById("contract_vendor_id")?.value;
@@ -858,9 +862,13 @@ export const FD_Contracts = {
       formData.append("startDate", document.getElementById("contract_start")?.value);
       formData.append("endDate", document.getElementById("contract_end")?.value);
       formData.append("justification", document.getElementById("contract_justification")?.value);
-      formData.append("contractType", isRental ? "rental" : "vendor");
-      formData.append("document", file);
-      formData.append(isRental ? 'equipmentList' : 'materialsList', JSON.stringify(items));
+      formData.append("contractType", isRental ? "rental" : "procurement");
+      formData.append("items", JSON.stringify(items));
+      formData.append("materialsList", JSON.stringify(items));
+      
+      if (fileInput.files[0]) {
+        formData.append("document", fileInput.files[0]);
+      }
       
       const refCode = document.getElementById("contract_ref")?.value || 
                       (isRental ? 'REN' : 'VND') + "-MOW-" + Math.floor(1000 + Math.random() * 9000);
@@ -1291,10 +1299,16 @@ export const FD_Contracts = {
   },
 
   async completeContract(contractId) {
-    if (!confirm("Are you sure you want to mark this contract as 100% completed? This will close the contract and lock it for further changes.")) {
-      return;
-    }
+    const contract = (this.allContracts || []).find(c => c.id == contractId);
+    
+    window.modal.confirm(
+      "Mark as 100% Completed?",
+      `Are you sure you want to formally complete <strong>${contract?.refCode || 'this contract'}</strong>? This will close the agreement and lock it for further changes.`,
+      () => this.executeCompleteContract(contractId)
+    );
+  },
 
+  async executeCompleteContract(contractId) {
     try {
       window.toast.show("Processing completion...", "info");
       const token = localStorage.getItem("mcms_auth_token");

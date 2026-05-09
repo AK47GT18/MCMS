@@ -553,41 +553,50 @@ export const EC_Handlers = {
             return;
         }
 
-        if (!confirm('Inventory verified. Proceed with Strategic Dispatch?')) {
-            return;
-        }
+        window.modal.confirm(
+            "Verify Dispatch?",
+            "Inventory has been verified. Are you sure you want to proceed with the Strategic Asset Dispatch?",
+            async () => {
+                try {
+                    window.toast.show("Executing dispatch...", "info");
+                    
+                    // Execute the moves
+                    for (const item of itemsToMove) {
+                        const stockItem = projectStock.find(m => String(m.materialName).trim() === String(item.name).trim());
 
-        // Execute the moves
-        for (const item of itemsToMove) {
-            const stockItem = projectStock.find(m => String(m.materialName).trim() === String(item.name).trim());
+                        try {
+                            await inventoryApi.distribute({
+                                sectorId: stockItem ? stockItem.sectorId : 1,
+                                materialName: item.name,
+                                category: 'Construction',
+                                unit: item.unit,
+                                quantity: item.quantity,
+                                reference: `Bulk Site Dispatch: ${project}`,
+                                notes: `Dispatched to ${supervisor} | ETA: ${eta}`
+                            });
+                        } catch (err) {
+                            console.error(`[EC] Failed to distribute ${item.name}:`, err);
+                        }
+                    }
 
-            try {
-                await inventoryApi.distribute({
-                    sectorId: stockItem ? stockItem.sectorId : 1,
-                    materialName: item.name,
-                    category: 'Construction',
-                    unit: item.unit,
-                    quantity: item.quantity,
-                    reference: `Bulk Site Dispatch: ${project}`,
-                    notes: `Dispatched to ${supervisor} | ETA: ${eta}`
-                });
-            } catch (err) {
-                console.error(`[EC] Failed to distribute ${item.name}:`, err);
+                    await notificationService.sendEmail({
+                        to: supervisor,
+                        subject: `Dispatch Notification: ${isMachinery ? 'Machinery' : 'Materials'} En-Route`,
+                        body: `Greetings. A dispatch of ${isMachinery ? 'Assets' : 'Construction Materials'} has been authorized for Site ${project}.`
+                    });
+
+                    setTimeout(async () => {
+                        window.drawer.close();
+                        await this._loadInventory();
+                        this._refreshCurrentView();
+                        window.toast.show('Dispatch completed successfully.', 'success');
+                    }, 800);
+
+                } catch (error) {
+                    window.toast.show(error.message, "error");
+                }
             }
-        }
-
-        await notificationService.sendEmail({
-            to: supervisor,
-            subject: `Dispatch Notification: ${isMachinery ? 'Machinery' : 'Materials'} En-Route`,
-            body: `Greetings. A dispatch of ${isMachinery ? 'Assets' : 'Construction Materials'} has been authorized for Site ${project}.`
-        });
-
-        setTimeout(async () => {
-            window.drawer.close();
-            await this._loadInventory();
-            this._refreshCurrentView();
-            window.toast.show('Dispatch completed successfully.', 'success');
-        }, 800);
+        );
     },
 
     async handleIssueMaterial(itemId) {
@@ -732,25 +741,45 @@ export const EC_Handlers = {
                 }
             }
 
-            // 2. Fetch Materials from Road Estimation
-            const estRes = await client.get(`/road-estimation/${projectId}`);
-            const estimate = estRes.data || estRes;
+            // 2. Fetch Materials and Contracts
+            const [estRes, contractsRes] = await Promise.all([
+                client.get(`/road-estimation/${projectId}`),
+                client.get(`/contracts?projectId=${projectId}&status=active`)
+            ]);
             
-            console.log('[EC] Fetched estimation data:', estimate);
+            const estimate = estRes.data || estRes;
+            const contracts = Array.isArray(contractsRes) ? contractsRes : (contractsRes.data || []);
+            
+            console.log('[EC] Fetched estimation and contracts:', { estimate, contracts });
 
-            // Extract unique materials across all layers
+            // Create a map of contracted materials and their totals
+            const contractedMap = {};
+            contracts.forEach(c => {
+                if (c.items) {
+                    c.items.forEach(item => {
+                        const name = (item.itemName || item.name || '').trim();
+                        if (name) {
+                            contractedMap[name] = (contractedMap[name] || 0) + (Number(item.quantity) || 0);
+                        }
+                    });
+                }
+            });
+
+            // Extract unique materials across all layers, but only if they have been procured
             const materialsMap = {};
-            // Handle different potential structures of estimate
             const layers = estimate.layers || estimate.spec?.layers || [];
             
             if (layers.length > 0) {
                 layers.forEach(layer => {
-                    if (layer.materials) {
-                        layer.materials.forEach(mat => {
-                            if (!materialsMap[mat.name]) {
-                                materialsMap[mat.name] = { name: mat.name, unit: mat.unit || 'Units' };
-                            }
-                        });
+                    const matName = layer.materialType;
+                    if (matName && contractedMap[matName]) {
+                        if (!materialsMap[matName]) {
+                            materialsMap[matName] = { 
+                                name: matName, 
+                                unit: layer.unit || 'Units',
+                                contractedQty: contractedMap[matName]
+                            };
+                        }
                     }
                 });
             }
@@ -763,12 +792,15 @@ export const EC_Handlers = {
                     container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400);">No materials required for this project specification.</div>';
                 } else {
                     container.innerHTML = uniqueMaterials.map((mat, i) => `
-                        <div style="background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
-                            <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">${mat.name}</div>
+                        <div style="background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 12px; position: relative;">
+                            <div style="position: absolute; top: -8px; right: 12px; background: var(--emerald-500); color: white; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">PROCURED</div>
+                            <div style="font-weight: 700; font-size: 13px; color: var(--slate-900); margin-bottom: 4px;">${mat.name}</div>
+                            <div style="font-size: 10px; color: var(--slate-500); margin-bottom: 12px;">Total Contracted: <strong>${mat.contractedQty.toLocaleString()} ${mat.unit}</strong></div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="qty_${i}" class="form-input" style="flex: 1; padding: 6px;" placeholder="Qty" 
-                                    oninput="window.app.ecModule.refreshStrategicImpact()">
-                                <span style="font-size: 11px;">${mat.unit}</span>
+                                <input type="number" id="qty_${i}" class="form-input" style="flex: 1; padding: 8px; font-weight: 700;" placeholder="Qty" 
+                                    max="${mat.contractedQty}"
+                                    oninput="if(Number(this.value) > ${mat.contractedQty}) { this.value = ${mat.contractedQty}; window.toast.show('Cannot exceed contracted amount.', 'warning'); } window.app.ecModule.refreshStrategicImpact()">
+                                <span style="font-size: 11px; font-weight: 600; color: var(--slate-600);">${mat.unit}</span>
                             </div>
                         </div>
                     `).join('');
@@ -788,24 +820,44 @@ export const EC_Handlers = {
 
                 const availableFleet = (this.assetRegistry || []).filter(a => {
                     if (a.status !== 'available') return false;
-                    const isOwned = !a.isRented && a.ownership !== 'Rental';
-                    if (isOwned) return true;
-                    return String(a.projectId) === String(projectId);
+                    
+                    // Rule 1: Assets with NO projectId assigned are "Company Fleet" (available for everyone)
+                    const isGlobal = !a.currentProjectId && !a.projectId;
+                    
+                    // Rule 2: If it has a project ID, check if it's THIS project
+                    const isForThisProject = String(a.currentProjectId || a.projectId) === String(projectId);
+                    
+                    if (isGlobal) return true;
+                    if (isForThisProject) {
+                        // If it's for this project, check if it's a rental (must have contract)
+                        const isRental = a.isRented || a.ownership === 'Rental';
+                        if (!isRental) return true;
+
+                        return contracts.some(c => 
+                            (c.contractType === 'rental' || c.contractType === 'RENTAL') && 
+                            c.items && c.items.some(item => 
+                                (item.itemName || item.name || '').toLowerCase().includes((a.name || '').toLowerCase())
+                            )
+                        );
+                    }
+                    
+                    return false;
                 });
                 
                 if (availableFleet.length === 0) {
-                    machineryContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No eligible machinery available for this project.</div>';
+                    machineryContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No procured/contracted machinery available for this project.</div>';
                 } else {
                     machineryContainer.innerHTML = availableFleet.map(asset => {
                         const isOwned = !asset.isRented && asset.ownership !== 'Rental';
+                        const isSiloed = !!(asset.currentProjectId || asset.projectId);
                         return `
                             <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
                                 <div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <div style="font-weight: 800; font-size: 14px; color: var(--slate-900);">${asset.name}</div>
-                                        <span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; ${isOwned ? 'background: #ECFDF5; color: #059669;' : 'background: #EFF6FF; color: #1D4ED8;'}">
-                                            ${isOwned ? 'Company Fleet' : 'Project Bound Rental'}
-                                        </span>
+                                        <span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; ${!isSiloed ? 'background: #ECFDF5; color: #059669;' : 'background: #EFF6FF; color: #1D4ED8;'}">
+                                             ${!isSiloed ? 'Company Base' : 'Project Bound'}
+                                         </span>
                                     </div>
                                     <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">${asset.assetCode || asset.id} • ${asset.category || 'General Fleet'}</div>
                                 </div>
@@ -823,20 +875,22 @@ export const EC_Handlers = {
     },
 
     async handleResolveIssue(assetId, assetName) {
-        if (!confirm(`Mark ${assetName} as FIXED and return it to AVAILABLE fleet pool?`)) {
-            return;
-        }
-
-        try {
-            await window.loader.show('Resolving maintenance issue...', async () => {
-                await window.assets.resolveIssue(assetId, `Fixed by workshop and returned to fleet.`);
-            });
-            window.modal.showSuccess('Asset Repaired', `${assetName} is now available for field deployment.`);
-            await this._loadAssets();
-        } catch (error) {
-            console.error('[EC] Failed to resolve:', error);
-            window.modal.showError('Error', error.message || 'Failed to update asset');
-        }
+        window.modal.confirm(
+            "Finalize Repairs?",
+            `Are you sure you want to mark <strong>${assetName}</strong> as FIXED and return it to the AVAILABLE fleet pool?`,
+            async () => {
+                try {
+                    await window.loader.show('Resolving maintenance issue...', async () => {
+                        await window.assets.resolveIssue(assetId, `Fixed by workshop and returned to fleet.`);
+                    });
+                    window.modal.showSuccess('Asset Repaired', `${assetName} is now available for field deployment.`);
+                    await this._loadAssets();
+                } catch (error) {
+                    console.error('[EC] Failed to resolve:', error);
+                    window.modal.showError('Error', error.message || 'Failed to update asset');
+                }
+            }
+        );
     },
 
     async handleAssetProcurementRequest() {
@@ -1738,48 +1792,37 @@ export const EC_Handlers = {
     },
 
     async handleConfirmReturned(contractId, machineType, sourceModel = 'contract') {
-        if (!confirm(`Are you sure you want to confirm collection of ${machineType} from the site? This will finalize the contract lifecycle.`)) {
-            return;
-        }
-
-        try {
-            window.toast.show('Processing return confirmation...', 'info');
-            
-            // Route to the correct API based on source model
-            if (sourceModel === 'vehicleContract') {
-                await client.patch(`/vehicle-contracts/${contractId}/collect`);
-            } else {
-                // For unified Contract model, update status to 'completed'
-                const token = localStorage.getItem('mcms_auth_token');
-                const res = await fetch(`/api/v1/contracts/${contractId}/complete`, {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+        window.modal.confirm(
+            "Confirm Machine Collection?",
+            `Are you sure you want to confirm collection of <strong>${machineType}</strong> from the site? This will formally finalize the contract lifecycle.`,
+            async () => {
+                try {
+                    window.toast.show('Processing return confirmation...', 'info');
+                    
+                    // Route to the correct API based on source model
+                    if (sourceModel === 'vehicleContract') {
+                        await client.patch(`/vehicle-contracts/${contractId}/collect`);
+                    } else {
+                        // For unified Contract model, update status to 'completed'
+                        const token = localStorage.getItem('mcms_auth_token');
+                        const res = await fetch(`/api/v1/contracts/${contractId}/complete`, {
+                            method: 'POST',
+                            headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (!res.ok) throw new Error("Failed to update contract status");
                     }
-                });
-                if (!res.ok) {
-                    // Fallback: try vehicle-contracts endpoint
-                    await client.patch(`/vehicle-contracts/${contractId}/collect`);
+
+                    window.toast.show(`${machineType} successfully collected and contract closed`, 'success');
+                    if (this._loadAssets) this._loadAssets();
+                    if (window.drawer) window.drawer.close();
+                    
+                } catch (error) {
+                    window.toast.show(error.message, 'error');
                 }
             }
-
-            window.toast.show(`${machineType} successfully marked as returned.`, 'success');
-            
-            // Log audit with dispatcher name
-            const dispatcherName = window.currentUser?.name || 'Equipment Coordinator';
-            client.post('/audit-logs', {
-                action: 'CONFIRM_RENTAL_RETURN',
-                entityType: sourceModel === 'vehicleContract' ? 'VehicleRentalContract' : 'Contract',
-                entityId: parseInt(contractId),
-                details: `EC (${dispatcherName}) confirmed collection of ${machineType} from project site.`
-            }).catch(() => {});
-
-            // Refresh data
-            this._loadAssets(); 
-        } catch (error) {
-            console.error('Return confirmation failed:', error);
-            window.toast.show('Action failed: ' + (error.message || 'Server error'), 'error');
-        }
+        );
     }
 };

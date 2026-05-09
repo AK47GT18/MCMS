@@ -12,10 +12,14 @@ async function create(data, userId) {
   const policy = await prisma.insurancePolicy.create({ data });
 
   // Audit log
-  await auditService.log(
-    userId, 'CREATE_INSURANCE_POLICY', 'InsurancePolicy', policy.id,
-    { entityName: data.entityName, type: data.documentType }
-  );
+  await auditService.log({
+    userId: userId,
+    action: 'CREATE_INSURANCE_POLICY',
+    targetType: 'InsurancePolicy',
+    targetId: policy.id,
+    targetCode: data.entityName,
+    details: { entityName: data.entityName, type: data.documentType }
+  });
 
   return policy;
 }
@@ -27,10 +31,14 @@ async function update(id, data, userId) {
   });
 
   // Audit log
-  await auditService.log(
-    userId, 'UPDATE_INSURANCE_POLICY', 'InsurancePolicy', policy.id,
-    data
-  );
+  await auditService.log({
+    userId: userId,
+    action: 'UPDATE_INSURANCE_POLICY',
+    targetType: 'InsurancePolicy',
+    targetId: policy.id,
+    targetCode: policy.entityName,
+    details: data
+  });
 
   return policy;
 }
@@ -39,10 +47,12 @@ async function remove(id, userId) {
   await prisma.insurancePolicy.delete({ where: { id } });
   
   // Audit log
-  await auditService.log(
-    userId, 'DELETE_INSURANCE_POLICY', 'InsurancePolicy', id,
-    {}
-  );
+  await auditService.log({
+    userId: userId,
+    action: 'DELETE_INSURANCE_POLICY',
+    targetType: 'InsurancePolicy',
+    targetId: id
+  });
 }
 
 module.exports = { getAll, create, update, remove };

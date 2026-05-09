@@ -5691,18 +5691,45 @@ Contract Admin</textarea>
                 </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    ${contract.items && contract.items.length > 0 ? contract.items.map((item, idx) => `
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px;">
-                            <div>
-                                <div style="font-weight: 700; font-size: 13px; color: var(--slate-800);">${item.materialName}</div>
-                                <div style="font-size: 11px; color: var(--slate-500);">Originally Contracted: <strong>${Number(item.quantity)} ${item.unit}</strong></div>
+                    ${contract.items && contract.items.length > 0 ? contract.items.map((item, idx) => {
+                        // CRITICAL: Force receivedQty to 0 if missing/undefined. Do NOT fallback to quantity.
+                        const verifiedQty = Number(item.receivedQty !== undefined && item.receivedQty !== null ? item.receivedQty : 0);
+                        const contractedQty = Number(item.quantity || 0);
+                        
+                        return `
+                        <div style="display: flex; flex-direction: column; padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; gap: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 700; font-size: 13px; color: var(--slate-800);">${item.materialName}</div>
+                                    <div style="display: flex; gap: 12px; margin-top: 4px;">
+                                        <div style="font-size: 10px; color: var(--slate-500);">Contracted: <strong>${contractedQty} ${item.unit}</strong></div>
+                                        <div style="font-size: 10px; color: ${verifiedQty > 0 ? 'var(--emerald-600)' : 'var(--red)'}; font-weight: 600;">
+                                            <i class="fas fa-clipboard-check"></i> EC Verified: <strong>${verifiedQty} ${item.unit}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="width: 140px;">
+                                    <label style="font-size: 10px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px; display: block; text-transform: uppercase;">Reconciliation Qty</label>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="number" class="form-input term-received-qty" 
+                                            data-item-id="${item.id}" 
+                                            value="${verifiedQty}" 
+                                            min="0" 
+                                            max="${verifiedQty}" 
+                                            style="width: 90px; padding: 6px; font-size: 12px; text-align: center; font-weight: 700; border-color: ${verifiedQty > 0 ? 'var(--emerald-200)' : 'var(--red-200)'};" 
+                                            data-vrules="required|numeric|min:0|max:${verifiedQty}" 
+                                            onfocus="this.select()"
+                                            oninput="window.V?.checkField(this)"
+                                            data-vmsg-max="Reconciliation cannot exceed EC verified amount (${verifiedQty})"
+                                            title="Must not exceed EC Verified quantity for audit reconciliation."
+                                            ${verifiedQty === 0 ? 'placeholder="0"' : ''}>
+                                        <i class="fas ${verifiedQty > 0 ? 'fa-check-circle' : 'fa-times-circle'}" style="color: ${verifiedQty > 0 ? 'var(--emerald-500)' : 'var(--red-400)'}; font-size: 14px;" title="${verifiedQty > 0 ? 'Verified by Intake' : 'No receipts logged by EC'}"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <div style="width: 120px;">
-                                <label style="font-size: 10px; font-weight: 700; color: var(--slate-400); margin-bottom: 4px; display: block; text-transform: uppercase;">Qty Received</label>
-                                <input type="number" class="form-input term-received-qty" data-item-id="${item.id}" value="${item.receivedQty || 0}" min="${item.receivedQty || 0}" max="${item.quantity}" style="width: 80px; padding: 4px 8px; font-size: 12px; text-align: center;" data-vrules="required|numeric|min:${item.receivedQty || 0}|max:${item.quantity}" oninput="window.V?.checkField(this)">
-                            </div>
+                            <div class="v-error-msg" data-field-for="term-received-qty" style="font-size: 10px; color: var(--red); font-weight: 600; text-align: right;"></div>
                         </div>
-                    `).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
+                    `; }).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
                 </div>
             </div>
 

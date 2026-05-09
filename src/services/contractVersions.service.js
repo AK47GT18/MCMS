@@ -58,10 +58,14 @@ async function create(contractId, data, userId, file) {
   });
 
   // Audit log
-  await auditService.log(
-    userId, 'CREATE_CONTRACT_VERSION', 'ContractVersion', version.id,
-    { contractId, versionNumber, fileName }
-  );
+  await auditService.log({
+    userId,
+    action: 'CREATE_CONTRACT_VERSION',
+    targetType: 'ContractVersion',
+    targetId: version.id,
+    targetCode: version.refCode,
+    details: { contractId, versionNumber, fileName }
+  });
 
   // Role-based Notifications (PM <-> FD)
   const creator = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, name: true } });
