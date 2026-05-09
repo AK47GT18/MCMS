@@ -62,7 +62,7 @@ async function remove(id) {
   logger.info('Asset deleted', { assetId: id });
 }
 
-async function checkOut(id, userId, projectId) {
+async function checkOut(id, userId, projectId, dispatchedBy) {
   const asset = await prisma.asset.update({
     where: { id },
     data: {
@@ -73,6 +73,7 @@ async function checkOut(id, userId, projectId) {
           userId,
           projectId,
           action: 'check_out',
+          dispatchedBy
         },
       },
     },
@@ -90,7 +91,7 @@ async function checkOut(id, userId, projectId) {
   return asset;
 }
 
-async function checkIn(id, userId, fuelLevel) {
+async function checkIn(id, userId, fuelLevel, dispatchedBy) {
   const asset = await prisma.asset.update({
     where: { id },
     data: {
@@ -102,6 +103,7 @@ async function checkIn(id, userId, fuelLevel) {
           userId,
           action: 'check_in',
           fuelLevelAtAction: fuelLevel,
+          dispatchedBy
         },
       },
     },

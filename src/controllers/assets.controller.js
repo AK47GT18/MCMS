@@ -84,7 +84,7 @@ const checkOut = asyncHandler(async (req, res, id) => {
   const data = validateBody(body, assetCheckOutSchema, res);
   if (!data) return;
 
-  const result = await assetsService.checkOut(assetId, user.id, data.projectId);
+  const result = await assetsService.checkOut(assetId, user.id, data.projectId, body.dispatchedBy);
 
   // Broadcast asset dispatched
   websocket.broadcastToChannel('assets', 'ASSET_DISPATCHED', {
@@ -139,7 +139,7 @@ const checkIn = asyncHandler(async (req, res, id) => {
   const data = validateBody(body, assetCheckInSchema, res);
   if (!data) return;
 
-  const result = await assetsService.checkIn(assetId, user.id, data.fuelLevel);
+  const result = await assetsService.checkIn(assetId, user.id, data.fuelLevel, body.dispatchedBy);
 
   // Broadcast asset returned
   websocket.broadcastToChannel('assets', 'ASSET_RETURNED', {
@@ -226,4 +226,30 @@ const resolveIssue = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { getAll, getById, create, update, remove, checkOut, checkIn, getAvailable, flagIssue, resolveIssue };
+const reportIncident = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  
+  const assetId = validateId(id, res);
+  if (!assetId) return;
+  
+  const body = await parseBody(req);
+  
+  // Validate required fields
+  if (!body.type || !['damage', 'partial_damage', 'theft', 'accident', 'non_arrival'].includes(body.type)) {
+    return response.badRequest(res, 'Valid incident type is required: damage, theft, accident, non_arrival');
+  }
+
+  const reconciliationService = require('../services/reconciliation.service');
+  const result = await reconciliationService.processIncident(assetId, user.id, {
+    type: body.type,
+    qtySent: body.qtySent,
+    qtyReceived: body.qtyReceived,
+    description: body.description,
+    dispatchedBy: body.dispatchedBy
+  });
+
+  response.success(res, result);
+});
+
+module.exports = { getAll, getById, create, update, remove, checkOut, checkIn, getAvailable, flagIssue, resolveIssue, reportIncident };

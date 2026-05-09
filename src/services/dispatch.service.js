@@ -176,6 +176,103 @@ const dispatchService = {
     }
 
     return updatedReq;
+  },
+
+  /**
+   * Confirm arrival with potential variance (shortages/damage)
+   */
+  async confirmArrivalVariance(data) {
+    const { requisitionId, receivedItems, receivedBy, dispatchedBy, notes, userId, userName, userRole } = data;
+
+    const requisition = await prisma.requisition.findUnique({
+      where: { id: parseInt(requisitionId) },
+      include: { 
+        items: true,
+        project: true
+      }
+    });
+
+    if (!requisition) throw new Error('Requisition not found');
+
+    const updatedReq = await prisma.requisition.update({
+      where: { id: parseInt(requisitionId) },
+      data: {
+        dispatchStatus: 'arrived',
+        status: 'fulfilled',
+        notes: notes ? (requisition.notes ? `${requisition.notes}\nIntake Notes: ${notes}` : notes) : requisition.notes
+      }
+    });
+
+    const inventoryService = require('./inventory.service');
+    const reconciliationService = require('./reconciliation.service');
+
+    const discrepancies = [];
+    
+    for (const receivedItem of receivedItems) {
+      const originalItem = requisition.items.find(i => String(i.id) === String(receivedItem.id));
+      const qtySent = Number(originalItem?.quantity || 0);
+      const qtyReceived = Number(receivedItem.qtyReceived || 0);
+      const variance = qtySent - qtyReceived;
+
+      // Add to site inventory (only what was actually received)
+      if (qtyReceived > 0) {
+        await inventoryService.distribute({
+          sectorId: 1, // Defaulting to site sector 1 for simplicity in this flow
+          materialName: receivedItem.itemName,
+          unit: 'Units',
+          quantity: qtyReceived,
+          reference: updatedReq.reqCode || `REQ-${requisitionId}`,
+          notes: `Intake confirmed by ${receivedBy}. Dispatched by ${dispatchedBy}.`,
+          dispatchedBy: dispatchedBy
+        }, { id: userId });
+      }
+
+      // Handle variance
+      if (variance > 0) {
+        discrepancies.push({
+          itemName: receivedItem.itemName,
+          qtySent,
+          qtyReceived,
+          variance,
+          unitPrice: Number(receivedItem.unitPrice || 0)
+        });
+
+        // Trigger financial reconciliation for the shortfall
+        await reconciliationService.processIncident({
+          projectId: requisition.projectId,
+          assetId: null, // Material incident
+          materialName: receivedItem.itemName,
+          type: 'damage', // Categorize as damage/loss
+          qtySent,
+          qtyReceived,
+          estimatedValue: Number(receivedItem.unitPrice || 0) * qtySent,
+          description: `Intake Shortage: ${variance} units of ${receivedItem.itemName} missing from ${updatedReq.reqCode}. Dispatched by ${dispatchedBy}. Received by ${receivedBy}.`,
+          dispatchedBy: dispatchedBy,
+          reportedBy: userName,
+          reporterId: userId
+        });
+      }
+    }
+
+    // Audit log
+    await auditService.log({
+      userId,
+      userName,
+      userRole,
+      action: 'CONFIRM_ARRIVAL_VARIANCE',
+      targetType: 'REQUISITION',
+      targetId: updatedReq.id,
+      targetCode: updatedReq.reqCode,
+      details: {
+        receivedBy,
+        dispatchedBy,
+        items: receivedItems.map(i => `${i.qtyReceived}/${i.qtySent} x ${i.itemName}`),
+        hasDiscrepancies: discrepancies.length > 0,
+        discrepancies
+      }
+    });
+
+    return { requisition: updatedReq, discrepancies };
   }
 };
 

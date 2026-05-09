@@ -21,9 +21,9 @@ export const FS_Logistics = {
                     <div class="card-title">Site Material Inventory</div>
                     <button class="btn btn-secondary" onclick="window.app.fsModule._loadSiteInventory()"><i class="fas fa-sync"></i> Refresh</button>
                 </div>
-                ${!this.inventoryLoaded 
+                ${!this.inventoryLoaded
                 ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading site inventory from server…</div></div>'
-                : (entries.length === 0 
+                : (entries.length === 0
                     ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-box-open" style="font-size:24px; margin-bottom:12px; display:block;"></i><div>No materials currently assigned to this site.</div></div>'
                     : `<table>
                         <thead>
@@ -71,10 +71,10 @@ export const FS_Logistics = {
                                     </td>
                                     <td style="text-align: right;">
                                         ${asset.status !== 'maintenance' ?
-                        `<button class="btn btn-secondary" onclick="window.app.fsModule.handleReportBreakdown('${asset.id}', '${asset.name}')" style="color: var(--red); border-color: var(--red-light);">
+                            `<button class="btn btn-secondary" onclick="window.app.fsModule.handleReportBreakdown('${asset.id}', '${asset.name}')" style="color: var(--red); border-color: var(--red-light);">
                                              <i class="fas fa-triangle-exclamation"></i> Report Breakdown
                                            </button>` : `<span style="font-size: 12px; color: var(--slate-400);">In Maintenance</span>`
-                    }
+                        }
                                     </td>
                                 </tr>
                             `).join('')}
@@ -111,7 +111,7 @@ export const FS_Logistics = {
 
     async _loadInTransit() {
         try {
-            const result = await client.get('/requisitions', { 
+            const result = await client.get('/requisitions', {
                 projectId: this.assignedProject?.id || 1,
                 status: 'approved'
             });
@@ -134,20 +134,20 @@ export const FS_Logistics = {
                 </div>
                 <div style="padding: 16px;">
                     ${this.inTransitItems.map(item => {
-                        const eta = item.estimatedArrival ? new Date(item.estimatedArrival).toLocaleString() : 'TBD';
-                        const items = item.items.map(i => `${i.quantity} x ${i.itemName}`).join(', ');
-                        return `
+            const eta = item.estimatedArrival ? new Date(item.estimatedArrival).toLocaleString() : 'TBD';
+            const items = item.items.map(i => `${i.quantity} x ${i.itemName}`).join(', ');
+            return `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--blue-border);">
                                 <div>
                                     <div style="font-weight: 700; font-size: 14px;">${items}</div>
-                                    <div style="font-size: 11px; color: var(--slate-500);">ETA: ${eta} | ID: ${item.reqCode || 'REQ-'+item.id}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">ETA: ${eta} | ID: ${item.reqCode || 'REQ-' + item.id}</div>
                                 </div>
                                 <button class="btn btn-primary" style="background: var(--blue); border-color: var(--blue);" onclick="window.app.fsModule.handleConfirmArrival('${item.id}')">
                                     <i class="fas fa-check-circle"></i> Confirm Arrival
                                 </button>
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -205,10 +205,10 @@ export const FS_Logistics = {
     addItemToRequisition(type) {
         const selectId = type === 'machinery' ? 'fs_mac_select' : 'fs_mat_select';
         const qtyId = type === 'machinery' ? 'fs_mac_qty' : 'fs_mat_qty';
-        
+
         const selectEl = document.getElementById(selectId);
         const qtyInput = document.getElementById(qtyId);
-        
+
         if (!selectEl || !selectEl.value || !qtyInput || !qtyInput.value) {
             if (window.toast) window.toast.show('Please select an item and quantity', 'warning');
             return;
@@ -216,7 +216,7 @@ export const FS_Logistics = {
 
         const qty = parseFloat(qtyInput.value);
         const selectedOption = selectEl.options[selectEl.selectedIndex];
-        
+
         const item = {
             category: type,
             itemName: selectEl.value,
@@ -230,13 +230,13 @@ export const FS_Logistics = {
 
         // Add to cart
         this.requisitionCart.push(item);
-        
+
         // Refresh UI
         this._renderRequisitionCart();
-        
+
         // Feedback
         if (window.toast) window.toast.show(`Added ${item.itemName} to list`, 'success');
-        
+
         // Reset qty
         qtyInput.value = type === 'machinery' ? '1' : '';
     },
@@ -250,7 +250,7 @@ export const FS_Logistics = {
         const container = document.getElementById('fs_items_container');
         const countLabel = document.querySelector('#fs_requisition_items_list label');
         const messageArea = document.getElementById('fs_req_message_area');
-        
+
         if (!container) return;
 
         if (this.requisitionCart.length === 0) {
@@ -317,7 +317,7 @@ export const FS_Logistics = {
 
         try {
             if (window.toast) window.toast.show('Submitting requisition...', 'info');
-            
+
             const payload = {
                 projectId: this.assignedProject?.id || 1,
                 items: formattedItems,
@@ -469,7 +469,7 @@ export const FS_Logistics = {
         try {
             await client.post('/inventory/return', {
                 fromSectorId: material.sectorId,
-                toSectorId: 1, 
+                toSectorId: 1,
                 materialName: name,
                 quantity: qty,
                 notes: `[RECOVERY] Reason: ${reason}. ${notes}`

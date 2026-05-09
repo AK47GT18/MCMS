@@ -72,7 +72,7 @@ function parseUrl(url) {
   // Remove /api/v1/ prefix
   const path = pathOnly.replace(/^\/api\/v1/, '');
   const parts = path.split('/').filter(Boolean);
-  
+
   return {
     resource: parts[0] || '',
     id: parts[1] || null,
@@ -93,7 +93,7 @@ async function router(req, res) {
   if (!req.query) {
     req.query = parseQuery(req.url);
   }
-  
+
   // ============================================
   // AUTH ROUTES (with rate limiting)
   // ============================================
@@ -146,7 +146,7 @@ async function router(req, res) {
     }
     return methodNotAllowed(res, ['POST']);
   }
-  
+
   // ============================================
   // USERS ROUTES
   // ============================================
@@ -154,11 +154,11 @@ async function router(req, res) {
     // Check for role filter query param
     const url = new URL(req.url, `http://${req.headers.host}`);
     const roleParam = url.searchParams.get('role');
-    
+
     if (roleParam && method === 'GET') {
       return usersController.getByRole(req, res);
     }
-    
+
     if (!id) {
       if (method === 'GET') return usersController.getAll(req, res);
       if (method === 'POST') return usersController.create(req, res);
@@ -175,7 +175,7 @@ async function router(req, res) {
     if (method === 'DELETE') return usersController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
-  
+
   // ============================================
   // PM & CONFIGURATION ROUTES
   // ============================================
@@ -223,7 +223,7 @@ async function router(req, res) {
     if (method === 'DELETE') return projectsController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
-  
+
   // ============================================
   // VENDORS ROUTES
   // ============================================
@@ -282,7 +282,7 @@ async function router(req, res) {
     if (method === 'DELETE') return contractsController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE', 'POST']);
   }
-  
+
   // ============================================
   // INSURANCE POLICIES ROUTES
   // ============================================
@@ -296,7 +296,7 @@ async function router(req, res) {
     if (method === 'DELETE') return insurancePoliciesController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
-  
+
   // ============================================
   // TASKS ROUTES
   // ============================================
@@ -309,7 +309,7 @@ async function router(req, res) {
         const url = new URL(req.url, `http://${req.headers.host}`);
         const projectId = url.searchParams.get('projectId');
         const status = url.searchParams.get('status');
-        
+
         if (projectId) {
           return tasksController.getByProject(req, res, projectId);
         }
@@ -329,7 +329,7 @@ async function router(req, res) {
     if (method === 'DELETE') return tasksController.remove(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH', 'DELETE']);
   }
-  
+
   // ============================================
   // ASSETS ROUTES
   // ============================================
@@ -353,6 +353,9 @@ async function router(req, res) {
     }
     if (action === 'resolve' && method === 'PUT') {
       return assetsController.resolveIssue(req, res, id);
+    }
+    if (action === 'incident' && method === 'POST') {
+      return assetsController.reportIncident(req, res, id);
     }
     if (method === 'GET') return assetsController.getById(req, res, id);
     if (method === 'PUT' || method === 'PATCH') return assetsController.update(req, res, id);
@@ -392,7 +395,7 @@ async function router(req, res) {
     if (method === 'GET') return vehicleRentalController.getAll(req, res); // Default for GET /vehicle-rentals/:id
     return methodNotAllowed(res, ['GET', 'POST', 'PATCH']);
   }
-  
+
   // ============================================
   // ASSET SCHEDULER ROUTES
   // ============================================
@@ -439,7 +442,7 @@ async function router(req, res) {
     if (method === 'GET') return requisitionsController.getById(req, res, id);
     return methodNotAllowed(res, ['GET']);
   }
-  
+
   // ============================================
   // DAILY LOGS ROUTES
   // ============================================
@@ -458,7 +461,7 @@ async function router(req, res) {
     if (method === 'GET') return dailyLogsController.getById(req, res, id);
     return methodNotAllowed(res, ['GET']);
   }
-  
+
   // ============================================
   // ISSUES ROUTES
   // ============================================
@@ -486,7 +489,7 @@ async function router(req, res) {
     if (method === 'PUT' || method === 'PATCH') return issuesController.update(req, res, id);
     return methodNotAllowed(res, ['GET', 'PUT', 'PATCH']);
   }
-  
+
   // ============================================
   // PROCUREMENT ROUTES
   // ============================================
@@ -517,7 +520,7 @@ async function router(req, res) {
     if (method === 'GET') return procurementController.getById(req, res, id);
     return methodNotAllowed(res, ['GET']);
   }
-  
+
   // ============================================
   // AUDIT LOGS ROUTES
   // ============================================
@@ -536,7 +539,7 @@ async function router(req, res) {
     }
     return methodNotAllowed(res, ['GET', 'POST']);
   }
-  
+
   // ============================================
   // ROAD ESTIMATION ROUTES
   // ============================================
@@ -566,7 +569,7 @@ async function router(req, res) {
     if (!id && method === 'GET') {
       return inventoryController.getAll(req, res);
     }
-    if (id === 'distribute' && method === 'POST') {
+    if ((id === 'distribute' || id === 'dispatch') && method === 'POST') {
       return inventoryController.distribute(req, res);
     }
     if (id === 'consume' && method === 'POST') {
@@ -706,7 +709,7 @@ async function router(req, res) {
     const handled = await documentRoutes(req, res);
     if (handled !== false) return;
   }
-  
+
   // ============================================
   // NOTIFICATION ROUTES
   // ============================================
@@ -756,7 +759,7 @@ async function router(req, res) {
 
     // Dynamic Report (Universal)
     if (role === 'dynamic' && (method === 'POST' || method === 'GET')) {
-        return reportsController.dynamicReport(req, res);
+      return reportsController.dynamicReport(req, res);
     }
 
     if (method !== 'GET') return methodNotAllowed(res, ['GET', 'POST']);

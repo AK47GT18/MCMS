@@ -756,6 +756,33 @@ async function terminate(contractId, { reason, receivedItems }, user) {
     });
   }
 
+  // Notify Finance Director for Rental Returns
+  if (contract.contractType === 'rental' || contract.contractType === 'RENTAL') {
+    try {
+      const fds = await prisma.user.findMany({ where: { role: 'Finance_Director', isActive: true } });
+      const emailService = require('../emails/email.service');
+      const isDamaged = reason?.includes('[DAMAGED]') || receivedItems?.some(i => i.status === 'Damaged');
+      
+      for (const fd of fds) {
+        await emailService.sendNotification(
+          fd,
+          isDamaged ? 'URGENT: Rental Asset Returned DAMAGED' : 'Rental Asset Returned - Contract Closure Required',
+          `Rental equipment "${contract.title}" (Ref: ${contract.refCode}) for project "${contract.project?.name || 'N/A'}" has been terminated/returned.
+          
+          Termination Status: ${newStatus}
+          ${isDamaged ? `Alert: Equipment was reported as DAMAGED during return audit.` : ''}
+          Details: ${reason || 'Regular return'}
+          Final Valuation: MWK ${finalValue.toLocaleString()}
+          
+          Please proceed with final reconciliation and contract closure.`,
+          `${process.env.FRONTEND_URL}/fd/contracts`
+        ).catch(e => logger.error('FD Contract Notification failed', e));
+      }
+    } catch (err) {
+      logger.error('Failed to notify FD about contract termination', err);
+    }
+  }
+
   return { success: true, newStatus, finalValue };
 }
 

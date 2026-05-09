@@ -305,6 +305,7 @@ model AssetLog {
   projectId         Int?     @map("project_id")
   action            String   @db.VarChar(20)
   fuelLevelAtAction Int?     @map("fuel_level_at_action") @db.SmallInt
+  dispatchedBy      String?  @map("dispatched_by") @db.VarChar(255)
   timestamp         DateTime @default(now()) @db.Timestamptz(6)
   asset             Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
   project           Project? @relation(fields: [projectId], references: [id])
@@ -760,6 +761,7 @@ model InventoryLog {
   quantity    Decimal   @db.Decimal(18, 3)
   reference   String?   @db.VarChar(255)
   notes       String?
+  dispatchedBy String?   @map("dispatched_by") @db.VarChar(255)
   timestamp   DateTime  @default(now()) @db.Timestamptz(6)
   inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   user        User?     @relation(fields: [userId], references: [id])
@@ -1064,6 +1066,7 @@ enum MaintenanceTypeEnum {
   preventive
   corrective
   emergency
+  incident
 
   @@map("maintenance_type_enum")
 }

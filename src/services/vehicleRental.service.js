@@ -204,14 +204,50 @@ async function shift(id, data, userId) {
 /**
  * Mark a rental vehicle as returned
  */
-async function markReturned(id, returnDate, userId) {
-  return await prisma.vehicleRentalContract.update({
+async function markReturned(id, data, userId) {
+  const { returnDate = new Date(), returnedBy, notes, status, damageJustification } = data;
+  
+  const contract = await prisma.vehicleRentalContract.findUnique({
+    where: { id: parseInt(id) },
+    include: { project: true }
+  });
+  
+  if (!contract) throw new AppError('Contract not found', 404);
+
+  const updated = await prisma.vehicleRentalContract.update({
     where: { id: parseInt(id) },
     data: {
       returnDate: new Date(returnDate),
-      status: 'returned'
+      status: status === 'Damaged' ? 'returned_damaged' : 'returned',
+      notes: notes ? `${contract.notes || ''} [Returned by ${returnedBy || 'N/A'}: ${notes}]` : contract.notes
     }
   });
+
+  // Notify Finance Director
+  try {
+    const fds = await prisma.user.findMany({ where: { role: 'Finance_Director', isActive: true } });
+    const emailService = require('../emails/email.service');
+    
+    for (const fd of fds) {
+      await emailService.sendNotification(
+        fd,
+        status === 'Damaged' ? 'URGENT: Rental Asset Returned DAMAGED' : 'Rental Asset Returned - Contract Closure Required',
+        `Rental machine "${contract.machineType}" (Ref: ${contract.refCode}) for project "${contract.project?.name || 'N/A'}" has been returned.
+        
+        Returned By: ${returnedBy || 'Unknown'}
+        Condition Status: ${status || 'Returned'}
+        ${status === 'Damaged' ? `Damage Justification: ${damageJustification}` : ''}
+        Final Notes: ${notes || 'None'}
+        
+        Please proceed with contract reconciliation and final payment processing.`,
+        `${process.env.FRONTEND_URL}/fd/contracts`
+      ).catch(e => logger.error('FD Return Notification failed', e));
+    }
+  } catch (err) {
+    logger.error('Failed to notify FD about rental return', err);
+  }
+
+  return updated;
 }
 
 /**

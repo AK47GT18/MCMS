@@ -9,12 +9,41 @@ import assetsApi from '../../../src/api/assets.api.js';
 import { notificationService } from '../../../src/services/notifications.service.js';
 
 export const EC_Handlers = {
-    openDispatchDrawer() {
-        // Fetch projects to populate the drawer
-        client.get('/projects').then(result => {
-            const projects = Array.isArray(result) ? result : (result.data || []);
+    async openDispatchDrawer() {
+        window.toast?.show('Loading project context and fleet registry...', 'info');
+        try {
+            // Fetch projects and assets in parallel to ensure the drawer has all data
+            const [projRes, assetRes, invRes] = await Promise.all([
+                client.get('/projects'),
+                assetsApi.getAll().catch(() => ({ data: [] })),
+                inventoryApi.getAll().catch(() => ({ data: [] }))
+            ]);
+
+            const projects = Array.isArray(projRes) ? projRes : (projRes.data || []);
+            this.assetRegistry = Array.isArray(assetRes) ? assetRes : (assetRes.data || []);
+            
+            // Re-process inventory for silos if needed
+            if (invRes) {
+                const items = Array.isArray(invRes) ? invRes : (invRes.data || []);
+                const projectMap = {};
+                items.forEach(item => {
+                    (item.allocations || []).forEach(alloc => {
+                        if (!projectMap[alloc.projectId]) projectMap[alloc.projectId] = [];
+                        projectMap[alloc.projectId].push({
+                            materialName: item.materialName,
+                            quantityOnHand: alloc.quantity,
+                            sectorId: alloc.sectorId
+                        });
+                    });
+                });
+                this.inventoryByProject = projectMap;
+            }
+
             window.drawer.open('Strategic Asset Dispatch', window.DrawerTemplates.assignResource(projects));
-        });
+        } catch (err) {
+            console.error('[EC] Failed to open dispatch drawer:', err);
+            window.toast?.show('Failed to load dispatch context.', 'error');
+        }
     },
 
     async openMaterialDispatch(materialName) {
@@ -143,7 +172,8 @@ export const EC_Handlers = {
                 phaseId,
                 recipient,
                 date,
-                justification
+                justification,
+                dispatchedBy: window.currentUser?.name || 'Equipment Coordinator'
             });
 
             // Update local state
@@ -416,25 +446,59 @@ export const EC_Handlers = {
 
     refreshStrategicImpact() {
         const project = document.getElementById('assign_project')?.value;
-        const phase = document.getElementById('assign_phase')?.value;
-        if (!project || !phase) return;
+        if (!project) return;
 
-        const projectStock = this.inventoryByProject?.[project] || [];
-        const phaseMats = this.phaseMaterials[phase] || [];
-        const itemsToMove = phaseMats.map((mat, i) => ({
-            name: mat.name,
-            quantity: Number(document.getElementById(`qty_${i}`)?.value || 0),
-            unit: mat.unit
-        })).filter(i => i.quantity > 0);
+        const isMachinery = document.getElementById('btn_machinery')?.classList.contains('active');
+        const container = document.getElementById('dispatch_impact_summary');
+        
+        if (isMachinery) {
+            // Machinery Impact
+            const selectedAssets = Array.from(document.querySelectorAll('.machinery-checkbox:checked')).map(cb => cb.dataset.name);
+            if (selectedAssets.length === 0) {
+                container.innerHTML = `
+                    <i class="fas fa-microchip" style="font-size: 24px; color: var(--slate-300); opacity: 0.5;"></i>
+                    <div style="text-align: center;">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em;">Intelligence: Awaiting Selection</div>
+                        <div style="font-size: 10px; color: var(--slate-400); margin-top: 2px;">Select machinery to calculate logistics impact</div>
+                    </div>
+                `;
+                return;
+            }
 
-        const stockMap = {};
-        projectStock.forEach(s => stockMap[s.materialName] = { qty: s.quantityOnHand });
-        this._updateDispatchImpact(itemsToMove, stockMap);
+            container.innerHTML = `
+                <div style="font-size: 11px; font-weight: 800; color: var(--slate-500); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-microchip" style="color: var(--blue);"></i>
+                    <span>Fleet Readiness Intelligence</span>
+                    <span style="flex: 1; height: 1px; background: var(--slate-200);"></span>
+                </div>
+                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--emerald);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #166534;">Fleet Verified</div>
+                        <div style="font-size: 11px; color: #15803d;">${selectedAssets.length} asset(s) ready for site mobilization.</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Materials Impact (Existing logic)
+            const projectStock = this.inventoryByProject?.[project] || [];
+            const matsToDispatch = this._currentProjectMaterials || [];
+            const itemsToMove = matsToDispatch.map((mat, i) => ({
+                name: mat.name,
+                quantity: Number(document.getElementById(`qty_${i}`)?.value || 0),
+                unit: mat.unit
+            })).filter(i => i.quantity > 0);
+
+            const stockMap = {};
+            projectStock.forEach(s => stockMap[s.materialName] = { qty: s.quantityOnHand });
+            this._updateDispatchImpact(itemsToMove, stockMap);
+        }
     },
 
     async handleExecuteDispatch() {
         const project = document.getElementById('assign_project')?.value;
-        const phase = document.getElementById('assign_phase')?.value;
         const supervisor = document.getElementById('assign_fs')?.value;
         const isMachinery = document.getElementById('btn_machinery')?.classList.contains('active');
         const eta = document.getElementById('dispatch_eta')?.value;
@@ -448,16 +512,16 @@ export const EC_Handlers = {
             return;
         }
 
-        if (!project || (!isMachinery && !phase) || !supervisor) {
-            window.toast.show('Please select project, phase, and supervisor.', 'warning');
+        if (!project || !supervisor) {
+            window.toast.show('Please select project and supervisor.', 'warning');
             return;
         }
 
         window.toast.show('Validating inventory…', 'info');
 
         const projectStock = this.inventoryByProject?.[project] || [];
-        const phaseMats = this.phaseMaterials[phase] || [];
-        const itemsToMove = phaseMats.map((mat, i) => ({
+        const matsToDispatch = this._currentProjectMaterials || [];
+        const itemsToMove = matsToDispatch.map((mat, i) => ({
             name: mat.name,
             quantity: Number(document.getElementById(`qty_${i}`)?.value || 0),
             unit: mat.unit
@@ -639,9 +703,123 @@ export const EC_Handlers = {
 
     async handleAssetUpdate(assetId) { },
 
-    handleTimelineProjectChange(projectId) {
+    async handleTimelineProjectChange(projectId) {
+        if (!projectId) return;
         console.log('[EC] Project context changed to:', projectId);
-        // Additional logic can be added here if we need to filter phases or supervisors by project
+        
+        const container = document.getElementById('material_sheet_container');
+        const supervisorSelect = document.getElementById('assign_fs');
+        if (container) container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Fetching project requirements...</div>';
+
+        try {
+            // 1. Fetch Project Details for Supervisor
+            const projRes = await client.get(`/projects/${projectId}`);
+            const project = projRes.data || projRes;
+            
+            if (supervisorSelect && project.managerName) {
+                // Check if supervisor already in options, if not add it
+                let exists = false;
+                for (let i = 0; i < supervisorSelect.options.length; i++) {
+                    if (supervisorSelect.options[i].value === project.managerName) {
+                        supervisorSelect.selectedIndex = i;
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    const newOpt = new Option(`${project.managerName} (Project Manager)`, project.managerName, true, true);
+                    supervisorSelect.add(newOpt);
+                }
+            }
+
+            // 2. Fetch Materials from Road Estimation
+            const estRes = await client.get(`/road-estimation/${projectId}`);
+            const estimate = estRes.data || estRes;
+            
+            console.log('[EC] Fetched estimation data:', estimate);
+
+            // Extract unique materials across all layers
+            const materialsMap = {};
+            // Handle different potential structures of estimate
+            const layers = estimate.layers || estimate.spec?.layers || [];
+            
+            if (layers.length > 0) {
+                layers.forEach(layer => {
+                    if (layer.materials) {
+                        layer.materials.forEach(mat => {
+                            if (!materialsMap[mat.name]) {
+                                materialsMap[mat.name] = { name: mat.name, unit: mat.unit || 'Units' };
+                            }
+                        });
+                    }
+                });
+            }
+
+            const uniqueMaterials = Object.values(materialsMap);
+            this._currentProjectMaterials = uniqueMaterials;
+
+            if (container) {
+                if (uniqueMaterials.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400);">No materials required for this project specification.</div>';
+                } else {
+                    container.innerHTML = uniqueMaterials.map((mat, i) => `
+                        <div style="background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 8px;">
+                            <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">${mat.name}</div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="qty_${i}" class="form-input" style="flex: 1; padding: 6px;" placeholder="Qty" 
+                                    oninput="window.app.ecModule.refreshStrategicImpact()">
+                                <span style="font-size: 11px;">${mat.unit}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            this.refreshStrategicImpact();
+
+            // 3. Fetch Available Machinery
+            const machineryContainer = document.getElementById('machinery_sheet_container');
+            if (machineryContainer) {
+                // Ensure registry is loaded (fallback)
+                if (!this.assetRegistry) {
+                    const assetRes = await assetsApi.getAll().catch(() => []);
+                    this.assetRegistry = Array.isArray(assetRes) ? assetRes : (assetRes.data || []);
+                }
+
+                const availableFleet = (this.assetRegistry || []).filter(a => {
+                    if (a.status !== 'available') return false;
+                    const isOwned = !a.isRented && a.ownership !== 'Rental';
+                    if (isOwned) return true;
+                    return String(a.projectId) === String(projectId);
+                });
+                
+                if (availableFleet.length === 0) {
+                    machineryContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400);">No eligible machinery available for this project.</div>';
+                } else {
+                    machineryContainer.innerHTML = availableFleet.map(asset => {
+                        const isOwned = !asset.isRented && asset.ownership !== 'Rental';
+                        return `
+                            <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="font-weight: 800; font-size: 14px; color: var(--slate-900);">${asset.name}</div>
+                                        <span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; ${isOwned ? 'background: #ECFDF5; color: #059669;' : 'background: #EFF6FF; color: #1D4ED8;'}">
+                                            ${isOwned ? 'Company Fleet' : 'Project Bound Rental'}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--slate-500); margin-top: 2px;">${asset.assetCode || asset.id} • ${asset.category || 'General Fleet'}</div>
+                                </div>
+                                <input type="checkbox" class="machinery-checkbox" data-id="${asset.id}" data-name="${asset.name}" style="width: 20px; height: 20px;" onchange="window.app.ecModule.refreshStrategicImpact()">
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+        } catch (err) {
+            console.error('[EC] Failed to fetch project context:', err);
+            if (container) container.innerHTML = '<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--red);">Error fetching project requirements.</div>';
+        }
     },
 
     async handleResolveIssue(assetId, assetName) {
@@ -1559,7 +1737,7 @@ export const EC_Handlers = {
         }
     },
 
-    async handleConfirmReturned(contractId, machineType) {
+    async handleConfirmReturned(contractId, machineType, sourceModel = 'contract') {
         if (!confirm(`Are you sure you want to confirm collection of ${machineType} from the site? This will finalize the contract lifecycle.`)) {
             return;
         }
@@ -1567,18 +1745,34 @@ export const EC_Handlers = {
         try {
             window.toast.show('Processing return confirmation...', 'info');
             
-            const res = await client.patch(`/vehicle-contracts/${contractId}/collect`);
-            
-            if (res.error) throw new Error(res.error);
+            // Route to the correct API based on source model
+            if (sourceModel === 'vehicleContract') {
+                await client.patch(`/vehicle-contracts/${contractId}/collect`);
+            } else {
+                // For unified Contract model, update status to 'completed'
+                const token = localStorage.getItem('mcms_auth_token');
+                const res = await fetch(`/api/v1/contracts/${contractId}/complete`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!res.ok) {
+                    // Fallback: try vehicle-contracts endpoint
+                    await client.patch(`/vehicle-contracts/${contractId}/collect`);
+                }
+            }
 
             window.toast.show(`${machineType} successfully marked as returned.`, 'success');
             
-            // Log audit
+            // Log audit with dispatcher name
+            const dispatcherName = window.currentUser?.name || 'Equipment Coordinator';
             client.post('/audit-logs', {
                 action: 'CONFIRM_RENTAL_RETURN',
-                entityType: 'VehicleRentalContract',
+                entityType: sourceModel === 'vehicleContract' ? 'VehicleRentalContract' : 'Contract',
                 entityId: parseInt(contractId),
-                details: `EC confirmed collection of ${machineType} from project site.`
+                details: `EC (${dispatcherName}) confirmed collection of ${machineType} from project site.`
             }).catch(() => {});
 
             // Refresh data

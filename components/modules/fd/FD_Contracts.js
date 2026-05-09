@@ -18,10 +18,12 @@ export const FD_Contracts = {
                     ${
                       this.currentContractTab === "project"
                         ? `<button class="btn btn-primary" onclick="window.app.fmModule?.openNewProjectContract()"><i class="fas fa-file-signature"></i> New Project Master</button>`
-                        : `<button class="btn btn-primary" style="background: ${this.currentContractTab === "rental" ? "var(--orange)" : "var(--blue)"}; border-color: ${this.currentContractTab === "rental" ? "var(--orange)" : "var(--blue)"};" 
-                            onclick="window.app.fmModule?.openNewVendorContract()">
-                            <i class="fas fa-plus-circle"></i> ${this.currentContractTab === "rental" ? "New Rental Agreement" : "New Vendor Contract"}
-                           </button>`
+                        : (this.currentContractTab === "vendor" 
+                            ? `<button class="btn btn-primary" onclick="window.app.fmModule?.openNewVendorContract()">
+                                <i class="fas fa-plus-circle"></i> New Vendor Contract
+                               </button>`
+                            : ""
+                          )
                     }
                 </div>
                 

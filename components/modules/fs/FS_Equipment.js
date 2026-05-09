@@ -36,8 +36,8 @@ export const FS_Equipment = {
                                 <td><span class="status ${asset.status === 'checked_out' ? 'active' : 'pending'}">${(asset.status || '').replace(/_/g, ' ')}</span></td>
                                 <td>
                                     <div style="display:flex; gap:4px;">
-                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.app.fsModule?.handleReportBreakdown('${asset.id}', '${asset.name.replace(/'/g, "\\'")}')"><i class="fas fa-exclamation-triangle" style="color:var(--orange);"></i> Issue</button>
-                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.app.fsModule?.handleReturnEquipment('${asset.id}', '${asset.name.replace(/'/g, "\\'")}')"><i class="fas fa-undo"></i> Return</button>
+                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.app.fsModule?.openAssetIncidentDrawer('${asset.id}')"><i class="fas fa-exclamation-triangle" style="color:var(--red);"></i> Incident</button>
+                                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:10px;" onclick="window.app.fsModule?.openReturnEquipmentDrawer('${asset.id}', '${asset.name.replace(/'/g, "\\'")}', '${asset.assetCode || ''}')"><i class="fas fa-undo"></i> Return</button>
                                     </div>
                                 </td>
                             </tr>
@@ -48,8 +48,7 @@ export const FS_Equipment = {
             }
             </div>
         `;
-    }
-,
+    },
 
     async _loadSiteAssets() {
         try {
@@ -62,44 +61,218 @@ export const FS_Equipment = {
             this.assetsLoaded = true;
             console.error('[FS] Failed to load site assets:', error);
         }
-    }
-,
+    },
 
-    async handleReportBreakdown(assetId, assetName) {
-        const issueType = prompt(`What is the issue with ${assetName}? (e.g., Broken, Stolen, Needs Maintenance)`);
-        if (!issueType) return;
-        
-        if (!confirm(`Are you sure you want to flag ${assetName} as '${issueType}'? This will alert the Equipment Coordinator.`)) {
+    async openAssetIncidentDrawer(assetId) {
+        try {
+            // Find asset from local cache first
+            let asset = this.siteAssets.find(a => String(a.id) === String(assetId));
+            
+            // If not in cache, fetch from API
+            if (!asset) {
+                const res = await assets.getById(assetId);
+                asset = res.data || res;
+            }
+
+            window.drawer.open(
+                'Report Asset Incident',
+                window.DrawerTemplates.assetIncidentReport(asset)
+            );
+
+            // Store reference for the preview calculator
+            this._currentIncidentAsset = asset;
+        } catch (error) {
+            console.error('[FS] Failed to open incident drawer:', error);
+            window.toast?.show('Failed to load asset details', 'error');
+        }
+    },
+
+    _updateIncidentPreview() {
+        const asset = this._currentIncidentAsset;
+        if (!asset) return;
+
+        const type = document.getElementById('incident_type')?.value;
+        const qtySent = Number(document.getElementById('incident_qty_sent')?.value || 1);
+        const qtyReceived = Number(document.getElementById('incident_qty_received')?.value || 0);
+        const estimatedValue = Number(asset.estimatedValue || 0);
+
+        let lossRatio = 0;
+        let lossDesc = '';
+
+        switch (type) {
+            case 'damage':
+                lossRatio = qtySent > 0 ? Math.max(0, (qtySent - qtyReceived) / qtySent) : 0;
+                lossDesc = `${qtySent - qtyReceived} out of ${qtySent} damaged`;
+                break;
+            case 'theft':
+                lossRatio = 1.0;
+                lossDesc = 'Total loss — reported as stolen';
+                break;
+            case 'accident':
+                lossRatio = qtySent > 0 ? Math.max(0, (qtySent - qtyReceived) / qtySent) : 0.5;
+                lossDesc = `${qtyReceived} of ${qtySent} salvageable`;
+                break;
+            case 'non_arrival':
+                lossRatio = 1.0;
+                lossDesc = 'Never arrived — full provisional loss';
+                break;
+            default:
+                lossDesc = 'Select an incident type';
+        }
+
+        const hit = Math.round(estimatedValue * lossRatio);
+        const lossPercent = Math.round(lossRatio * 100);
+
+        const hitEl = document.getElementById('incident_hit_amount');
+        const descEl = document.getElementById('incident_hit_desc');
+        const badgeEl = document.getElementById('incident_loss_badge');
+
+        if (hitEl) hitEl.textContent = `MWK ${hit.toLocaleString()}`;
+        if (descEl) descEl.textContent = lossDesc;
+        if (badgeEl) {
+            badgeEl.textContent = `${lossPercent}% Loss`;
+            badgeEl.style.background = lossPercent > 50 ? '#FEE2E2' : '#FEF3C7';
+            badgeEl.style.color = lossPercent > 50 ? '#DC2626' : '#92400E';
+        }
+    },
+
+    async submitAssetIncident(assetId) {
+        const type = document.getElementById('incident_type')?.value;
+        const qtySent = document.getElementById('incident_qty_sent')?.value;
+        const qtyReceived = document.getElementById('incident_qty_received')?.value;
+        const description = document.getElementById('incident_description')?.value?.trim();
+        const dispatchedBy = document.getElementById('incident_dispatched_by')?.value?.trim();
+
+        if (!type) {
+            window.toast?.show('Please select an incident type.', 'warning');
+            return;
+        }
+        if (!description || description.length < 10) {
+            window.toast?.show('Please provide a detailed description (min 10 characters).', 'warning');
+            return;
+        }
+        if (!dispatchedBy) {
+            window.toast?.show('Please enter the name of who dispatched this asset.', 'warning');
+            return;
+        }
+
+        if (!confirm(`This will deduct the calculated financial impact from the project budget. Are you sure you want to submit this incident report?`)) {
             return;
         }
 
         try {
-            await window.loader.show('Reporting issue...', async () => {
-                await assets.flagIssue(assetId, `Field Supervisor reported: ${issueType}`);
-            });
-            window.modal.showSuccess('Issue Reported', `${assetName} has been flagged.`);
-            await this._loadSiteAssets();
-        } catch (error) {
-            console.error('[FS] Failed to report issue:', error);
-            window.modal.showError('Report Failed', error.message || 'Failed to report issue');
-        }
-    }
-,
+            window.toast?.show('Submitting incident report...', 'info');
 
-    async handleReturnEquipment(assetId, assetName) {
-        if (!confirm(`Are you sure you want to return ${assetName} to the base/inventory?`)) {
+            const token = localStorage.getItem('mcms_auth_token');
+            const res = await fetch(`/api/v1/assets/${assetId}/incident`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type,
+                    qtySent: Number(qtySent || 1),
+                    qtyReceived: Number(qtyReceived || 0),
+                    description,
+                    dispatchedBy
+                })
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result?.error?.message || 'Failed to submit incident');
+            }
+
+            const data = result.data || result;
+
+            window.drawer.close();
+            window.modal?.showSuccess(
+                'Incident Reported',
+                `${data.assetName} has been flagged as "${data.incidentType}". Financial impact: MWK ${(data.financialHit || 0).toLocaleString()}.${data.replenishmentReqCode ? ` Replenishment requisition ${data.replenishmentReqCode} has been auto-generated.` : ''}`
+            );
+
+            // Refresh assets
+            await this._loadSiteAssets();
+
+        } catch (error) {
+            console.error('[FS] Incident submission failed:', error);
+            window.toast?.show('Failed: ' + (error.message || 'Server error'), 'error');
+        }
+    },
+
+    async openReturnEquipmentDrawer(assetId, assetName, assetCode) {
+        window.drawer.open('Return to Base', `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Demobilization Notice</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${assetName}</div>
+                    <div style="font-size: 12px; color: var(--slate-500);">${assetCode || 'EQP-'+assetId}</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Personnel Sending Back <span style="color: var(--red);">*</span></label>
+                    <input type="text" id="return_sent_by" class="form-input" placeholder="Name of supervisor or operator" style="width: 100%;" value="${window.currentUser?.name || ''}">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Estimated Arrival at Yard <span style="color: var(--red);">*</span></label>
+                    <input type="datetime-local" id="return_arrival_time" class="form-input" style="width: 100%;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 700;">Equipment Condition Notes</label>
+                    <textarea id="return_cond_notes" class="form-input" placeholder="E.g. Clean, partial fuel, minor scratch reported..." style="width: 100%; height: 80px; resize: none;"></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 800; background: var(--slate-900); border-color: var(--slate-900);" 
+                    onclick="window.app.fsModule.submitEquipmentReturn('${assetId}', '${assetName.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-truck-pickup" style="margin-right: 8px;"></i> Confirm Dispatch to Base
+                </button>
+            </div>
+        `);
+
+        // Default to 4 hours from now
+        setTimeout(() => {
+            const dt = new Date();
+            dt.setHours(dt.getHours() + 4);
+            const el = document.getElementById('return_arrival_time');
+            if (el) el.value = dt.toISOString().slice(0, 16);
+        }, 100);
+    },
+
+    async submitEquipmentReturn(assetId, assetName) {
+        const sentBy = document.getElementById('return_sent_by').value;
+        const arrivalTime = document.getElementById('return_arrival_time').value;
+        const notes = document.getElementById('return_cond_notes').value;
+
+        if (!sentBy || !arrivalTime) {
+            window.toast.show('Please fill in all required return details.', 'warning');
             return;
         }
 
+        window.toast.show('Processing demobilization...', 'info');
+
         try {
-            await window.loader.show('Returning equipment...', async () => {
-                await assets.checkIn(assetId, { notes: 'Returned from site by Field Supervisor' });
+            await assets.checkIn(assetId, { 
+                notes: `[SITE RETURN] Sent by: ${sentBy}. ETA: ${new Date(arrivalTime).toLocaleString()}. Notes: ${notes}` 
             });
-            window.modal.showSuccess('Equipment Returned', `${assetName} has been sent back.`);
+
+            // Notify EC
+            await client.post('/audit-logs', {
+                action: 'EQUIPMENT_RETURNED_FROM_SITE',
+                targetType: 'ASSET',
+                targetId: assetId,
+                details: { sentBy, arrivalTime, notes, assetName }
+            });
+
+            window.toast.show('Equipment successfully dispatched to base.', 'success');
+            window.drawer.close();
             await this._loadSiteAssets();
-        } catch (error) {
-            console.error('[FS] Failed to return equipment:', error);
-            window.modal.showError('Return Failed', error.message || 'Failed to return equipment');
+        } catch (err) {
+            console.error('Return failed:', err);
+            window.toast.show('Failed to process equipment return.', 'error');
         }
     }
 };

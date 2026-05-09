@@ -62,10 +62,93 @@ export const DrawerTemplates = {
         `;
     },
 
+    assetIncidentReport: (asset) => {
+        const assetName = asset?.name || 'Unknown Asset';
+        const assetCode = asset?.assetCode || asset?.id || '--';
+        const estimatedValue = Number(asset?.estimatedValue || 0);
+
+        return `
+            <div style="padding: 24px;">
+                <div style="background: linear-gradient(135deg, #FEF2F2, #FFF1F2); border: 1px solid #FECACA; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 48px; height: 48px; background: #FEE2E2; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 20px; color: #DC2626;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; color: #991B1B; font-size: 15px;">${assetName}</div>
+                            <div style="font-size: 12px; color: #B91C1C; font-weight: 600;">${assetCode} • Est. Value: MWK ${estimatedValue.toLocaleString()}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Incident Type <span style="color: var(--red);">*</span></label>
+                    <select id="incident_type" class="form-input" style="width: 100%;" onchange="window.app.fsModule._updateIncidentPreview()">
+                        <option value="">Select incident type...</option>
+                        <option value="damage">Damage — Partial or full damage to asset</option>
+                        <option value="theft">Theft — Asset stolen or missing</option>
+                        <option value="accident">Accident — Collision / operational accident</option>
+                        <option value="non_arrival">Non-Arrival — Dispatched but never arrived at site</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Qty Sent / Dispatched</label>
+                        <input type="number" id="incident_qty_sent" class="form-input" value="1" min="1" style="width: 100%; font-weight: 700;" oninput="window.app.fsModule._updateIncidentPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Qty Received / Salvageable</label>
+                        <input type="number" id="incident_qty_received" class="form-input" value="0" min="0" style="width: 100%; font-weight: 700;" oninput="window.app.fsModule._updateIncidentPreview()">
+                    </div>
+                </div>
+
+                <div id="incident_financial_preview" style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-size: 10px; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Estimated Financial Impact</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div id="incident_hit_amount" style="font-size: 20px; font-weight: 900; color: var(--red); font-family: 'JetBrains Mono';">MWK 0</div>
+                            <div id="incident_hit_desc" style="font-size: 11px; color: var(--slate-500);">Select incident type to preview</div>
+                        </div>
+                        <div id="incident_loss_badge" style="background: var(--slate-100); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; color: var(--slate-600);">0% Loss</div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Who Dispatched This Asset? <span style="color: var(--red);">*</span></label>
+                    <input type="text" id="incident_dispatched_by" class="form-input" placeholder="Name of the EC/person who dispatched" style="width: 100%;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Description / Details <span style="color: var(--red);">*</span></label>
+                    <textarea id="incident_description" class="form-input" placeholder="Describe what happened in detail..." style="width: 100%; height: 80px; resize: none;"></textarea>
+                </div>
+
+                <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; color: #92400E; font-weight: 700;">
+                        <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
+                        Submitting this report will automatically:
+                    </div>
+                    <ul style="margin: 8px 0 0 16px; padding: 0; font-size: 11px; color: #78350F; line-height: 1.8;">
+                        <li>Deduct the financial impact from the project budget</li>
+                        <li>Notify the Equipment Coordinator, Finance Director, and Project Manager</li>
+                        <li>Generate a replenishment requisition for replacement</li>
+                        <li>Create an immutable audit trail entry</li>
+                    </ul>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 800; background: #DC2626; border-color: #DC2626;" 
+                    onclick="window.app.fsModule.submitAssetIncident('${asset?.id}')">
+                    <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i> Submit Incident Report
+                </button>
+            </div>
+        `;
+    },
+
     newVehicleRental: (data) => {
         const projects = data.projects || [];
         const MACHINE_TYPES = data.machineTypes || ['Excavator', 'Dozer', 'Grader', 'Roller', 'Dumper', 'Crane', 'Backhoe', 'Water Truck'];
-        
+
         return `
             <div style="padding: 24px;">
                 <div style="background: var(--slate-50); border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid var(--slate-200);">
@@ -114,6 +197,234 @@ export const DrawerTemplates = {
 
                 <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 700; background: var(--orange); border-color: var(--orange);" onclick="window.app.ecModule.handleRentalSubmit()">
                     Submit for Approval
+                </button>
+            </div>
+        `;
+    },
+
+    requestRentalAsset: (data) => {
+        const projects = data.projects || [];
+        const machineTypes = ['Excavator', 'Dozer', 'Grader', 'Roller', 'Dumper', 'Crane', 'Backhoe', 'Water Truck', 'Lowbed', 'Tipper'];
+        
+        return `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Rental Procurement Requisition</div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--slate-900);">Request a new rental asset to be contracted</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Select Project <span style="color: var(--red);">*</span></label>
+                    <select id="req_rental_project" class="form-input" style="width: 100%;">
+                        <option value="">Select Project...</option>
+                        ${projects.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Required Machine Type <span style="color: var(--red);">*</span></label>
+                    <select id="req_rental_machine" class="form-input" style="width: 100%;">
+                        <option value="">Select Machine Type...</option>
+                        ${machineTypes.map(m => `<option value="${m}">${m}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Required From</label>
+                        <input type="date" id="req_rental_start" class="form-input" style="width: 100%;" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Required To</label>
+                        <input type="date" id="req_rental_end" class="form-input" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Urgency Level</label>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="rental_urgency" value="Standard" checked style="display: none;" onchange="this.parentElement.parentElement.querySelectorAll('.urg-box').forEach(d => { d.style.borderColor='var(--slate-200)'; d.style.background='white'; }); this.nextElementSibling.style.borderColor='var(--blue)'; this.nextElementSibling.style.background='var(--blue-light)';">
+                            <div class="urg-box" style="padding: 10px; text-align: center; border: 2px solid var(--blue); background: var(--blue-light); border-radius: 8px; font-size: 12px; font-weight: 700;">Standard</div>
+                        </label>
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="rental_urgency" value="Urgent" style="display: none;" onchange="this.parentElement.parentElement.querySelectorAll('.urg-box').forEach(d => { d.style.borderColor='var(--slate-200)'; d.style.background='white'; }); this.nextElementSibling.style.borderColor='var(--orange)'; this.nextElementSibling.style.background='#FFF7ED';">
+                            <div class="urg-box" style="padding: 10px; text-align: center; border: 2px solid var(--slate-200); border-radius: 8px; font-size: 12px; font-weight: 700;">Urgent</div>
+                        </label>
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="rental_urgency" value="Critical" style="display: none;" onchange="this.parentElement.parentElement.querySelectorAll('.urg-box').forEach(d => { d.style.borderColor='var(--slate-200)'; d.style.background='white'; }); this.nextElementSibling.style.borderColor='var(--red)'; this.nextElementSibling.style.background='#FEF2F2';">
+                            <div class="urg-box" style="padding: 10px; text-align: center; border: 2px solid var(--slate-200); border-radius: 8px; font-size: 12px; font-weight: 700;">Critical</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 700;">Operational Notes</label>
+                    <textarea id="req_rental_notes" class="form-input" placeholder="Explain why this rental is needed (e.g. Current excavator broken, extra capacity for Phase 2)..." style="width: 100%; height: 80px; resize: none;"></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 800; background: var(--slate-900); border-color: var(--slate-900);" 
+                    onclick="window.app.ecModule.submitRentalProcurementRequisition()">
+                    <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Submit Procurement Requisition
+                </button>
+            </div>
+        `;
+    },
+
+    confirmRentalReturn: (data) => {
+        return `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Contract Termination & Return</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${data.machineName}</div>
+                    <div style="font-size: 12px; color: var(--slate-500);">Ref: ${data.refCode || 'N/A'}</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Asset Condition on Return <span style="color: var(--red);">*</span></label>
+                    <select id="return_asset_status" class="form-input" style="width: 100%;" onchange="window.app.ecModule._toggleReturnDamageReport(this.value)">
+                        <option value="Good">Excellent / Good Condition</option>
+                        <option value="Fair">Fair (Wear & Tear)</option>
+                        <option value="Damaged">Damaged / Needs Repair</option>
+                    </select>
+                </div>
+
+                <div id="return_damage_report" style="display: none; margin-bottom: 20px;">
+                    <div style="padding: 16px; background: #FFF1F2; border: 1px solid #FECACA; border-radius: 12px;">
+                        <label class="form-label" style="color: #991B1B; font-weight: 700;">Damage Justification <span style="color: var(--red);">*</span></label>
+                        <textarea id="return_damage_notes" class="form-input" placeholder="Explain how and when the damage occurred..." style="width: 100%; height: 60px; resize: none;"></textarea>
+                        <div style="font-size: 10px; color: #991B1B; margin-top: 8px; font-weight: 600;">
+                            <i class="fas fa-info-circle"></i> This will alert the Finance Director to close the contract with damage penalties.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Personnel Returning <span style="color: var(--red);">*</span></label>
+                        <input type="text" id="return_person_name" class="form-input" placeholder="Who is returning it?" style="width: 100%;" value="${window.currentUser?.name || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Contact / ID No.</label>
+                        <input type="text" id="return_person_contact" class="form-input" placeholder="Audit purposes" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 700;">Return Notes</label>
+                    <textarea id="return_general_notes" class="form-input" placeholder="Any final remarks..." style="width: 100%; height: 60px; resize: none;"></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 800; background: var(--emerald); border-color: var(--emerald);" 
+                    onclick="window.app.ecModule.submitRentalReturn('${data.contractId}', '${data.sourceModel}')">
+                    <i class="fas fa-check-double" style="margin-right: 8px;"></i> Finalize Return & Notify FD
+                </button>
+            </div>
+        `;
+    },
+
+    dispatchOwnedAsset: (data) => {
+        const projects = data.projects || [];
+        return `
+            <div style="padding: 24px;">
+                <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #0369A1; text-transform: uppercase; margin-bottom: 8px;">Fleet Dispatch Order</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${data.assetName}</div>
+                    <div style="font-size: 12px; color: var(--slate-500);">${data.assetCode} • Current Location: Central Yard</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Destination Project <span style="color: var(--red);">*</span></label>
+                    <select id="dispatch_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule._onDispatchProjectChange(this.value, '${data.id}')">
+                        <option value="">Select Project...</option>
+                        ${projects.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div id="timeline_intelligence" style="display: none; margin-bottom: 20px;">
+                    <!-- Real-time conflict suggestions injected here -->
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Deployment Start</label>
+                        <input type="date" id="dispatch_start" class="form-input" style="width: 100%;" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Est. Return Date</label>
+                        <input type="date" id="dispatch_end" class="form-input" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Delivered By (Logistics Personnel) <span style="color: var(--red);">*</span></label>
+                    <input type="text" id="dispatch_delivered_by" class="form-input" placeholder="Name of driver or transport partner" style="width: 100%;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 700;">Operational Instructions / Notes</label>
+                    <textarea id="dispatch_notes" class="form-input" placeholder="E.g. Check oil before use, specific operator manual included..." style="width: 100%; height: 80px; resize: none;"></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 800; background: var(--slate-900); border-color: var(--slate-900);" 
+                    onclick="window.app.ecModule.submitAssetDispatch('${data.id}')">
+                    <i class="fas fa-shipping-fast" style="margin-right: 8px;"></i> Formalize Dispatch Order
+                </button>
+            </div>
+        `;
+    },
+
+    markAssetBrokenDown: (data) => {
+        const projects = data.allProjects || [];
+        
+        return `
+            <div style="padding: 24px;">
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Internal Asset Breakdown Report</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${data.assetName}</div>
+                    <div style="font-size: 12px; color: var(--slate-500);">${data.assetCode || 'EQP-'+data.id} • ${data.project?.name || 'Company Base'}</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Breakdown Location <span style="color: var(--red);">*</span></label>
+                    <select id="breakdown_location" class="form-input" style="width: 100%;">
+                        <option value="Base">Company Base / Central Yard</option>
+                        ${projects.map(p => `<option value="${p.name}" ${data.project?.id === p.id ? 'selected' : ''}>Project: ${p.name}</option>`).join('')}
+                        <option value="Transit">In Transit</option>
+                        <option value="Offsite">Offsite / External Yard</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Date of Failure <span style="color: var(--red);">*</span></label>
+                        <input type="date" id="breakdown_date" class="form-input" value="${new Date().toISOString().split('T')[0]}" style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700;">Reported By <span style="color: var(--red);">*</span></label>
+                        <input type="text" id="breakdown_reported_by" class="form-input" value="${window.currentUser?.name || ''}" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Assigned Operator <span style="color: var(--red);">*</span></label>
+                    <input type="text" id="breakdown_operator" class="form-input" placeholder="Who was operating the machine?" style="width: 100%;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700;">Fault Justification / Symptoms <span style="color: var(--red);">*</span></label>
+                    <textarea id="breakdown_justification" class="form-input" placeholder="Describe the failure (e.g. Hydraulic leak, Engine failure, Electronic fault)..." style="width: 100%; height: 80px; resize: none;"></textarea>
+                </div>
+
+                <div style="background: #F0F9FF; border: 1px solid #BAE6FD; padding: 12px; border-radius: 12px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; color: #0369A1; font-weight: 700;">
+                        <i class="fas fa-info-circle"></i> AUDIT NOTE: Company asset repairs are funded by the central fleet budget and do not impact project operational accounts.
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 14px; font-weight: 800; background: #DC2626; border-color: #DC2626;" 
+                    onclick="window.app.ecModule.submitInternalBreakdown('${data.id}')">
+                    <i class="fas fa-wrench" style="margin-right: 8px;"></i> Formalize Breakdown Report
                 </button>
             </div>
         `;
@@ -662,7 +973,7 @@ export const DrawerTemplates = {
 
             <div style="padding: 24px;">
                 <!-- Materials Section -->
-                <div style="margin-bottom: 32px; ${ (contract.contractType === 'vendor' || contract.contractType === 'rental' || contract.type === 'vendor' || contract.type === 'rental' || contract.type === 'VENDOR' || contract.type === 'RENTAL') ? 'display: none;' : '' }">
+                <div style="margin-bottom: 32px; ${(contract.contractType === 'vendor' || contract.contractType === 'rental' || contract.type === 'vendor' || contract.type === 'rental' || contract.type === 'VENDOR' || contract.type === 'RENTAL') ? 'display: none;' : ''}">
                     <h4 style="font-size: 11px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Procured Materials & Specs</h4>
                     <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm);">
                         <div style="padding: 10px 16px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">
@@ -1663,9 +1974,9 @@ export const DrawerTemplates = {
                         </span>
                     </div>
                     <div style="color: var(--slate-500); line-height: 1.4;">
-                        ${window.app.fsModule?.bestPosition ? 
-                            `Accuracy: ±${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` : 
-                            `Please ensure you have synced your location on the dashboard map before submitting.`}
+                        ${window.app.fsModule?.bestPosition ?
+                `Accuracy: ±${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` :
+                `Please ensure you have synced your location on the dashboard map before submitting.`}
                     </div>
                 </div>
             </div>
@@ -1776,9 +2087,9 @@ export const DrawerTemplates = {
                         <div>
                             <div style="font-weight: 800; font-size: 13px;">GPS ${isFlagged ? 'Warning' : 'Verified'}</div>
                             <div style="font-size: 11px; opacity: 0.9;">
-                                ${isFlagged 
-                                    ? `Submission flagged: Distance outside work zone or low accuracy detected.` 
-                                    : `This report was verified within the project geofence with high precision.`}
+                                ${isFlagged
+                ? `Submission flagged: Distance outside work zone or low accuracy detected.`
+                : `This report was verified within the project geofence with high precision.`}
                             </div>
                         </div>
                     </div>
@@ -4173,16 +4484,16 @@ Contract Admin</textarea>
                     <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
                         <option value="" disabled selected>Select from road spec...</option>
                         ${(() => {
-                const materials = projectData?.recommendedMaterials || [];
-                const phases = [...new Set(materials.map(m => m.phaseName))];
-                return phases.map(phase => `
+            const materials = projectData?.recommendedMaterials || [];
+            const phases = [...new Set(materials.map(m => m.phaseName))];
+            return phases.map(phase => `
                             <optgroup label="${phase}">
                                 ${materials.filter(m => m.phaseName === phase).map(m => `
                                     <option value="${m.name}" data-unit="${m.unit}" data-approved="${m.approvedQty}">${m.name} (Max: ${m.approvedQty} ${m.unit})</option>
                                 `).join('')}
                             </optgroup>
                         `).join('');
-            })()}
+        })()}
                     </select>
 
                     <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
@@ -4836,35 +5147,14 @@ Contract Admin</textarea>
             </div>
 
             <div id="material_sheet_view">
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label class="form-label">Project Phase</label>
-                    <select id="assign_phase" class="form-input" style="width: 100%;" onchange="window.app.ecModule.updateMaterialSheet(this.value)">
-                        <option value="">Select Phase...</option>
-                        <option value="1">Phase 1: Mobilization & Site Prep</option>
-                        <option value="2">Phase 2: Earthworks & Sub-base</option>
-                        <option value="3">Phase 3: Base Course Construction</option>
-                        <option value="4">Phase 4: Surfacing / Paving</option>
-                        <option value="5">Phase 5: Drainage & Ancillary</option>
-                        <option value="6">Phase 6: Final Completion</option>
-                    </select>
-                </div>
-                
                 <div id="material_sheet_container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">Select a phase to view required materials.</div>
+                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">Select a project to view required materials.</div>
                 </div>
             </div>
 
             <div id="machinery_view" style="display: none; margin-bottom: 24px;">
-                <div class="form-group">
-                    <label class="form-label">Search Asset Registry</label>
-                    <input type="text" class="form-input" placeholder="Search by name, plate, or type..." style="width: 100%;">
-                </div>
-                <div style="margin-top: 12px; max-height: 200px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 12px; background: var(--slate-50);">
-                    <div style="padding: 32px 16px; text-align: center; color: var(--slate-400);">
-                        <i class="fas fa-search-plus" style="font-size: 20px; margin-bottom: 8px; opacity: 0.5;"></i>
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Registry Search</div>
-                        <div style="font-size: 10px; opacity: 0.8;">Enter asset name or serial to filter fleet</div>
-                    </div>
+                <div id="machinery_sheet_container" style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px;">
+                    <div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">Select a project to view available machinery.</div>
                 </div>
             </div>
 
@@ -5532,7 +5822,7 @@ Contract Admin</textarea>
 
         const totalReq = reqs.length || pMaterials.length;
         const totalHoldings = holds.reduce((acc, h) => acc + (Number(h.quantity || h.totalQuantity || 0)), 0);
-        
+
         // Gap Analysis: Requirements vs Holdings (Unified List)
         // We prioritize procurement.materials as it contains the official budget vs actuals
         const allMaterialNames = new Set([
@@ -5545,12 +5835,12 @@ Contract Admin</textarea>
             const pMat = pMaterials.find(m => m.materialName === mName);
             const req = reqs.find(r => r.materialName === mName);
             const hold = holds.find(h => h.materialName === mName);
-            
+
             // Priority: Procurement Received > Inventory Quantity
             const current = pMat ? Number(pMat.receivedQuantity) : (hold ? Number(hold.quantity || hold.totalQuantity) || 0 : 0);
             const target = pMat ? Number(pMat.requiredQuantity) : (req ? Number(req.quantity) || 0 : 0);
             const shortfall = Math.max(0, target - current);
-            
+
             return {
                 name: mName,
                 current,

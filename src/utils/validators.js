@@ -200,10 +200,12 @@ const updateAssetSchema = createAssetSchema.partial();
 
 const assetCheckOutSchema = z.object({
   projectId: z.coerce.number().int().positive(),
+  dispatchedBy: z.string().optional(),
 });
 
 const assetCheckInSchema = z.object({
   fuelLevel: z.coerce.number().int().min(0).max(100).optional(),
+  dispatchedBy: z.string().optional(),
 });
 
 const assetFlagIssueSchema = z.object({
@@ -345,6 +347,7 @@ const inventoryDistributeSchema = z.object({
   quantity: z.coerce.number().positive(),
   reference: z.string().optional(),
   notes: z.string().optional(),
+  dispatchedBy: z.string().optional(),
 });
 
 const inventoryConsumeSchema = z.object({
@@ -353,6 +356,7 @@ const inventoryConsumeSchema = z.object({
   quantity: z.coerce.number().positive(),
   reference: z.string().optional(),
   notes: z.string().optional(),
+  dispatchedBy: z.string().optional(),
 });
 
 // ============================================

@@ -35,6 +35,7 @@ export class EquipmentCoordinatorDashboard {
 
         this.currentView = 'dashboard';
         this.hubActiveTab = 'field';
+        this.registryActiveTab = 'owned';
 
         // --- LIVE STATE (API-BACKED) ---
         this.inventory = {};
@@ -42,6 +43,8 @@ export class EquipmentCoordinatorDashboard {
         this.pendingReceipts = [];
         this.requisitionQueue = [];
         this.assetRegistry = [];
+        this.rentalContracts = [];
+        this.rentalsLoaded = false;
         this.conflicts = [];
         this.auditLogs = [];
         this.projects = [];

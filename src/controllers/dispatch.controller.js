@@ -51,4 +51,31 @@ const confirmArrival = asyncHandler(async (req, res, id) => {
   response.success(res, result);
 });
 
-module.exports = { dispatch, confirmArrival };
+const confirmArrivalVariance = asyncHandler(async (req, res, id) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  req.body = await parseBody(req);
+  const { receivedItems, receivedBy, dispatchedBy, notes } = req.body;
+
+  const result = await dispatchService.confirmArrivalVariance({
+    requisitionId: id,
+    receivedItems,
+    receivedBy,
+    dispatchedBy,
+    notes,
+    userId: user.id,
+    userName: user.name,
+    userRole: user.role
+  });
+
+  // Broadcast update
+  websocket.broadcastToChannel('requisitions', 'REQUISITION_ARRIVED_VARIANCE', {
+    requisitionId: id,
+    discrepancies: result.discrepancies
+  });
+
+  response.success(res, result);
+});
+
+module.exports = { dispatch, confirmArrival, confirmArrivalVariance };

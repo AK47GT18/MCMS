@@ -75,7 +75,8 @@ async function distribute(data, user) {
       type: 'IN',
       quantity,
       reference,
-      notes
+      notes,
+      dispatchedBy: data.dispatchedBy
     }
   });
 
@@ -149,7 +150,8 @@ async function consume(data, user) {
       type: 'OUT',
       quantity,
       reference,
-      notes
+      notes,
+      dispatchedBy: data.dispatchedBy
     }
   });
 
