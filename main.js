@@ -53,12 +53,12 @@ window.addEventListener('pageshow', (event) => {
 // --- Global Error Boundary ---
 window.addEventListener('error', (event) => {
     console.error('Global Error Caught:', event.error);
-    
+
     // Send to error reporting service (e.g., Sentry)
     if (typeof reportError === 'function') {
         reportError(event.error, { type: 'uncaught_error', message: event.message });
     }
-    
+
     if (window.modal) {
         window.modal.error('Application Error', `An unexpected error occurred: ${event.message}`);
     } else {
@@ -68,12 +68,12 @@ window.addEventListener('error', (event) => {
 
 window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled Promise Rejection:', event.reason);
-    
+
     // Send to error reporting service
     if (typeof reportError === 'function') {
         reportError(event.reason, { type: 'unhandled_rejection' });
     }
-    
+
     if (window.toast) {
         window.toast.show(`Async Error: ${event.reason.message || 'Unknown network error'}`, 'error');
     }
@@ -105,7 +105,7 @@ window.triggerPwaInstall = async () => {
         // won't fire on self-signed certs
         const isAndroid = /android/i.test(navigator.userAgent);
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        
+
         let msg = '';
         if (isAndroid) {
             msg = '📲 To install: Tap the ⋮ menu (top right) → "Add to Home screen" or "Install app"';
@@ -114,7 +114,7 @@ window.triggerPwaInstall = async () => {
         } else {
             msg = '📲 To install: Use your browser menu → "Install" or "Add to Home screen"';
         }
-        
+
         alert(msg);
         return;
     }
@@ -159,10 +159,10 @@ async function initPushNotifications(registration) {
 
     try {
         console.log('[Push] Initializing... Current permission:', Notification.permission);
-        
+
         // Check if we already have a subscription
         const existingSub = await registration.pushManager.getSubscription();
-        
+
         if (existingSub) {
             console.log('[Push] User already subscribed to endpoint:', existingSub.endpoint);
             // Verify with server if we want to be sure, but for now just stashing locally
@@ -184,14 +184,14 @@ async function initPushNotifications(registration) {
 async function subscribeUserToPush(registration) {
     try {
         console.log('[Push] Subscribing user...');
-        
+
         // 1. Get public key from server
         const keyResponse = await fetch('/api/v1/push/key');
         if (!keyResponse.ok) throw new Error('Failed to fetch public key');
-        
+
         const resJson = await keyResponse.json();
         const publicKey = resJson.data?.publicKey || resJson.publicKey;
-        
+
         if (!publicKey) {
             throw new Error('VAPID Public Key missing from server response');
         }
@@ -246,7 +246,7 @@ window.requestNotificationPermission = async () => {
     try {
         const permission = await Notification.requestPermission();
         console.log('[Push] Permission requested:', permission);
-        
+
         if (permission === 'granted') {
             const registration = await navigator.serviceWorker.ready;
             await subscribeUserToPush(registration);
@@ -277,7 +277,7 @@ function urlBase64ToUint8Array(base64String) {
 // Expose trigger globally
 window.requestNotificationPermission = async () => {
     if (!('serviceWorker' in navigator)) return;
-    
+
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
         const registration = await navigator.serviceWorker.ready;
@@ -300,7 +300,7 @@ class App {
     async init() {
         try {
             console.log('[DEBUG] MCM Main.init() started');
-            
+
             // Check if localStorage is accessible
             const storageAvailable = this.checkStorage();
             if (!storageAvailable) {
@@ -312,13 +312,13 @@ class App {
             if (USE_REAL_AUTH) {
                 const token = localStorage.getItem(TOKEN_KEY);
                 console.log(`[DEBUG] TOKEN_KEY: ${TOKEN_KEY}, Token value: ${token ? (token.substring(0, 10) + '...') : 'NULL'}`);
-                
+
                 if (!token || token === 'undefined') {
                     console.warn('[DEBUG] No valid token found, redirecting to index.html in 1s...');
                     setTimeout(() => window.location.href = 'index.html', 1000);
                     return;
                 }
-                
+
                 // Fetch user profile from backend
                 try {
                     const response = await fetch(`${API_BASE}/auth/me`, {
@@ -327,7 +327,7 @@ class App {
                             'Content-Type': 'application/json'
                         }
                     });
-                    
+
                     if (response.status === 429) {
                         console.warn('Rate limit exceeded fetching profile');
                         window.toast?.show('Rate limit exceeded. Please wait...', 'warning');
@@ -337,24 +337,24 @@ class App {
                     }
 
                     if (!response.ok) {
-                         if (response.status === 401 || response.status === 403) {
-                             throw new Error('Session expired');
-                         } else {
-                             // Server error or other issue - don't logout, just warn
-                             console.error('Profile fetch failed:', response.statusText);
-                             window.toast?.show(`Connection error: ${response.status}`, 'error');
-                             return;
-                         }
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('Session expired');
+                        } else {
+                            // Server error or other issue - don't logout, just warn
+                            console.error('Profile fetch failed:', response.statusText);
+                            window.toast?.show(`Connection error: ${response.status}`, 'error');
+                            return;
+                        }
                     }
-                    
+
                     const data = await response.json();
                     this.currentUser = data.data || data; // Handle both {data: user} and direct user response
-                    
+
                     // Normalize role (handle db enum "Project_Manager" -> "Project Manager")
                     if (this.currentUser && this.currentUser.role) {
                         this.currentUser.role = this.currentUser.role.replace(/_/g, ' ');
                     }
-                    
+
                     console.log(`Authenticated as ${this.currentUser.name} (${this.currentUser.role})`);
 
                     // Mandatory Credential Check
@@ -367,7 +367,7 @@ class App {
                         localStorage.removeItem(TOKEN_KEY);
                         window.location.href = 'index.html';
                     } else {
-                         window.toast?.show('Authentication check failed', 'error');
+                        window.toast?.show('Authentication check failed', 'error');
                     }
                     return;
                 }
@@ -376,10 +376,10 @@ class App {
                 this.currentUser = mockUser;
                 console.log(`[DEV MODE] Starting MCMS as ${this.currentUser.role}`);
             }
-            
+
             // Expose currentUser globally for templates
             window.currentUser = this.currentUser;
-            
+
             // Initialize real-time WebSocket connection
             this.realtime = realtime;
             window.realtime = realtime;
@@ -413,7 +413,7 @@ class App {
     async loadPage(pageId) {
         // Persist current page for session recovery
         localStorage.setItem('mcms_last_page', pageId);
-        
+
         // Route-level permission control
         const ROUTE_PERMISSIONS = {
             'dashboard': [], // All authenticated users
@@ -434,7 +434,7 @@ class App {
         if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(this.currentUser.role)) {
             window.toast?.show('Access denied: Restricted to Project Managers', 'warning');
             console.warn(`Access denied to ${pageId} for role ${this.currentUser.role}`);
-            
+
             // Redirect to dashboard if trying to access restricted page
             if (pageId !== 'dashboard') {
                 this.loadPage('dashboard');
@@ -479,7 +479,7 @@ class App {
             if (this.currentUser.role === ROLES.CONTRACT_ADMIN || this.currentUser.role === 'Contract Administrator' || this.currentUser.role === 'Contract_Administrator') {
                 this.caModule = module;
             }
-            
+
             // Expose techModule globally for System Technician role
             if (this.currentUser.role === 'System Technician' || this.currentUser.role === 'System_Technician') {
                 window.techModule = module;
@@ -517,7 +517,7 @@ class App {
 
         // Initialization Hooks for Maps/Plots
         if (module) {
-             // Safe invocation of module-specific hooks
+            // Safe invocation of module-specific hooks
             if (pageId === 'portfolio' && typeof module.initializeProjectMap === 'function') {
                 module.initializeProjectMap();
             } else if (pageId === 'tracking' && typeof module.initializeTrackingMap === 'function') {
@@ -562,7 +562,7 @@ class App {
         let updates = [];
         if (user.mustChangeEmail) updates.push('<strong>Email Address</strong>');
         if (user.mustChangePassword) updates.push('<strong>Password</strong>');
-        
+
         message += `<ul style="margin: 10px 0; padding-left: 20px;">${updates.map(u => `<li>${u}</li>`).join('')}</ul>`;
 
         window.modal.show({
@@ -607,11 +607,11 @@ class App {
                     });
 
                     if (!response.ok) throw new Error('Failed to update email');
-                    
+
                     this.currentUser.mustChangeEmail = false;
                     this.currentUser.email = newEmail;
                     window.toast.show('Email updated successfully', 'success');
-                    
+
                     if (this.currentUser.mustChangePassword) {
                         this.promptPasswordUpdate();
                     } else {
@@ -689,7 +689,7 @@ class App {
         const selector = document.getElementById('issue-project-selector');
         const info = document.getElementById('issue-internal-info');
         const scopeInput = document.getElementById('issue-scope');
-        
+
         if (scope === 'project') {
             projectBtn.classList.add('active');
             internalBtn.classList.remove('active');
@@ -710,7 +710,7 @@ class App {
         const preview = document.getElementById('issue-photo-preview');
         const label = document.getElementById('issue-photo-label');
         const error = document.getElementById('issue-photo-error');
-        
+
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
                 error.style.display = 'block';
@@ -721,7 +721,7 @@ class App {
             }
             error.style.display = 'none';
             label.textContent = file.name;
-            
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 if (preview) {
@@ -744,10 +744,10 @@ class App {
             const priority = document.getElementById('issue-priority')?.value;
             const description = document.getElementById('issue-description')?.value;
             const photoFile = document.getElementById('issue-photo')?.files[0];
-            
+
             // Try to get project ID - with validation
             let projectId = window.currentIssueProjectId;
-            
+
             // Check if user selected a project from the dropdown
             const projectSelectEl = document.getElementById('issue-project');
             if (projectSelectEl) {
@@ -757,17 +757,17 @@ class App {
                     console.log('[Issue Submit] Project selected from dropdown:', projectId);
                 }
             }
-            
+
             // Fallback to module's selected project
             if (!projectId && this.pmModule?.selectedProjectId) {
                 projectId = this.pmModule.selectedProjectId;
             }
-            
+
             // Fallback to window variable
             if (!projectId) {
                 projectId = window.currentProjectId;
             }
-            
+
             // Fallback to URL params
             if (!projectId) {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -808,18 +808,18 @@ class App {
                 entityType: 'Issue',
                 entityId: createdIssue.id,
                 details: `Issue #${createdIssue.id} (${category}) reported with ${photoFile ? 'photo evidence' : 'no photo'}`
-            }).catch(() => {});
+            }).catch(() => { });
 
             console.log('[Issue Submit] ✅ Success:', result);
             window.toast.show('✅ Issue submitted! Ref: ISS-' + (createdIssue.id || createdIssue.issueCode), 'success');
-            
+
             // Close drawer after slight delay
             setTimeout(() => {
                 window.drawer.close();
             }, 800);
-            
+
             window.currentIssueProjectId = null;
-            
+
             // Refresh views
             // Refresh views across all modules
             if (this.pmModule) {
@@ -828,11 +828,11 @@ class App {
             }
             if (this.ecModule && typeof this.ecModule._loadSharedIssues === 'function') this.ecModule._loadSharedIssues();
             if (this.fmModule && typeof this.fmModule.loadIssuesFromAPI === 'function') this.fmModule.loadIssuesFromAPI();
-            
+
             // Global refresh event for any custom listeners
             window.dispatchEvent(new CustomEvent('issues:updated'));
             if (this.fmModule?.currentView === 'governance') this.fmModule._loadSharedIssues?.();
-            
+
         } catch (error) {
             console.error('[Issue Submit] ❌ Error:', error);
             window.toast.show('❌ Failed to submit issue report', 'error');
@@ -854,23 +854,23 @@ class App {
         const desc = document.getElementById('issue-description');
         const error = document.getElementById('issue-description-error');
         const count = document.getElementById('issue-char-count');
-        
+
         if (!desc) return false;
-        
+
         const text = desc.value.trim();
         const len = text.length;
-        
+
         // Update character counter
         if (count) {
             count.textContent = `${len} / 20`;
             count.style.color = len >= 20 ? 'var(--emerald)' : len > 0 ? 'var(--red)' : 'var(--slate-400)';
             count.style.fontWeight = len >= 20 ? '700' : '500';
         }
-        
+
         // Regex: must contain at least 3 real words (letters only, no pure numbers/symbols)
         const realWordPattern = /[a-zA-Z]{2,}/g;
         const wordMatches = text.match(realWordPattern) || [];
-        
+
         // Empty field
         if (len === 0) {
             if (forceShow) {
@@ -885,7 +885,7 @@ class App {
             }
             return false;
         }
-        
+
         // Too short
         if (len < 20) {
             desc.classList.add('v-error');
@@ -897,7 +897,7 @@ class App {
             }
             return false;
         }
-        
+
         // Has enough chars but not enough real words (gibberish check)
         if (wordMatches.length < 3) {
             desc.classList.add('v-error');
@@ -909,7 +909,7 @@ class App {
             }
             return false;
         }
-        
+
         // Valid
         desc.classList.add('v-ok');
         desc.classList.remove('v-error');
@@ -998,19 +998,18 @@ window.calculateExpenses = () => {
     });
     const totalEl = document.getElementById('daily-total-expense');
     if (totalEl) totalEl.innerText = total.toLocaleString() + ' MWK';
-    
-    // Update wallet
-    const balEl = document.getElementById('wallet-balance');
-    if (balEl) {
-        const bal = 800000 - total;
-        balEl.innerText = bal.toLocaleString();
-        balEl.style.color = bal < 0 ? '#ef4444' : 'white';
-    }
 };
 
 window.addExpenseRow = () => {
     const container = document.getElementById('expense-rows');
     if (!container) return;
+
+    // Get materials from FS module if available
+    const siteInventory = window.app?.fsModule?.siteInventory || {};
+    const inventoryOptions = Object.keys(siteInventory).map(name =>
+        `<option value="${name}">${name} (Site Stock)</option>`
+    ).join('');
+
     const div = document.createElement('div');
     div.className = 'expense-item-row';
     div.style.cssText = 'display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; align-items:end; padding-bottom:8px; border-bottom:1px solid var(--slate-200);';
@@ -1019,11 +1018,16 @@ window.addExpenseRow = () => {
             <label style="font-size:10px; color:var(--slate-500);">Category</label>
             <select class="form-input exp-cat" style="padding:4px 8px; font-size:12px;" onchange="window.calculateExpenses()">
                 <option value="">Select...</option>
-                <option value="Fuel">Fuel (3k/L)</option>
-                <option value="Cement">Cement (25k/bag)</option>
-                <option value="Aggregate">Aggregate (40k/ton)</option>
-                <option value="Labor">Labor (15k/day)</option>
-                <option value="Equipment">Equipment (100k/hr)</option>
+                <optgroup label="Materials (On Site)">
+                    ${inventoryOptions}
+                </optgroup>
+                <optgroup label="Common Expenses">
+                    <option value="Fuel">Fuel (3k/L)</option>
+                    <option value="Cement">Cement (25k/bag)</option>
+                    <option value="Aggregate">Aggregate (40k/ton)</option>
+                    <option value="Labor">Labor (15k/day)</option>
+                    <option value="Equipment">Equipment (100k/hr)</option>
+                </optgroup>
             </select>
         </div>
         <div>
@@ -1054,7 +1058,7 @@ window.handlePhotoCapture = async (input, galleryId) => {
     window.initPhotoGallery(galleryId);
     const gallery = window.photoGalleries[galleryId];
     const files = Array.from(input.files);
-    
+
     if (files.length === 0) return;
 
     // Request GPS once for this batch
@@ -1062,9 +1066,9 @@ window.handlePhotoCapture = async (input, galleryId) => {
     try {
         if (navigator.geolocation) {
             const pos = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                    enableHighAccuracy: true, 
-                    timeout: 5000 
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 5000
                 });
             });
             geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -1086,14 +1090,14 @@ window.handlePhotoCapture = async (input, galleryId) => {
 
         const reader = new FileReader();
         window.toast.show('Processing & Tagging...', 'info');
-        
+
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                gallery.push({ 
-                    name: file.name, 
-                    dataUrl: e.target.result, 
-                    file: file, 
+                gallery.push({
+                    name: file.name,
+                    dataUrl: e.target.result,
+                    file: file,
                     timestamp: Date.now(),
                     location: geo, // Attached GPS tag
                     metadata: {
@@ -1176,7 +1180,7 @@ window.captureFromWebcam = async () => {
             });
             geo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         }
-    } catch(e) { console.warn('GPS failed for webcam capture'); }
+    } catch (e) { console.warn('GPS failed for webcam capture'); }
 
     // Draw video frame to canvas
     canvas.width = video.videoWidth;
@@ -1189,7 +1193,7 @@ window.captureFromWebcam = async () => {
     gallery.push({
         name: `webcam-${Date.now()}.jpg`,
         dataUrl: dataUrl,
-        file: null, 
+        file: null,
         timestamp: Date.now(),
         location: geo // GPS Tagging
     });
@@ -1211,9 +1215,9 @@ window.renderPhotoGallery = (galleryId) => {
     const container = document.getElementById(`photo-preview-${galleryId}`);
     const counter = document.getElementById(`photo-counter-${galleryId}`);
     const addBtn = document.getElementById(`photo-add-btn-${galleryId}`);
-    
+
     if (!container) return;
-    
+
     // Update counter
     if (counter) {
         const count = gallery.length;
@@ -1222,25 +1226,25 @@ window.renderPhotoGallery = (galleryId) => {
         else if (count > 0) color = 'var(--orange)';
         counter.innerHTML = `<span style="color:${color}; font-weight:700;">${count}</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span>`;
     }
-    
+
     // Show/hide add button at max
     if (addBtn) {
         addBtn.style.display = gallery.length >= 10 ? 'none' : 'block';
     }
-    
+
     // Render thumbnails
     if (gallery.length === 0) {
         container.innerHTML = '<div style="text-align:center; color:var(--slate-400); font-size:12px; padding:8px;">No photos yet. Tap the button above to capture.</div>';
         return;
     }
-    
+
     container.innerHTML = gallery.map((photo, i) => `
         <div style="position:relative; width:72px; height:72px; flex-shrink:0; border-radius:8px; overflow:hidden; border:2px solid var(--slate-200);">
-            <img src="${photo.dataUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Photo ${i+1}">
+            <img src="${photo.dataUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Photo ${i + 1}">
             <button onclick="window.removePhoto('${galleryId}', ${i})" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
                 <i class="fas fa-times"></i>
             </button>
-            <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.5); color:white; font-size:8px; text-align:center; padding:1px;">${i+1}</div>
+            <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.5); color:white; font-size:8px; text-align:center; padding:1px;">${i + 1}</div>
         </div>
     `).join('');
 };
@@ -1287,7 +1291,7 @@ window.submitDailyProgressLog = (btn) => {
     // Find whichever module has handleDailyLogSubmit
     const module = [window.app.pmModule, window.app.fsModule, window.app.caModule]
         .find(m => m && typeof m.handleDailyLogSubmit === 'function');
-    
+
     if (!module) {
         // Fallback: use pmModule directly since that's where the method is defined
         window.toast.show('Submitting via project manager module...', 'info');

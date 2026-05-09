@@ -50,12 +50,12 @@ async function getById(id) {
 
 async function create(data, userId) {
   // Extract progress increment if provided in the payload
-  const { progressIncrement, task_id, submissionLat, submissionLng, expenseItems, assetUsages, ...logData } = data;
+  const { progressIncrement, progressCompletion, task_id, submissionLat, submissionLng, expenseItems, assetUsages, materialsConsumed, phaseId, ...logData } = data;
 
   // Validate geofence
   const project = await prisma.project.findUnique({
     where: { id: data.projectId },
-    select: { id: true, lat: true, lng: true, radius: true, managerId: true }
+    select: { id: true, lat: true, lng: true, radius: true, managerId: true, code: true, name: true, budgetTotal: true, budgetSpent: true, currentPhase: true }
   });
 
   if (!project) throw new AppError('Project not found', 404);
@@ -137,11 +137,39 @@ async function create(data, userId) {
     throw new AppError('Evidence required: Please capture at least 3 photos of site progress.', 400);
   }
 
+  // --- AUTO-DEDUCT MATERIALS FROM SITE INVENTORY ---
+  if (materialsConsumed && Array.isArray(materialsConsumed) && materialsConsumed.length > 0) {
+    const inventoryService = require('./inventory.service');
+    // Find the project's primary sector for inventory deduction
+    const projectSectors = await prisma.sector.findMany({ where: { projectId: data.projectId }, take: 1 });
+    const primarySectorId = projectSectors[0]?.id;
+    
+    if (primarySectorId) {
+      for (const mat of materialsConsumed) {
+        try {
+          await inventoryService.consume({
+            sectorId: primarySectorId,
+            materialName: mat.materialName,
+            quantity: Number(mat.quantity),
+            reference: `Daily Log - ${phaseId || 'Site Work'}`,
+            notes: `[DAILY LOG] Consumed during ${phaseId || 'site work'}. Narrative: ${(logData.narrative || '').substring(0, 80)}`
+          }, { id: userId });
+          logger.info('Material consumed via daily log', { materialName: mat.materialName, qty: mat.quantity, projectId: data.projectId });
+        } catch (matErr) {
+          logger.error('Failed to deduct material from inventory', { error: matErr.message, materialName: mat.materialName });
+        }
+      }
+    } else {
+      logger.warn('No sectors found for project, skipping material deduction', { projectId: data.projectId });
+    }
+  }
+
   const log = await prisma.dailyLog.create({
     data: {
       ...logData,
       task_id: task_id,
-      workProgress: progressIncrement,
+      workProgress: progressCompletion || progressIncrement,
+      activePhase: phaseId || null,
       submittedBy: userId,
       logDate: new Date(data.logDate),
       submissionLat,
@@ -163,14 +191,14 @@ async function create(data, userId) {
             assetId: Number(u.assetId),
             operatorName: u.operatorName || 'Site Operator',
             hoursOperated: parseFloat(u.hoursOperated || 0),
-            fuelConsumed: parseFloat(u.fuelConsumed || 0),
-            roleInPhase: u.roleInPhase
+            fuelConsumed: 0,
+            roleInPhase: u.roleInPhase || phaseId
           }))
         }
       })
     },
     include: {
-      project: { select: { id: true, code: true } },
+      project: { select: { id: true, code: true, name: true } },
       submitter: { select: { id: true, name: true } },
     },
   });
@@ -250,6 +278,60 @@ async function approve(id, approverId) {
     action: 'APPROVE_DAILY_LOG', targetType: 'DailyLog', targetId: id,
     details: { projectId: log.projectId }
   });
+
+  // --- PHASE COMPLETION LOGIC ---
+  // If the daily log reported 100% for its phase, advance the project
+  if (log.workProgress >= 100 && log.activePhase) {
+    try {
+      const tasksConfig = require('../config/tasks_config.json');
+      const phases = tasksConfig.phases || [];
+      const currentIndex = phases.findIndex(p => p.id === log.activePhase);
+      
+      if (currentIndex !== -1) {
+        const completedPhases = currentIndex + 1;
+        const totalPhases = phases.length;
+        const overallProgress = Math.round((completedPhases / totalPhases) * 100);
+        const nextPhase = phases[currentIndex + 1];
+        
+        await prisma.project.update({
+          where: { id: log.projectId },
+          data: {
+            progress: overallProgress,
+            currentPhase: nextPhase ? currentIndex + 2 : currentIndex + 1, // Int: 1-based phase number
+            ...(overallProgress >= 100 && { status: 'completed' })
+          }
+        });
+
+        // Audit log for phase completion
+        await auditService.log({
+          userId: approverId, userName: user?.name, userRole: user?.role,
+          action: 'PHASE_COMPLETED', targetType: 'Project', targetId: log.projectId,
+          details: {
+            completedPhase: phases[currentIndex].name,
+            nextPhase: nextPhase?.name || 'PROJECT COMPLETE',
+            overallProgress
+          }
+        });
+
+        // Notify FS of phase advancement
+        await notifService.create({
+          userId: log.submittedBy,
+          type: 'success', icon: 'fa-flag-checkered',
+          title: `Phase Complete: ${phases[currentIndex].name}`,
+          message: nextPhase ? `Advancing to ${nextPhase.name}. Overall progress: ${overallProgress}%` : `All phases complete! Project at 100%.`
+        });
+
+        logger.info('Phase completed and project advanced', {
+          projectId: log.projectId,
+          completedPhase: log.phaseId,
+          nextPhase: nextPhase?.id,
+          overallProgress
+        });
+      }
+    } catch (phaseErr) {
+      logger.error('Failed to advance project phase', { error: phaseErr.message });
+    }
+  }
 
   return log;
 }

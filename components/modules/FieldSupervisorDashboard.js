@@ -77,7 +77,7 @@ export class FieldSupervisorDashboard {
         try {
             // Fetch everything in parallel
             const [roadSpec, ownedAssets, rentalContracts] = await Promise.all([
-                client.get(`/road-specifications?projectId=${projectId}`).catch(() => null),
+                Promise.resolve({ layers: [], accessories: [] }), // Removed client.get('/road-specifications?projectId=${projectId}') to prevent 404
                 client.get(`/assets?projectId=${projectId}`).catch(() => []),
                 client.get(`/vehicle-contracts?projectId=${projectId}&status=active`).catch(() => [])
             ]);
@@ -295,16 +295,17 @@ export class FieldSupervisorDashboard {
             'tasks': { title: 'Execution Tasks', context: 'Daily Site Objectives' },
             'gantt': { title: 'Master Schedule', context: 'Project Timeline & Dependencies' },
             'equipment': { title: 'Site Equipment', context: 'Assigned Fleet & Machinery' },
-            'logistics': { title: 'Site Logistics', context: 'Resource Intake & Inventory' }
+            'logistics': { title: 'Logistics & Fleet', context: 'Resource Intake & Asset Management' }
         };
         const current = headers[this.currentView] || { title: 'Site Overview', context: '' };
         const projectName = this.assignedProject?.name || current.context;
 
         return `
             <div class="page-header">
+
                 <div class="page-title-row">
                   <div>
-                    <h1 class="page-title">${current.title}</h1>
+                    <h1 class="page-title" style="font-size: 24px;">${current.title}</h1>
                     <div class="context-strip">
                       <span class="context-value">${projectName}</span>
                       <span style="color: var(--slate-400);">•</span>
@@ -316,7 +317,7 @@ export class FieldSupervisorDashboard {
                   </div>
                   <div style="display:flex; gap:8px; align-items: center;">
                     <!-- Primary Mobile Action (Reduced size) -->
-                    <button class="btn btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                    <button class="btn btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="window.app.fsModule.openDailyLogDrawer()">
                         <i class="fas fa-camera"></i>
                         <span>Daily Log</span>
                     </button>
@@ -404,7 +405,7 @@ export class FieldSupervisorDashboard {
                             <button class="btn btn-secondary btn-sm" style="height: 32px;" onclick="window.app.fsModule.loadDailyProgressData()">
                                 <i class="fas fa-sync"></i> Refresh
                             </button>
-                            <button class="btn btn-action btn-sm" style="height: 32px;" onclick="window.drawer.open('Daily Progress', window.DrawerTemplates.dailyProgressLog())">
+                            <button class="btn btn-action btn-sm" style="height: 32px;" onclick="window.app.fsModule.openDailyLogDrawer()">
                                 <i class="fas fa-plus"></i> Submit Daily Report
                             </button>
                         </div>

@@ -6,86 +6,341 @@ import inventoryApi from '../../../src/api/inventory.api.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
-        // Trigger refresh only if not currently fetching (prevents infinite loop)
-        if (!this._fetchingLogistics && !this.inventoryLoaded) {
+        // Default tab if not set
+        if (!this.activeLogisticsTab) this.activeLogisticsTab = 'materials';
+
+        // Trigger refresh only if not currently fetching
+        if (!this._fetchingLogistics) {
             this._fetchingLogistics = true;
             setTimeout(() => {
-                Promise.all([this._loadSiteInventory(), this._loadInTransit()])
-                    .finally(() => { this._fetchingLogistics = false; });
+                Promise.all([
+                    this._loadSiteInventory(), 
+                    this._loadInTransit(),
+                    this._loadSiteAssets()
+                ]).finally(() => { this._fetchingLogistics = false; });
             }, 0);
         }
 
         const entries = Object.entries(this.siteInventory || {});
+        const activeTab = this.activeLogisticsTab;
 
         return `
             ${this._renderInTransit()}
-            <div class="data-card" style="margin-bottom: 24px;">
-                <div class="data-card-header">
-                    <div class="card-title">Site Material Inventory</div>
-                    <button class="btn btn-secondary" onclick="window.app.fsModule._loadSiteInventory()"><i class="fas fa-sync"></i> Refresh</button>
-                </div>
-                ${!this.inventoryLoaded
-                ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading site inventory from server…</div></div>'
-                : (entries.length === 0
-                    ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-box-open" style="font-size:24px; margin-bottom:12px; display:block;"></i><div>No materials currently assigned to this site.</div></div>'
-                    : `<table>
-                        <thead>
-                            <tr><th>Material</th><th>On-Site Stock</th><th>Sector</th><th style="text-align: right;">Action</th></tr>
-                        </thead>
-                        <tbody>
-                            ${entries.map(([name, data]) => `
-                                <tr>
-                                    <td style="font-weight: 700;">${name}</td>
-                                    <td style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 15px; color: ${data.qty === 0 ? 'var(--red)' : 'var(--slate-900)'};">${data.qty} ${data.unit}</td>
-                                    <td style="font-size: 12px; color: var(--slate-500);">${data.sectorName || '--'}</td>
-                                    <td style="text-align: right;">
-                                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                            <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Log Burn', window.DrawerTemplates.logMaterialBurn(${JSON.stringify({ name, ...data }).replace(/"/g, '&quot;')}))" ${data.qty === 0 ? 'disabled' : ''}>Log Consumption</button>
-                                            <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openReturnDrawer('${name}')" style="color: var(--orange); border-color: var(--orange-light);" ${data.qty === 0 ? 'disabled' : ''}>
-                                                <i class="fas fa-undo"></i> Return
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>`
-                )
-            }
-            </div>
-
+            
             <div class="data-card">
-                <div class="data-card-header">
-                    <div class="card-title" style="color: var(--blue);">Site Equipment</div>
+                <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-title">Site Resource Center</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="window.app.fsModule._loadSiteInventory()" title="Sync Records">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
                 </div>
-                ${!this.assetsLoaded
-                ? '<div style="padding: 40px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Checking site equipment fleet…</div></div>'
-                : (this.siteAssets.length === 0
-                    ? '<div style="padding: 32px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size:24px; margin-bottom:12px; display:block; opacity: 0.5;"></i>No equipment currently assigned to site.</div>'
-                    : `<table>
-                        <thead><tr><th>Asset</th><th>Code</th><th>Status</th><th style="text-align: right;">Action</th></tr></thead>
-                        <tbody>
-                            ${this.siteAssets.map(asset => `
-                                <tr>
-                                    <td style="font-weight: 700;">${asset.name}</td>
-                                    <td><span class="project-id">${asset.assetCode || asset.id}</span></td>
-                                    <td>
-                                        <span class="status ${asset.status === 'maintenance' ? 'locked' : (asset.status === 'checked_out' ? 'active' : 'pending')}" style="${asset.status === 'maintenance' ? 'background: var(--red-light); color: var(--red);' : ''}">${(asset.status || '').replace(/_/g, ' ')}</span>
-                                    </td>
-                                    <td style="text-align: right;">
-                                        ${asset.status !== 'maintenance' ?
-                            `<button class="btn btn-secondary" onclick="window.app.fsModule.handleReportBreakdown('${asset.id}', '${asset.name}')" style="color: var(--red); border-color: var(--red-light);">
-                                             <i class="fas fa-triangle-exclamation"></i> Report Breakdown
-                                           </button>` : `<span style="font-size: 12px; color: var(--slate-400);">In Maintenance</span>`
-                        }
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>`
-                )
-            }
+
+                <!-- Registry-style Tabs -->
+                <div class="tabs" style="margin-bottom: 0; padding: 0 20px; border-bottom: 1px solid var(--slate-200);">
+                    <div class="tab ${activeTab === 'materials' ? 'active' : ''}" onclick="window.app.fsModule.switchLogisticsTab('materials')">
+                        <i class="fas fa-boxes" style="margin-right: 8px;"></i> Materials
+                    </div>
+                    <div class="tab ${activeTab === 'equipment' ? 'active' : ''}" onclick="window.app.fsModule.switchLogisticsTab('equipment')">
+                        <i class="fas fa-truck-monster" style="margin-right: 8px;"></i> Equipment & Fleet
+                    </div>
+                </div>
+
+                <div id="logistics-tab-content">
+                    ${activeTab === 'materials' ? this._renderMaterialsTable(entries) : this._renderEquipmentTable()}
+                </div>
+            </div>
         `;
+    },
+
+    switchLogisticsTab(tab) {
+        this.activeLogisticsTab = tab;
+        this._refreshCurrentView();
+    },
+
+    _renderMaterialsTable(entries) {
+        if (!this.inventoryLoaded) {
+            return '<div style="padding: 60px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Loading site inventory…</div></div>';
+        }
+        if (entries.length === 0) {
+            return '<div style="padding: 60px; text-align: center; color: var(--slate-400);"><i class="fas fa-box-open" style="font-size:32px; margin-bottom:16px; display:block; opacity: 0.5;"></i><div>No materials currently assigned to this site.</div></div>';
+        }
+
+        // Pagination Logic
+        this.materialsPage = this.materialsPage || 1;
+        const perPage = 10;
+        const totalPages = Math.ceil(entries.length / perPage);
+        const startIdx = (this.materialsPage - 1) * perPage;
+        const paginatedEntries = entries.slice(startIdx, startIdx + perPage);
+
+        let tableHTML = `
+            <table>
+                <thead>
+                    <tr><th>Material</th><th>Sector</th><th>On-Site Stock</th><th style="text-align: right;">Action</th></tr>
+                </thead>
+                <tbody>
+                    ${paginatedEntries.map(([name, data]) => `
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700; color: var(--slate-900);">${name}</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">Inventory ID: <span class="project-id">${data.inventoryId || 'INV-00'}</span></div>
+                            </td>
+                            <td>
+                                <div style="font-size: 13px; font-weight: 500;">${data.sectorName || 'Main Site'}</div>
+                            </td>
+                            <td>
+                                <div style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 15px; color: ${data.qty === 0 ? 'var(--red)' : 'var(--slate-900)'};">
+                                    ${data.qty.toLocaleString()} <span style="font-size: 11px; font-weight: 600; color: var(--slate-500);">${data.unit}</span>
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    ${(() => {
+                                        const incoming = (this.inTransitItems || []).filter(req => 
+                                            req.items.some(i => i.itemName.toLowerCase() === name.toLowerCase())
+                                        );
+                                        const now = new Date();
+                                        
+                                        const hasIncoming = incoming.length > 0;
+                                        const canReceive = incoming.length === 0 || incoming.some(req => !req.estimatedArrival || new Date(req.estimatedArrival) <= now);
+                                        
+                                        let buttons = '';
+                                        
+                                        if (hasIncoming) {
+                                            buttons += `
+                                                <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openMaterialScheduleDrawer('${name.replace(/'/g, "\\'")}')" style="color: var(--blue); border-color: var(--blue-light);">
+                                                    <i class="fas fa-calendar-alt"></i> Schedule
+                                                </button>
+                                            `;
+                                        }
+                                        
+                                        if (canReceive) {
+                                            buttons += `
+                                                <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}', '${data.unit}')" style="color: var(--emerald); border-color: var(--emerald-light);">
+                                                    <i class="fas fa-box-open"></i> Receive Goods
+                                                </button>
+                                            `;
+                                        }
+                                        
+                                        return buttons;
+                                    })()}
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        if (totalPages > 1) {
+            tableHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--slate-200); background: var(--slate-50); border-radius: 0 0 8px 8px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Page ${this.materialsPage} of ${totalPages}</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.changeMaterialsPage(${this.materialsPage - 1})" ${this.materialsPage === 1 ? 'disabled' : ''}>Previous</button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.changeMaterialsPage(${this.materialsPage + 1})" ${this.materialsPage === totalPages ? 'disabled' : ''}>Next</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return tableHTML;
+    },
+
+    changeMaterialsPage(page) {
+        this.materialsPage = page;
+        this._refreshCurrentView();
+    },
+
+    changeEquipmentPage(page) {
+        this.equipmentPage = page;
+        this._refreshCurrentView();
+    },
+
+    openMaterialScheduleDrawer(materialName) {
+        const incoming = (this.inTransitItems || []).filter(req => 
+            req.items.some(i => i.itemName.toLowerCase() === materialName.toLowerCase())
+        );
+
+        let contentHTML = '';
+        if (incoming.length === 0) {
+            contentHTML = `
+                <div style="padding: 32px; text-align: center; border: 1px dashed var(--slate-200); border-radius: 8px;">
+                    <div style="font-size: 13px; color: var(--slate-500);">No incoming shipments.</div>
+                </div>
+            `;
+        } else {
+            contentHTML = incoming.map(req => {
+                const item = req.items.find(i => i.itemName.toLowerCase() === materialName.toLowerCase());
+                const arrivalDate = req.estimatedArrival ? new Date(req.estimatedArrival) : null;
+                const now = new Date();
+                const isArrived = !arrivalDate || arrivalDate <= now;
+                const eta = arrivalDate ? arrivalDate.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pending ETA';
+                
+                return `
+                    <div style="padding: 16px; background: var(--slate-50); border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--slate-100);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                            <div style="font-weight: 700; font-size: 15px;">${item.quantity} ${item.unit}</div>
+                            <span class="status ${isArrived ? 'active' : 'pending'}" style="font-size: 10px; padding: 2px 8px;">
+                                ${isArrived ? 'READY' : 'IN TRANSIT'}
+                            </span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--slate-500); margin-bottom: 16px; line-height: 1.5;">
+                            <strong>ETA:</strong> ${eta}<br>
+                            <strong>Ref:</strong> ${req.reqCode || 'REQ-'+req.id}<br>
+                            ${req.dispatchedBy ? `<strong>Sender:</strong> ${req.dispatchedBy} ${req.dispatchedPhone ? `(<a href="tel:${req.dispatchedPhone}" style="color: var(--blue); text-decoration: none;">${req.dispatchedPhone}</a>)` : ''}` : ''}
+                        </div>
+                        ${isArrived ? `
+                            <button class="btn btn-primary btn-sm" style="width: 100%; background: var(--emerald); border-color: var(--emerald); justify-content: center;" onclick="window.app.fsModule.handleConfirmArrival('${req.id}')">
+                                Mark as Received
+                            </button>
+                        ` : `
+                            <div style="text-align: center; font-size: 11px; color: var(--slate-400); font-style: italic;">
+                                <i class="fas fa-lock" style="margin-right: 4px;"></i> Available upon arrival
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.drawer.open(`Schedule: ${materialName}`, `
+            <div style="padding: 24px;">
+                <div style="margin-bottom: 24px;">
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 700;">${materialName}</h3>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 4px;">Logistics & Arrival Timeline</div>
+                </div>
+                ${contentHTML}
+            </div>
+        `);
+    },
+
+    openManualIntakeDrawer(materialName, unit) {
+        window.drawer.open('Receive Goods', `
+            <div style="padding: 24px;">
+                <div style="margin-bottom: 24px;">
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 700;">${materialName}</h3>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 4px;">Direct Site Intake (${unit})</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Quantity Received</label>
+                    <input type="number" id="manual_intake_qty" class="form-input" placeholder="0.00" min="0.1" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Delivery Note / ID</label>
+                    <input type="text" id="manual_intake_ref" class="form-input" placeholder="e.g. DN-10234">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Observations</label>
+                    <textarea id="manual_intake_notes" class="form-input" placeholder="Any damage or notes..." style="height: 100px;"></textarea>
+                </div>
+                
+                <div style="margin-top: 32px;">
+                    <button class="btn btn-primary" style="width: 100%; background: var(--emerald); border-color: var(--emerald); justify-content: center; height: 48px;" 
+                        onclick="window.app.fsModule.executeManualIntake('${materialName.replace(/'/g, "\\'")}', '${unit}')">
+                        <i class="fas fa-check-circle"></i> Log Site Receipt
+                    </button>
+                </div>
+            </div>
+        `);
+    },
+
+    async executeManualIntake(materialName, unit) {
+        const qty = parseFloat(document.getElementById('manual_intake_qty')?.value);
+        const ref = document.getElementById('manual_intake_ref')?.value;
+        const notes = document.getElementById('manual_intake_notes')?.value;
+
+        if (!qty || qty <= 0) {
+            window.toast?.show('Please enter a valid quantity.', 'warning');
+            return;
+        }
+
+        try {
+            window.toast?.show('Updating site inventory...', 'info');
+            // Using the inventory distribute endpoint which adds to a sector's stock
+            await inventoryApi.distribute({
+                sectorId: this.siteInventory[materialName]?.sectorId || 1,
+                materialName: materialName,
+                unit: unit,
+                quantity: qty,
+                reference: ref || 'Direct Site Intake',
+                notes: notes
+            });
+
+            window.toast?.show(`Successfully received ${qty} ${unit} of ${materialName}.`, 'success');
+            window.drawer.close();
+            await this._loadSiteInventory();
+            this._refreshCurrentView();
+        } catch (error) {
+            console.error('[FS] Manual intake failed:', error);
+            window.toast?.show('Failed to log intake. Server error.', 'error');
+        }
+    },
+
+    _renderEquipmentTable() {
+        if (!this.assetsLoaded) {
+            return '<div style="padding: 60px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin" style="font-size:24px; margin-bottom:12px;"></i><div>Syncing site fleet status…</div></div>';
+        }
+        if (this.siteAssets.length === 0) {
+            return '<div style="padding: 60px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size:32px; margin-bottom:16px; display:block; opacity: 0.5;"></i>No equipment currently assigned to site.</div>';
+        }
+
+        // Pagination Logic
+        this.equipmentPage = this.equipmentPage || 1;
+        const perPage = 10;
+        const totalPages = Math.ceil(this.siteAssets.length / perPage);
+        const startIdx = (this.equipmentPage - 1) * perPage;
+        const paginatedAssets = this.siteAssets.slice(startIdx, startIdx + perPage);
+
+        let tableHTML = `
+            <table>
+                <thead><tr><th>Asset</th><th>Reg Code</th><th>Fleet Status</th><th style="text-align: right;">Action</th></tr></thead>
+                <tbody>
+                    ${paginatedAssets.map(asset => `
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700; color: var(--slate-900);">${asset.name}</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">${asset.category || 'General Machinery'}</div>
+                            </td>
+                            <td><span class="project-id">${asset.assetCode || asset.id}</span></td>
+                            <td>
+                                <span class="status ${asset.status === 'maintenance' ? 'locked' : (asset.status === 'checked_out' ? 'active' : 'pending')}" 
+                                    style="${asset.status === 'maintenance' ? 'background: var(--red-light); color: var(--red);' : ''}">
+                                    ${(asset.status || '').replace(/_/g, ' ').toUpperCase()}
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    ${asset.status !== 'maintenance' ? `
+                                        <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openAssetIncidentDrawer('${asset.id}')" style="color: var(--red); border-color: var(--red-light);">
+                                            <i class="fas fa-triangle-exclamation"></i> Breakdown
+                                        </button>
+                                    ` : `<span style="font-size: 11px; color: var(--slate-400); font-weight: 600;">OFFLINE (MAINTENANCE)</span>`}
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        if (totalPages > 1) {
+            tableHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--slate-200); background: var(--slate-50); border-radius: 0 0 8px 8px;">
+                    <span style="font-size: 12px; color: var(--slate-500);">Page ${this.equipmentPage} of ${totalPages}</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.changeEquipmentPage(${this.equipmentPage - 1})" ${this.equipmentPage === 1 ? 'disabled' : ''}>Previous</button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.changeEquipmentPage(${this.equipmentPage + 1})" ${this.equipmentPage === totalPages ? 'disabled' : ''}>Next</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return tableHTML;
     },
 
     async _loadSiteInventory() {

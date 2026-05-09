@@ -37,8 +37,8 @@ const { handleError, notFoundHandler } = require('./src/middlewares/error.middle
 const { parseBody, parseQuery } = require('./src/middlewares/validate.middleware');
 const { applySecurityHeaders, bodySizeLimit } = require('./src/middlewares/security.middleware');
 
-// Request body size limiter (10MB default)
-const checkBodySize = bodySizeLimit(10 * 1024 * 1024);
+// Request body size limiter (100MB to accommodate reports with base64 phone photos)
+const checkBodySize = bodySizeLimit(100 * 1024 * 1024);
 
 /**
  * SSL/HTTPS Setup - auto-generates certs via scripts/generate-cert.js if missing
@@ -129,6 +129,81 @@ const server = (sslOptions ? https : http).createServer(sslOptions || {}, async 
     // App config for frontend
     if (url === '/api/v1/config' && req.method === 'GET') {
       response.success(res, getAppConfig());
+      return;
+    }
+
+    // ============================================
+    // SYSTEM / HARDWARE BRIDGES
+    // ============================================
+
+    // High-Precision Geolocation Bridge (Native Windows)
+    if (url === '/api/v1/system/precise-location' && req.method === 'GET') {
+      const { exec } = require('child_process');
+      const tempPs1 = path.join(__dirname, 'scratch', `loc_${Date.now()}.ps1`);
+      
+      const psScript = `
+        $ErrorActionPreference = 'Stop'
+        try {
+            # Load WinRT Geolocation
+            $Type = [Windows.Devices.Geolocation.Geolocator, Windows.Devices.Geolocation, ContentType=WindowsRuntime]
+            $geolocator = New-Object Windows.Devices.Geolocation.Geolocator
+            
+            # Force High Accuracy (User Requirement)
+            $geolocator.DesiredAccuracy = [Windows.Devices.Geolocation.PositionAccuracy]::High
+            $geolocator.MovementThreshold = 1
+            
+            # Request Position
+            $asyncOp = $geolocator.GetGeopositionAsync()
+            
+            # Wait for completion (max 10 seconds)
+            $timeout = 100
+            while ($asyncOp.Status -eq 'Started' -and $timeout -gt 0) {
+                Start-Sleep -m 100
+                $timeout--
+            }
+
+            if ($asyncOp.Status -eq 'Completed') {
+                # In PowerShell, we can access the result directly if completed
+                $pos = $asyncOp.GetResults()
+                $result = @{
+                    Latitude  = $pos.Coordinate.Point.Position.Latitude
+                    Longitude = $pos.Coordinate.Point.Position.Longitude
+                    Accuracy  = $pos.Coordinate.Accuracy
+                    Timestamp = $pos.Coordinate.Timestamp.ToString()
+                    Source    = "Native-Hardware-Lock"
+                    Status    = "Success"
+                }
+                Write-Output ($result | ConvertTo-Json)
+            } else {
+                throw "Hardware lock timed out. Ensure Wi-Fi is ON and you are near a window."
+            }
+        } catch {
+            Write-Output (@{ Status = "Error"; Message = $_.Exception.Message } | ConvertTo-Json)
+        }
+      `;
+
+      if (!fs.existsSync(path.join(__dirname, 'scratch'))) fs.mkdirSync(path.join(__dirname, 'scratch'));
+      fs.writeFileSync(tempPs1, psScript);
+
+      exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${tempPs1}"`, (error, stdout) => {
+        if (fs.existsSync(tempPs1)) fs.unlinkSync(tempPs1);
+        try {
+          const jsonStart = stdout.indexOf('{');
+          const jsonEnd = stdout.lastIndexOf('}');
+          if (jsonStart !== -1) {
+            const result = JSON.parse(stdout.substring(jsonStart, jsonEnd + 1));
+            if (result.Status === 'Success') {
+              response.success(res, result);
+            } else {
+              response.error(res, result.Message || "Hardware error", 400);
+            }
+          } else {
+            response.error(res, "No hardware response", 500);
+          }
+        } catch (e) {
+          response.error(res, "Failed to parse hardware location", 500);
+        }
+      });
       return;
     }
     

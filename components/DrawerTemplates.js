@@ -205,7 +205,7 @@ export const DrawerTemplates = {
     requestRentalAsset: (data) => {
         const projects = data.projects || [];
         const machineTypes = ['Excavator', 'Dozer', 'Grader', 'Roller', 'Dumper', 'Crane', 'Backhoe', 'Water Truck', 'Lowbed', 'Tipper'];
-        
+
         return `
             <div style="padding: 24px;">
                 <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -374,13 +374,13 @@ export const DrawerTemplates = {
 
     markAssetBrokenDown: (data) => {
         const projects = data.allProjects || [];
-        
+
         return `
             <div style="padding: 24px;">
                 <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                     <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 8px;">Internal Asset Breakdown Report</div>
                     <div style="font-size: 18px; font-weight: 800; color: var(--slate-900);">${data.assetName}</div>
-                    <div style="font-size: 12px; color: var(--slate-500);">${data.assetCode || 'EQP-'+data.id} • ${data.project?.name || 'Company Base'}</div>
+                    <div style="font-size: 12px; color: var(--slate-500);">${data.assetCode || 'EQP-' + data.id} • ${data.project?.name || 'Company Base'}</div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
@@ -1860,35 +1860,85 @@ export const DrawerTemplates = {
     `,
 
     dailyProgressLog: (arg) => {
-        const data = (typeof arg === 'object' && arg !== null) ? arg : { taskId: arg };
-        const taskId = data.taskId || "";
-        const taskName = data.taskName || "Select Task...";
+        const data = (typeof arg === 'object' && arg !== null) ? arg : {};
+        const project = data.project || {};
+        const inventory = data.inventory || {};
+        const siteAssets = data.siteAssets || [];
+        const tasksConfig = data.tasksConfig || { phases: [] };
+        const phases = tasksConfig.phases || [];
+
+        // Determine current phase (project.currentPhase is Int 1-4)
+        const phaseNumber = Number(project.currentPhase || 1);
+        const currentPhaseIndex = Math.max(0, phaseNumber - 1);
+        const currentPhase = phases[currentPhaseIndex] || phases[0] || { id: 'PHASE_1', name: 'Phase 1', tasks: [] };
+        const completedPhaseCount = currentPhaseIndex >= 0 ? currentPhaseIndex : 0;
+        const overallProgress = project.progress || Math.round((completedPhaseCount / Math.max(phases.length, 1)) * 100);
+
+        // Budget data
+        const budgetTotal = Number(project.budgetTotal || project.budget || 0);
+        const budgetSpent = Number(project.spent || 0);
+        const budgetPercent = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
+
+        // Auto-calculate phase elapsed time
+        const projectStart = project.startDate ? new Date(project.startDate) : null;
+        const now = new Date();
+        const daysElapsed = projectStart ? Math.max(0, Math.round((now - projectStart) / (1000 * 60 * 60 * 24))) : 0;
+        const estPhaseDays = project.durationDays ? Math.round(project.durationDays / phases.length) : 0;
+        const phaseDaysRemaining = Math.max(0, estPhaseDays - (daysElapsed - (completedPhaseCount * estPhaseDays)));
+
+        // Inventory items for material selection
+        const inventoryItems = Object.entries(inventory);
+
         return `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
-            <input type="hidden" id="daily-log-task-id" value="${taskId || ""}" />
-            <div style="background:var(--red-light); border:1px solid var(--red); color:var(--red-dark); padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <i class="fas fa-clock"></i> CRITICAL DEADLINE: 2 Days Remaining
-                </div>
-                <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px; background:white; border: 1px solid var(--slate-300);" onclick="window.app.fsModule.viewLogHistory()">
-                    <i class="fas fa-history"></i> History
-                </button>
-            </div>
+            <input type="hidden" id="daily-log-phase-id" value="${currentPhase.id}" />
 
-            <!-- Workflow Wallet Card -->
-            <div style="background:white; color:var(--slate-900); border: 1px solid var(--slate-200); padding:16px; border-radius:8px; margin-bottom:20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div style="font-size:11px; text-transform:uppercase; color:var(--slate-500); font-weight:700;">Project Wallet</div>
-                <div style="font-size:24px; font-weight:800; margin:4px 0; color:var(--slate-900);">MWK <span id="wallet-balance">800,000</span></div>
-                <div style="font-size:11px; color:var(--slate-500); font-weight: 500;">of MWK 5,000,000 Allocated</div>
-                <div style="height:6px; background:var(--slate-100); margin-top:12px; border-radius:3px; overflow: hidden;">
-                    <div style="width:16%; height:100%; background:var(--emerald);"></div>
+            <!-- Phase Progress Tracker -->
+            <div style="background: white; color: var(--slate-900); padding: 20px; border-radius: 12px; border: 1px solid var(--slate-200); margin-bottom: 20px; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--slate-500); letter-spacing: 1px;">Current Phase</div>
+                        <div style="font-size: 16px; font-weight: 800; margin-top: 4px;">${currentPhase.name}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--slate-500);">Overall</div>
+                        <div style="font-size: 20px; font-weight: 900; color: var(--emerald);">${overallProgress}%</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 4px; margin-bottom: 12px;">
+                    ${phases.map((p, i) => `
+                        <div style="flex: 1; height: 6px; border-radius: 3px; background: ${i < completedPhaseCount ? 'var(--emerald)' : i === completedPhaseCount ? 'var(--orange)' : 'var(--slate-200)'};" title="${p.name}"></div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--slate-500);">
+                    <span>Phase ${completedPhaseCount + 1} of ${phases.length}</span>
+                    <span>${estPhaseDays > 0 ? `~${phaseDaysRemaining} days remaining in phase` : `Day ${daysElapsed}`}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                    <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px; background:white; border:1px solid var(--slate-200); color:var(--slate-700); font-weight:700; box-shadow:var(--shadow-sm);" onclick="window.app.fsModule.viewLogHistory()">
+                        <i class="fas fa-history"></i> History
+                    </button>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom:16px;">
-                 <label class="form-label">Narrative / Progress Log</label>
-                 <textarea id="daily-narrative" class="form-input" data-vrules="required|minLen:5" rows="2" placeholder="Describe work done today... (e.g. Finished north section)"></textarea>
+                 <label class="form-label">Narrative / Progress Log <span style="color:var(--red);">*</span></label>
+                 <textarea id="daily-narrative" class="form-input" data-vrules="required|minLen:10" rows="3" placeholder="Describe work done today in detail... (min 10 characters)"></textarea>
+                 <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Be specific: what was accomplished, blockers encountered, next steps.</div>
+            </div>
+
+            <!-- Materials Consumed Section -->
+            <div style="background: #FFF7ED; padding: 16px; border-radius: 8px; border: 1px solid #FED7AA; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <label class="form-label" style="color: #9A3412; font-weight: 700; margin: 0;"><i class="fas fa-cubes"></i> Materials Consumed Today</label>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; background: white; border-color: #FED7AA;" onclick="window.app.fsModule?.addMaterialUsageRow()">
+                        <i class="fas fa-plus"></i> Add Material
+                    </button>
+                </div>
+                <div id="material-usage-rows" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="text-align: center; color: #92400E; font-size: 11px; padding: 8px; opacity: 0.6;">No materials logged yet. Add items used on site today.</div>
+                </div>
             </div>
 
             <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
@@ -1900,24 +1950,21 @@ export const DrawerTemplates = {
                 <div id="expense-rows" style="display:flex; flex-direction:column; gap:8px;">
                     <!-- Rows will be injected here -->
                 </div>
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed var(--slate-300); font-weight:700;">
-                    <span style="font-size:12px; color:var(--slate-600);">Total Expense:</span>
-                    <span id="daily-total-expense" style="color:var(--orange); font-size:14px;">0 MWK</span>
-                </div>
             </div>
 
              <div class="form-group" style="margin-bottom: 20px;">
-                <label class="form-label">Progress Completion</label>
+                <label class="form-label">Phase Progress <span style="color:var(--red);">*</span></label>
+                <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 8px;">How complete is <strong>${currentPhase.name}</strong>?</div>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <input type="range" id="daily-progress-increment" class="form-input" style="flex:1;" min="0" max="100" value="45" oninput="this.nextElementSibling.innerText = this.value + '%'">
-                    <span style="font-weight:700; font-size:14px; width:40px;">45%</span>
+                    <input type="range" id="daily-progress-completion" class="form-input" style="flex:1;" min="0" max="100" value="${project.phaseProgress || 0}" oninput="this.nextElementSibling.innerText = this.value + '%'">
+                    <span style="font-weight:700; font-size:14px; width:40px;">${project.phaseProgress || 0}%</span>
                 </div>
+                <div style="font-size: 10px; color: var(--orange); margin-top: 4px; font-weight: 600;"><i class="fas fa-info-circle"></i> Setting to 100% and getting PM approval will complete this phase and advance to the next.</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label class="form-label" style="margin:0;">Progress Photos</label>
+                    <label class="form-label" style="margin:0;">Progress Photos <span style="color:var(--red);">*</span></label>
                     <span id="photo-counter-dailyLog" style="font-size:11px; color:var(--slate-500);"><span style="color:var(--red); font-weight:700;">0</span>/10 photos <span style="font-size:10px; color:var(--slate-400);">(min 3)</span></span>
                 </div>
                 <label id="photo-add-btn-dailyLog" onclick="return window.handleCameraClick(event, 'dailyLog')" style="border: 2px dashed var(--slate-300); background: var(--slate-50); padding: 16px; text-align: center; border-radius: 8px; color: var(--slate-500); cursor: pointer; display: block; margin-bottom:8px;">
@@ -1939,11 +1986,11 @@ export const DrawerTemplates = {
                 <div id="sos-fields" style="display:none; animation: fadeIn 0.3s ease;">
                     <div class="form-group" style="margin-bottom:12px;">
                          <label class="form-label" style="color:var(--red);">Amount Needed (MWK)</label>
-                         <input type="number" class="form-input" placeholder="e.g. 500,000" style="border-color:var(--red-light);">
+                         <input type="number" id="sos-amount" class="form-input" placeholder="e.g. 500,000" style="border-color:var(--red-light);">
                     </div>
                      <div class="form-group">
                          <label class="form-label" style="color:var(--red);">Reason</label>
-                         <select class="form-input" style="border-color:var(--red-light);">
+                         <select id="sos-reason" class="form-input" style="border-color:var(--red-light);">
                             <option>Material Price Increase</option>
                             <option>Unforeseen Labor Costs</option>
                             <option>Emergency Repair</option>
@@ -1961,21 +2008,21 @@ export const DrawerTemplates = {
                     </button>
                 </div>
                 <div id="machine-usage-rows" style="display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Machinery usage rows will be injected here -->
                     <div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery usage logged today.</div>
                 </div>
-                <div id="log-location-status" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 11px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span style="font-weight: 700; color: var(--slate-600);">LOCATION VERIFICATION</span>
-                        <span id="drawer-gps-badge" style="font-weight: 700;">
-                            ${window.app.fsModule?.bestPosition ? `<i class="fas fa-check-circle" style="color:var(--emerald);"></i> Verified` : `<i class="fas fa-exclamation-triangle" style="color:var(--orange);"></i> Not Synced`}
-                        </span>
-                    </div>
-                    <div style="color: var(--slate-500); line-height: 1.4;">
-                        ${window.app.fsModule?.bestPosition ?
+            </div>
+
+            <div id="log-location-status" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-weight: 700; color: var(--slate-600);">LOCATION VERIFICATION</span>
+                    <span id="drawer-gps-badge" style="font-weight: 700;">
+                        ${window.app.fsModule?.bestPosition ? `<i class="fas fa-check-circle" style="color:var(--emerald);"></i> Verified` : `<i class="fas fa-exclamation-triangle" style="color:var(--orange);"></i> Not Synced`}
+                    </span>
+                </div>
+                <div style="color: var(--slate-500); line-height: 1.4;">
+                    ${window.app.fsModule?.bestPosition ?
                 `Accuracy: ±${Math.round(window.app.fsModule.bestPosition.coords.accuracy)}m<br>Last Synced: ${new Date(window.app.fsModule.lastLocationSync).toLocaleTimeString()}` :
                 `Please ensure you have synced your location on the dashboard map before submitting.`}
-                    </div>
                 </div>
             </div>
 
@@ -4601,7 +4648,7 @@ Contract Admin</textarea>
                 <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px; display: block;">2. Delivery Information</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div>
-                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Carrier / Transporter</label>
+                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Carrier / Transporter ${req.dispatchedPhone ? `(${req.dispatchedPhone})` : ''}</label>
                         <input type="text" id="arrival_dispatched_by" class="form-input" placeholder="e.g. Unitrans" style="width: 100%;" value="${req.dispatchedBy || ''}">
                     </div>
                     <div>
@@ -5753,11 +5800,11 @@ Contract Admin</textarea>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     ${contract.items && contract.items.length > 0 ? contract.items.map((item, idx) => {
-                        // CRITICAL: Force receivedQty to 0 if missing/undefined. Do NOT fallback to quantity.
-                        const verifiedQty = Number(item.receivedQty !== undefined && item.receivedQty !== null ? item.receivedQty : 0);
-                        const contractedQty = Number(item.quantity || 0);
-                        
-                        return `
+            // CRITICAL: Force receivedQty to 0 if missing/undefined. Do NOT fallback to quantity.
+            const verifiedQty = Number(item.receivedQty !== undefined && item.receivedQty !== null ? item.receivedQty : 0);
+            const contractedQty = Number(item.quantity || 0);
+
+            return `
                         <div style="display: flex; flex-direction: column; padding: 12px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; gap: 8px;">
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="flex: 1;">
@@ -5790,7 +5837,8 @@ Contract Admin</textarea>
                             </div>
                             <div class="v-error-msg" data-field-for="term-received-qty" style="font-size: 10px; color: var(--red); font-weight: 600; text-align: right;"></div>
                         </div>
-                    `; }).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
+                    `;
+        }).join('') : '<div style="font-size: 12px; color: var(--slate-400);">No specific materials listed for this contract.</div>'}
                 </div>
             </div>
 

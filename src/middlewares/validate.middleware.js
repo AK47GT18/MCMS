@@ -77,8 +77,8 @@ async function parseBody(req) {
     req.on('data', chunk => {
       body += chunk.toString();
       
-      // Prevent large payloads (1MB limit)
-      if (body.length > 1024 * 1024) {
+      // Prevent extremely large payloads (100MB limit to allow for base64 images in reports)
+      if (body.length > 100 * 1024 * 1024) {
         reject(new Error('Payload too large'));
       }
     });

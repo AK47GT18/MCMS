@@ -92,10 +92,9 @@ export const NAV_ITEMS = {
             section: 'Field Operations',
             items: [
                 { label: 'Dashboard', icon: ICONS.dashboard, id: 'dashboard', active: true },
-                { label: 'Site Logistics', icon: '<i class="fas fa-truck-ramp-box"></i>', id: 'logistics', badge: 2 },
+                { label: 'Logistics & Fleet', icon: '<i class="fas fa-truck-ramp-box"></i>', id: 'logistics', badge: 2 },
                 { label: 'Tasks', icon: '<i class="fas fa-list-check"></i>', id: 'tasks' },
-                { label: 'Execution Schedule', icon: '<i class="fas fa-stream"></i>', id: 'gantt' },
-                { label: 'Equipment', icon: '<i class="fas fa-truck-moving"></i>', id: 'equipment' }
+                { label: 'Execution Schedule', icon: '<i class="fas fa-stream"></i>', id: 'gantt' }
             ]
         },
         {

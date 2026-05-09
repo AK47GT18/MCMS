@@ -25,7 +25,8 @@ const dispatch = asyncHandler(async (req, res) => {
     shortfalls: req.body.shortfalls,
     userId: user.id,
     userName: user.name,
-    userRole: user.role
+    userRole: user.role,
+    userPhone: user.phone
   });
 
   // Broadcast update

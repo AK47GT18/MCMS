@@ -31,7 +31,9 @@ const dispatchService = {
       data: {
         dispatchStatus: 'in_transit',
         estimatedArrival: new Date(estimatedArrival),
-        status: 'approved'
+        status: 'approved',
+        dispatchedBy: userName,
+        dispatchedPhone: data.userPhone || null
       }
     });
 
@@ -271,6 +273,28 @@ const dispatchService = {
         discrepancies
       }
     });
+
+    // Notify EC that resources arrived with variance
+    await notifService.notifyRole('Equipment_Coordinator', {
+      type: discrepancies.length > 0 ? 'warning' : 'success',
+      icon: discrepancies.length > 0 ? 'fa-exclamation-triangle' : 'fa-check-circle',
+      title: discrepancies.length > 0 ? 'Arrival with Variance' : 'Resources Arrived',
+      message: `Supervisor ${userName} confirmed arrival of ${updatedReq.reqCode} with ${discrepancies.length} discrepancies at ${requisition.project.name}`
+    });
+
+    // Email notification to EC users
+    try {
+      const ecUsers = await prisma.user.findMany({ where: { role: 'Equipment_Coordinator' }, select: { name: true, email: true } });
+      for (const ec of ecUsers) {
+        emailService.sendNotification(
+          ec,
+          discrepancies.length > 0 ? 'Variance Reported - Resources Received at Site' : 'Arrival Confirmed - Resources Received at Site',
+          `Field Supervisor ${userName} has confirmed arrival of resources at ${requisition.project?.name} with ${discrepancies.length > 0 ? 'VARIANCE' : 'full delivery'}.\n\nRequisition: ${updatedReq.reqCode}\nDiscrepancies: ${discrepancies.length > 0 ? discrepancies.map(d => `${d.itemName}: Received ${d.qtyReceived} (Expected ${d.qtySent})`).join(', ') : 'None'}\nNotes: ${notes || 'No notes provided.'}\n\nInventory has been updated based on actual received quantities.`,
+        ).catch(err => console.error('Arrival variance email to EC failed:', err.message));
+      }
+    } catch (emailErr) {
+      console.error('Failed to email EC on arrival variance:', emailErr.message);
+    }
 
     return { requisition: updatedReq, discrepancies };
   }
