@@ -222,26 +222,7 @@ async function create(data, userId) {
     details: { logDate: log.logDate, isSos: log.isSos }
   });
   
-  // ALGORITHMIC FIX: Sync Daily Log Work to Gantt Task
-  if (task_id && progressIncrement) {
-    try {
-      const task = await prisma.task.findUnique({ where: { id: parseInt(task_id, 10) }});
-      if (task) {
-        // Calculate accrued progress mathematically
-        const currentProgress = Number(task.progress || 0);
-        let updatedProgress = currentProgress + Number(progressIncrement);
-        if (updatedProgress > 100) updatedProgress = 100;
-
-        await prisma.task.update({
-          where: { id: task.id },
-          data: { progress: updatedProgress }
-        });
-        logger.info('Task progress synced from Daily Log', { taskId: task.id, newProgress: updatedProgress });
-      }
-    } catch (e) {
-      logger.error('Failed to sync progress from Daily Log to Task', { error: e.message });
-    }
-  }
+  // Moved Task progress sync to approve() to ensure schedule updates upon PM verification
 
   // Emit SOS alert if flagged
   if (log.isSos) {
@@ -278,6 +259,30 @@ async function approve(id, approverId) {
     action: 'APPROVE_DAILY_LOG', targetType: 'DailyLog', targetId: id,
     details: { projectId: log.projectId }
   });
+
+  // ALGORITHMIC FIX: Sync Daily Log Work to Gantt Task upon approval
+  if (log.task_id && log.workProgress) {
+    try {
+      const task = await prisma.task.findUnique({ where: { id: log.task_id }});
+      if (task) {
+        // Here workProgress represents the absolute phase/task progress from the frontend
+        // If it's an increment, we'd add it. But the frontend sends progressCompletion which is absolute.
+        // The original code did: currentProgress + progressIncrement.
+        // Since the UI says "Phase Progress", we can just set it to log.workProgress.
+        // Let's make sure it updates the task progress
+        let updatedProgress = Number(log.workProgress);
+        if (updatedProgress > 100) updatedProgress = 100;
+
+        await prisma.task.update({
+          where: { id: task.id },
+          data: { progress: updatedProgress }
+        });
+        logger.info('Task progress synced from Daily Log upon approval', { taskId: task.id, newProgress: updatedProgress });
+      }
+    } catch (e) {
+      logger.error('Failed to sync progress from Daily Log to Task upon approval', { error: e.message });
+    }
+  }
 
   // --- PHASE COMPLETION LOGIC ---
   // If the daily log reported 100% for its phase, advance the project

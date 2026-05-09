@@ -4952,7 +4952,7 @@ Contract Admin</textarea>
             <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Site Progress Review</div>
-                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Project: ${log.project?.name || "Central"}</div>
+                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Project: ${log.project?.name || log.projectName || "Site Project"}</div>
                 </div>
                 <div>
                     <select id="log-history-selector" class="form-input" style="font-size: 11px; padding: 4px 8px;" onchange="window.app.pmModule.switchReviewLog(this.value)">
@@ -4962,27 +4962,32 @@ Contract Admin</textarea>
             </div>
 
             <div style="padding: 24px; max-height: calc(100vh - 150px); overflow-y: auto;">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px;">
                     <div style="background: var(--emerald-light); padding: 12px; border-radius: 8px; border: 1px solid var(--emerald-border); text-align: center;">
                         <div style="font-size: 10px; color: var(--emerald-dark); font-weight: 700;">WORK PERCENT</div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald-dark);">${log.workPercentage}%</div>
-                    </div>
-                    <div style="background: var(--blue-light); padding: 12px; border-radius: 8px; border: 1px solid var(--blue-border); text-align: center;">
-                        <div style="font-size: 10px; color: var(--blue-dark); font-weight: 700;">MANPOWER</div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--blue-dark);">${log.manpowerCount}</div>
-                    </div>
-                    <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-200); text-align: center;">
-                        <div style="font-size: 10px; color: var(--slate-500); font-weight: 700;">WEATHER</div>
-                        <div style="font-size: 13px; font-weight: 800; color: var(--slate-700); margin-top: 4px;">${log.weatherCondition?.toUpperCase() || "CLEAR"}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald-dark);">${log.workProgress || 0}%</div>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 24px;">
-                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Completed Activities</div>
-                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
-                        ${log.activitiesCompleted || "No activities logged."}
+                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Completed Activities / Narrative</div>
+                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700); white-space: pre-wrap;">
+                        ${log.narrative || "No activities logged."}
                     </div>
                 </div>
+
+                ${log.photos && log.photos.length > 0 ? `
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Site Progress Photos</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+                        ${log.photos.map(p => `
+                            <a href="${p.dataUrl || p}" target="_blank" style="display: block; border: 1px solid var(--slate-200); border-radius: 8px; overflow: hidden; background: var(--slate-50); text-decoration: none;">
+                                <img src="${p.dataUrl || p}" style="width: 100%; height: 120px; object-fit: cover; display: block;" loading="lazy" />
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
 
                 ${log.expenseItems && log.expenseItems.length > 0
             ? `

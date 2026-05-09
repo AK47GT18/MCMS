@@ -103,11 +103,12 @@ export const FS_Logistics = {
                                         const now = new Date();
                                         
                                         const hasIncoming = incoming.length > 0;
+                                        const hasPendingSchedule = incoming.some(req => req.estimatedArrival && new Date(req.estimatedArrival) > now);
                                         const canReceive = incoming.length === 0 || incoming.some(req => !req.estimatedArrival || new Date(req.estimatedArrival) <= now);
                                         
                                         let buttons = '';
                                         
-                                        if (hasIncoming) {
+                                        if (hasPendingSchedule) {
                                             buttons += `
                                                 <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openMaterialScheduleDrawer('${name.replace(/'/g, "\\'")}')" style="color: var(--blue); border-color: var(--blue-light);">
                                                     <i class="fas fa-calendar-alt"></i> Schedule

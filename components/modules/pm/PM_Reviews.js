@@ -122,8 +122,8 @@ export const PM_Reviews = {
 
         const rows = this.pendingLogs.map(item => `
             <tr>
-                <td style="font-weight: 700;">${new Date(item.date || item.createdAt).toLocaleDateString()}</td>
-                <td>${this.escapeHTML(item.projectName || 'Site Project')}</td>
+                <td style="font-weight: 700;">${new Date(item.logDate || item.createdAt).toLocaleDateString()}</td>
+                <td>${this.escapeHTML(item.project?.name || item.projectName || 'Site Project')}</td>
                 <td>${item.submitter?.name || 'FS'}</td>
                 <td>${item.workProgress || 0}%</td>
                 <td><span class="status pending">SUBMITTED</span></td>
