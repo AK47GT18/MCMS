@@ -148,8 +148,7 @@ export const NAV_ITEMS = {
         {
             section: 'Logistics Control',
             items: [
-                { label: 'Distribution Log', icon: '<i class="fas fa-route"></i>', id: 'distribution' },
-                { label: 'Service Schedule', icon: '<i class="fas fa-wrench"></i>', id: 'maintenance', badge: 2 }
+                { label: 'Distribution Log', icon: '<i class="fas fa-route"></i>', id: 'distribution' }
             ]
         },
         { 

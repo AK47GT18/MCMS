@@ -75,63 +75,61 @@ export const FS_Logistics = {
         const paginatedEntries = entries.slice(startIdx, startIdx + perPage);
 
         let tableHTML = `
-            <table>
-                <thead>
-                    <tr><th>Material</th><th>Sector</th><th>On-Site Stock</th><th style="text-align: right;">Action</th></tr>
-                </thead>
-                <tbody>
-                    ${paginatedEntries.map(([name, data]) => `
-                        <tr>
-                            <td>
-                                <div style="font-weight: 700; color: var(--slate-900);">${name}</div>
-                                <div style="font-size: 11px; color: var(--slate-500);">Inventory ID: <span class="project-id">${data.inventoryId || 'INV-00'}</span></div>
-                            </td>
-                            <td>
-                                <div style="font-size: 13px; font-weight: 500;">${data.sectorName || 'Main Site'}</div>
-                            </td>
-                            <td>
-                                <div style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 15px; color: ${data.qty === 0 ? 'var(--red)' : 'var(--slate-900)'};">
-                                    ${data.qty.toLocaleString()} <span style="font-size: 11px; font-weight: 600; color: var(--slate-500);">${data.unit}</span>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px;">
+                ${paginatedEntries.map(([name, data]) => `
+                    <div class="resource-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 15px; color: var(--slate-900);">${name}</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">ID: <span class="project-id">${data.inventoryId || 'INV-00'}</span></div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-family: 'JetBrains Mono'; font-weight: 800; font-size: 16px; color: ${data.qty === 0 ? 'var(--red)' : 'var(--emerald)'};">
+                                    ${data.qty.toLocaleString()}
                                 </div>
-                            </td>
-                            <td style="text-align: right;">
-                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                    ${(() => {
-                                        const incoming = (this.inTransitItems || []).filter(req => 
-                                            req.items.some(i => i.itemName.toLowerCase() === name.toLowerCase())
-                                        );
-                                        const now = new Date();
-                                        
-                                        const hasIncoming = incoming.length > 0;
-                                        const hasPendingSchedule = incoming.some(req => req.estimatedArrival && new Date(req.estimatedArrival) > now);
-                                        const canReceive = incoming.length === 0 || incoming.some(req => !req.estimatedArrival || new Date(req.estimatedArrival) <= now);
-                                        
-                                        let buttons = '';
-                                        
-                                        if (hasPendingSchedule) {
-                                            buttons += `
-                                                <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openMaterialScheduleDrawer('${name.replace(/'/g, "\\'")}')" style="color: var(--blue); border-color: var(--blue-light);">
-                                                    <i class="fas fa-calendar-alt"></i> Schedule
-                                                </button>
-                                            `;
-                                        }
-                                        
-                                        if (canReceive) {
-                                            buttons += `
-                                                <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}', '${data.unit}')" style="color: var(--emerald); border-color: var(--emerald-light);">
-                                                    <i class="fas fa-box-open"></i> Receive Goods
-                                                </button>
-                                            `;
-                                        }
-                                        
-                                        return buttons;
-                                    })()}
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+                                <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">${data.unit}</div>
+                            </div>
+                        </div>
+
+                        <div style="padding: 8px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100); font-size: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-map-marker-alt" style="color: var(--slate-400);"></i>
+                            <span style="font-weight: 600; color: var(--slate-700);">${data.sectorName || 'Main Site'}</span>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                            ${(() => {
+                                const incoming = (this.inTransitItems || []).filter(req => 
+                                    req.items.some(i => i.itemName.toLowerCase() === name.toLowerCase())
+                                );
+                                const now = new Date();
+                                
+                                const hasPendingSchedule = incoming.some(req => req.estimatedArrival && new Date(req.estimatedArrival) > now);
+                                const canReceive = incoming.length === 0 || incoming.some(req => !req.estimatedArrival || new Date(req.estimatedArrival) <= now);
+                                
+                                let buttons = '';
+                                
+                                if (hasPendingSchedule) {
+                                    buttons += `
+                                        <button class="btn btn-secondary btn-sm" style="flex: 1; height: 36px; font-size: 11px; color: var(--blue); border-color: var(--blue-light);" onclick="window.app.fsModule.openMaterialScheduleDrawer('${name.replace(/'/g, "\\'")}')">
+                                            <i class="fas fa-calendar-alt"></i> Schedule
+                                        </button>
+                                    `;
+                                }
+                                
+                                if (canReceive) {
+                                    buttons += `
+                                        <button class="btn btn-secondary btn-sm" style="flex: 1; height: 36px; font-size: 11px; color: var(--emerald); border-color: var(--emerald-light);" onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}', '${data.unit}')">
+                                            <i class="fas fa-box-open"></i> Receive
+                                        </button>
+                                    `;
+                                }
+                                
+                                return buttons;
+                            })()}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
         `;
 
         if (totalPages > 1) {
@@ -298,35 +296,30 @@ export const FS_Logistics = {
         const paginatedAssets = this.siteAssets.slice(startIdx, startIdx + perPage);
 
         let tableHTML = `
-            <table>
-                <thead><tr><th>Asset</th><th>Reg Code</th><th>Fleet Status</th><th style="text-align: right;">Action</th></tr></thead>
-                <tbody>
-                    ${paginatedAssets.map(asset => `
-                        <tr>
-                            <td>
-                                <div style="font-weight: 700; color: var(--slate-900);">${asset.name}</div>
-                                <div style="font-size: 11px; color: var(--slate-500);">${asset.category || 'General Machinery'}</div>
-                            </td>
-                            <td><span class="project-id">${asset.assetCode || asset.id}</span></td>
-                            <td>
-                                <span class="status ${asset.status === 'maintenance' ? 'locked' : (asset.status === 'checked_out' ? 'active' : 'pending')}" 
-                                    style="${asset.status === 'maintenance' ? 'background: var(--red-light); color: var(--red);' : ''}">
-                                    ${(asset.status || '').replace(/_/g, ' ').toUpperCase()}
-                                </span>
-                            </td>
-                            <td style="text-align: right;">
-                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                    ${asset.status !== 'maintenance' ? `
-                                        <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openAssetIncidentDrawer('${asset.id}')" style="color: var(--red); border-color: var(--red-light);">
-                                            <i class="fas fa-triangle-exclamation"></i> Breakdown
-                                        </button>
-                                    ` : `<span style="font-size: 11px; color: var(--slate-400); font-weight: 600;">OFFLINE (MAINTENANCE)</span>`}
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px;">
+                ${paginatedAssets.map(asset => `
+                    <div class="asset-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 15px; color: var(--slate-900);">${asset.name}</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">${asset.category || 'Machinery'} | <span class="project-id">${asset.assetCode || asset.id}</span></div>
+                            </div>
+                            <span class="status ${asset.status === 'maintenance' ? 'locked' : (asset.status === 'checked_out' ? 'active' : 'pending')}" 
+                                style="font-size: 10px; ${asset.status === 'maintenance' ? 'background: var(--red-light); color: var(--red);' : ''}">
+                                ${(asset.status || '').replace(/_/g, ' ').toUpperCase()}
+                            </span>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                            ${asset.status !== 'maintenance' ? `
+                                <button class="btn btn-secondary btn-sm" style="flex: 1; height: 36px; font-size: 11px; color: var(--red); border-color: var(--red-light);" onclick="window.app.fsModule.openAssetIncidentDrawer('${asset.id}')">
+                                    <i class="fas fa-triangle-exclamation"></i> Log Breakdown
+                                </button>
+                            ` : `<div style="flex: 1; padding: 10px; text-align: center; background: var(--slate-50); color: var(--slate-400); font-size: 11px; font-weight: 700; border-radius: 8px;">UNDER MAINTENANCE</div>`}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
         `;
 
         if (totalPages > 1) {

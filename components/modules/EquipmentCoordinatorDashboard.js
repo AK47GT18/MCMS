@@ -90,7 +90,6 @@ export class EquipmentCoordinatorDashboard {
             case 'inventory': return this.getInventoryView();
             case 'registry': return this.getRegistryView();
             case 'distribution': return this.getDistributionLogView();
-            case 'maintenance': return this.getMaintenanceView();
             case 'custody': return this.getCustodyView();
             case 'reports': return this.getRecordsView();
             case 'governance': return this.getGovernanceView();
@@ -107,7 +106,6 @@ export class EquipmentCoordinatorDashboard {
             'inventory': { title: 'Material Inventory', context: 'Consumable Resource Silo' },
             'registry': { title: 'Asset Registry', context: 'Master Equipment List' },
             'distribution': { title: 'Distribution Log', context: 'Project Resource Consumption (Burn)' },
-            'maintenance': { title: 'Service Schedule', context: 'Preventative Maintenance' },
             'custody': { title: 'Chain of Custody', context: 'Asset Timeline & Fault History' },
             'project-logistics': { title: 'Project Logistics Hub', context: 'Portfolio fulfillment & Site delays' },
             'reports': { title: 'Records Center', context: 'Reporting & Compliance' },
@@ -177,7 +175,6 @@ export class EquipmentCoordinatorDashboard {
                 }
                 break;
             case 'registry':
-            case 'maintenance':
                 loads.push(this._loadAssets());
                 break;
             case 'project-logistics':

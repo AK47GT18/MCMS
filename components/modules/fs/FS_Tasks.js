@@ -68,30 +68,45 @@ export const FS_Tasks = {
             const paginatedTasks = taskList.slice(startIdx, startIdx + perPage);
 
             let tableHTML = `
-                <table>
-                    <thead><tr><th>Task</th><th>Phase</th><th>Start</th><th>End</th><th>Progress</th><th>Action</th></tr></thead>
-                    <tbody>
-                        ${paginatedTasks.map(t => `
-                            <tr>
-                                <td style="font-weight: 700;">${t.name}</td>
-                                <td style="font-size: 11px; color: var(--slate-500);">Phase ${t.phaseNumber || t.phaseId || '--'}</td>
-                                <td>${t.startDate ? new Date(t.startDate).toLocaleDateString() : '--'}</td>
-                                <td>${t.endDate ? new Date(t.endDate).toLocaleDateString() : '--'}</td>
-                                <td>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <div style="flex:1; height:6px; background:var(--slate-100); border-radius:3px;"><div style="width:${t.progress || 0}%; height:100%; background:var(--orange); border-radius:3px;"></div></div>
-                                        <span style="font-size:11px; font-weight:700;">${t.progress || 0}%</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button class="btn btn-secondary btn-sm" onclick="window.app.fsModule.openScheduleDrawer('${t.id}')">
-                                        <i class="fas fa-calendar-alt"></i> View Schedule
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px;">
+                    ${paginatedTasks.map(t => `
+                        <div class="task-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <div style="font-weight: 800; font-size: 15px; color: var(--slate-900);">${t.name}</div>
+                                    <div style="font-size: 11px; color: var(--slate-500);">Phase ${t.phaseNumber || t.phaseId || '--'}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; font-weight: 800; color: var(--orange);">${t.progress || 0}%</div>
+                                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">COMPLETE</div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="flex: 1; height: 6px; background: var(--slate-100); border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${t.progress || 0}%; height: 100%; background: var(--orange);"></div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
+                                <div>
+                                    <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">Start</div>
+                                    <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${t.startDate ? new Date(t.startDate).toLocaleDateString() : '--'}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">End</div>
+                                    <div style="font-size: 12px; font-weight: 700; color: var(--slate-700);">${t.endDate ? new Date(t.endDate).toLocaleDateString() : '--'}</div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 4px;">
+                                <button class="btn btn-secondary btn-sm" style="width: 100%; height: 36px; font-size: 11px; justify-content: center;" onclick="window.app.fsModule.openScheduleDrawer('${t.id}')">
+                                    <i class="fas fa-calendar-alt"></i> View Schedule
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             `;
 
             // Pagination Controls
@@ -401,7 +416,11 @@ export const FS_Tasks = {
 
             // Materials consumed
             if (payloadOverride?.materialsConsumed) {
-                payload.materialsConsumed = payloadOverride.materialsConsumed;
+                payload.materialsConsumed = payloadOverride.materialsConsumed.map(m => ({
+                    materialName: m.materialName,
+                    quantity: m.quantity,
+                    usedBy: m.usedBy
+                }));
             }
 
             // ... (rest of payload logic)
@@ -528,7 +547,8 @@ export const FS_Tasks = {
         const materialsConsumed = Array.from(materialRows).map(row => {
             return {
                 materialName: row.querySelector('.material-select')?.value || '',
-                quantity: parseFloat(row.querySelector('.material-qty')?.value) || 0
+                quantity: parseFloat(row.querySelector('.material-qty')?.value) || 0,
+                usedBy: row.querySelector('.material-used-by')?.value || ''
             };
         }).filter(m => m.materialName && m.quantity > 0);
 
@@ -620,9 +640,15 @@ export const FS_Tasks = {
                     ${options}
                 </select>
             </div>
-            <div>
-                <label style="font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Quantity Used</label>
-                <input type="number" class="form-input material-qty" placeholder="e.g. 500" step="0.1" style="padding: 6px; font-size: 12px; height: 30px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                    <label style="font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Quantity Used</label>
+                    <input type="number" class="form-input material-qty" placeholder="e.g. 500" step="0.1" style="padding: 6px; font-size: 12px; height: 30px;">
+                </div>
+                <div>
+                    <label style="font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Used By / Team</label>
+                    <input type="text" class="form-input material-used-by" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 30px;">
+                </div>
             </div>
         `;
         container.appendChild(row);

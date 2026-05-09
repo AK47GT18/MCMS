@@ -693,8 +693,19 @@ export const FS_Dashboard = {
         `);
     },
 
-    viewLogHistory() {
-        window.drawer.open('Log History', window.DrawerTemplates.dailyProgressLogHistory());
+    async viewLogHistory() {
+        window.drawer.open('Log History', window.DrawerTemplates.dailyProgressLogHistory([]));
+        
+        try {
+            const logs = await client.get('/daily-logs', { 
+                projectId: this.assignedProject?.id,
+                limit: 10 
+            });
+            const logArray = Array.isArray(logs) ? logs : (logs.data || []);
+            window.drawer.updateContent(window.DrawerTemplates.dailyProgressLogHistory(logArray));
+        } catch (error) {
+            console.error('[FS] Failed to load history:', error);
+        }
     },
 
     async loadHistoricalLog(date) {

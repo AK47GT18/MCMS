@@ -48,47 +48,51 @@ export const Shared_Issues = {
                         </div>
                     </div>
                     
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>Evidence</th>
-                                    <th>Description</th>
-                                    <th>Latest Response</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${this.sharedIssues.length === 0 
-                                    ? '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--slate-400);">No issues reported by you.</td></tr>'
-                                    : this.sharedIssues.map(issue => {
-                                        const statusClass = (issue.status || 'open').toLowerCase() === 'resolved' ? 'active' : (issue.status || 'open').toLowerCase() === 'in_progress' ? 'locked' : 'pending';
-                                        
-                                        return `
-                                        <tr>
-                                            <td style="font-weight: 700;">#${issue.id}</td>
-                                            <td><span class="badge" style="background: var(--slate-100); color: var(--slate-600); font-size: 10px; padding: 2px 8px; border-radius: 4px;">${issue.category || 'General'}</span></td>
-                                            <td><span class="status ${statusClass}">${(issue.status || 'OPEN').toUpperCase()}</span></td>
-                                            <td>
-                                                ${issue.photoUrl ? '<i class="fas fa-image" style="color: var(--blue);" title="Photo Attached"></i>' : '<span style="color:var(--slate-300);">—</span>'}
-                                            </td>
-                                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${issue.description}</td>
-                                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; color: var(--slate-500);">
-                                                ${issue.resolutionNotes ? issue.resolutionNotes : '<span style="opacity: 0.5;">Pending PM review...</span>'}
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/"/g, '&quot;')}))'>
-                                                    <i class="fas fa-eye"></i> View Thread
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px;">
+                        ${this.sharedIssues.length === 0 
+                            ? '<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--slate-400);">No issues reported by you.</div>'
+                            : this.sharedIssues.map(issue => {
+                                const statusClass = (issue.status || 'open').toLowerCase() === 'resolved' ? 'active' : (issue.status || 'open').toLowerCase() === 'in_progress' ? 'locked' : 'pending';
+                                
+                                return `
+                                <div class="issue-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div>
+                                            <div style="font-weight: 800; font-size: 15px; color: var(--slate-900);">#${issue.id || '—'}</div>
+                                            <span class="badge" style="background: var(--slate-100); color: var(--slate-600); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-top: 4px; display: inline-block;">
+                                                ${issue.category || 'General'}
+                                            </span>
+                                        </div>
+                                        <span class="status ${statusClass}" style="font-size: 10px; font-weight: 700;">${(issue.status || 'OPEN').toUpperCase()}</span>
+                                    </div>
+                                    
+                                    <div style="font-size: 13px; color: var(--slate-600); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 36px;">
+                                        ${issue.description || 'No description provided'}
+                                    </div>
+
+                                    <div style="padding: 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100); margin-top: 4px;">
+                                        <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-bottom: 4px;">Latest Response</div>
+                                        <div style="font-style: italic; color: var(--slate-600); font-size: 12px; line-height: 1.4;">
+                                            ${issue.resolutionNotes ? issue.resolutionNotes : '<span style="opacity: 0.5;">Pending PM review...</span>'}
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                                        <div>
+                                            ${issue.photoUrl ? `
+                                                <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; color: var(--blue); border-color: var(--blue-light);" onclick='window.viewDocument("${issue.photoUrl}", "Evidence Preview")'>
+                                                    <i class="fas fa-image"></i> View Evidence
                                                 </button>
-                                            </td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                            </tbody>
-                        </table>
+                                            ` : '<span style="font-size: 11px; color: var(--slate-400);"><i class="fas fa-image" style="opacity: 0.5;"></i> No Evidence</span>'}
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px; border-radius: 8px;" 
+                                            onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/"/g, '&quot;')}))'>
+                                            View Thread
+                                        </button>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
                     </div>
                 </div>
             </div>

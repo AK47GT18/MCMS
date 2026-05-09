@@ -34,19 +34,21 @@ export class AppLayout {
         const currentUser = getCurrentUser();
         const roleKey = currentUser.role ? currentUser.role.replace(/_/g, ' ') : '';
         const navSections = NAV_ITEMS[roleKey] || NAV_ITEMS[currentUser.role] || [];
-        const allItems = navSections.flatMap(s => s.items);
+        const allItems = navSections.flatMap(s => (s.items || []).filter(i => i && i.label));
 
-        // Optimize mobile nav: limit to 5 items max for better UX
-        let mobileItems = allItems;
-        if (currentUser.role === ROLES.FIELD_SUPERVISOR && allItems.length > 5) {
+        // Optimize mobile nav: Field Supervisors also use standard truncation to avoid crowding
+        let mobileItems = [];
+        if (allItems.length > 5) {
             mobileItems = allItems.slice(0, 4);
             mobileItems.push({
-                label: 'Governance',
-                icon: '<i class="fas fa-headset"></i>',
-                id: 'mobile_reporting',
+                label: 'Menu',
+                icon: '<i class="fas fa-bars"></i>',
+                id: 'mobile_menu',
                 action: 'drawer',
-                drawerId: 'reportingMenu'
+                drawerId: 'mobileMenu'
             });
+        } else {
+            mobileItems = allItems;
         }
 
         const sidebarHTML = this.generateSidebar(navSections);
@@ -238,7 +240,8 @@ export class AppLayout {
 
     generateSidebar(sections) {
         const currentUser = getCurrentUser();
-        const dashboardTitle = this.roleTitles[currentUser.role] || 'DASHBOARD';
+        const roleKey = currentUser.role ? currentUser.role.replace(/_/g, ' ') : '';
+        const dashboardTitle = this.roleTitles[roleKey] || this.roleTitles[currentUser.role] || 'WORKSPACE';
         
         const sectionsHTML = sections.map(section => `
             <div class="nav-section">
@@ -266,8 +269,8 @@ export class AppLayout {
                      <div class="user-profile">
                         <div class="profile-avatar" style="background: var(--slate-800);">${this.getInitials(currentUser.name)}</div>
                         <div class="profile-info">
-                            <div class="profile-name">${currentUser.name}</div>
-                            <div class="profile-role">${currentUser.role}</div>
+                            <div class="profile-name">${currentUser.name || 'Site User'}</div>
+                            <div class="profile-role">${currentUser.role || 'Personnel'}</div>
                         </div>
                     </div>
                 </div>
@@ -407,7 +410,9 @@ export class AppLayout {
                         'whistleblowerPortal': 'Whistleblower Portal',
                         'safetyIncident': 'Report Safety Incident',
                         'dailyReport': 'Daily Report',
-                        'assignEquipment': 'Assign Equipment'
+                        'assignEquipment': 'Assign Equipment',
+                        'reportingMenu': 'Governance',
+                        'mobileMenu': 'Main Menu'
                     };
                     const title = drawerTitles[drawerId] || 'Details';
                     
@@ -420,7 +425,11 @@ export class AppLayout {
                     } else {
                         const template = DrawerTemplates[drawerId];
                         if (template) {
-                            window.drawer.open(title, typeof template === 'function' ? template() : template);
+                            // Re-derive user context at click time (render-scoped vars aren't accessible here)
+                            const liveUser = getCurrentUser();
+                            const liveRoleKey = liveUser.role ? liveUser.role.replace(/_/g, ' ') : '';
+                            const navSections = NAV_ITEMS[liveRoleKey] || NAV_ITEMS[liveUser.role] || [];
+                            window.drawer.open(title, typeof template === 'function' ? template(navSections) : template);
                         }
                     }
                 } else {

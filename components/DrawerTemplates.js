@@ -1924,6 +1924,16 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
+            <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--slate-50); border-radius: 16px; border: 1px solid var(--slate-100);">
+                <div style="width: 44px; height: 44px; background: var(--slate-800); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800;">
+                    ${window.currentUser?.name?.charAt(0) || 'U'}
+                </div>
+                <div>
+                    <div style="font-weight: 800; font-size: 14px; color: var(--slate-900);">${window.currentUser?.name || 'Site Supervisor'}</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">${window.currentUser?.role || 'Field Supervisor'}</div>
+                </div>
+            </div>
+
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Narrative / Progress Log <span style="color:var(--red);">*</span></label>
                  <textarea id="daily-narrative" class="form-input" data-vrules="required|minLen:10" rows="3" placeholder="Describe work done today in detail... (min 10 characters)"></textarea>
@@ -1940,17 +1950,6 @@ export const DrawerTemplates = {
                 </div>
                 <div id="material-usage-rows" style="display: flex; flex-direction: column; gap: 8px;">
                     <div style="text-align: center; color: #92400E; font-size: 11px; padding: 8px; opacity: 0.6;">No materials logged yet. Add items used on site today.</div>
-                </div>
-            </div>
-
-            <div style="background:var(--slate-50); padding:16px; border-radius:8px; border:1px solid var(--slate-200); margin-bottom:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <label class="form-label" style="color:var(--slate-700); font-weight:700; margin:0;"><i class="fas fa-coins"></i> Daily Expenses</label>
-                    <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="window.addExpenseRow()"><i class="fas fa-plus"></i> Add Item</button>
-                </div>
-                
-                <div id="expense-rows" style="display:flex; flex-direction:column; gap:8px;">
-                    <!-- Rows will be injected here -->
                 </div>
             </div>
 
@@ -2038,25 +2037,47 @@ export const DrawerTemplates = {
 
     dailyProgressLogHistory: (logs = []) => `
         <div class="drawer-section" style="padding-top: 12px;">
+            <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800;">Log History</h3>
                 <input type="date" id="history-date-picker" class="form-input" style="padding: 4px 8px; font-size: 13px;" onchange="window.app.fsModule.loadHistoricalLog(this.value)">
             </div>
             
-            <div id="history-content-area">
+            <div id="history-content-area" style="display: flex; flex-direction: column; gap: 12px;">
                 ${logs.length === 0
             ? `
                     <div style="text-align: center; padding: 40px 20px; color: var(--slate-400);">
                         <i class="fas fa-calendar-alt" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
-                        <div>Select a date to view historical progress reports</div>
+                        <div>Select a date above or view recent logs on the dashboard.</div>
                     </div>
                 `
-            : `
-                    <div style="text-align: center; padding: 20px; color: var(--slate-500);">Loading historical data...</div>
-                `
+            : logs.sort((a,b) => new Date(b.logDate) - new Date(a.logDate)).map(log => `
+                    <div class="log-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s;" onclick='window.drawer.open("Log Details", window.DrawerTemplates.dailyLogDetails(${JSON.stringify(log).replace(/"/g, '&quot;')}))'>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 14px; color: var(--slate-900);">${new Date(log.logDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">${log.weather || 'Good Weather'} • ${log.headcount || 0} Personnel</div>
+                            </div>
+                            <span class="badge ${log.status === 'approved' ? 'badge-success' : log.status === 'rejected' ? 'badge-danger' : 'badge-warning'}" style="font-size: 10px;">${log.status.toUpperCase()}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--slate-600); line-height: 1.4; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${log.narrative}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--slate-50);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-camera"></i> ${log.photos?.length || 0}
+                                </div>
+                                <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-chart-line"></i> ${log.progressCompletion || 0}%
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: var(--slate-300);"></i>
+                        </div>
+                    </div>
+                `).join('')
         }
             </div>
-            
         </div>
     `,
 
@@ -2084,6 +2105,29 @@ export const DrawerTemplates = {
                     <div style="font-size: 14px; line-height: 1.6; color: var(--slate-800); font-weight: 500;">
                         ${log.narrative || 'No narrative provided for this log.'}
                     </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 12px;">Materials Consumed</div>
+                    ${log.materialsConsumed && log.materialsConsumed.length > 0 ? `
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${log.materialsConsumed.map(m => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: white; border: 1px solid var(--slate-200); border-radius: 8px;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.materialName}</div>
+                                        <div style="font-size: 11px; color: var(--slate-500);">Used By: ${m.usedBy || 'Site Team'}</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 14px; font-weight: 800; color: var(--orange-600);">${m.quantity}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div style="padding: 16px; text-align: center; background: var(--slate-50); border-radius: 8px; color: var(--slate-400); border: 1px dashed var(--slate-200); font-size: 12px;">
+                            No material consumption logged.
+                        </div>
+                    `}
                 </div>
 
                 <div style="margin-bottom: 24px;">
@@ -6063,7 +6107,7 @@ Contract Admin</textarea>
                                     </div>
                                     <div>
                                         <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${a.name}</div>
-                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} • ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
+                                        <div style="font-size: 11px; color: var(--slate-400);">${a.id} | ${a.status?.toUpperCase() || 'DEPLOYED'}</div>
                                     </div>
                                 </div>
                                 <span style="font-size: 10px; font-weight: 800; color: var(--emerald); background: #F0FDF4; padding: 4px 8px; border-radius: 6px;">DEPLOYED</span>
@@ -6081,7 +6125,7 @@ Contract Admin</textarea>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--slate-50);">
                                 <div>
                                     <div style="font-weight: 700; color: var(--slate-800); font-size: 13px;">${c.item || 'Generic Resource'}</div>
-                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} • ${c.user || 'System'}</div>
+                                    <div style="font-size: 11px; color: var(--slate-400); margin-top: 2px;">${new Date(c.timestamp).toLocaleString()} | ${c.user || 'System'}</div>
                                 </div>
                                 <div style="text-align: right;">
                                     <div style="font-weight: 800; color: ${c.type === 'IN' ? 'var(--emerald)' : 'var(--orange)'};">
@@ -6095,5 +6139,191 @@ Contract Admin</textarea>
                 </div>
             </div>
         `;
-    }
+    },
+
+    reportingMenu: () => {
+        const user = window.currentUser || { role: 'Unknown' };
+        return `
+            <div class="drawer-section" style="padding-top: 12px;">
+                <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
+                
+                <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--slate-50); border-radius: 16px; border: 1px solid var(--slate-100);">
+                    <div style="width: 44px; height: 44px; background: var(--slate-800); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800;">
+                        ${user.name ? user.name.charAt(0) : 'U'}
+                    </div>
+                    <div>
+                        <div style="font-weight: 800; font-size: 14px; color: var(--slate-900);">${user.name || 'Site User'}</div>
+                        <div style="font-size: 11px; color: var(--slate-500);">${user.role || 'Personnel'}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-left: 4px;">Site Reporting</div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.close(); window.app.fsModule?.openDailyLogDrawer()">
+                            <div style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.1); color: var(--emerald); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Daily Progress</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">Submit site updates and resource usage</div>
+                            </div>
+                        </button>
+
+                        <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.close(); window.app.loadPage('reporting')">
+                            <div style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.1); color: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Governance Center</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">Monitor blockers and site integrity</div>
+                            </div>
+                        </button>
+
+                        <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.drawer.close(); window.app.fsModule?.viewRejectedLogs()">
+                            <div style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-undo-alt"></i>
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">Rejected Reviews</div>
+                                <div style="font-size: 11px; color: var(--slate-500);">View and fix rejected site logs</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="height: 1px; background: var(--slate-100); margin: 8px 0 24px;"></div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.app.layout.showProfileDrawer()">
+                        <div style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.1); color: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">My Profile</div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Account settings & credentials</div>
+                        </div>
+                    </button>
+
+                    <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: #FFF1F2; border: 1px solid #FECACA; box-shadow: var(--shadow-sm);" onclick="window.app.layout.handleLogout()">
+                        <div style="width: 32px; height: 32px; background: white; color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #FECACA;">
+                            <i class="fas fa-power-off"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; font-size: 14px; color: var(--red);">Logout Session</div>
+                            <div style="font-size: 11px; color: #B91C1C; opacity: 0.8;">Securely sign out of MCMS</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    mobileMenu: (navSections = []) => {
+        const user = window.currentUser || { role: 'Unknown' };
+        
+        const sectionHTML = navSections.map(section => `
+            <div style="margin-bottom: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-left: 4px;">${section.section}</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${section.items.map(item => `
+                        <button class="btn" style="width: 100%; padding: 12px 16px; justify-content: flex-start; gap: 12px; background: white; border: 1px solid var(--slate-100); border-radius: 12px; box-shadow: var(--shadow-sm);" 
+                            onclick="window.drawer.close(); ${item.action === 'drawer' ? `setTimeout(function(){ var t = window.DrawerTemplates['${item.drawerId}']; window.drawer.open('${item.label}', typeof t === 'function' ? t() : t); }, 100)` : `window.app.loadPage('${item.id}')`}">
+                            <div style="width: 28px; height: 28px; background: var(--slate-50); color: var(--slate-600); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                                ${item.icon}
+                            </div>
+                            <div style="font-weight: 700; font-size: 13px; color: var(--slate-900);">${item.label}</div>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="drawer-section" style="padding-top: 12px;">
+                <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
+                
+                <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--slate-50); border-radius: 16px; border: 1px solid var(--slate-100);">
+                    <div style="width: 48px; height: 48px; background: var(--slate-800); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800;">
+                        ${user.name ? user.name.charAt(0) : 'U'}
+                    </div>
+                    <div>
+                        <div style="font-weight: 800; font-size: 15px; color: var(--slate-900);">${user.name || 'Site User'}</div>
+                        <div style="font-size: 12px; color: var(--slate-500);">${user.role || 'Personnel'}</div>
+                    </div>
+                </div>
+
+                ${sectionHTML}
+
+                <div style="height: 1px; background: var(--slate-100); margin: 8px 0 24px;"></div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: white; border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);" onclick="window.app.layout.showProfileDrawer()">
+                        <div style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.1); color: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; font-size: 14px; color: var(--slate-900);">My Profile</div>
+                            <div style="font-size: 11px; color: var(--slate-500);">Account settings & credentials</div>
+                        </div>
+                    </button>
+
+
+                    <button class="btn" style="width: 100%; padding: 16px; justify-content: flex-start; gap: 16px; background: #FFF1F2; border: 1px solid #FECACA; box-shadow: var(--shadow-sm);" onclick="window.app.layout.handleLogout()">
+                        <div style="width: 32px; height: 32px; background: white; color: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #FECACA;">
+                            <i class="fas fa-power-off"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; font-size: 14px; color: var(--red);">Logout Session</div>
+                            <div style="font-size: 11px; color: #B91C1C; opacity: 0.8;">Securely sign out of MCMS</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    submitComplaint: (projectId = null) => `
+        <div class="drawer-section">
+            <div style="background: var(--amber-light); padding: 16px; border-radius: 8px; border: 1px solid var(--amber-hover); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-exclamation-triangle" style="color: var(--amber-dark); font-size: 20px;"></i>
+                <div style="font-weight: 700; color: var(--amber-dark); font-size: 14px;">Report Site Issue / Delay</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Issue Category</label>
+                <select id="issue-category" class="form-input" style="width: 100%;">
+                    <option>Material Shortage</option>
+                    <option>Weather Delay</option>
+                    <option>Equipment Breakdown</option>
+                    <option>Technical Clarification Needed</option>
+                    <option>Labor Dispute</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Severity</label>
+                <div style="display: flex; gap: 12px;">
+                    <label style="flex: 1; border: 1px solid var(--slate-200); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
+                        <input type="radio" name="severity" value="low"> <div style="font-size: 11px;">Low</div>
+                    </label>
+                    <label style="flex: 1; border: 1px solid var(--amber); background: var(--amber-light); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
+                        <input type="radio" name="severity" value="medium" checked> <div style="font-size: 11px; font-weight: 700;">Medium</div>
+                    </label>
+                    <label style="flex: 1; border: 1px solid var(--red); background: var(--red-light); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;">
+                        <input type="radio" name="severity" value="high"> <div style="font-size: 11px; font-weight: 700;">High</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Details</label>
+                <textarea id="issue-description" class="form-input" data-vrules="required|minLen:20" rows="5" placeholder="Describe the issue and expected impact on schedule..." oninput="window.app.validateIssueInline()"></textarea>
+                <div id="issue-description-error" class="v-msg v-msg-err" style="display:none; font-size:11px; margin-top:4px;"></div>
+                <div id="issue-char-count" style="font-size:10px; color:var(--slate-400); text-align:right; margin-top:4px;">0 / 20</div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; background: var(--amber-dark); border-color: var(--amber-dark); justify-content: center; padding: 14px; font-weight: 700;" onclick="window.app.handleSubmitIssue(${projectId})">Submit Report</button>
+        </div>
+    `,
 };

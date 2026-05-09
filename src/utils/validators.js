@@ -272,6 +272,7 @@ const createDailyLogSchema = z.object({
   activePhase: z.string().max(100).optional(),
   activeTask: z.string().max(255).optional(),
   progressIncrement: z.number().int().min(0).max(100).optional(),
+  progressCompletion: z.number().int().min(0).max(100).optional(),
   submissionLat: z.coerce.number().optional(),
   submissionLng: z.coerce.number().optional(),
   submissionAccuracy: z.coerce.number().optional(),
