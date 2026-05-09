@@ -75,7 +75,6 @@ export const EC_Distribution = {
 
             // Sort by time descending
             this.dispatchLogs = logs.sort((a, b) => new Date(b.time) - new Date(a.time));
-            this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load distribution logs:', error);
         } finally {

@@ -241,7 +241,9 @@ const reportIncident = asyncHandler(async (req, res, id) => {
   }
 
   const reconciliationService = require('../services/reconciliation.service');
-  const result = await reconciliationService.processIncident(assetId, user.id, {
+  const result = await reconciliationService.processIncident({
+    assetId,
+    reporterId: user.id,
     type: body.type,
     qtySent: body.qtySent,
     qtyReceived: body.qtyReceived,

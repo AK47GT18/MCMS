@@ -4481,12 +4481,22 @@ Contract Admin</textarea>
                     <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
                         <option value="" disabled selected>Select from road spec...</option>
                         ${(() => {
-            const materials = projectData?.recommendedMaterials || [];
+            const allMaterials = projectData?.recommendedMaterials || [];
+            // Filter out materials that are already fully delivered or en-route
+            const materials = allMaterials.filter(m => {
+                const totalOnSite = (Number(m.onSiteQty) || 0) + (Number(m.inTransitQty) || 0);
+                return totalOnSite < (Number(m.approvedQty) || 0);
+            });
+
+            if (materials.length === 0) {
+                return `<option value="" disabled>All assigned materials are fully supplied to site.</option>`;
+            }
+
             const phases = [...new Set(materials.map(m => m.phaseName))];
             return phases.map(phase => `
                             <optgroup label="${phase}">
                                 ${materials.filter(m => m.phaseName === phase).map(m => `
-                                    <option value="${m.name}" data-unit="${m.unit}" data-approved="${m.approvedQty}">${m.name} (Max: ${m.approvedQty} ${m.unit})</option>
+                                    <option value="${m.name}" data-unit="${m.unit}" data-approved="${m.approvedQty}">${m.name} (Need: ${m.approvedQty - (m.onSiteQty + m.inTransitQty)} ${m.unit})</option>
                                 `).join('')}
                             </optgroup>
                         `).join('');
@@ -4552,6 +4562,60 @@ Contract Admin</textarea>
             <button class="btn btn-primary" id="btn_authorize_dispatch" style="width: 100%; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
                 onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} window.app.ecModule?.handleRequisitionDispatch('${req.id}')">
                 <i class="fas fa-truck" style="margin-right: 8px;"></i> Authorize & Dispatch
+            </button>
+        </div>
+    `,
+    confirmMaterialArrival: (req) => `
+        <div style="padding: 24px;">
+            <div style="background: var(--blue-light); padding: 16px; border-radius: 12px; border: 1px solid var(--blue-border); margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+                <i class="fas fa-truck-loading" style="color: var(--blue); font-size: 20px;"></i>
+                <div>
+                    <div style="font-weight: 800; color: var(--blue); font-size: 14px;">Confirm Material Arrival</div>
+                    <div style="font-size: 11px; color: var(--blue-border);">Reference: ${req.reqCode || 'REQ-' + req.id}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin-bottom: 12px; display: block;">1. Verify Received Quantities</label>
+                ${req.items.map((item, idx) => `
+                    <div style="background: white; border: 1px solid var(--slate-200); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-weight: 700; color: var(--slate-800);">${item.itemName}</span>
+                            <span style="font-size: 12px; color: var(--slate-500);">Expected: <span style="font-weight: 700; color: var(--slate-700);">${item.quantity} ${item.unit || ''}</span></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="number" class="received-qty-input form-input" 
+                                data-item-id="${item.id}" 
+                                data-expected-qty="${item.quantity}"
+                                data-item-name="${item.itemName}"
+                                value="${item.quantity}" 
+                                step="0.1"
+                                style="flex: 1; font-weight: 800; color: var(--blue); border-color: var(--blue-border);">
+                            <div style="font-size: 12px; font-weight: 700; color: var(--slate-400);">${item.unit || ''}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px; display: block;">2. Delivery Information</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Carrier / Transporter</label>
+                        <input type="text" id="arrival_dispatched_by" class="form-input" placeholder="e.g. Unitrans" style="width: 100%;" value="${req.dispatchedBy || ''}">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Receiving Officer</label>
+                        <input type="text" id="arrival_received_by" class="form-input" style="width: 100%;" value="${window.currentUser?.name || ''}">
+                    </div>
+                </div>
+                <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Shortage / Damage Notes</label>
+                <textarea id="arrival_notes" class="form-input" placeholder="Explain any discrepancies here..." style="width: 100%; height: 80px; resize: none;"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; padding: 16px; background: var(--blue); border-color: var(--blue); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;"
+                onclick="window.app.fsModule?.submitMaterialArrival('${req.id}')">
+                <i class="fas fa-check-double" style="margin-right: 8px;"></i> Complete Site Intake
             </button>
         </div>
     `,

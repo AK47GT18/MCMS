@@ -189,7 +189,6 @@ export const EC_Registry = {
             this.rentalContracts = mergedRentals;
             this.activeProjects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.data || []);
             this.rentalsLoaded = true;
-            this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load assets/rentals:', error);
             this.rentalsLoaded = true;

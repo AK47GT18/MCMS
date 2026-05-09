@@ -16,7 +16,15 @@ const escapeHTML = (str) => {
 
 export const FS_Tasks = {
     getTasksView() {
-        setTimeout(() => this._loadTasks(), 0);
+        if (!this._fetchingTasks && !this.tasksLoaded) {
+            this._fetchingTasks = true;
+            setTimeout(() => {
+                this._loadTasks().finally(() => { 
+                    this._fetchingTasks = false; 
+                    this.tasksLoaded = true;
+                });
+            }, 0);
+        }
         return `
             <div class="data-card">
               <div class="data-card-header"><div class="card-title">Assigned Tasks</div></div>
@@ -78,7 +86,15 @@ export const FS_Tasks = {
 ,
 
     getGanttView() {
-        setTimeout(() => this.renderGanttChart(), 100);
+        if (!this._fetchingGantt && !this.ganttLoaded) {
+            this._fetchingGantt = true;
+            setTimeout(() => {
+                this.renderGanttChart().finally(() => { 
+                    this._fetchingGantt = false; 
+                    this.ganttLoaded = true;
+                });
+            }, 100);
+        }
 
         const viewModes = ['Day', 'Week', 'Month', 'Year'];
         const viewModeOptions = viewModes.map(m =>

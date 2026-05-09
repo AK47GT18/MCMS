@@ -828,6 +828,9 @@ async function router(req, res) {
     if (method === 'POST' && id && action === 'confirm') {
       return dispatchController.confirmArrival(req, res, id);
     }
+    if (method === 'POST' && id && action === 'variance') {
+      return dispatchController.confirmArrivalVariance(req, res, id);
+    }
     return methodNotAllowed(res, ['POST']);
   }
 

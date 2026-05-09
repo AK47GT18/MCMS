@@ -149,42 +149,49 @@ export class EquipmentCoordinatorDashboard {
         }
     }
 
-    switchView(view) {
+    async switchView(view) {
         this.currentView = view;
 
+        // Initial render to show loading states if needed
+        this._refreshCurrentView();
+
+        const loads = [];
         switch (view) {
             case 'dashboard':
-                this._loadProjects();
-                this._loadAssets();
-                this._loadInventory();
-                this._loadProcurementReceipts();
-                this._loadDistributionLogs();
+                loads.push(this._loadProjects());
+                loads.push(this._loadAssets());
+                loads.push(this._loadInventory());
+                loads.push(this._loadProcurementReceipts());
+                loads.push(this._loadDistributionLogs());
                 break;
             case 'inventory':
             case 'distribution':
-                this._loadInventory();
-                this._loadDistributionLogs();
+                loads.push(this._loadInventory());
+                loads.push(this._loadDistributionLogs());
                 break;
             case 'requests':
                 if (this.hubActiveTab === 'fm') {
-                    this._loadProcurementReceipts();
+                    loads.push(this._loadProcurementReceipts());
                 } else {
-                    this._loadRequisitions();
+                    loads.push(this._loadRequisitions());
                 }
                 break;
             case 'registry':
             case 'maintenance':
-                this._loadAssets();
+                loads.push(this._loadAssets());
                 break;
             case 'project-logistics':
-                this._loadProjects();
+                loads.push(this._loadProjects());
                 break;
             case 'audit':
-                this._loadAuditLogs?.();
+                if (this._loadAuditLogs) loads.push(this._loadAuditLogs());
                 break;
         }
 
-        this._refreshCurrentView();
+        if (loads.length > 0) {
+            await Promise.all(loads);
+            this._refreshCurrentView();
+        }
     }
 
     async _loadProjects() {
@@ -204,10 +211,6 @@ export class EquipmentCoordinatorDashboard {
                     const data = holdings[idx];
                     this.inventoryByProject[p.id] = Array.isArray(data) ? data : (data?.data || []);
                 });
-            }
-
-            if (this.currentView === 'dashboard' || this.currentView === 'project-logistics') {
-                this._refreshCurrentView();
             }
         } catch (error) {
             console.error('[EC] Failed to load projects:', error);

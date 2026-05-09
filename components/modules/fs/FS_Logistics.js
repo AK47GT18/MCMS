@@ -6,11 +6,14 @@ import inventoryApi from '../../../src/api/inventory.api.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
-        // Trigger refresh
-        setTimeout(() => {
-            this._loadSiteInventory();
-            this._loadInTransit();
-        }, 0);
+        // Trigger refresh only if not currently fetching (prevents infinite loop)
+        if (!this._fetchingLogistics && !this.inventoryLoaded) {
+            this._fetchingLogistics = true;
+            setTimeout(() => {
+                Promise.all([this._loadSiteInventory(), this._loadInTransit()])
+                    .finally(() => { this._fetchingLogistics = false; });
+            }, 0);
+        }
 
         const entries = Object.entries(this.siteInventory || {});
 
@@ -102,7 +105,6 @@ export const FS_Logistics = {
                 };
             });
             this.inventoryLoaded = true;
-            this._refreshCurrentView();
         } catch (error) {
             this.inventoryLoaded = true;
             console.error('[FS] Failed to load site inventory:', error);
@@ -117,7 +119,6 @@ export const FS_Logistics = {
             });
             const items = Array.isArray(result) ? result : (result.data || result.requisitions || []);
             this.inTransitItems = items.filter(r => r.dispatchStatus === 'in_transit');
-            this._refreshCurrentView();
         } catch (error) {
             console.error('[FS] Failed to load in-transit items:', error);
         }
@@ -154,17 +155,65 @@ export const FS_Logistics = {
     },
 
     async handleConfirmArrival(reqId) {
-        if (!confirm('Confirm that these resources have arrived physically at the site?')) return;
+        const req = this.inTransitItems.find(r => String(r.id) === String(reqId));
+        if (!req) return;
+        
+        window.drawer.open('Material Intake', window.DrawerTemplates.confirmMaterialArrival(req));
+    },
+
+    async submitMaterialArrival(reqId) {
+        const req = this.inTransitItems.find(r => String(r.id) === String(reqId));
+        if (!req) return;
+
+        const receivedBy = document.getElementById('arrival_received_by').value;
+        const dispatchedBy = document.getElementById('arrival_dispatched_by').value;
+        const notes = document.getElementById('arrival_notes').value;
+        const inputs = document.querySelectorAll('.received-qty-input');
+        
+        const receivedItems = Array.from(inputs).map(input => ({
+            id: input.dataset.itemId,
+            itemName: input.dataset.itemName,
+            expectedQty: Number(input.dataset.expectedQty),
+            receivedQty: Number(input.value)
+        }));
+
+        if (!receivedBy) {
+            window.toast.show('Please enter the name of the Receiving Officer.', 'warning');
+            return;
+        }
 
         try {
-            window.toast.show('Confirming arrival...', 'info');
-            await client.post(`/dispatch/${reqId}/confirm`);
-            window.toast.show('Arrival confirmed. Site inventory updated.', 'success');
+            window.toast.show('Processing site intake...', 'info');
+            
+            // Use variance API if any quantity differs, otherwise use standard confirm
+            const hasDiscrepancy = receivedItems.some(i => i.receivedQty !== i.expectedQty);
+            
+            if (hasDiscrepancy) {
+                await client.post(`/dispatch/${reqId}/variance`, {
+                    receivedItems,
+                    receivedBy,
+                    dispatchedBy,
+                    notes
+                });
+                window.toast.show('Intake completed with variance. Incidents logged.', 'warning');
+            } else {
+                await client.post(`/dispatch/${reqId}/confirm`, {
+                    receivedBy,
+                    dispatchedBy,
+                    notes
+                });
+                window.toast.show('Full delivery confirmed. Inventory updated.', 'success');
+            }
+
+            window.drawer.close();
+            
+            // Refresh logistics view
             await this._loadSiteInventory();
             await this._loadInTransit();
+            this._refreshCurrentView();
         } catch (error) {
-            console.error('Arrival confirmation failed:', error);
-            window.toast.show('Failed to confirm arrival.', 'error');
+            console.error('[FS] Intake failed:', error);
+            window.toast.show('Failed to complete resource intake.', 'error');
         }
     },
 

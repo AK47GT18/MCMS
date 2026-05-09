@@ -83,10 +83,8 @@ export const EC_Handlers = {
                     </div>
 
                     <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="form-label">Project Phase</label>
-                        <select id="dispatch_phase" class="form-input" style="width: 100%;" onchange="window.app.ecModule._loadPhaseResources(this.value)">
-                            <option value="">Select Site first...</option>
-                        </select>
+                        <label class="form-label">Site Supervisor (Auto-assigned)</label>
+                        <input type="text" id="dispatch_recipient" class="form-input" placeholder="Select target site first..." style="width: 100%; background: var(--slate-50); color: var(--slate-700);" readonly>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 20px;">
@@ -109,9 +107,15 @@ export const EC_Handlers = {
                         <textarea id="dispatch_justification" class="form-input" placeholder="Scheduled fulfillment for site works..." style="width: 100%; height: 60px; resize: none; font-size: 12px;"></textarea>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="form-label">Recipient Name (To Who)</label>
-                        <input type="text" id="dispatch_recipient" class="form-input" placeholder="Site supervisor / manager" style="width: 100%;">
+                    <div class="form-group" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label class="form-label">Transporter / Driver Name</label>
+                            <input type="text" id="dispatch_transporter" class="form-input" placeholder="Name of driver..." style="width: 100%;">
+                        </div>
+                        <div>
+                            <label class="form-label">Driver Phone Number</label>
+                            <input type="text" id="dispatch_transporter_phone" class="form-input" placeholder="+265..." style="width: 100%;">
+                        </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 32px;">
@@ -135,8 +139,9 @@ export const EC_Handlers = {
     async handleMaterialDistribution(materialName) {
         const amount = Number(document.getElementById('dispatch_amount')?.value || 0);
         const projectId = document.getElementById('dispatch_project')?.value;
-        const phaseId = document.getElementById('dispatch_phase')?.value;
         const recipient = document.getElementById('dispatch_recipient')?.value;
+        const transporter = document.getElementById('dispatch_transporter')?.value;
+        const transporterPhone = document.getElementById('dispatch_transporter_phone')?.value || 'N/A';
         const date = document.getElementById('dispatch_date')?.value;
         const justification = document.getElementById('dispatch_justification')?.value;
 
@@ -156,39 +161,35 @@ export const EC_Handlers = {
             if (errorEl) errorEl.style.display = 'block';
             return;
         }
-        if (!projectId || !recipient || !justification) {
-            window.toast?.show('Project site, recipient, and justification are required.', 'warning');
+        if (!projectId || !recipient || !justification || !transporter) {
+            window.toast?.show('Project site, transporter, and justification are required.', 'warning');
             return;
         }
 
         try {
             window.toast?.show('Processing distribution...', 'info');
 
-            // Perform deduction API call
+            // Find the sector ID from allocations
+            let sectorId = 1; // Default fallback
+            if (material.allocations) {
+                const match = material.allocations.find(a => String(a.projectId) === String(projectId));
+                if (match && match.sectorId) sectorId = match.sectorId;
+            }
+
+            // Perform deduction API call (map to distribute API schema)
             await client.post('/inventory/dispatch', {
-                materialName,
+                sectorId: sectorId,
+                materialName: materialName,
+                unit: material.unit || 'Units',
                 quantity: amount,
-                projectId,
-                phaseId,
-                recipient,
-                date,
-                justification,
+                reference: `Site Dispatch: ${projectId}`,
+                notes: `Transporter: ${transporter} (${transporterPhone}) | Recipient: ${recipient} | Reason: ${justification}`,
                 dispatchedBy: window.currentUser?.name || 'Equipment Coordinator'
             });
 
             // Update local state
             this.inventory[materialName].qty -= amount;
-
-            // Send Notification Email
-            try {
-                const notificationsApi = await import('../../../src/api/notifications.api.js');
-                await notificationsApi.default.sendEmail({
-                    to: 'Site Management',
-                    subject: `Material Dispatch: ${materialName}`,
-                    body: `Authorized dispatch of ${amount} ${material.unit} to Project ${projectId}.\n\nJustification: ${justification}\nRecipient: ${recipient}`,
-                    description: `Automated logistics fulfillment for ${materialName}.`
-                });
-            } catch (e) { console.error('Email notify failed', e); }
+            // Note: Email notifications and audit logs are securely handled by the backend automatically upon successful /inventory/dispatch }
 
             window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
             window.drawer?.close();
@@ -321,84 +322,18 @@ export const EC_Handlers = {
 
     async _loadProjectPhases(projectId) {
         if (!projectId) return;
-        const phaseSelect = document.getElementById('dispatch_phase');
         const recipientInput = document.getElementById('dispatch_recipient');
-        if (!phaseSelect) return;
-
-        phaseSelect.innerHTML = '<option value="">Loading...</option>';
         try {
-            // 1. Load Phases (Top-level tasks)
-            const result = await client.get(`/projects/${projectId}/tasks`);
-            const tasks = Array.isArray(result) ? result : (result.data || []);
-            const phases = tasks.filter(t => !t.parentId);
-
-            if (phases.length === 0) {
-                phaseSelect.innerHTML = '<option value="general">General Operations</option>';
-            } else {
-                phaseSelect.innerHTML = '<option value="">Select Phase...</option>' +
-                    phases.map(ph => `<option value="${ph.id}">${ph.name}</option>`).join('');
+            // Load Project Details for Supervisor auto-assignment
+            let project = await client.get(`/projects/${projectId}`);
+            if (project) {
+                // Handle axios wrapper if present
+                project = project.data || project;
+                recipientInput.value = project.fieldSupervisor?.name || project.manager?.name || project.supervisorName || project.managerName || 'Unassigned Supervisor';
             }
-
-            // 2. Load Project Details for Supervisor
-            const project = await client.get(`/projects/${projectId}`);
-            if (project && recipientInput) {
-                recipientInput.value = project.supervisorName || project.managerName || '';
-            }
-
-            // Clear resource list on project change
-            const resSummary = document.getElementById('phase_resources_summary');
-            if (resSummary) resSummary.style.display = 'none';
-
         } catch (err) {
             console.error('Failed to load project context:', err);
-            phaseSelect.innerHTML = '<option value="general">General Operations (Fallback)</option>';
-        }
-    },
-
-    async handleMaterialDistribution(materialName) {
-        const amount = Number(document.getElementById('dispatch_amount')?.value || 0);
-        const projectId = document.getElementById('dispatch_project')?.value;
-        const phaseId = document.getElementById('dispatch_phase')?.value;
-        const recipient = document.getElementById('dispatch_recipient')?.value;
-        const date = document.getElementById('dispatch_date')?.value;
-
-        const material = this.inventory[materialName];
-        const errorEl = document.getElementById('dispatch_error');
-
-        if (!amount || amount <= 0 || amount > material.qty) {
-            if (errorEl) errorEl.style.display = 'block';
-            return;
-        }
-        if (!projectId || !recipient) {
-            window.toast?.show('Project site and recipient are required.', 'warning');
-            return;
-        }
-
-        try {
-            window.toast?.show('Processing distribution...', 'info');
-
-            // Perform deduction API call
-            await client.post('/inventory/dispatch', {
-                materialName,
-                quantity: amount,
-                projectId,
-                phaseId,
-                recipient,
-                date
-            });
-
-            // Update local state
-            this.inventory[materialName].qty -= amount;
-
-            window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
-            window.drawer?.close();
-
-            // Refresh view
-            if (this.currentView === 'inventory') this._refreshCurrentView();
-            if (this.currentView === 'dashboard') this._refreshCurrentView();
-
-        } catch (err) {
-            window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');
+            if (recipientInput) recipientInput.value = 'Failed to load supervisor';
         }
     },
 
@@ -1139,10 +1074,6 @@ export const EC_Handlers = {
                 setTimeout(() => {
                     refreshBtn.innerHTML = '<i class="fas fa-sync"></i> Refresh Stock';
                 }, 2000);
-            }
-
-            if (this.currentView === 'inventory' || this.currentView === 'dashboard') {
-                this._refreshCurrentView();
             }
         } catch (error) {
             console.error('[EC] Failed to load inventory:', error);

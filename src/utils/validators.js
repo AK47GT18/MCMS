@@ -344,6 +344,7 @@ const updateProcurementSchema = z.object({
 const inventoryDistributeSchema = z.object({
   sectorId: z.coerce.number().int().positive(),
   materialName: z.string().min(1),
+  unit: z.string().optional(),
   quantity: z.coerce.number().positive(),
   reference: z.string().optional(),
   notes: z.string().optional(),

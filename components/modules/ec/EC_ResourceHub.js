@@ -137,8 +137,6 @@ export const EC_ResourceHub = {
             
             // Filter out fulfilled/rejected ones unless we want a history
             this.requisitionQueue = items.filter(r => r.status === 'pending' || r.status === 'approved');
-            
-            this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load requisitions:', error);
         } finally {
@@ -162,7 +160,6 @@ export const EC_ResourceHub = {
                 vendor: p.vendorName,
                 projectName: p.projectName
             }));
-            this._refreshCurrentView();
         } catch (error) {
             console.error('[EC] Failed to load procurement receipts:', error);
         } finally {

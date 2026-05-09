@@ -2,7 +2,15 @@ import client from '../../../src/api/client.js';
 
 export const EC_ProjectLogistics = {
     getProjectLogisticsView() {
-        setTimeout(() => this.loadProjectLogistics(), 0);
+        if (!this._fetchingProjectLogistics && !this.projectLogisticsLoaded) {
+            this._fetchingProjectLogistics = true;
+            setTimeout(() => {
+                this.loadProjectLogistics().finally(() => {
+                    this._fetchingProjectLogistics = false;
+                    this.projectLogisticsLoaded = true;
+                });
+            }, 0);
+        }
         return `
             <div class="data-card" style="background: #ffffff !important; border: 1px solid var(--slate-200); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-sm);">
                 <div class="data-card-header" style="padding: 32px 24px; background: #ffffff; border-bottom: 1px solid var(--slate-100);">

@@ -182,33 +182,73 @@ function calculateIncidentCost(asset, incidentData) {
 
 /**
  * Process a full incident reconciliation:
- * 1. Calculate financial hit from asset value and loss ratio
+ * Supports both Assets and Materials (if assetId is null)
+ * 1. Calculate financial hit from asset/material value and loss ratio
  * 2. Deduct from project budget
- * 3. Update asset status
+ * 3. Update asset status (if applicable)
  * 4. Create audit trail
  * 5. Notify PM, FD, EC
  * 6. Generate replenishment requisition for FD
  */
-async function processIncident(assetId, reporterId, incidentData) {
+async function processIncident(options = {}) {
+  const { 
+    assetId = null, 
+    reporterId, 
+    projectId = null,
+    materialName = null,
+    type,
+    qtySent = 1,
+    qtyReceived = 0,
+    estimatedValue = null,
+    description = '',
+    dispatchedBy = 'Unknown'
+  } = options;
+
   const logger = require('../utils/logger');
-  const asset = await prisma.asset.findUnique({
-    where: { id: assetId },
-    include: {
-      currentProject: { select: { id: true, name: true, code: true, managerId: true, fieldSupervisorId: true } }
-    }
-  });
+  let asset = null;
+  let project = null;
 
-  if (!asset) throw new AppError('Asset not found', 404);
+  if (assetId) {
+    asset = await prisma.asset.findUnique({
+      where: { id: assetId },
+      include: {
+        currentProject: { select: { id: true, name: true, code: true, managerId: true, fieldSupervisorId: true } }
+      }
+    });
+    if (!asset) throw new AppError('Asset not found', 404);
+    project = asset.currentProject;
+  } else if (projectId) {
+    project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, name: true, code: true, managerId: true, fieldSupervisorId: true }
+    });
+  }
 
-  const project = asset.currentProject;
-  const { financialHit, lossRatio, lossDescription } = calculateIncidentCost(asset, incidentData);
+  // Calculate financial hit
+  let financialHit = 0;
+  let lossRatio = 0;
+  let lossDescription = '';
+
+  if (asset) {
+    const costData = calculateIncidentCost(asset, { type, qtySent, qtyReceived });
+    financialHit = costData.financialHit;
+    lossRatio = costData.lossRatio;
+    lossDescription = costData.lossDescription;
+  } else {
+    // Material incident
+    const sent = Number(qtySent || 1);
+    const received = Number(qtyReceived || 0);
+    lossRatio = sent > 0 ? Math.max(0, (sent - received) / sent) : 1;
+    financialHit = Math.round((estimatedValue || 0) * lossRatio);
+    lossDescription = `[MATERIAL] ${sent - received} of ${sent} units of ${materialName || 'Resource'} damaged/missing.`;
+  }
 
   const reporter = await prisma.user.findUnique({
     where: { id: reporterId },
     select: { id: true, name: true, role: true }
   });
 
-  // 1. Apply budget deduction if project exists and there's a financial impact
+  // 1. Apply budget deduction
   if (project && financialHit > 0) {
     const projectService = require('./projects.service');
     await projectService.addToSpent(project.id, financialHit);
@@ -217,35 +257,37 @@ async function processIncident(assetId, reporterId, incidentData) {
     });
   }
 
-  // 2. Update asset status based on incident type
-  let newAssetStatus = asset.status;
-  if (incidentData.type === 'theft' || incidentData.type === 'non_arrival') {
-    newAssetStatus = 'decommissioned';
-  } else if (incidentData.type === 'accident' || incidentData.type === 'damage') {
-    newAssetStatus = 'maintenance';
-  }
+  // 2. Update asset status if applicable
+  if (asset) {
+    let newAssetStatus = asset.status;
+    if (type === 'theft' || type === 'non_arrival') {
+      newAssetStatus = 'decommissioned';
+    } else if (type === 'accident' || type === 'damage') {
+      newAssetStatus = 'maintenance';
+    }
 
-  await prisma.asset.update({
-    where: { id: assetId },
-    data: {
-      status: newAssetStatus,
-      condition: lossRatio >= 0.5 ? 'Poor' : 'Fair',
-      assetLogs: {
-        create: {
-          userId: reporterId,
-          action: `incident_${incidentData.type}`,
-          fuelLevelAtAction: -1
-        }
-      },
-      maintenanceRecords: {
-        create: {
-          serviceDate: new Date(),
-          type: 'incident',
-          description: `[INCIDENT: ${incidentData.type.toUpperCase()}] ${incidentData.description || lossDescription}. Financial impact: MWK ${financialHit.toLocaleString()}. Dispatched by: ${incidentData.dispatchedBy || 'Unknown'}`
+    await prisma.asset.update({
+      where: { id: assetId },
+      data: {
+        status: newAssetStatus,
+        condition: lossRatio >= 0.5 ? 'Poor' : 'Fair',
+        assetLogs: {
+          create: {
+            userId: reporterId,
+            action: `incident_${type}`,
+            fuelLevelAtAction: -1
+          }
+        },
+        maintenanceRecords: {
+          create: {
+            serviceDate: new Date(),
+            type: 'incident',
+            description: `[INCIDENT: ${type.toUpperCase()}] ${description || lossDescription}. Financial impact: MWK ${financialHit.toLocaleString()}. Dispatched by: ${dispatchedBy}`
+          }
         }
       }
-    }
-  });
+    });
+  }
 
   // 3. Create audit trail
   await prisma.auditLog.create({
@@ -253,20 +295,20 @@ async function processIncident(assetId, reporterId, incidentData) {
       userId: reporterId,
       userName: reporter?.name,
       userRole: reporter?.role,
-      action: 'ASSET_INCIDENT_REPORTED',
-      targetType: 'Asset',
-      targetId: assetId,
-      targetCode: asset.assetCode,
+      action: asset ? 'ASSET_INCIDENT_REPORTED' : 'MATERIAL_INCIDENT_REPORTED',
+      targetType: asset ? 'Asset' : 'Material',
+      targetId: assetId || project?.id,
+      targetCode: asset ? asset.assetCode : (project ? project.code : 'N/A'),
       details: {
-        incidentType: incidentData.type,
-        assetName: asset.name,
-        qtySent: incidentData.qtySent,
-        qtyReceived: incidentData.qtyReceived,
+        incidentType: type,
+        assetName: asset ? asset.name : materialName,
+        qtySent,
+        qtyReceived,
         lossRatio, financialHit, lossDescription,
         projectId: project?.id,
         projectName: project?.name,
-        dispatchedBy: incidentData.dispatchedBy,
-        description: incidentData.description
+        dispatchedBy,
+        description
       }
     }
   });
@@ -276,34 +318,31 @@ async function processIncident(assetId, reporterId, incidentData) {
   const alertData = {
     type: 'error',
     icon: 'fa-exclamation-triangle',
-    title: `Asset Incident: ${incidentData.type.replace(/_/g, ' ').toUpperCase()}`,
-    message: `${asset.name} (${asset.assetCode}) — ${lossDescription}. Budget impact: MWK ${financialHit.toLocaleString()}. ${project ? `Project: ${project.name}` : ''}`
+    title: `Incident Alert: ${type.replace(/_/g, ' ').toUpperCase()}`,
+    message: `${asset ? asset.name : materialName} — ${lossDescription}. Budget impact: MWK ${financialHit.toLocaleString()}. ${project ? `Project: ${project.name}` : ''}`
   };
 
   await notifService.notifyRole('Equipment_Coordinator', alertData);
   await notifService.notifyRole('Finance_Director', alertData);
   if (project?.managerId) await notifService.create({ userId: project.managerId, ...alertData });
-  if (project?.fieldSupervisorId && project.fieldSupervisorId !== reporterId) {
-    await notifService.create({ userId: project.fieldSupervisorId, ...alertData });
-  }
-
-  // 5. Generate replenishment requisition if significant loss
+  
+  // 5. Generate replenishment requisition if loss occurred
   let replenishmentReq = null;
   if (financialHit > 0 && project) {
     try {
       replenishmentReq = await prisma.requisition.create({
         data: {
-          reqCode: `RPL-INC-${assetId}-${Date.now().toString().slice(-4)}`,
+          reqCode: `RPL-INC-${assetId || 'MAT'}-${Date.now().toString().slice(-4)}`,
           projectId: project.id,
-          notes: `[AUTO] Replenishment for incident on ${asset.name}: ${lossDescription}`,
+          notes: `[AUTO] Replenishment for incident on ${asset ? asset.name : materialName}: ${lossDescription}`,
           totalAmount: financialHit,
           status: 'pending',
           submittedBy: reporterId,
           items: {
             create: [{
-              itemName: `Replacement: ${asset.name} (${asset.category || 'Equipment'})`,
-              quantity: Math.max(1, Number(incidentData.qtySent || 1) - Number(incidentData.qtyReceived || 0)),
-              unitPrice: Number(asset.estimatedValue || financialHit)
+              itemName: asset ? `Replacement: ${asset.name}` : `Replenishment: ${materialName}`,
+              quantity: Math.max(1, Number(qtySent) - Number(qtyReceived)),
+              unitPrice: asset ? Number(asset.estimatedValue || 0) : (Number(estimatedValue) / Number(qtySent))
             }]
           }
         }
@@ -317,11 +356,11 @@ async function processIncident(assetId, reporterId, incidentData) {
   }
 
   return {
-    assetId, assetCode: asset.assetCode, assetName: asset.name,
-    incidentType: incidentData.type, financialHit, lossRatio, lossDescription,
-    newStatus: newAssetStatus, projectId: project?.id,
-    replenishmentReqId: replenishmentReq?.id || null,
-    replenishmentReqCode: replenishmentReq?.reqCode || null
+    success: true,
+    financialHit,
+    lossDescription,
+    projectId: project?.id,
+    replenishmentReqId: replenishmentReq?.id || null
   };
 }
 

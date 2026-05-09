@@ -105,14 +105,32 @@ async function distribute(data, user) {
   try {
     const sector = await prisma.sector.findUnique({
       where: { id: sectorId },
-      include: { project: { include: { manager: true } } }
+      include: { project: { include: { manager: true, fieldSupervisor: true } } }
     });
-    if (sector?.project?.manager) {
-      await emailService.sendNotification(
-        sector.project.manager,
-        `Materials Dispersed: ${materialName}`,
-        `A quantity of ${quantity} ${unit} of ${materialName} has been dispersed/distributed to sector ${sector.name} for project ${sector.project.name}. Reference: ${reference || 'N/A'}`
-      );
+    
+    if (sector?.project) {
+      const emailBody = `A quantity of ${quantity} ${unit} of ${materialName} has been distributed to sector ${sector.name} for project ${sector.project.name}.
+      
+Reference: ${reference || 'N/A'}
+Details: ${notes || 'N/A'}`;
+
+      // Notify Project Manager
+      if (sector.project.manager) {
+        await emailService.sendNotification(
+          sector.project.manager,
+          `Materials Dispersed: ${materialName}`,
+          emailBody
+        );
+      }
+      
+      // Notify Field Supervisor (Site Recipient)
+      if (sector.project.fieldSupervisor) {
+        await emailService.sendNotification(
+          sector.project.fieldSupervisor,
+          `Logistics Alert: ${materialName} En-Route`,
+          emailBody
+        );
+      }
     }
   } catch (error) {
     logger.error('Failed to send material dispersion email:', error.message);

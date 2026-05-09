@@ -176,6 +176,23 @@ export class FieldSupervisorDashboard {
             if (window.toast) window.toast.show('Project data still loading. Please wait.', 'warning');
             return;
         }
+
+        // Enrich materials with current site status for filtering
+        if (this.assignedProject.recommendedMaterials) {
+            this.assignedProject.recommendedMaterials.forEach(m => {
+                const siteItem = this.siteInventory?.[m.name];
+                m.onSiteQty = siteItem ? siteItem.qty : 0;
+                
+                // Calculate in-transit for this item
+                let inTransit = 0;
+                (this.inTransitItems || []).forEach(req => {
+                    const item = req.items.find(i => i.itemName === m.name);
+                    if (item) inTransit += Number(item.quantity);
+                });
+                m.inTransitQty = inTransit;
+            });
+        }
+
         this.requisitionCart = []; // Reset cart for new request
         window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS(this.assignedProject));
     }
@@ -185,14 +202,18 @@ export class FieldSupervisorDashboard {
         if (this.projectLoading && !this._loadStarted) {
             this._loadStarted = true;
             setTimeout(() => {
-                this._loadAssignedProject().then(() => {
+                this._loadAssignedProject().then(async () => {
                     this.projectLoading = false;
-                    this._cacheRequisitionData().then(() => {
-                        this._refreshCurrentView();
-                    });
-                    this._loadSiteInventory();
-                    this._loadDashboardStats();
-                    this._loadSiteAssets();
+                    
+                    // Load all secondary data in parallel
+                    await Promise.all([
+                        this._cacheRequisitionData(),
+                        this._loadSiteInventory(),
+                        this._loadDashboardStats(),
+                        this._loadSiteAssets()
+                    ]);
+                    
+                    // Final single refresh once everything is primed
                     this._refreshCurrentView();
                 }).catch((err) => {
                     console.error('[FS] Initialization failed:', err);
