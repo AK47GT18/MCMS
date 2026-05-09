@@ -1676,7 +1676,7 @@ export const DrawerTemplates = {
             </div>
 
             <div class="evidence-photo" style="width: 100%; height: 200px; background: var(--slate-200); border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 16px; border: 1px solid var(--slate-300);">
-                <img src="${log?.photoUrl || "public/images/hero-background.jpg"}" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover; background: var(--slate-100);" onerror="this.src='public/images/hero-background.jpg'">
+                <img src="${log?.photoUrl || "public/images/hero-background.jpg"}" loading="eager" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover; background: var(--slate-100);" onerror="this.src='public/images/hero-background.jpg'">
                 <div class="geo-tag" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-map-marker-alt"></i> ${log?.gpsCoords || project?.location || "Sector 4"}
                 </div>
@@ -1892,15 +1892,17 @@ export const DrawerTemplates = {
         return `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
-            <input type="hidden" id="daily-log-phase-id" value="${currentPhase.id}" />
+            <div style="margin-bottom: 12px;">
+                <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Reporting Phase</label>
+                <select id="daily-log-phase-id" class="form-input" style="width: 100%; font-weight: 700;">
+                    ${phases.map((p, i) => `<option value="${p.id}" ${p.id === currentPhase.id ? 'selected' : ''}>Phase ${i + 1}: ${p.name}</option>`).join('')}
+                </select>
+            </div>
 
             <!-- Phase Progress Tracker -->
             <div style="background: white; color: var(--slate-900); padding: 20px; border-radius: 12px; border: 1px solid var(--slate-200); margin-bottom: 20px; box-shadow: var(--shadow-sm);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div>
-                        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--slate-500); letter-spacing: 1px;">Current Phase</div>
-                        <div style="font-size: 16px; font-weight: 800; margin-top: 4px;">${currentPhase.name}</div>
-                    </div>
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--slate-500); letter-spacing: 1px;">Project Progress</div>
                     <div style="text-align: right;">
                         <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--slate-500);">Overall</div>
                         <div style="font-size: 20px; font-weight: 900; color: var(--emerald);">${overallProgress}%</div>
@@ -2062,6 +2064,7 @@ export const DrawerTemplates = {
         const photos = log.photos || [];
         const machinery = log.assetUsage || [];
         const isFlagged = log.locationFlagged;
+        window.__currentCarouselPhotos = photos.map(p => p.dataUrl);
 
         return `
             <div class="drawer-section" style="padding-top: 12px;">
@@ -2091,7 +2094,7 @@ export const DrawerTemplates = {
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
                             ${photos.map((p, idx) => `
                                 <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--slate-200); background: var(--slate-100); aspect-ratio: 1/1;">
-                                    <img src="${p.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.utils.viewImage('${p.dataUrl}')">
+                                    <img src="${p.dataUrl}" loading="eager" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.app.previewImageCarousel(window.__currentCarouselPhotos, ${idx})">
                                     <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 8px; background: rgba(0,0,0,0.5); color: white; font-size: 9px;">
                                         Photo ${idx + 1}
                                     </div>
@@ -5578,7 +5581,7 @@ Contract Admin</textarea>
     auditDetails: (log) => {
         let details = log.details;
         if (typeof details === "string") {
-            try { details = JSON.parse(details); } catch(e) {}
+            try { details = JSON.parse(details); } catch (e) { }
         }
 
         const getAuditSummaryHTML = () => {

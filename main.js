@@ -971,9 +971,56 @@ class App {
         if (!src) return;
         window.modal.show({
             title: 'Evidence Preview',
-            message: `<div style="text-align:center;"><img src="${src}" style="max-width:100%; max-height: 70vh; border-radius:8px; box-shadow:var(--shadow-lg);"></div>`,
+            message: `<div style="text-align:center;"><img src="${src}" loading="eager" style="max-width:100%; max-height: 70vh; border-radius:8px; box-shadow:var(--shadow-lg);"></div>`,
             confirmText: 'Close'
         });
+    }
+
+    previewImageCarousel(images, startIndex = 0) {
+        if (!images || images.length === 0) return;
+        window.currentCarouselImages = images;
+        window.currentCarouselIndex = startIndex;
+
+        const src = window.currentCarouselImages[window.currentCarouselIndex];
+        const hasNext = window.currentCarouselIndex < window.currentCarouselImages.length - 1;
+        const hasPrev = window.currentCarouselIndex > 0;
+
+        const renderCarousel = () => {
+            return `
+                <div style="text-align:center; position:relative;">
+                    <img id="carousel-img" src="${src}" loading="eager" style="max-width:100%; max-height: 70vh; border-radius:8px; box-shadow:var(--shadow-lg);">
+                    <div style="margin-top: 16px; display:flex; justify-content:center; gap: 12px; align-items:center;">
+                        <button id="carousel-prev" class="btn btn-secondary" onclick="window.app.navigateCarousel(-1)" ${!hasPrev ? 'disabled' : ''}><i class="fas fa-chevron-left"></i> Prev</button>
+                        <span id="carousel-text" style="font-size:13px; font-weight:700;">${window.currentCarouselIndex + 1} / ${window.currentCarouselImages.length}</span>
+                        <button id="carousel-next" class="btn btn-secondary" onclick="window.app.navigateCarousel(1)" ${!hasNext ? 'disabled' : ''}>Next <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            `;
+        };
+
+        window.modal.show({
+            title: 'Evidence Preview',
+            message: renderCarousel(),
+            confirmText: 'Close'
+        });
+    }
+
+    navigateCarousel(dir) {
+        if (!window.currentCarouselImages) return;
+        window.currentCarouselIndex += dir;
+        const src = window.currentCarouselImages[window.currentCarouselIndex];
+        const hasNext = window.currentCarouselIndex < window.currentCarouselImages.length - 1;
+        const hasPrev = window.currentCarouselIndex > 0;
+
+        const img = document.getElementById('carousel-img');
+        const text = document.getElementById('carousel-text');
+        const btnPrev = document.getElementById('carousel-prev');
+        const btnNext = document.getElementById('carousel-next');
+
+        if (img) img.src = src;
+        if (text) text.innerText = `${window.currentCarouselIndex + 1} / ${window.currentCarouselImages.length}`;
+        if (btnPrev) btnPrev.disabled = !hasPrev;
+        if (btnNext) btnNext.disabled = !hasNext;
     }
 }
 

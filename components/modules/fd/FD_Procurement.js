@@ -13,7 +13,7 @@ export const FD_Procurement = {
                         <select id="procurement_project_select" class="form-input" style="width: 250px;" onchange="window.app.fmModule.loadProcurementData()">
                             <option value="">Select Project...</option>
                         </select>
-                        <button class="btn btn-primary" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract); setTimeout(() => { window.app.fmModule?.loadContractProjects(); window.app.fmModule?.initContractUpload(); }, 100)"><i class="fas fa-file-contract"></i> Procure Materials</button>
+                        <button class="btn btn-primary" onclick="window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newVendorContract, 'lg'); setTimeout(() => { (window.app.fmModule || window.app.pmModule)?.loadContractProjects(true); (window.app.fmModule || window.app.pmModule)?.initContractUpload(); }, 100)"><i class="fas fa-file-contract"></i> Procure Materials</button>
                     </div>
                 </div>
                 <div id="fm-procurement-content">
@@ -48,7 +48,7 @@ export const FD_Procurement = {
         try {
             const res = await client.get(`/procurement/project-status/${projectId}`);
             const data = res.data;
-            
+
             if (data.missingSpec) {
                 container.innerHTML = `
                     <div style="padding: 60px 40px; text-align: center;">
@@ -218,7 +218,7 @@ export const FD_Procurement = {
             if (projectSelect && projectSelect.options.length <= 1) {
                 projects.forEach(p => projectSelect.add(new Option(p.name, p.id)));
             }
-            
+
             // Map replenishments to a similar structure for unified display
             const mappedReps = reps.map(r => ({
                 ...r,
@@ -241,12 +241,12 @@ export const FD_Procurement = {
         if (!container) return;
 
         const filters = this.requisitionFilters || { project: '', type: '', budget: '' };
-        
+
         const filtered = this.data.requisitions.filter(req => {
             if (filters.project && String(req.projectId) !== String(filters.project)) return false;
             if (filters.type === 'site' && req.isReplenishment) return false;
             if (filters.type === 'stock' && !req.isReplenishment) return false;
-            
+
             if (filters.budget) {
                 const totalAmt = Number(req.totalAmount || 0);
                 const projBudget = Number(req.project?.budgetTotal || 0);
@@ -276,16 +276,16 @@ export const FD_Procurement = {
                 </thead>
                 <tbody>
                     ${filtered.map(req => {
-                        const items = req.items || [];
-                        const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
-                        const totalAmt = Number(req.totalAmount || 0);
-                        const projBudget = Number(req.project?.budgetTotal || 0);
-                        const projSpent = Number(req.project?.budgetSpent || 0);
-                        const remaining = projBudget - projSpent;
-                        const isOverBudget = totalAmt > remaining && projBudget > 0;
-                        const isCritical = isOverBudget || (remaining < (projBudget * 0.1));
-                        
-                        return `
+            const items = req.items || [];
+            const desc = items.length ? items.map(i => `${i.itemName} x ${i.quantity}`).join(', ') : 'Resources';
+            const totalAmt = Number(req.totalAmount || 0);
+            const projBudget = Number(req.project?.budgetTotal || 0);
+            const projSpent = Number(req.project?.budgetSpent || 0);
+            const remaining = projBudget - projSpent;
+            const isOverBudget = totalAmt > remaining && projBudget > 0;
+            const isCritical = isOverBudget || (remaining < (projBudget * 0.1));
+
+            return `
                             <tr onclick="window.fmModule.openRequisitionReview('${req.id}')">
                                 <td>
                                     <span class="project-id">${req.reqCode || 'REQ-' + req.id}</span>
@@ -295,14 +295,14 @@ export const FD_Procurement = {
                                 <td>${desc}</td>
                                 <td>${req.submitter?.name || 'Field'}</td>
                                 <td style="text-align:right; font-family: 'JetBrains Mono'; font-weight: 700;">${totalAmt.toLocaleString()}</td>
-                                <td><span class="status ${isCritical ? 'delayed' : 'active'}" style="background: ${isCritical ? '#FEF2F2' : '#F0FDF4'}; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'};">${isCritical ? 'Critical' : 'Healthy'} (${(remaining/1000000).toFixed(1)}M Rem)</span></td>
+                                <td><span class="status ${isCritical ? 'delayed' : 'active'}" style="background: ${isCritical ? '#FEF2F2' : '#F0FDF4'}; color: ${isCritical ? 'var(--red)' : 'var(--emerald)'};">${isCritical ? 'Critical' : 'Healthy'} (${(remaining / 1000000).toFixed(1)}M Rem)</span></td>
                                 <td>${isOverBudget
-                                    ? `<button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Exceeds Budget</button>`
-                                    : `<button class="btn btn-action" style="padding: 4px 8px; font-size: 11px;">Review & Approve</button>`
-                                }</td>
+                    ? `<button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;">Exceeds Budget</button>`
+                    : `<button class="btn btn-action" style="padding: 4px 8px; font-size: 11px;">Review & Approve</button>`
+                }</td>
                             </tr>
                         `;
-                    }).join('')}
+        }).join('')}
                 </tbody>
             </table>
         `;

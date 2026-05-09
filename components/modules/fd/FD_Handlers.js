@@ -14,7 +14,7 @@ export const FD_Handlers = {
 
         try {
             window.toast.show(`Processing ${isReplenishment ? 'replenishment' : 'requisition'} ${status}...`, 'info');
-            
+
             if (isReplenishment) {
                 // Replenishment Actions
                 let action;
@@ -22,10 +22,10 @@ export const FD_Handlers = {
                 else if (status === 'rejected') action = 'reject';
                 else if (status === 'flagged' || status === 'escalated') action = 'escalate';
 
-                await client.post(`/replenishment/${reqId}/finance-action`, { 
-                    action, 
+                await client.post(`/replenishment/${reqId}/finance-action`, {
+                    action,
                     financeComments: note,
-                    estimatedCost: req.totalAmount 
+                    estimatedCost: req.totalAmount
                 });
             } else {
                 // Standard Requisition Actions
@@ -37,27 +37,27 @@ export const FD_Handlers = {
                     await client.post(`/requisitions/${reqId}/flag-fraud`);
                 }
             }
-            
+
             window.toast.show(`${isReplenishment ? 'Stock replenishment' : 'Requisition'} ${reqId} has been ${status} successfully.`, 'success');
-            
+
             if (status === 'approved') {
                 window.toast.show('Opening contract registry for procurement...', 'info');
                 // Redirect to New Contract flow
-                window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newContract);
+                window.drawer.open('Create Vendor Contract', window.DrawerTemplates.newVendorContract, 'lg');
                 setTimeout(async () => {
                     await this.loadContractProjects?.();
                     this.initContractUpload?.();
-                    
+
                     // Pre-fill data if available
                     const projectSelect = document.getElementById('contract_project');
                     if (projectSelect && req.projectId) {
                         projectSelect.value = req.projectId;
                         await this.onContractProjectSelected?.(req.projectId);
                     }
-                    
+
                     const titleInput = document.getElementById('contract_title');
                     if (titleInput) titleInput.value = `Procurement for ${req.reqCode || 'REQ-' + req.id}`;
-                    
+
                     const valueInput = document.getElementById('contract_value');
                     if (valueInput) valueInput.value = req.totalAmount || 0;
                 }, 200);
@@ -110,10 +110,10 @@ export const FD_Handlers = {
                 try {
                     const promises = toApprove.map(async (req) => {
                         if (req.isReplenishment) {
-                            return client.post(`/replenishment/${req.id}/finance-action`, { 
-                                action: 'approve', 
+                            return client.post(`/replenishment/${req.id}/finance-action`, {
+                                action: 'approve',
                                 financeComments: 'Bulk approved by Finance Director',
-                                estimatedCost: req.totalAmount 
+                                estimatedCost: req.totalAmount
                             });
                         } else {
                             return client.post(`/requisitions/${req.id}/approve`);
@@ -121,9 +121,9 @@ export const FD_Handlers = {
                     });
 
                     await Promise.all(promises);
-                    
+
                     window.toast.show(`Successfully approved ${toApprove.length} requisitions.`, 'success');
-                    
+
                     // Log to Audit
                     client.post('/audit-logs', {
                         action: 'BULK_APPROVE_REQUISITIONS',
@@ -149,7 +149,7 @@ export const FD_Handlers = {
 
         try {
             window.toast.show(`Processing rental ${action}...`, 'info');
-            
+
             let res;
             if (action === 'approved') {
                 res = await window.vehicleRentalsApi.approve(rentalId, { comments: note });
@@ -161,7 +161,7 @@ export const FD_Handlers = {
 
             window.toast.show(`Rental contract ${action} successfully.`, 'success');
             window.drawer.close();
-            
+
             // Refresh view
             if (this.currentView === 'contracts' || this.currentView === 'dashboard') {
                 this.loadContractsData?.();
