@@ -57,22 +57,26 @@ export const EC_Registry = {
                         </thead>
                         <tbody>
                             ${this.rentalContracts.map(c => {
-                                const isExpired = c.status === 'expired';
+                                const isExpired = c.endDate ? new Date(c.endDate) < new Date() : false;
+                                const machineName = c.machineType || c.title || "Rental Equipment";
+                                const vendor = c.vendorName || c.vendor?.name || c.vendor || "Unassigned";
+                                const ref = c.refCode || c.contractCode || c.code || "RENT-" + c.id;
+                                
                                 return `
                                 <tr>
-                                    <td><span class="project-id">${c.refCode}</span></td>
-                                    <td style="font-weight: 700;">${c.machineType}</td>
-                                    <td style="font-size: 12px;">${c.vendorName}</td>
+                                    <td><span class="project-id">${ref}</span></td>
+                                    <td style="font-weight: 700;">${machineName}</td>
+                                    <td style="font-size: 12px;">${vendor}</td>
                                     <td>${c.project?.name || 'Unassigned'}</td>
                                     <td style="font-size: 12px; color: ${isExpired ? 'var(--red)' : 'var(--slate-600)'};">
-                                        ${new Date(c.endDate).toLocaleDateString()}
+                                        ${c.endDate ? new Date(c.endDate).toLocaleDateString() : 'N/A'}
                                         ${isExpired ? '<div style="font-size:10px; font-weight:800;">OVERDUE</div>' : ''}
                                     </td>
-                                    <td><span class="status ${c.status === 'active' ? 'active' : 'locked'}">${(c.status || 'active').toUpperCase()}</span></td>
+                                    <td><span class="status ${c.status === 'Active' || c.status === 'active' ? 'active' : 'locked'}">${(c.status || 'Active').toUpperCase()}</span></td>
                                     <td style="text-align: right;">
-                                        ${c.status !== 'returned' ? `
+                                        ${c.status !== 'returned' && c.status !== 'Completed' && c.status !== 'ENDED' ? `
                                             <button class="btn btn-primary" style="background: var(--orange); border: none; font-size: 11px; padding: 6px 12px;" 
-                                                onclick="window.app.ecModule.handleConfirmReturned('${c.id}', '${c.machineType}')">
+                                                onclick="window.app.ecModule.handleConfirmReturned('${c.id}', '${this.escapeHTML ? this.escapeHTML(machineName) : machineName}')">
                                                 <i class="fas fa-truck-pickup"></i> Confirm Returned
                                             </button>
                                         ` : '<span style="font-size: 11px; color: var(--emerald); font-weight:700;"><i class="fas fa-check-circle"></i> Completed</span>'}
@@ -91,17 +95,24 @@ export const EC_Registry = {
         if (this.isLoadingAssets) return;
         this.isLoadingAssets = true;
         try {
-            // Load both owned assets and rental contracts
-            const [assetRes, rentalRes] = await Promise.all([
+            // Load both owned assets, pending requisitions, and finalized contracts
+            const [assetRes, rentalReqs, contractsRes] = await Promise.all([
                 assets.getAll(),
-                client.get('/vehicle-contracts')
+                client.get('/vehicle-contracts').catch(() => []),
+                client.get('/contracts').catch(() => [])
             ]);
             
             const assetData = assetRes.data || assetRes;
             this.assetRegistry = Array.isArray(assetData) ? assetData : (assetData.items || []);
             
-            const rentalData = Array.isArray(rentalRes) ? rentalRes : (rentalRes.contracts || []);
-            this.rentalContracts = rentalData;
+            const reqData = Array.isArray(rentalReqs) ? rentalReqs : (rentalReqs.contracts || rentalReqs.data || []);
+            const allContracts = Array.isArray(contractsRes) ? contractsRes : (contractsRes.data || []);
+            
+            // Extract finalized rentals from the unified contracts registry
+            const finalizedRentals = allContracts.filter(c => c.contractType === 'rental' || c.contractType === 'RENTAL');
+            
+            // Merge sources (deduplicating by ID just in case, though they are distinct entities)
+            this.rentalContracts = [...reqData, ...finalizedRentals];
             
             this.rentalsLoaded = true;
             this._refreshCurrentView();

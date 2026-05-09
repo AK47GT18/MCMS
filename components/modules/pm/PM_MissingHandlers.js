@@ -1224,10 +1224,13 @@ export const PM_MissingHandlers = {
             window.toast.show('Analyzing requirements vs. fleet holdings...', 'info');
             
             // Re-use the existing API utility
-            const data = await window.vehicleRentalsApi.getGapAnalysis(projectId);
+            const res = await window.vehicleRentalsApi.getGapAnalysis(projectId);
+            const data = res.data || res || {};
+            const summary = data.summary || { totalNeedsRental: 0 };
             
             window.drawer.open('Equipment Needs vs. Holdings', window.DrawerTemplates.projectEquipmentGap({
                 ...data,
+                summary,
                 projectId
             }));
         } catch (error) {

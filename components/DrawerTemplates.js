@@ -10,8 +10,9 @@ export const DrawerTemplates = {
     },
 
     projectEquipmentGap: (data) => {
-        const { gap, summary } = data;
-        const totalNeedsRental = summary.totalNeedsRental;
+        const gap = data.gap || [];
+        const summary = data.summary || { totalNeedsRental: 0 };
+        const totalNeedsRental = summary.totalNeedsRental || 0;
         return `
             <div style="padding: 24px;">
                 <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -3734,17 +3735,17 @@ Contract Admin</textarea>
                     <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Project</label>
                     <div style="display: flex; gap: 8px;">
                         <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 2px 6px; border: 1px solid #ffedd5; border-radius: 4px; background: #fff7ed;"
-                            onclick="(window.app?.pmModule || window.app?.fmModule)?.onProjectRentalSelected(document.getElementById('contract_project').value)">
+                            onclick="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(document.getElementById('contract_project').value)">
                             <i class="fas fa-sync-alt" style="margin-right: 4px;"></i> Refresh
                         </button>
                         <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--slate-500); padding: 2px 6px; border: 1px solid var(--slate-200); border-radius: 4px; background: var(--slate-50);"
-                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule)?.openNewVendorContract()">
+                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.openNewVendorContract()">
                             <i class="fas fa-undo" style="margin-right: 4px;"></i> Reset
                         </button>
                     </div>
                 </div>
                 <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.onProjectRentalSelected(this.value)">
+                    onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(this.value)">
                     <option value="">Select Target Project...</option>
                 </select>
             </div>
@@ -3777,7 +3778,7 @@ Contract Admin</textarea>
                 <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Rental Vendor Name</label>
                 <input type="text" id="contract_vendor" class="form-input" data-vrules="required|minLen:3" 
                     oninput="window.V?.checkField(this)" 
-                    onkeyup="(window.app?.pmModule || window.app?.fmModule)?.searchVendors(this.value)"
+                    onkeyup="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.searchVendors(this.value)"
                     autocomplete="off"
                     style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;" placeholder="Search or type rental company name...">
                 <input type="hidden" id="contract_vendor_id">
@@ -3813,11 +3814,11 @@ Contract Admin</textarea>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
                     <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Mobilization Date</label>
-                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <input type="date" id="contract_start" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
                 <div>
                     <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Demobilization</label>
-                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
+                    <input type="date" id="contract_end" class="form-input" data-vrules="required" onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.calculateContractPerformance?.()" min="${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;">
                 </div>
             </div>
 
@@ -3830,7 +3831,7 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 12px;">
                 <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Agreed Rental Sum (MWK)</label>
-                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule)?.calculateContractPerformance?.()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
+                <input type="number" id="contract_value" class="form-input" data-vrules="required|min:1" oninput="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.calculateContractPerformance?.()" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 700;" placeholder="0">
             </div>
 
             <div class="form-group" style="margin-bottom: 12px;">
@@ -3848,7 +3849,7 @@ Contract Admin</textarea>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 15px; background: var(--orange); border-color: var(--orange);"
-                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} (window.app?.pmModule || window.app?.fmModule).submitContract()">
+                onclick="if(!window.V?.validateForm(this.closest('.drawer-content')||this.parentElement)){return} (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule).submitContract()">
                 <i class="fas fa-truck-moving" style="margin-right: 8px;"></i> Establish Rental Contract
             </button>
         </div>

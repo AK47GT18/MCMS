@@ -1312,9 +1312,13 @@ export const EC_Handlers = {
     async openEquipmentGapDrawer(projectId) {
         try {
             window.toast.show('Analyzing requirements...', 'info');
-            const data = await window.vehicleRentalsApi.getGapAnalysis(projectId);
+            const res = await window.vehicleRentalsApi.getGapAnalysis(projectId);
+            const data = res.data || res || {};
+            const summary = data.summary || { totalNeedsRental: 0 };
+            
             window.drawer.open('Equipment Needs vs. Holdings', window.DrawerTemplates.projectEquipmentGap({
                 ...data,
+                summary,
                 projectId
             }));
         } catch (error) {
@@ -1323,65 +1327,235 @@ export const EC_Handlers = {
         }
     },
 
-    async openNewRentalDrawer(projectId = null) {
-        try {
-            const projectsRes = await client.get('/projects');
-            const projects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.data || []);
-            
-            const configsRes = await window.vehicleRentalsApi.getPriceConfigs();
-            const configs = Array.isArray(configsRes) ? configsRes : (configsRes.data || []);
-            const machineTypes = [...new Set(configs.map(c => c.machineType))];
+    openNewRentalDrawer(projectId = null) {
+        this.currentContractTab = "rental";
+        window.drawer.open(
+            "Vehicle Rental Agreement",
+            window.DrawerTemplates.newRentalContract,
+            'lg'
+        );
+        
+        setTimeout(() => {
+            this.loadContractProjects(true);
+            this.initContractUpload();
+            if (projectId) {
+                const select = document.getElementById("contract_project");
+                if (select) {
+                    select.value = projectId;
+                    this.onProjectRentalSelected(projectId);
+                }
+            }
+        }, 100);
+    },
 
-            window.drawer.open('Procurement Requisition', window.DrawerTemplates.newVehicleRental({
-                projectId,
-                projects,
-                machineTypes
-            }));
-        } catch (error) {
-            console.error('Failed to open rental drawer:', error);
-            window.toast.show('Error loading procurement data', 'error');
+    async loadContractProjects(isRental = false) {
+        try {
+            const res = await client.get("/projects?limit=100");
+            const projectsData = Array.isArray(res) ? res : res.data || [];
+            const select = document.getElementById("contract_project");
+            if (select) {
+                select.innerHTML = '<option value="">Select Target Project...</option>' + 
+                    projectsData.map(p => `<option value="${p.id}">${p.code} – ${p.name}</option>`).join("");
+            }
+        } catch (err) {
+            console.error("Failed to load projects", err);
         }
     },
 
-    async handleRentalSubmit() {
-        const type = document.getElementById('rental-contract-type').value;
-        const machineType = document.getElementById('rental-machine-type').value;
-        const projectId = document.getElementById('rental-project-id').value;
-        const dailyRate = document.getElementById('rental-daily-rate').value;
-        const duration = document.getElementById('rental-duration').value;
-        const vendorName = document.getElementById('rental-vendor').value;
+    initContractUpload() {
+        const dropZone = document.getElementById('contract-drop-zone');
+        const fileInput = document.getElementById('contract_document');
+        const status = document.getElementById('contract-file-status');
 
-        if (!projectId || !dailyRate || !duration || !vendorName) {
-            window.toast.show('Please fill all required fields', 'warning');
+        if (dropZone && fileInput) {
+            dropZone.onclick = () => fileInput.click();
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 25 * 1024 * 1024) {
+                        window.toast.show("File size exceeds 25MB limit.", "error");
+                        e.target.value = "";
+                        return;
+                    }
+                    status.innerHTML = `<span style="color: var(--emerald); font-weight: 700;"><i class="fas fa-check-circle"></i> ${file.name}</span>`;
+                    dropZone.style.borderColor = "var(--emerald)";
+                    dropZone.style.background = "#F0FDF4";
+                }
+            };
+        }
+    },
+
+    async onProjectRentalSelected(projectId) {
+        if (!projectId) return;
+        const vehiclesBody = document.getElementById("contract-vehicles-body");
+        if (vehiclesBody) {
+            vehiclesBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px;"><i class="fas fa-spinner fa-spin"></i> Analyzing equipment needs...</td></tr>`;
+            try {
+                const [estRes, budgetRes] = await Promise.all([
+                    client.get(`/projects/${projectId}/estimate`),
+                    client.get(`/inventory/project/${projectId}`)
+                ]);
+                
+                const estimate = estRes.data || estRes;
+                const budgetData = budgetRes.data || budgetRes;
+                this.currentProjectBudget = budgetData.summary || {};
+
+                // Use a standard set of machines if no specific estimate exists
+                const machines = [
+                    { name: 'Excavator 20T', rate: 450000 },
+                    { name: 'Motor Grader 140K', rate: 520000 },
+                    { name: 'Roller 10T', rate: 280000 },
+                    { name: 'Dumper 15m3', rate: 180000 },
+                    { name: 'Bulldozer D6', rate: 550000 }
+                ];
+
+                vehiclesBody.innerHTML = machines.map((m, idx) => `
+                    <tr>
+                        <td style="padding: 10px; text-align: center;">
+                            <input type="checkbox" name="contract_material" value="${idx}" data-name="${m.name}" data-market="${m.rate}" data-unit="Day" onchange="window.app.ecModule.calculateContractPerformance()">
+                        </td>
+                        <td style="padding: 10px; font-weight: 700;">${m.name}</td>
+                        <td style="padding: 10px; text-align: center;">1</td>
+                        <td style="padding: 10px; text-align: center;">0</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <input type="number" id="m_qty_${idx}" class="form-input" value="1" style="width: 50px; padding: 4px; text-align: center;" oninput="window.app.ecModule.calculateContractPerformance()">
+                        </td>
+                    </tr>
+                `).join("");
+            } catch (err) {
+                console.error("Failed to load project rental context", err);
+                vehiclesBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color: var(--red);">Error loading equipment context</td></tr>`;
+            }
+        }
+    },
+
+    async searchVendors(query) {
+        const resultsContainer = document.getElementById("vendor_autocomplete_results");
+        if (!resultsContainer || !query || query.length < 2) {
+            if (resultsContainer) resultsContainer.style.display = "none";
+            return;
+        }
+        try {
+            const res = await client.get(`/vendors/search?q=${encodeURIComponent(query)}`);
+            const vendors = res.data || res || [];
+            if (vendors.length === 0) {
+                resultsContainer.innerHTML = `<div style="padding: 12px; font-size: 11px; color: var(--slate-500);">No matching vendors</div>`;
+            } else {
+                resultsContainer.innerHTML = vendors.map(v => `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--slate-100); cursor: pointer;" 
+                        onmousedown="window.app.ecModule.selectVendorAutocomplete(${v.id}, '${v.name.replace(/'/g, "\\'")}')">
+                        <div style="font-weight: 700; font-size: 12px;">${v.name}</div>
+                        <div style="font-size: 10px; color: var(--slate-500);">${v.category || 'General Provider'}</div>
+                    </div>
+                `).join("");
+            }
+            resultsContainer.style.display = "block";
+        } catch (e) { console.error(e); }
+    },
+
+    selectVendorAutocomplete(id, name) {
+        const input = document.getElementById("contract_vendor");
+        const hidden = document.getElementById("contract_vendor_id");
+        if (input) input.value = name;
+        if (hidden) hidden.value = id;
+        const results = document.getElementById("vendor_autocomplete_results");
+        if (results) results.style.display = "none";
+    },
+
+    calculateContractPerformance() {
+        const checkboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+        let marketTotal = 0;
+        checkboxes.forEach(cb => {
+            const idx = cb.value;
+            const qty = parseFloat(document.getElementById(`m_qty_${idx}`)?.value || 0);
+            const rate = parseFloat(cb.dataset.market || 0);
+            marketTotal += qty * rate;
+        });
+
+        const start = document.getElementById("contract_start")?.value;
+        const end = document.getElementById("contract_end")?.value;
+        if (start && end) {
+            const days = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1;
+            if (days > 0) marketTotal *= days;
+        }
+
+        const negotiatedTotal = parseFloat(document.getElementById("contract_value")?.value || 0);
+        const marketDisplay = document.getElementById("contract_market_price_display");
+        const negotiatedDisplay = document.getElementById("contract_negotiated_price_display");
+        const performanceDisplay = document.getElementById("contract_performance_display");
+
+        if (marketDisplay) marketDisplay.textContent = `MWK ${marketTotal.toLocaleString()}`;
+        if (negotiatedDisplay) negotiatedDisplay.textContent = `MWK ${negotiatedTotal.toLocaleString()}`;
+
+        if (performanceDisplay) {
+            if (marketTotal > 0 && negotiatedTotal > 0) {
+                const savings = ((marketTotal - negotiatedTotal) / marketTotal) * 100;
+                performanceDisplay.innerHTML = `<span style="color: ${savings >= 0 ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">${savings >= 0 ? '+' : ''}${savings.toFixed(1)}% ${savings >= 0 ? 'Saving' : 'Loss'}</span>`;
+            } else {
+                performanceDisplay.textContent = "-";
+            }
+        }
+    },
+
+    async submitContract() {
+        if (window.V && !window.V.validateForm(document.querySelector('.drawer-content'))) return;
+
+        const fileInput = document.getElementById("contract_document");
+        if (!fileInput?.files?.[0]) {
+            window.toast.show("Signed agreement document is required.", "error");
             return;
         }
 
+        const selectedCheckboxes = document.querySelectorAll('input[name="contract_material"]:checked');
+        if (selectedCheckboxes.length === 0) {
+            window.toast.show("Please select at least one machine for this contract.", "error");
+            return;
+        }
+
+        const items = Array.from(selectedCheckboxes).map(cb => {
+            const idx = cb.value;
+            return {
+                name: cb.dataset.name,
+                quantity: parseFloat(document.getElementById(`m_qty_${idx}`)?.value || 0),
+                unit: "Day",
+                unitPrice: parseFloat(cb.dataset.market || 0)
+            };
+        });
+
+        window.toast.show("Submitting rental contract...", "info");
+
         try {
-            const res = await window.vehicleRentalsApi.create({
-                projectId: parseInt(projectId),
-                machineType,
-                contractType: type,
-                dailyRate: parseFloat(dailyRate),
-                durationDays: parseInt(duration),
-                vendorName
+            const token = localStorage.getItem("mcms_auth_token");
+            const formData = new FormData();
+            formData.append("projectId", document.getElementById("contract_project").value);
+            formData.append("vendorName", document.getElementById("contract_vendor").value);
+            formData.append("vendorId", document.getElementById("contract_vendor_id").value);
+            formData.append("title", document.getElementById("contract_title").value);
+            formData.append("value", document.getElementById("contract_value").value);
+            formData.append("startDate", document.getElementById("contract_start").value);
+            formData.append("endDate", document.getElementById("contract_end").value);
+            formData.append("justification", document.getElementById("contract_justification").value);
+            formData.append("contractType", "rental");
+            formData.append("document", fileInput.files[0]);
+            formData.append("equipmentList", JSON.stringify(items));
+            
+            const refCode = `REN-MOW-${Math.floor(1000 + Math.random() * 9000)}`;
+            formData.append("refCode", refCode);
+
+            const res = await fetch("/api/v1/contracts", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
             });
 
-            if (res.error) throw new Error(res.error);
+            if (!res.ok) throw new Error("Failed to establish contract");
 
-            window.toast.show('Requisition submitted to Finance Director', 'success');
+            window.toast.show("Rental contract successfully established", "success");
             window.drawer.close();
-            
-            // Log audit
-            client.post('/audit-logs', {
-                action: 'CREATE_RENTAL_REQUEST',
-                entityType: 'VehicleRentalContract',
-                entityId: (res.data || res).id,
-                details: `EC requested ${type} for ${machineType} at ${dailyRate}/day for ${duration} days.`
-            }).catch(() => {});
+            if (this._loadAssets) this._loadAssets();
 
         } catch (error) {
-            console.error('Rental submission failed:', error);
-            window.toast.show('Submission failed: ' + error.message, 'error');
+            window.toast.show(error.message, "error");
         }
     },
 

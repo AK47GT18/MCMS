@@ -1,9 +1,20 @@
-const { prisma } = require('../src/config/database');
-async function check() {
-  const p = await prisma.project.findMany({ select: { id: true, code: true, budgetTotal: true, budgetSpent: true } });
-  console.log(JSON.stringify(p, null, 2));
-  const c = await prisma.contract.findMany({ select: { id: true, refCode: true, projectId: true, contractType: true, status: true, value: true } });
-  console.log(JSON.stringify(c, null, 2));
-  await prisma.$disconnect();
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function checkAssets() {
+  try {
+    const count = await prisma.asset.count();
+    console.log('Total assets in DB:', count);
+    
+    const assets = await prisma.asset.findMany({ take: 5 });
+    console.log('Sample assets:', JSON.stringify(assets, null, 2));
+    
+  } catch (err) {
+    console.error('Error checking assets:', err);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
-check();
+
+checkAssets();
