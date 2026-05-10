@@ -75,60 +75,109 @@ export class FieldSupervisorDashboard {
         console.log('[FS] Caching real project-scoped requisition data for project:', projectId);
 
         try {
-            // Fetch everything in parallel
-            const [roadSpec, ownedAssets, rentalContracts] = await Promise.all([
-                Promise.resolve({ layers: [], accessories: [] }), // Removed client.get('/road-specifications?projectId=${projectId}') to prevent 404
+            const [estRes, ownedAssets, rentalContracts, projectAssets, gapRes] = await Promise.all([
+                client.get(`/road-estimation/${projectId}`).catch(() => ({ layers: [], accessories: [] })),
+                client.get(`/assets`).catch(() => []), 
+                client.get(`/vehicle-contracts?projectId=${projectId}&status=active`).catch(() => []),
                 client.get(`/assets?projectId=${projectId}`).catch(() => []),
-                client.get(`/vehicle-contracts?projectId=${projectId}&status=active`).catch(() => [])
+                client.get(`/road-estimation/${projectId}/equipment-gap`).catch(() => ({ data: { required: [] } }))
             ]);
+            
+            const roadSpec = estRes.data || estRes;
+            const gapData = gapRes.data || gapRes || { required: [] };
+            const assignedOwned = Array.isArray(projectAssets) ? projectAssets : (projectAssets.data || []);
+            const allOwned = Array.isArray(ownedAssets) ? ownedAssets : (ownedAssets.data || []);
+            const rentalList = Array.isArray(rentalContracts) ? rentalContracts : (rentalContracts.contracts || []);
 
-            // 1. Process Materials from Road Specification
-            // This ensures FS only requests what the PM approved
-            const layers = roadSpec?.layers || [];
+            // 1. Process Materials (PM-Approved list)
+            const layers = roadSpec?.layers || roadSpec?.spec?.layers || [];
             const accessories = roadSpec?.accessories || [];
 
             this.assignedProject.recommendedMaterials = [
                 ...layers.map(l => ({
                     name: l.materialType,
                     unit: l.unit,
-                    approvedQty: Number(l.totalQuantity),
-                    phase: l.phaseNumber,
+                    approvedQty: Number(l.totalQuantity || l.quantity || 0),
+                    phaseNumber: Number(l.phaseNumber),
                     phaseName: l.phaseName || `Phase ${l.phaseNumber}`
                 })),
                 ...accessories.map(a => ({
-                    name: a.itemName,
+                    name: a.itemName || a.name,
                     unit: a.unit,
-                    approvedQty: Number(a.totalQuantity),
+                    approvedQty: Number(a.totalQuantity || a.quantity || 0),
                     category: a.category,
                     phaseName: 'Road Furniture & Accessories'
                 }))
             ];
 
-            // 2. Process Machinery (Owned + Rented)
-            const ownedList = Array.isArray(ownedAssets) ? ownedAssets : (ownedAssets.data || []);
-            const rentalList = Array.isArray(rentalContracts) ? rentalContracts : (rentalContracts.contracts || []);
+            // 2. Process Machinery (Combine Assigned + Required Gap + All Fleet)
+            const uniqueMachines = new Map();
+            const currentPhaseNum = Number(this.assignedProject.currentPhase || 1);
+            
+            // First pass: Add Required Machinery from the Gap Analysis (The standard for the project)
+            const requiredMachinery = gapData.required || [];
+            requiredMachinery.forEach(req => {
+                const name = req.label || req.type;
+                uniqueMachines.set(name, {
+                    name: name,
+                    type: req.type,
+                    icon: req.icon,
+                    source: 'planned',
+                    available: true,
+                    isAssigned: false,
+                    phaseKeys: (req.phases || []).map(p => Number(p.phaseKey))
+                });
+            });
 
-            this.assignedProject.recommendedMachines = [
-                ...ownedList.map(a => ({
-                    name: a.name,
+            // Second pass: Add everything ALREADY assigned to the project (Owned)
+            assignedOwned.forEach(a => {
+                const name = a.name;
+                const existing = uniqueMachines.get(name);
+                uniqueMachines.set(name, {
+                    ...(existing || {}),
+                    name: name,
                     type: a.category,
                     code: a.assetCode,
                     source: 'owned',
-                    available: a.status === 'available',
-                    status: a.status
-                })),
-                ...rentalList.map(c => ({
-                    name: `${c.machineType} (${c.vendorName})`,
+                    available: a.status === 'available' || a.status === 'checked_out',
+                    status: a.status,
+                    isAssigned: true
+                });
+            });
+
+            // Third pass: Add rentals
+            rentalList.forEach(c => {
+                const name = `${c.machineType} (${c.vendorName})`;
+                const existing = uniqueMachines.get(name);
+                uniqueMachines.set(name, {
+                    ...(existing || {}),
+                    name: name,
                     type: c.machineType,
                     code: c.refCode,
                     source: 'rental',
                     available: c.status === 'active',
-                    expiresAt: c.endDate,
-                    vendor: c.vendorName
-                }))
-            ];
+                    status: c.status,
+                    isAssigned: true
+                });
+            });
 
-            console.log(`[FS] Cache complete: ${this.assignedProject.recommendedMaterials.length} materials, ${this.assignedProject.recommendedMachines.length} machines.`);
+            // Fourth pass: Add all other machines from fleet (if not already there)
+            allOwned.forEach(a => {
+                if (!uniqueMachines.has(a.name)) {
+                    uniqueMachines.set(a.name, {
+                        name: a.name,
+                        type: a.category,
+                        code: a.assetCode,
+                        source: 'owned',
+                        available: a.status === 'available',
+                        status: a.status,
+                        isAssigned: false
+                    });
+                }
+            });
+
+            this.assignedProject.recommendedMachines = Array.from(uniqueMachines.values());
+            console.log(`[FS] Cache Refreshed: ${this.assignedProject.recommendedMaterials.length} mats, ${this.assignedProject.recommendedMachines.length} assets.`);
         } catch (e) {
             console.error('[FS] Failed to cache requisition data:', e);
             // Fallback to empty if critical fail
@@ -205,14 +254,21 @@ export class FieldSupervisorDashboard {
                 this._loadAssignedProject().then(async () => {
                     this.projectLoading = false;
                     
-                    // Load all secondary data in parallel
-                    await Promise.all([
-                        this._cacheRequisitionData(),
-                        this._loadSiteInventory(),
-                        this._loadDashboardStats(),
-                        this._loadSiteAssets(),
-                        this._loadWeather()
-                    ]);
+            // 2. Load all secondary data in parallel
+            await Promise.all([
+                this._cacheRequisitionData(),
+                this._loadSiteInventory(),
+                this._loadDashboardStats(),
+                this._loadSiteAssets(),
+                this._loadWeather()
+            ]);
+            
+            // Ensure phases are explicitly attached to the project object for template access
+            if (this.assignedProject && this.phases) {
+                this.assignedProject.phases = this.phases;
+            } else if (this.assignedProject && this.taskConfig?.phases) {
+                this.assignedProject.phases = this.taskConfig.phases;
+            }
                     
                     // Final single refresh once everything is primed
                     this._refreshCurrentView();

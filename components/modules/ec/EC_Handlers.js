@@ -177,14 +177,31 @@ export const EC_Handlers = {
             }
 
             // Perform deduction API call (map to distribute API schema)
-            await client.post('/inventory/dispatch', {
-                sectorId: sectorId,
-                materialName: materialName,
-                unit: material.unit || 'Units',
-                quantity: amount,
-                reference: `Site Dispatch: ${projectId}`,
-                notes: `Transporter: ${transporter} (${transporterPhone}) | Recipient: ${recipient} | Reason: ${justification}`,
-                dispatchedBy: window.currentUser?.name || 'Equipment Coordinator'
+            // Perform Requisition -> Approve -> Dispatch Pipeline
+            const reqRes = await client.post('/requisitions', {
+                projectId: parseInt(projectId),
+                sectorId: parseInt(sectorId),
+                items: [{
+                    itemName: materialName,
+                    quantity: amount,
+                    unit: material.unit || 'Units'
+                }],
+                notes: `Direct EC Dispatch - Reason: ${justification}`,
+                priority: 'high'
+            });
+            const reqId = reqRes.data ? reqRes.data.id : reqRes.id;
+            
+            // Auto-Approve it
+            await client.post(`/requisitions/${reqId}/approve`, { reason: 'Direct Dispatch auto-approval' });
+            
+            // Dispatch it to put it in transit
+            await client.post('/dispatch', {
+                requisitionId: reqId,
+                estimatedArrival: date,
+                partial: false,
+                dispatchedItems: [`${amount} x ${materialName}`],
+                userPhone: transporterPhone,
+                transporterName: transporter
             });
 
             // Update local state

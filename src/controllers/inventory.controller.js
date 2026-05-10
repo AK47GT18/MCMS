@@ -33,7 +33,7 @@ const distribute = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
   
-  if (!hasRole(req, res, ['Equipment_Coordinator', 'Project_Manager', 'Finance_Director', 'System_Technician', 'Managing_Director'])) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Project_Manager', 'Finance_Director', 'System_Technician', 'Managing_Director', 'Field_Supervisor'])) return;
   
   const body = await parseBody(req);
   const data = validateBody(body, inventoryDistributeSchema, res);
@@ -150,9 +150,9 @@ const getByProject = asyncHandler(async (req, res, id) => {
 const getIncomingShipments = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director'])) return;
+  if (!hasRole(req, res, ['Equipment_Coordinator', 'Finance_Director', 'Project_Manager', 'Managing_Director', 'Field_Supervisor'])) return;
 
-  const shipments = await inventoryService.getIncomingShipments();
+  const shipments = await inventoryService.getIncomingShipments(req.query?.projectId);
   response.success(res, shipments);
 });
 

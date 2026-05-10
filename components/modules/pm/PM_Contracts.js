@@ -1074,15 +1074,40 @@ export const PM_Contracts = {
     }
   },
 
-  async onProjectRentalSelected(projectId) {
+  async onProjectRentalSelected(projectId, phaseNum = null) {
     if (!projectId) return;
     const vehiclesBody = document.getElementById('contract-vehicles-body');
-    if (!vehiclesBody) return;
+    const phaseSelect = document.getElementById('contract_phase');
+    const phaseContainer = document.getElementById('rental_phase_container');
 
-    vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Analyzing fleet requirements...</td></tr>`;
+    if (vehiclesBody) {
+      vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Analyzing fleet requirements...</td></tr>`;
+    }
 
     try {
       const token = localStorage.getItem("mcms_auth_token");
+      
+      // 1. Fetch Project Details to get Phases
+      const projectRes = await fetch(`/api/v1/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const projectResult = await projectRes.json();
+      const project = projectResult.data || projectResult;
+
+      // 2. Update Phase Dropdown if not already populated
+      if (phaseSelect && project.phases && (phaseSelect.options.length <= 1 || !phaseNum)) {
+          phaseSelect.innerHTML = '<option value="">All Project Requirements</option>';
+          project.phases.forEach((p, i) => {
+              const opt = document.createElement('option');
+              opt.value = i + 1;
+              opt.textContent = `Stage ${i + 1}: ${p.name}`;
+              if (phaseNum == (i + 1)) opt.selected = true;
+              phaseSelect.appendChild(opt);
+          });
+          if (phaseContainer) phaseContainer.style.display = 'block';
+      }
+
+      // 3. Fetch Equipment Gaps
       const resp = await fetch(`/api/v1/projects/${projectId}/equipment-gap`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1098,34 +1123,50 @@ export const PM_Contracts = {
         gaps = payload.data;
       }
 
+      // 4. Apply Phase Filtering
+      if (phaseNum) {
+          const pNum = parseInt(phaseNum);
+          gaps = gaps.filter(v => {
+              // Check if machine is required in this phase
+              // The API usually returns 'phases' array or we check v.phaseKeys
+              if (!v.phaseKeys) return true; // Fallback to showing all if no phase data
+              return v.phaseKeys.includes(pNum);
+          });
+      }
+
       if (!gaps || gaps.length === 0) {
-        vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--slate-400);">No equipment gaps identified for this project.</td></tr>`;
+        vehiclesBody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:var(--slate-400);">No equipment gaps identified for ${phaseNum ? 'this stage' : 'this project'}.</td></tr>`;
         return;
       }
 
       vehiclesBody.innerHTML = gaps.map((v, idx) => {
-        const name = v.label || v.name || v.type;
-        const rate = v.dailyRate || v.rate || 0;
-        const gap = v.estimatedDays || 1;
+        const name = v.label || v.name || v.type || v.machineType;
+        const rate = v.dailyRate || v.rate || v.basePrice || 0;
+        const estDays = v.estimatedDays || v.totalRequired || 1;
 
         return `
-          <tr style="border-bottom: 1px solid var(--slate-100);">
+          <tr style="border-bottom: 1px solid var(--slate-100); transition: background 0.2s;">
             <td style="padding: 12px; text-align: center;">
               <input type="checkbox" name="contract_material" value="${idx}" 
                 data-name="${name}" data-market="${rate}"
-                style="width: 16px; height: 16px; cursor: pointer;"
-                onchange="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
+                style="width: 18px; height: 18px; cursor: pointer;"
+                onchange="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.calculateContractPerformance()">
             </td>
             <td style="padding: 12px;">
-              <div style="font-weight: 700; color: var(--slate-800);">${name}</div>
-              <div style="font-size: 10px; color: var(--slate-500);">Market: MWK ${rate.toLocaleString()}/day</div>
+              <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">${name}</div>
+              <div style="font-size: 10px; color: var(--slate-500); margin-top: 2px;">Market Baseline: MWK ${rate.toLocaleString()}/day</div>
             </td>
-            <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--slate-600);">${gap}</td>
-            <td style="padding: 12px; text-align: center; color: var(--slate-400);">0</td>
             <td style="padding: 12px; text-align: center;">
-              <input type="number" id="m_qty_${idx}" class="form-input" 
-                style="width: 60px; padding: 4px; font-size: 11px; text-align: center; font-weight: 700;" 
-                value="${gap}" oninput="(window.app?.pmModule || window.app?.fmModule || window.fmModule || window.pmModule)?.calculateContractPerformance()">
+              <div id="rental_days_display_${idx}" style="font-weight: 700; color: var(--slate-700); font-size: 13px;">${estDays} Days</div>
+              <div style="font-size: 9px; color: var(--slate-400); text-transform: uppercase; font-weight: 800; margin-top: 2px;">Estimated Need</div>
+            </td>
+            <td style="padding: 12px; text-align: center;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <input type="number" id="m_qty_${idx}" class="form-input" 
+                    style="width: 70px; padding: 6px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 800; background: #F8FAFC;" 
+                    value="1" min="1" oninput="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.calculateContractPerformance()">
+                <span style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase;">Unit(s)</span>
+              </div>
             </td>
           </tr>
         `;
@@ -1133,7 +1174,7 @@ export const PM_Contracts = {
 
       // Generate Reference Code
       const refInput = document.getElementById("contract_ref");
-      if (refInput) refInput.value = `REN-PM-${Math.floor(1000 + Math.random() * 9000)}`;
+      if (refInput && !refInput.value) refInput.value = `REN-PM-${Math.floor(1000 + Math.random() * 9000)}`;
 
       this.fetchBudgetStatus(projectId);
     } catch (err) {

@@ -350,6 +350,7 @@ const inventoryDistributeSchema = z.object({
   reference: z.string().optional(),
   notes: z.string().optional(),
   dispatchedBy: z.string().optional(),
+  reqId: z.preprocess((val) => val === '' ? undefined : val, z.coerce.number().int().positive().optional()),
 });
 
 const inventoryConsumeSchema = z.object({

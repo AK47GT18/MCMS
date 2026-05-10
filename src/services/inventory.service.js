@@ -34,10 +34,36 @@ async function getBySector(sectorId) {
  * @param {Object} user 
  */
 async function distribute(data, user) {
-  const { sectorId, materialName, category, unit, quantity, reference, notes, lowThreshold } = data;
+  const { sectorId, materialName, category, unit, quantity, reference, notes, lowThreshold, reqId } = data;
   
   if (!sectorId || !materialName || !unit || !quantity || quantity <= 0) {
     throw new AppError('Invalid distribution data', 400);
+  }
+
+  // If this intake is linked to a requisition dispatch, mark it as fulfilled/delivered
+  if (reqId) {
+    try {
+      const idStr = String(reqId);
+      if (idStr.startsWith('SHIP-')) {
+        const contractItemId = parseInt(idStr.replace('SHIP-', ''));
+        await prisma.contractItem.update({
+          where: { id: contractItemId },
+          data: { receivedQty: { increment: quantity } }
+        });
+        logger.info(`Contract Item ${contractItemId} received quantity updated via intake.`);
+      } else {
+        await prisma.requisition.update({
+          where: { id: parseInt(reqId) },
+          data: { 
+            status: 'fulfilled',
+            dispatchStatus: 'delivered'
+          }
+        });
+        logger.info(`Requisition ${reqId} marked as fulfilled via inventory intake.`);
+      }
+    } catch (err) {
+      logger.warn(`Failed to update shipment ${reqId} status: ${err.message}`);
+    }
   }
 
   // Find or create inventory record
@@ -362,17 +388,21 @@ async function getAll() {
   return Object.values(totals);
 }
 
-async function getIncomingShipments() {
+async function getIncomingShipments(projectId) {
+  const where = {
+    status: { in: ['active', 'draft', 'expired'] }
+  };
+  
+  if (projectId) {
+    where.projectId = parseInt(projectId);
+  }
+
   const contracts = await prisma.contract.findMany({
-    where: { status: { in: ['active', 'draft', 'expired'] } },
+    where,
     include: {
       project: { select: { id: true, name: true, code: true } },
       vendor: { select: { id: true, name: true } },
-      items: {
-        where: {
-          // Prisma doesn't support comparing two columns directly in where without raw query, so we'll filter in memory or get all items and filter out completed ones
-        }
-      }
+      items: true
     }
   });
 

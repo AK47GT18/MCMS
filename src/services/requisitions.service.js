@@ -81,6 +81,7 @@ async function getAll({ page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 
       include: {
         project: { select: { id: true, code: true, name: true, budgetTotal: true, budgetSpent: true } },
         submitter: { select: { id: true, name: true } },
+        reviewer: { select: { id: true, name: true } },
         items: true,
       },
     }),

@@ -106,6 +106,46 @@ const dispatchService = {
    * Confirm arrival of resources at site
    */
   async confirmArrival(requisitionId, userId, userName, userRole) {
+    if (String(requisitionId).startsWith('SHIP-')) {
+      const contractItemId = parseInt(requisitionId.replace('SHIP-', ''));
+      const inventoryService = require('./inventory.service');
+      
+      // For contract items, we treat the arrival as a full fulfillment of the contract line item
+      const contractItem = await prisma.contractItem.findUnique({
+        where: { id: contractItemId },
+        include: { contract: { include: { project: true } } }
+      });
+      
+      if (!contractItem) throw new Error('Contract item not found');
+      
+      // Update the contract item received quantity
+      await prisma.contractItem.update({
+        where: { id: contractItemId },
+        data: { receivedQty: contractItem.quantity } // Fully received
+      });
+
+      // Distribute to site inventory
+      await inventoryService.distribute({
+        sectorId: 1, 
+        materialName: contractItem.itemName,
+        unit: contractItem.unit,
+        quantity: contractItem.quantity,
+        reference: `CONT-${contractItem.contractId}`,
+        notes: `Arrival confirmed by ${userName} (Contract Item Fulfillment).`
+      }, { id: userId });
+
+      // Audit log
+      await auditService.log({
+        userId, userName, userRole,
+        action: 'CONFIRM_ARRIVAL',
+        targetType: 'CONTRACT_ITEM',
+        targetId: contractItemId,
+        details: { material: contractItem.itemName, quantity: contractItem.quantity }
+      });
+
+      return { id: contractItemId, status: 'fulfilled' };
+    }
+
     const requisition = await prisma.requisition.findUnique({
       where: { id: parseInt(requisitionId) },
       include: { 
@@ -131,7 +171,7 @@ const dispatchService = {
         await inventoryService.distribute({
           sectorId: 1,
           materialName: item.itemName,
-          unit: 'Units',
+          unit: item.unit || 'Units',
           quantity: item.quantity,
           reference: updatedReq.reqCode || `REQ-${requisitionId}`,
           notes: `Arrival confirmed by ${userName}. Added to site inventory.`
@@ -184,7 +224,68 @@ const dispatchService = {
    * Confirm arrival with potential variance (shortages/damage)
    */
   async confirmArrivalVariance(data) {
-    const { requisitionId, receivedItems, receivedBy, dispatchedBy, notes, userId, userName, userRole } = data;
+    let { requisitionId, receivedItems, receivedBy, dispatchedBy, notes, userId, userName, userRole } = data;
+    
+    if (String(requisitionId).startsWith('SHIP-')) {
+      const contractItemId = parseInt(requisitionId.replace('SHIP-', ''));
+      const inventoryService = require('./inventory.service');
+      const reconciliationService = require('./reconciliation.service');
+      
+      const contractItem = await prisma.contractItem.findUnique({
+        where: { id: contractItemId },
+        include: { contract: { include: { project: true } } }
+      });
+      
+      if (!contractItem) throw new Error('Contract item not found');
+      
+      const discrepancies = [];
+      const qtySent = Number(contractItem.quantity);
+      // Normalized items might only have one item in receivedItems
+      const receivedItem = receivedItems[0]; 
+      const qtyReceived = Number(receivedItem.receivedQty || 0);
+      const variance = qtySent - qtyReceived;
+
+      // Update contract item
+      await prisma.contractItem.update({
+        where: { id: contractItemId },
+        data: { receivedQty: qtyReceived }
+      });
+
+      // Distribute what was received
+      if (qtyReceived > 0) {
+        await inventoryService.distribute({
+          sectorId: 1,
+          materialName: contractItem.itemName,
+          unit: contractItem.unit,
+          quantity: qtyReceived,
+          reference: `CONT-${contractItem.contractId}`,
+          notes: `Arrival confirmed by ${receivedBy} (with variance). Dispatched by ${dispatchedBy}.`
+        }, { id: userId });
+      }
+
+      if (variance > 0) {
+        discrepancies.push({
+          itemName: contractItem.itemName,
+          qtySent,
+          qtyReceived,
+          variance
+        });
+
+        await reconciliationService.processIncident({
+          projectId: contractItem.contract.projectId,
+          materialName: contractItem.itemName,
+          type: 'damage',
+          qtySent,
+          qtyReceived,
+          description: `Contract Intake Shortage: ${variance} units of ${contractItem.itemName}. Ref: CONT-${contractItem.contractId}`,
+          dispatchedBy: dispatchedBy,
+          reportedBy: userName,
+          reporterId: userId
+        });
+      }
+
+      return { id: contractItemId, discrepancies };
+    }
 
     const requisition = await prisma.requisition.findUnique({
       where: { id: parseInt(requisitionId) },

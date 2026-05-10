@@ -4166,22 +4166,25 @@ Contract Admin</textarea>
             </div>
 
             <div class="form-group" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                    <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Project</label>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 2px 6px; border: 1px solid #ffedd5; border-radius: 4px; background: #fff7ed;"
-                            onclick="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(document.getElementById('contract_project').value)">
-                            <i class="fas fa-sync-alt" style="margin-right: 4px;"></i> Refresh
-                        </button>
-                        <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--slate-500); padding: 2px 6px; border: 1px solid var(--slate-200); border-radius: 4px; background: var(--slate-50);"
-                            onclick="window.drawer.close(); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.openNewVendorContract()">
-                            <i class="fas fa-undo" style="margin-right: 4px;"></i> Reset
-                        </button>
-                    </div>
+                <label class="form-label v-req" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project</label>
+                <div style="display: flex; gap: 10px;">
+                    <select id="contract_project" class="form-input" data-vrules="required" style="flex: 2; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
+                        onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(this.value)">
+                        <option value="">Select Target Project...</option>
+                    </select>
+                    <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 0 12px; border: 1px solid #ffedd5; border-radius: 8px; background: #fff7ed;"
+                        onclick="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(document.getElementById('contract_project').value)">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
-                <select id="contract_project" class="form-input" data-vrules="required" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px;"
-                    onchange="window.V?.checkField(this); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(this.value)">
-                    <option value="">Select Target Project...</option>
+            </div>
+
+            <!-- New Phase Filter -->
+            <div id="rental_phase_container" class="form-group" style="margin-bottom: 20px; display: none;">
+                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Project Phase / Stage Filter</label>
+                <select id="contract_phase" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-weight: 700; background: #F8FAFC;"
+                    onchange="(window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.onProjectRentalSelected(document.getElementById('contract_project').value, this.value)">
+                    <option value="">All Project Requirements</option>
                 </select>
             </div>
 
@@ -4192,20 +4195,27 @@ Contract Admin</textarea>
                     <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px;">
                         <thead>
                             <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
-                                <th style="padding: 10px; text-align: left; width: 40px;"></th>
-                                <th style="padding: 10px; text-align: left;">Machine / Equipment</th>
-                                <th style="padding: 10px; text-align: center;">Days Required</th>
-                                <th style="padding: 10px; text-align: center; width: 100px;">Rental Qty</th>
+                                <th style="padding: 12px; text-align: center; width: 50px;">
+                                    <input type="checkbox" onclick="const cbs = document.querySelectorAll('input[name=\'contract_material\']'); cbs.forEach(c => c.checked = this.checked); (window.app?.pmModule || window.app?.fmModule || window.app?.ecModule)?.calculateContractPerformance()">
+                                </th>
+                                <th style="padding: 12px; text-align: left;">Machine / Equipment</th>
+                                <th style="padding: 12px; text-align: center; width: 120px;">Days Required</th>
+                                <th style="padding: 12px; text-align: center; width: 120px;">Rental Qty</th>
                             </tr>
                         </thead>
                         <tbody id="contract-vehicles-body">
                             <tr>
-                                <td colspan="4" style="padding: 24px; text-align: center; color: var(--slate-400);">Select a project to view required equipment</td>
+                                <td colspan="4" style="padding: 32px; text-align: center; color: var(--slate-400);">
+                                    <i class="fas fa-truck-loading" style="font-size: 24px; display: block; margin-bottom: 10px; opacity: 0.2;"></i>
+                                    Select a project to view required equipment
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div style="font-size: 11px; color: var(--slate-500); margin-top: 8px; font-style: italic;">Check the machines this rental vendor will supply</div>
+                <div style="font-size: 11px; color: var(--slate-500); margin-top: 8px; font-style: italic;">
+                    <i class="fas fa-info-circle"></i> Bulk selection enabled. Multiple machines can be assigned to a single contract.
+                </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 12px; position: relative;">
@@ -4540,129 +4550,154 @@ Contract Admin</textarea>
             </button>
         </div>
     `,
-    requestResourceFS: (projectData = {}) => `
-        <div class="drawer-section" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-            <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; background: rgba(255, 107, 0, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--orange); margin-right: 12px; font-size: 18px;">
-                    <i class="fas fa-truck-loading"></i>
-                </div>
-                <div>
-                    <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin: 0;">Resource Requisition</h3>
-                    <div style="font-size: 12px; color: var(--slate-500);">Project: ${projectData.name || 'Current Site'}</div>
-                </div>
-            </div>
+    requestResourceFS: (projectData) => {
+        const currentPhaseNum = Number(projectData.currentPhase || 1);
+        const phases = projectData.phases || [];
+        const currentPhaseName = phases[currentPhaseNum - 1]?.name || `Phase ${currentPhaseNum}`;
 
-            <div id="fs_req_message_area" style="margin-bottom: 16px; display: none;"></div>
-
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label class="form-label" style="color: var(--slate-700); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">1. Choose Category</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--slate-50); padding: 4px; border-radius: 10px; border: 1px solid var(--slate-200);">
-                    <button class="btn active" id="fs_btn_machinery" 
-                        onclick="window.app.fsModule?.toggleRequestType('machinery', this)" 
-                        style="padding: 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; transition: all 0.2s; background: var(--orange); color: white;">
-                        <i class="fas fa-tractor" style="margin-right: 6px;"></i> Machinery
-                    </button>
-                    <button class="btn" id="fs_btn_materials" 
-                        onclick="window.app.fsModule?.toggleRequestType('materials', this)" 
-                        style="padding: 10px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; transition: all 0.2s; background: transparent; color: var(--slate-600);">
-                        <i class="fas fa-boxes" style="margin-right: 6px;"></i> Materials
-                    </button>
+        return `
+            <div style="padding: 24px;">
+                <!-- Header Section -->
+                <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
+                    <i class="fas fa-truck-loading" style="color: var(--orange); font-size: 28px;"></i>
+                    <div>
+                        <div style="font-weight: 800; color: #9a3412; font-size: 16px;">Create Resource Requisition</div>
+                        <div style="font-size: 11px; color: #c2410c;">Select a project stage and define the required quantities</div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="fs_resource_selector_box" style="padding: 16px; background: var(--slate-50); border-radius: 12px; border: 1px dashed var(--slate-300); margin-bottom: 20px;">
-                <!-- Machinery View -->
-                <div id="fs_machinery_req_view">
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Project-Scoped Equipment</label>
-                    <select id="fs_mac_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        <option value="" disabled selected>Select assigned machine...</option>
-                        ${(projectData?.recommendedMachines || []).length > 0
-            ? (projectData.recommendedMachines || [])
-                .map(
-                    (m) => `
-                            <option value="${m.name}" data-available="${m.available}" data-type="${m.type}" data-source="${m.source}">
-                                ${m.available ? "✅" : "⏳"} ${m.name} [${m.source === 'owned' ? 'OWNED' : 'RENTAL'}]
+                <!-- Project Context Card -->
+                <div style="background: var(--slate-900); color: white; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-md);">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Active Project</div>
+                    <div style="font-size: 15px; font-weight: 700;">${projectData.name}</div>
+                </div>
+
+                <!-- Phase Selector -->
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                        <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Select Project Phase</label>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 2px 6px; border: 1px solid #ffedd5; border-radius: 4px; background: #fff7ed;"
+                                onclick="window.app.fsModule.handleRequisitionPhaseChange(document.getElementById('fs_req_phase_select').value)">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <select id="fs_req_phase_select" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-weight: 700; background: white;"
+                        onchange="window.app.fsModule.handleRequisitionPhaseChange(this.value)">
+                        ${phases.map((p, i) => `
+                            <option value="${i + 1}" ${currentPhaseNum === (i + 1) ? 'selected' : ''}>
+                                STAGE ${i + 1}: ${p.name.toUpperCase()} ${currentPhaseNum === (i + 1) ? '(ACTIVE)' : ''}
                             </option>
-                        `,
-                )
-                .join("")
-            : `<option value="" disabled>No equipment assigned to this project yet.</option>`
-        }
+                        `).join('')}
                     </select>
-                    
-                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
-                        <div style="flex: 1;">
-                            <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 4px; text-transform: uppercase;">Quantity</label>
-                            <input type="number" id="fs_mac_qty" class="form-input" value="1" min="1" style="width: 100%; border-radius: 8px; padding: 8px;">
-                        </div>
-                        <button class="btn" onclick="window.app.fsModule?.addItemToRequisition('machinery')" style="margin-top: 20px; background: var(--slate-900); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px;">
-                            <i class="fas fa-plus"></i> Add
-                        </button>
+                </div>
+
+                <!-- Selection Table -->
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px; background: var(--slate-100); padding: 4px; border-radius: 10px;">
+                        <button id="fs_btn_machinery" onclick="window.app.fsModule.toggleRequestType('machinery', this)" class="btn active" style="flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 800; font-size: 11px; background: var(--orange); color: white; transition: all 0.2s;">EQUIPMENT</button>
+                        <button id="fs_btn_materials" onclick="window.app.fsModule.toggleRequestType('materials', this)" class="btn" style="flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 800; font-size: 11px; background: transparent; color: var(--slate-600); transition: all 0.2s;">MATERIALS</button>
+                    </div>
+
+                    <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow-x: auto; box-shadow: var(--shadow-sm);">
+                        <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                                    <th style="padding: 12px; text-align: left; color: var(--slate-500); font-weight: 700; text-transform: uppercase; font-size: 10px;">Resource Item</th>
+                                    <th style="padding: 12px; text-align: center; width: 120px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; font-size: 10px;">Gap / Need</th>
+                                    <th style="padding: 12px; text-align: center; width: 120px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; font-size: 10px;">Request Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fs_resource_table_body">
+                                <!-- Machinery Rows -->
+                                ${(() => {
+                                    const machines = projectData.recommendedMachines || [];
+                                    const filtered = machines.filter(m => m.isAssigned || !m.phaseKeys || m.phaseKeys.includes(currentPhaseNum));
+                                    
+                                    if (filtered.length === 0) return '<tr class="fs-mac-row"><td colspan="3" style="padding: 32px; text-align: center; color: var(--slate-400);">No planned equipment for this stage.</td></tr>';
+
+                                    return filtered.map(m => `
+                                        <tr class="fs-mac-row" style="border-bottom: 1px solid var(--slate-100);">
+                                            <td style="padding: 12px;">
+                                                <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">${m.name.toUpperCase()}</div>
+                                                <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">
+                                                    SOURCE: ${m.source.toUpperCase()} | STATUS: ${m.isAssigned ? '<span style="color:var(--emerald);font-weight:700;">ON-SITE</span>' : 'AVAILABLE'}
+                                                </div>
+                                            </td>
+                                            <td style="padding: 12px; text-align: center;">
+                                                <input type="number" class="fs-req-input" data-type="machinery" data-name="${m.name}" data-unit="days" 
+                                                    placeholder="0" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 700; background: var(--slate-50);">
+                                                <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 4px;">Days</div>
+                                            </td>
+                                            <td style="padding: 12px; text-align: center;">
+                                                <input type="number" class="fs-req-input" data-type="machinery" data-name="${m.name}" data-unit="units" 
+                                                    placeholder="0" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 700; background: #FFF9F5; color: var(--orange-dark);">
+                                                <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 4px;">Unit(s)</div>
+                                            </td>
+                                        </tr>
+                                    `).join('');
+                                })()}
+
+                                <!-- Materials Rows -->
+                                ${(() => {
+                                    const materials = (projectData.recommendedMaterials || []).filter(m => m.phaseNumber === currentPhaseNum);
+                                    
+                                    if (materials.length === 0) return '<tr class="fs-mat-row" style="display: none;"><td colspan="3" style="padding: 32px; text-align: center; color: var(--slate-400);">No planned materials for this stage.</td></tr>';
+
+                                    return materials.map(m => {
+                                        const onSite = Number(m.onSiteQty) || 0;
+                                        const approved = Number(m.approvedQty) || 0;
+                                        const remaining = Math.max(0, approved - (onSite + (Number(m.inTransitQty) || 0)));
+                                        
+                                        return `
+                                            <tr class="fs-mat-row" style="display: none; border-bottom: 1px solid var(--slate-100);">
+                                                <td style="padding: 12px;">
+                                                    <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">${m.name.toUpperCase()}</div>
+                                                    <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">
+                                                        SITE STOCK: ${onSite.toLocaleString()} ${m.unit.toUpperCase()}
+                                                    </div>
+                                                </td>
+                                                <td style="padding: 12px; text-align: center;">
+                                                    <div style="font-weight: 800; color: var(--orange-dark); font-size: 13px;">${remaining.toLocaleString()}</div>
+                                                    <div style="font-size: 9px; color: var(--slate-400); font-weight: 700; text-transform: uppercase; margin-top: 4px;">${m.unit.toUpperCase()} NEED</div>
+                                                </td>
+                                                <td style="padding: 12px; text-align: center;">
+                                                    <input type="number" class="fs-req-input" data-type="material" data-name="${m.name}" data-unit="${m.unit}"
+                                                        placeholder="0.0" step="0.1"
+                                                        style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 700; background: #F0FDFA; color: var(--emerald-700);">
+                                                    <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 4px;">Total</div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('');
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="font-size: 11px; color: var(--slate-500); margin-top: 10px; font-style: italic; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-info-circle"></i>
+                        Define required quantities for each resource and stage dispatch.
                     </div>
                 </div>
 
-                <!-- Materials View (Grouped by Phase) -->
-                <div id="fs_material_req_view" style="display: none;">
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 8px; text-transform: uppercase;">Approved Material List</label>
-                    <select id="fs_mat_select" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border-color: var(--slate-200); background-color: white;">
-                        <option value="" disabled selected>Select from road spec...</option>
-                        ${(() => {
-            const allMaterials = projectData?.recommendedMaterials || [];
-            // Filter out materials that are already fully delivered or en-route
-            const materials = allMaterials.filter(m => {
-                const totalOnSite = (Number(m.onSiteQty) || 0) + (Number(m.inTransitQty) || 0);
-                return totalOnSite < (Number(m.approvedQty) || 0);
-            });
-
-            if (materials.length === 0) {
-                return `<option value="" disabled>All assigned materials are fully supplied to site.</option>`;
-            }
-
-            const phases = [...new Set(materials.map(m => m.phaseName))];
-            return phases.map(phase => `
-                            <optgroup label="${phase}">
-                                ${materials.filter(m => m.phaseName === phase).map(m => `
-                                    <option value="${m.name}" data-unit="${m.unit}" data-approved="${m.approvedQty}">${m.name} (Need: ${m.approvedQty - (m.onSiteQty + m.inTransitQty)} ${m.unit})</option>
-                                `).join('')}
-                            </optgroup>
-                        `).join('');
-        })()}
+                <!-- Footer Section -->
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Operational Urgency</label>
+                    <select id="fs_req_urgency" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-weight: 600;">
+                        <option value="normal">Routine Supply (72h Cycle)</option>
+                        <option value="priority">Priority Dispatch (24h Window)</option>
+                        <option value="emergency">Critical / Work-Stoppage (ASAP)</option>
                     </select>
-
-                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
-                        <div style="flex: 1;">
-                            <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 4px; text-transform: uppercase;">Amount</label>
-                            <input type="number" id="fs_mat_qty" class="form-input" value="" placeholder="0.0" min="0.1" step="0.1" style="width: 100%; border-radius: 8px; padding: 8px;">
-                        </div>
-                        <button class="btn" onclick="window.app.fsModule?.addItemToRequisition('material')" style="margin-top: 20px; background: var(--slate-900); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px;">
-                            <i class="fas fa-plus"></i> Add
-                        </button>
-                    </div>
                 </div>
-            </div>
 
-            <div id="fs_requisition_items_list" style="margin-bottom: 24px;">
-                <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-700); margin-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid var(--slate-100); padding-bottom: 8px;">Request Summary (0 Items)</label>
-                <div id="fs_items_container" style="display: flex; flex-direction: column; gap: 8px; min-height: 40px;">
-                    <div style="text-align: center; padding: 12px; color: var(--slate-400); font-size: 12px; font-style: italic;">No items added to current draft.</div>
-                </div>
+                <button class="btn btn-primary" onclick="window.app.fsModule.handleBulkRequisitionSubmit()" 
+                    style="width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 14px; background: var(--orange); border: none; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fas fa-paper-plane"></i> DISPATCH REQUEST TO EC
+                </button>
             </div>
-
-            <div class="form-group" style="margin-bottom: 32px; padding: 16px; background: #FFF9F5; border-radius: 12px; border: 1px solid #FFE5D4;">
-                <label class="form-label" style="color: var(--orange-dark); font-weight: 700; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block;">Operational Urgency</label>
-                <select id="fs_req_urgency" class="form-input" style="width: 100%; border: none; background: transparent; font-weight: 700; color: var(--slate-800);">
-                    <option value="normal">Routine Supply (72h Cycle)</option>
-                    <option value="urgent">Critical Path Blocker (Next 24h)</option>
-                </select>
-            </div>
-
-            <button class="btn" style="width: 100%; padding: 16px; background: var(--orange); border: none; border-radius: 12px; color: white; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3); transition: transform 0.2s;" 
-                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'"
-                onclick="window.app.fsModule?.handleSubmitRequisition()">
-                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Dispatch Request to EC
-            </button>
-        </div>
-    `,
+        `;
+    },
     dispatchResource: (req) => `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Dispatch Resources</h3>
@@ -4702,7 +4737,13 @@ Contract Admin</textarea>
             </div>
 
             <div style="margin-bottom: 24px;">
-                <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin-bottom: 12px; display: block;">1. Verify Received Quantities</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin: 0;">1. Verify Received Quantities</label>
+                    <div style="font-size: 11px; color: var(--emerald); font-weight: 700; background: rgba(16,185,129,0.1); padding: 4px 10px; border-radius: 20px;">
+                        <i class="fas fa-check-shield"></i> Approved by: ${req.reviewer?.name || 'EC Yard Team'}
+                        <span style="color: var(--slate-400); font-weight: 400; margin-left: 4px;">• ${req.updatedAt ? new Date(req.updatedAt).toLocaleDateString() : 'Active'}</span>
+                    </div>
+                </div>
                 ${req.items.map((item, idx) => `
                     <div style="background: white; border: 1px solid var(--slate-200); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm);">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -4724,18 +4765,48 @@ Contract Admin</textarea>
             </div>
 
             <div style="margin-bottom: 24px;">
-                <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px; display: block;">2. Delivery Information</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                    <div>
-                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Carrier / Transporter ${req.dispatchedPhone ? `(${req.dispatchedPhone})` : ''}</label>
-                        <input type="text" id="arrival_dispatched_by" class="form-input" placeholder="e.g. Unitrans" style="width: 100%;" value="${req.dispatchedBy || ''}">
+                <label class="form-label" style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--slate-500); margin-bottom: 8px; display: block;">2. Delivery Metadata</label>
+                
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Driver / Transporter</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${req.dispatchedBy || req.transporterName || 'Yard Team'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Contact Phone</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--blue);">${req.dispatchedPhone || req.driverPhone || 'N/A'}</div>
+                        </div>
                     </div>
-                    <div>
-                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Receiving Officer</label>
-                        <input type="text" id="arrival_received_by" class="form-input" style="width: 100%;" value="${window.currentUser?.name || ''}">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Dispatch Time</div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${req.dispatchDate ? new Date(req.dispatchDate).toLocaleString() : (req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A')}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Estimated Arrival</div>
+                            <div style="font-size: 12px; font-weight: 700; color: var(--emerald);">${req.estimatedArrival ? new Date(req.estimatedArrival).toLocaleString() : 'TBD'}</div>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px dashed var(--slate-200); padding-top: 12px;">
+                        <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">EC Justification / Remarks</div>
+                        <div style="font-size: 12px; color: var(--slate-600); font-style: italic; line-height: 1.4; margin-top: 4px;">"${req.remarks || req.justification || req.notes || 'No specific remarks provided.'}"</div>
                     </div>
                 </div>
-                <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Shortage / Damage Notes</label>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div>
+                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Confirming Officer</label>
+                        <input type="text" id="arrival_received_by" class="form-input" style="width: 100%; font-weight: 700;" value="${window.currentUser?.name || ''}">
+                        <input type="hidden" id="arrival_dispatched_by" value="${req.dispatchedBy || ''}">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Delivery Note / ID</label>
+                        <input type="text" id="arrival_ref" class="form-input" placeholder="e.g. DN-10234" style="width: 100%;">
+                    </div>
+                </div>
+                
+                <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Observations (Shortages / Damage)</label>
                 <textarea id="arrival_notes" class="form-input" placeholder="Explain any discrepancies here..." style="width: 100%; height: 80px; resize: none;"></textarea>
             </div>
 
