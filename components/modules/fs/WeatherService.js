@@ -78,7 +78,9 @@ const WeatherService = {
                     weatherCode: daily.weather_code[i],
                     ...(this.WMO_CODES[daily.weather_code[i]] || { label: 'Unknown', icon: 'fa-question', color: '#6b7280' })
                 })) : [],
-                fetchedAt: new Date().toISOString()
+                fetchedAt: new Date().toISOString(),
+                latitude: data.latitude,
+                longitude: data.longitude
             };
 
             this._cache = result;
@@ -168,9 +170,9 @@ const WeatherService = {
                     <div style="font-size: 11px; font-weight: 700; color: ${safety.color};">${safety.message}</div>
                 </div>
 
-                <!-- 3-Day Forecast -->
+                <!-- 3-Day Forecast (Hidden on Mobile for Space) -->
                 ${weather.forecast.length > 1 ? `
-                    <div style="display: flex; gap: 8px;">
+                    <div class="hidden-mobile" style="display: flex; gap: 8px;">
                         ${weather.forecast.slice(1).map(day => {
                             const dayName = new Date(day.date).toLocaleDateString('en-GB', { weekday: 'short' });
                             return `
@@ -230,7 +232,9 @@ const WeatherService = {
                 <div style="text-align: right;">
                     <div style="font-size: 9px; font-weight: 800; color: #0EA5E9; margin-bottom: 2px;">LOCAL SYNC</div>
                     <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; color: #0369A1; font-weight: 600;">
-                        <i class="fas fa-location-dot" style="font-size: 8px;"></i> ${Math.round(weather.latitude * 100) / 100}, ${Math.round(weather.longitude * 100) / 100}
+                        <i class="fas fa-location-dot" style="font-size: 8px;"></i> 
+                        ${weather.latitude ? Math.round(weather.latitude * 100) / 100 : '—'}, 
+                        ${weather.longitude ? Math.round(weather.longitude * 100) / 100 : '—'}
                     </div>
                 </div>
             </div>

@@ -116,14 +116,19 @@ export const FS_Dashboard = {
                                 ` : '';
                             })()}
                             
-                            <!-- Progress Chart Card -->
-                            <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 16px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Phase Completion Analysis</div>
-                                    <i class="fas fa-chart-line" style="color: var(--orange);"></i>
+                            <!-- Live Weather Mini-Card (Integrated) -->
+                            <div class="data-card" id="weather-card" style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+                                <div class="data-card-header" style="padding: 12px 16px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="card-title" style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;"><i class="fas fa-cloud-sun" style="color: var(--blue); margin-right: 6px;"></i>Site Weather</div>
+                                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 10px;" onclick="window.app.fsModule._loadWeather(true)">
+                                        <i class="fas fa-sync"></i>
+                                    </button>
                                 </div>
-                                <div style="height: 120px; position: relative;">
-                                    <canvas id="fs-progress-chart"></canvas>
+                                <div id="fs-weather-widget" style="padding: 16px; flex: 1; display: flex; align-items: center; justify-content: center;">
+                                    <div style="text-align: center; color: var(--slate-400); font-size: 11px;">
+                                        <i class="fas fa-circle-notch fa-spin" style="margin-bottom: 4px; display: block;"></i>
+                                        Loading...
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -134,20 +139,6 @@ export const FS_Dashboard = {
                         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--slate-500);">
                             <span>Execution Progress</span>
                             <span>${this.assignedProject?.progress || 0}% Complete</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="data-card" id="weather-card">
-                    <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="card-title"><i class="fas fa-cloud-sun" style="color: var(--blue); margin-right: 6px;"></i>Site Weather</div>
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule._loadWeather(true)">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
-                    </div>
-                    <div id="fs-weather-widget" style="padding: 20px;">
-                        <div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">
-                            <i class="fas fa-circle-notch fa-spin" style="font-size: 16px; margin-bottom: 8px; display: block;"></i>
-                            Loading weather data…
                         </div>
                     </div>
                 </div>
