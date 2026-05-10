@@ -2,6 +2,7 @@
 export class ModalManager {
     constructor() {
         this.createOverlay();
+        this.closeTimeout = null;
     }
 
     createOverlay() {
@@ -27,6 +28,10 @@ export class ModalManager {
     }
 
     show(options) {
+        if (this.closeTimeout) {
+            clearTimeout(this.closeTimeout);
+            this.closeTimeout = null;
+        }
         // options: { type, title, message, confirmText, cancelText, onConfirm, onCancel }
         const overlay = document.getElementById('modal-overlay');
         const container = document.getElementById('modal-container');
@@ -67,8 +72,9 @@ export class ModalManager {
         const cancelBtn = content.querySelector('.modal-cancel');
 
         confirmBtn?.addEventListener('click', () => {
-            if (options.onConfirm) options.onConfirm();
+            const onConfirm = options.onConfirm;
             this.close();
+            if (onConfirm) onConfirm();
         });
 
         cancelBtn?.addEventListener('click', () => {
@@ -166,8 +172,9 @@ export class ModalManager {
         const container = document.getElementById('modal-container');
         
         container?.classList.remove('active');
-        setTimeout(() => {
+        this.closeTimeout = setTimeout(() => {
             overlay?.classList.remove('active');
+            this.closeTimeout = null;
         }, 200);
     }
 }

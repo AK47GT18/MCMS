@@ -118,11 +118,18 @@ export const EC_Handlers = {
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 32px;">
-                        <label class="form-label">Dispatch Date & Time</label>
-                        <input type="datetime-local" id="dispatch_date" class="form-input" style="width: 100%;" 
-                            min="${new Date().toISOString().slice(0, 16)}"
-                            value="${new Date().toISOString().slice(0, 16)}">
+                    <div class="form-group" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label class="form-label">Dispatch Date & Time</label>
+                            <input type="datetime-local" id="dispatch_date" class="form-input" style="width: 100%;" 
+                                min="${new Date().toISOString().slice(0, 16)}"
+                                value="${new Date().toISOString().slice(0, 16)}">
+                        </div>
+                        <div>
+                            <label class="form-label">Estimated Arrival (ETA)</label>
+                            <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;" 
+                                min="${new Date().toISOString().slice(0, 16)}">
+                        </div>
                     </div>
 
                     <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 14px;" 
@@ -143,6 +150,7 @@ export const EC_Handlers = {
         const transporter = document.getElementById('dispatch_transporter')?.value;
         const transporterPhone = document.getElementById('dispatch_transporter_phone')?.value || 'N/A';
         const date = document.getElementById('dispatch_date')?.value;
+        const eta = document.getElementById('dispatch_eta')?.value;
         const justification = document.getElementById('dispatch_justification')?.value;
 
         // Allocation Validation
@@ -161,8 +169,8 @@ export const EC_Handlers = {
             if (errorEl) errorEl.style.display = 'block';
             return;
         }
-        if (!projectId || !recipient || !justification || !transporter) {
-            window.toast?.show('Project site, transporter, and justification are required.', 'warning');
+        if (!projectId || !recipient || !justification || !transporter || !eta) {
+            window.toast?.show('Project site, transporter, justification, and ETA are required.', 'warning');
             return;
         }
 
@@ -197,7 +205,7 @@ export const EC_Handlers = {
             // Dispatch it to put it in transit
             await client.post('/dispatch', {
                 requisitionId: reqId,
-                estimatedArrival: date,
+                estimatedArrival: eta,
                 partial: false,
                 dispatchedItems: [`${amount} x ${materialName}`],
                 userPhone: transporterPhone,
@@ -205,7 +213,7 @@ export const EC_Handlers = {
             });
 
             // Update local state
-            this.inventory[materialName].qty -= amount;
+            // Removed local deduction
             // Note: Email notifications and audit logs are securely handled by the backend automatically upon successful /inventory/dispatch }
 
             window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');

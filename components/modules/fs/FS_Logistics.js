@@ -3,6 +3,8 @@ import tasksApi from '../../../src/api/tasks.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 import assets from '../../../src/api/assets.api.js';
 import inventoryApi from '../../../src/api/inventory.api.js';
+import replenishmentApi from '../../../src/api/replenishment.api.js';
+import { notificationService } from '../../../src/services/notifications.service.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
@@ -83,7 +85,11 @@ export const FS_Logistics = {
         const startIdx = (this.materialsPage - 1) * perPage;
         const paginatedEntries = materialEntries.slice(startIdx, startIdx + perPage);
 
-        const buildActionButtons = (name, unit) => {
+        const buildActionButtons = (name, unit, qty = 0) => {
+            const localReceipts = this._getReceiptHistory(name);
+            const backendLogs = (this.siteInventoryLogs?.[name] || []).filter(l => l.type === 'IN');
+            const hasBeenReceived = localReceipts.length > 0 || backendLogs.length > 0;
+            
             const incoming = (this.inTransitItems || []).filter(req => 
                 req.items.some(i => i.itemName.toLowerCase() === name.toLowerCase())
             );
@@ -109,10 +115,20 @@ export const FS_Logistics = {
                 `;
             }
             
-            if (canReceive && incoming.length === 0) {
+            if (canReceive && incoming.length === 0 && !hasBeenReceived) {
                 buttons += `
-                    <button class="btn btn-secondary btn-sm" style="padding: 0 16px; height: 36px; font-size: 11px; color: var(--emerald); border-color: var(--emerald-light);" onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}', '${unit}', '${receivableReqId}')">
+                    <button class="btn btn-secondary btn-sm" style="padding: 0 16px; height: 36px; font-size: 11px; color: var(--emerald); border-color: var(--emerald-light);" onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}', '${unit}', '${receivableReqId}', ${qty})">
                         <i class="fas fa-box-open" style="margin-right: 4px;"></i> Receive
+                    </button>
+                `;
+            }
+
+            // Always show History button if there are past receipts or backend logs
+            const hasLogs = (this.siteInventoryLogs?.[name] || []).length > 0;
+            if (hasBeenReceived || hasLogs) {
+                buttons += `
+                    <button class="btn btn-secondary btn-sm" style="padding: 0 16px; height: 36px; font-size: 11px; color: var(--blue); border-color: var(--blue-light);" onclick="window.app.fsModule.viewReceiptHistory('${name.replace(/'/g, "\\'")}', '${unit}')">
+                        <i class="fas fa-history" style="margin-right: 4px;"></i> History
                     </button>
                 `;
             }
@@ -144,7 +160,7 @@ export const FS_Logistics = {
                     </td>
                     <td style="text-align: right; min-width: 150px; white-space: nowrap;">
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            ${buildActionButtons(name, data.unit)}
+                            ${buildActionButtons(name, data.unit, data.qty)}
                         </div>
                     </td>
                 </tr>
@@ -175,7 +191,7 @@ export const FS_Logistics = {
                         </td>
                         <td style="text-align: right; padding: 8px 12px; white-space: nowrap;">
                             <button class="btn btn-primary btn-sm" style="background: var(--blue); border-color: var(--blue); padding: 4px 12px; font-size: 11px;" 
-                                onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}'  , '${data.unit || ''}', '${ship.id}')">
+                                onclick="window.app.fsModule.openManualIntakeDrawer('${name.replace(/'/g, "\\'")}'  , '${data.unit || ''}', '${ship.id}', ${data.qty || 0})">
                                 <i class="fas fa-check-circle" style="margin-right: 4px;"></i>Confirm Arrival
                             </button>
                         </td>
@@ -207,7 +223,7 @@ export const FS_Logistics = {
                 </div>
 
                 <div style="display: flex; gap: 8px; margin-top: 4px;">
-                    ${buildActionButtons(name, data.unit)}
+                    ${buildActionButtons(name, data.unit, data.qty)}
                 </div>
             </div>
         `).join('');
@@ -320,7 +336,7 @@ export const FS_Logistics = {
             </div>
         `);
     },
-    async openManualIntakeDrawer(materialName, unit, reqId = '') {
+    async openManualIntakeDrawer(materialName, unit, reqId = '', inventoryQty = 0) {
         let expectedQty = 0;
         let dispatchInfoHTML = '';
         let drawerSubtitle = `Direct Site Intake (${unit})`;
@@ -374,16 +390,22 @@ export const FS_Logistics = {
         let matchedShipments = [];
 
         if (this.inTransitItems && this.inTransitItems.length > 0) {
-            // Use extremely aggressive name matching (trim, lowercase, remove non-alphanumeric)
+            // Use extremely aggressive name matching
             const clean = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
             const searchName = clean(materialName);
             
             matchedShipments = this.inTransitItems.filter(r => 
-                (r.items || []).some(i => clean(i.itemName) === searchName)
+                (r.items || []).some(i => {
+                    const itemName = clean(i.itemName);
+                    return itemName === searchName || itemName.includes(searchName) || searchName.includes(itemName);
+                })
             );
             
             matchedShipments.forEach(r => {
-                const item = r.items.find(i => clean(i.itemName) === searchName);
+                const item = r.items.find(i => {
+                    const itemName = clean(i.itemName);
+                    return itemName === searchName || itemName.includes(searchName) || searchName.includes(itemName);
+                });
                 if (item) pendingDispatchQty += Number(item.quantity || 0);
             });
         }
@@ -436,14 +458,27 @@ export const FS_Logistics = {
             if (macMatches.length > 0) isVehicle = true;
         }
 
-        const hasSpecificDispatch = expectedQty > 0 || pendingDispatchQty > 0;
-        const strictLimit = expectedQty > 0 ? expectedQty : (pendingDispatchQty > 0 ? pendingDispatchQty : projectTotalQty);
-        const ruleLabel = expectedQty > 0 ? 'Specific Dispatch' : (pendingDispatchQty > 0 ? 'Total Pending Dispatches' : 'Project Plan');
+        // Determine the intake limit:
+        // Priority: specific dispatch qty > pending dispatch total > inventory qty from the table
+        const hasDispatchLimit = expectedQty > 0 || pendingDispatchQty > 0;
+        let strictLimit = expectedQty > 0
+            ? expectedQty
+            : (pendingDispatchQty > 0 ? pendingDispatchQty : (Number(inventoryQty) || 0));
 
-        // IF we have an en-route shipment, we force the label to be specific
-        const validationMessage = hasSpecificDispatch 
-            ? `Rule: Intake must not exceed <strong>${strictLimit.toLocaleString()} ${unit}</strong> (Authorized Dispatch).`
-            : `Rule: Intake must not exceed <strong>${strictLimit.toLocaleString()} ${unit}</strong> (Project Plan).`;
+        // If we have a pending dispatch but no specific expectedQty yet (e.g. from generic Receive button),
+        // we use the pending dispatch total as the expected quantity for validation.
+        if (expectedQty === 0 && pendingDispatchQty > 0) {
+            expectedQty = pendingDispatchQty;
+        }
+        
+        // Validation message
+        const limitSource = hasDispatchLimit ? 'Authorized Dispatch' : 'Inventory Record';
+        let validationMessage = '';
+        if (strictLimit > 0) {
+            validationMessage = `Rule: Intake must not exceed <strong>${strictLimit.toLocaleString()} ${unit}</strong> (${limitSource}).`;
+        } else {
+            validationMessage = `<i class="fas fa-box-open"></i> Direct Site Intake — enter the quantity received.`;
+        }
 
         // Fetch Vehicle Contract if applicable
         let contractInfoHTML = '';
@@ -503,15 +538,18 @@ export const FS_Logistics = {
             const shortagePanel = document.getElementById('shortage_panel');
             const shortageQtyEl = document.getElementById('shortage_qty_display');
 
-            if (val > limit && limit > 0) {
+            // Hard-block if the value exceeds the limit (from dispatch OR inventory record)
+            const hasRealLimit = limit > 0;
+            const srcLabel = (dispatchQty > 0 && limit === dispatchQty) ? 'Authorized Dispatch' : 'Inventory Record';
+
+            if (hasRealLimit && val > limit) {
                 input.style.borderColor = 'var(--red)';
                 input.style.background = '#FFF5F5';
                 if (msg) {
                     msg.style.color = 'var(--red)';
                     msg.style.background = '#FFF5F5';
                     msg.style.borderColor = 'var(--red)';
-                    const src = (dispatchQty > 0 && limit === dispatchQty) ? 'Dispatched Amount' : 'Project Plan';
-                    msg.textContent = 'VALIDATION ERROR: Value exceeds ' + limit.toLocaleString() + ' ' + unitLabel + ' (' + src + ').';
+                    msg.textContent = 'VALIDATION ERROR: Value exceeds ' + limit.toLocaleString() + ' ' + unitLabel + ' (' + srcLabel + ').';
                 }
                 if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
                 if (shortagePanel) shortagePanel.style.display = 'none';
@@ -522,8 +560,11 @@ export const FS_Logistics = {
                     msg.style.color = 'var(--slate-600)';
                     msg.style.background = 'var(--slate-50)';
                     msg.style.borderColor = 'var(--slate-200)';
-                    const src = (dispatchQty > 0 && limit === dispatchQty) ? 'Authorized Dispatch' : 'Project Plan';
-                    msg.textContent = 'Rule: Intake must not exceed ' + (limit > 0 ? limit.toLocaleString() : 'System Max') + ' ' + unitLabel + ' (' + src + ').';
+                    if (hasRealLimit) {
+                        msg.innerHTML = '<i class="fas fa-info-circle"></i> Intake Limit: <strong>' + limit.toLocaleString() + ' ' + unitLabel + '</strong> (' + srcLabel + ')';
+                    } else {
+                        msg.innerHTML = '<i class="fas fa-box-open"></i> Direct Site Intake — enter the quantity received.';
+                    }
                 }
                 if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 
@@ -536,6 +577,7 @@ export const FS_Logistics = {
                     if (shortagePanel) shortagePanel.style.display = 'none';
                 }
             }
+
         };
 
         window.drawer.open(isVehicle ? 'Confirm Vehicle Arrival' : 'Receive Goods', `
@@ -704,6 +746,18 @@ export const FS_Logistics = {
             });
 
             window.toast?.show(`Successfully received ${qty} ${unit} of ${materialName}.`, 'success');
+
+            // Save receipt to local history
+            this._saveReceiptRecord(materialName, {
+                qty,
+                unit,
+                ref,
+                notes: finalNotes,
+                receivedBy: this.currentUser?.name || 'Field Supervisor',
+                reqId: reqId || null,
+                timestamp: new Date().toISOString()
+            });
+
             window.drawer.close();
             await this._loadSiteInventory();
             this._refreshCurrentView();
@@ -922,6 +976,7 @@ export const FS_Logistics = {
             const items = Array.isArray(result) ? result : (result.data || []);
 
             this.siteInventory = {};
+            this.siteInventoryLogs = {};
             items.forEach(item => {
                 this.siteInventory[item.materialName] = {
                     qty: Number(item.quantityOnHand || 0),
@@ -930,6 +985,10 @@ export const FS_Logistics = {
                     sectorName: item.sectorName,
                     inventoryId: item.id
                 };
+                // Store backend logs per material for history view
+                if (item.logs && item.logs.length > 0) {
+                    this.siteInventoryLogs[item.materialName] = item.logs;
+                }
             });
             this.inventoryLoaded = true;
         } catch (error) {
@@ -1102,17 +1161,71 @@ export const FS_Logistics = {
         try {
             window.toast.show('Processing site intake...', 'info');
             
-            // Use variance API if any quantity differs, otherwise use standard confirm
-            const hasDiscrepancy = receivedItems.some(i => i.receivedQty !== i.expectedQty);
+            const shortages = receivedItems.filter(i => i.qtyReceived < i.qtySent);
+            const hasDiscrepancy = shortages.length > 0 || receivedItems.some(i => i.qtyReceived > i.qtySent);
             
             if (hasDiscrepancy) {
+                // Validation: Disallow exceeding limit
+                for (const item of receivedItems) {
+                    const limit = item.qtySent > 0 ? item.qtySent : 999999999; // Fallback to a very high number if no specific dispatch (handled by project check if needed)
+                    
+                    if (item.qtyReceived > limit) {
+                        window.toast.show(`ERROR: Received quantity for ${item.itemName} cannot exceed the authorized dispatch of ${limit.toLocaleString()}.`, 'error');
+                        return;
+                    }
+                }
+
+                // If shortage, reason is mandatory
+                if (shortages.length > 0 && (!notes || notes.length < 10)) {
+                    window.toast.show('Shortage detected: Please provide a detailed reason in the notes (min 10 chars).', 'warning');
+                    return;
+                }
+
+                // Handle shortages: Audit, Notify, and Auto-Procure
+                for (const item of shortages) {
+                    const missingQty = item.qtySent - item.qtyReceived;
+                    
+                    // 1. Create replenishment request for FD to procure more
+                    await replenishmentApi.createRequest({
+                        projectId: this.assignedProject?.id || 1,
+                        materialName: item.itemName,
+                        quantity: missingQty,
+                        reason: `Shortage during intake: ${notes}`,
+                        priority: 'high',
+                        status: 'pending_procurement'
+                    });
+
+                    // 2. Create Audit Log
+                    await client.post('/audit-logs', {
+                        action: 'MATERIAL_INTAKE_SHORTAGE',
+                        targetType: 'INVENTORY',
+                        targetId: item.id || item.itemName,
+                        details: {
+                            itemName: item.itemName,
+                            sent: item.qtySent,
+                            received: item.qtyReceived,
+                            missing: missingQty,
+                            reason: notes,
+                            supervisor: receivedBy
+                        }
+                    });
+
+                    // 3. Notify FD and EC
+                    await notificationService.sendEmail({
+                        to: 'Finance Director & EC',
+                        subject: `ALERT: Material Shortage Detected - ${item.itemName}`,
+                        body: `Field Supervisor ${receivedBy} reported a shortage of ${missingQty} units for ${item.itemName} at Project ${this.assignedProject?.id}. A new procurement request has been auto-generated.`,
+                        description: notes
+                    });
+                }
+
                 await client.post(`/dispatch/${reqId}/variance`, {
                     receivedItems,
                     receivedBy,
                     dispatchedBy,
                     notes
                 });
-                window.toast.show('Intake completed with variance. Incidents logged.', 'warning');
+                window.toast.show('Intake completed with variance. Replenishment triggered.', 'warning');
             } else {
                 await client.post(`/dispatch/${reqId}/confirm`, {
                     receivedBy,
@@ -1130,7 +1243,7 @@ export const FS_Logistics = {
             this._refreshCurrentView();
         } catch (error) {
             console.error('[FS] Intake failed:', error);
-            window.toast.show('Failed to complete resource intake.', 'error');
+            window.toast.show('Failed to complete resource intake: ' + (error.message || 'Server error'), 'error');
         }
     },
 
@@ -1530,5 +1643,118 @@ export const FS_Logistics = {
             console.error('[FS] Return failed:', error);
             window.toast.show('Return failed: ' + (error.message || 'Server error'), 'error');
         }
+    },
+
+    _getReceiptHistory(materialName) {
+        const projectId = this.assignedProject?.id || 1;
+        const key = `mcms_receipts_${projectId}_${materialName.toLowerCase().replace(/\s+/g, '_')}`;
+        try {
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        } catch (e) {
+            return [];
+        }
+    },
+
+    _saveReceiptRecord(materialName, data) {
+        const projectId = this.assignedProject?.id || 1;
+        const key = `mcms_receipts_${projectId}_${materialName.toLowerCase().replace(/\s+/g, '_')}`;
+        const history = this._getReceiptHistory(materialName);
+        history.unshift(data);
+        localStorage.setItem(key, JSON.stringify(history.slice(0, 10))); // Keep last 10
+    },
+
+    async viewReceiptHistory(name, unit) {
+        const localReceipts = this._getReceiptHistory(name);
+        const backendLogs = (this.siteInventoryLogs?.[name] || []).filter(l => l.type === 'IN');
+
+        // Merge and sort by date
+        const allHistory = [
+            ...localReceipts.map(r => ({
+                id: 'local',
+                date: r.timestamp,
+                qty: r.qty,
+                ref: r.ref,
+                user: r.receivedBy,
+                notes: r.notes,
+                isLocal: true
+            })),
+            ...backendLogs.map(l => ({
+                id: l.id,
+                date: l.timestamp,
+                qty: l.quantity,
+                ref: l.reference,
+                user: l.user?.name || 'Yard Team',
+                notes: l.notes,
+                isLocal: false
+            }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        window.drawer.open(`Receipt History: ${name}`, `
+            <div style="padding: 0; background: white; min-height: 100%; font-family: sans-serif;">
+                <!-- Simple Header -->
+                <div style="padding: 24px; border-bottom: 2px solid #FFF7ED; background: white;">
+                    <div style="font-size: 11px; color: #F97316; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Material Receipt History</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                        <h2 style="margin: 0; font-size: 20px; color: #1E293B;">${name}</h2>
+                        <div style="text-align: right;">
+                            <div style="font-size: 18px; font-weight: 700; color: #F97316;">${allHistory.reduce((sum, h) => sum + (Number(h.qty) || 0), 0).toLocaleString()} ${unit}</div>
+                            <div style="font-size: 10px; color: #64748B;">Total Received</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 24px;">
+                    ${allHistory.length === 0 ? `
+                        <div style="text-align: center; padding: 40px; color: #94A3B8;">No records found.</div>
+                    ` : `
+                        <div style="display: flex; flex-direction: column; gap: 1px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
+                            ${allHistory.map((entry, idx) => `
+                                <div style="background: white; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div>
+                                            <div style="font-size: 12px; font-weight: 600; color: #1E293B;">+ ${Number(entry.qty).toLocaleString()} ${unit}</div>
+                                            <div style="font-size: 11px; color: #64748B;">${new Date(entry.date).toLocaleString()}</div>
+                                        </div>
+                                        <div style="font-size: 10px; font-weight: 700; color: #F97316; text-transform: uppercase; background: #FFF7ED; padding: 2px 8px; border-radius: 4px;">
+                                            ${entry.isLocal ? 'Site Intake' : 'Dispatch'}
+                                        </div>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; border-top: 1px solid #F1F5F9; padding-top: 12px;">
+                                        <div>
+                                            <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase;">Handled By</div>
+                                            <div style="font-size: 12px; color: #334155; font-weight: 500;">${entry.user}</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase;">Reference</div>
+                                            <div style="font-size: 12px; color: #334155; font-weight: 500;">${entry.ref || 'N/A'}</div>
+                                        </div>
+                                    </div>
+
+                                    ${entry.notes ? `
+                                        <div style="font-size: 13px; color: #475569; background: #F8FAFC; padding: 12px 16px; border-radius: 6px; line-height: 1.6;">
+                                            ${entry.notes.split('|').map(part => {
+                                                const segment = part.trim();
+                                                if (segment.includes(':')) {
+                                                    const [label, ...value] = segment.split(':');
+                                                    return `<div style="margin-bottom: 4px;"><span style="font-weight: 700; color: #1E293B;">${label}:</span> ${value.join(':').trim()}</div>`;
+                                                }
+                                                return `<div style="margin-bottom: 4px;">${segment}</div>`;
+                                            }).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+
+                <div style="padding: 24px; border-top: 1px solid #E2E8F0;">
+                    <button class="btn" style="width: 100%; background: #F97316; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="window.drawer.close()">
+                        Return to Inventory
+                    </button>
+                </div>
+            </div>
+        `);
     }
 };

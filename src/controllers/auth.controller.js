@@ -77,6 +77,13 @@ const changePassword = asyncHandler(async (req, res) => {
   if (!currentPassword || !newPassword) {
     return response.badRequest(res, 'Current and new password required');
   }
+
+  // Validate password strength
+  const { passwordSchema } = require('../utils/validators');
+  const validation = passwordSchema.safeParse(newPassword);
+  if (!validation.success) {
+    return response.badRequest(res, validation.error.errors[0].message);
+  }
   
   await authService.changePassword(user.id, currentPassword, newPassword);
   

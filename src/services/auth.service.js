@@ -156,6 +156,7 @@ async function changePassword(userId, currentPassword, newPassword) {
   // Verify current password
   const isValid = await bcrypt.compare(currentPassword, user.passwordHash || '');
   if (!isValid) {
+    logger.warn('Password change failed: Current password mismatch', { userId });
     throw new AppError('Current password is incorrect', 400);
   }
   

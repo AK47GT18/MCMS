@@ -563,7 +563,14 @@ class App {
         if (user.mustChangeEmail) updates.push('<strong>Email Address</strong>');
         if (user.mustChangePassword) updates.push('<strong>Password</strong>');
 
-        message += `<ul style="margin: 10px 0; padding-left: 20px;">${updates.map(u => `<li>${u}</li>`).join('')}</ul>`;
+        message += `
+            <div style="margin: 16px 0; padding: 12px; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-100);">
+                <div style="font-size: 10px; font-weight: 800; color: var(--slate-400); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Pending Updates</div>
+                <ul style="margin: 0; padding-left: 20px; color: var(--slate-700); font-size: 13px; font-weight: 600;">
+                    ${updates.map(u => `<li style="margin-bottom: 4px;">${u}</li>`).join('')}
+                </ul>
+            </div>
+        `;
 
         window.modal.show({
             type: 'info',
@@ -632,11 +639,11 @@ class App {
             message: `
                 <p style="margin-bottom: 15px;">Please set a new secure password for your account.</p>
                 <div class="form-group">
-                    <label>Current (Initial) Password</label>
+                    <label class="form-label">Current (Initial) Password</label>
                     <input type="password" id="modal-current-pw" class="form-input" style="width:100%">
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
-                    <label>New Secure Password</label>
+                    <label class="form-label">New Secure Password</label>
                     <input type="password" id="modal-new-pw" class="form-input" style="width:100%">
                 </div>
             `,
@@ -663,7 +670,7 @@ class App {
 
                     if (!response.ok) {
                         const err = await response.json();
-                        throw new Error(err.message || 'Failed to change password');
+                        throw new Error(err.error?.message || 'Failed to change password');
                     }
 
                     this.currentUser.mustChangePassword = false;
