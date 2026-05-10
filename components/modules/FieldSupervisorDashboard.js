@@ -6,7 +6,7 @@ import client from '../../src/api/client.js';
 import inventoryApi from '../../src/api/inventory.api.js';
 import assets from '../../src/api/assets.api.js';
 import tasks from '../../src/api/tasks.api.js';
-import dailyLogs from '../../src/api/dailyLogs.api.js';
+import issues from '../../src/api/issues.api.js';
 import { getRecommendedResources } from '../../src/utils/resourceMapping.js';
 
 export class FieldSupervisorDashboard {
@@ -497,6 +497,7 @@ export class FieldSupervisorDashboard {
         try {
             const res = await client.get('/daily-logs', { projectId: this.assignedProject?.id });
             const data = Array.isArray(res) ? res : (res.data || []);
+            this.currentLogs = data; // Cache for drawer lookup
             
             if (data.length === 0) {
                 container.innerHTML = `
@@ -551,7 +552,7 @@ export class FieldSupervisorDashboard {
                     </td>
                     <td style="text-align: right;">
                         <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" 
-                            onclick='window.drawer.open("Log Details", window.DrawerTemplates.dailyLogDetails(${JSON.stringify(log).replace(/"/g, '&quot;')}))'>
+                            onclick='window.app.fsModule.openLogDetailsDrawer(${log.id})'>
                             <i class="fas fa-eye"></i> View Details
                         </button>
                     </td>
@@ -594,7 +595,7 @@ export class FieldSupervisorDashboard {
                             </div>
                         </div>
                         <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px; border-radius: 8px;" 
-                            onclick='window.drawer.open("Log Details", window.DrawerTemplates.dailyLogDetails(${JSON.stringify(log).replace(/"/g, '&quot;')}))'>
+                            onclick='window.app.fsModule.openLogDetailsDrawer(${log.id})'>
                             View Details
                         </button>
                     </div>
@@ -644,6 +645,7 @@ export class FieldSupervisorDashboard {
             const filterStatus = document.getElementById('issue-status-filter')?.value || 'all';
             const filterCategory = document.getElementById('issue-category-filter')?.value || 'all';
             let data = Array.isArray(res) ? res : (res.data || []);
+            this.currentIssues = data; // Cache for drawer lookup
 
             if (filterStatus !== 'all') {
                 data = data.filter(i => (i.status || 'open').toLowerCase() === filterStatus);
@@ -703,7 +705,7 @@ export class FieldSupervisorDashboard {
                                         </td>
                                         <td style="text-align: right;">
                                             <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" 
-                                                onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/"/g, '&quot;')}))'>
+                                                onclick='window.app.fsModule.openIssueDetailsDrawer(${issue.id})'>
                                                 <i class="fas fa-eye"></i> View Thread
                                             </button>
                                         </td>
@@ -753,7 +755,7 @@ export class FieldSupervisorDashboard {
                                         ` : '<span style="font-size: 11px; color: var(--slate-400);"><i class="fas fa-image" style="opacity: 0.5;"></i> No Evidence</span>'}
                                     </div>
                                     <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px; border-radius: 8px;" 
-                                        onclick='window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(${JSON.stringify(issue).replace(/"/g, '&quot;')}))'>
+                                        onclick='window.app.fsModule.openIssueDetailsDrawer(${issue.id})'>
                                         View Thread
                                     </button>
                                 </div>
@@ -768,6 +770,108 @@ export class FieldSupervisorDashboard {
     switchView(view) {
         this.currentView = view;
         window.app.loadPage(this.currentView);
+    }
+
+    openLogDetailsDrawer(logId) {
+        const log = this.currentLogs?.find(l => l.id === logId);
+        if (log) {
+            window.drawer.open("Log Details", window.DrawerTemplates.dailyLogDetails(log));
+        }
+    }
+
+    openIssueDetailsDrawer(issueId) {
+        const issue = this.currentIssues?.find(i => i.id === issueId);
+        if (issue) {
+            window.drawer.open("Issue Details", window.DrawerTemplates.complaintDetails(issue));
+        }
+    }
+
+    async handleResolveIssue(id) {
+        try {
+            const statusEl = document.getElementById('resolution-status');
+            const notesEl = document.getElementById('resolution-notes');
+            const submitBtn = document.getElementById('btn-submit-resolution');
+            
+            if (!statusEl || !notesEl) {
+                console.warn('[Issue Resolution] Cannot find status or notes elements.');
+                return;
+            }
+
+            const status = statusEl.value;
+            const notes = notesEl.value;
+
+            if (!this.validateResolutionInline(true)) {
+                notesEl.focus();
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            }
+
+            // Reporters (FS) cannot resolve/close, they can only "update" with notes.
+            // But we'll call the same executeResolutionUpdate which handles the notes.
+            await this.executeResolutionUpdate(id, status, notes);
+        } catch (error) {
+            console.error('[Issue Resolution] Error:', error);
+            window.toast?.show('❌ Failed to update resolution', 'error');
+            const submitBtn = document.getElementById('btn-submit-resolution');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Submit Response';
+            }
+        }
+    }
+
+    async executeResolutionUpdate(id, status, notes) {
+        try {
+            window.toast.show('Updating issue status...', 'info');
+            await issues.resolve(id, {
+                status,
+                resolutionNotes: notes
+            });
+
+            window.toast.show('Issue updated successfully', 'success');
+            window.drawer.close();
+            
+            // Refresh logic for FS
+            if (this.currentView === 'dashboard') {
+                // If there's an issue list on dashboard, it will refresh on next render or via WS
+            }
+        } catch (error) {
+            console.error('[Issue Execution] Error:', error);
+            window.toast.show('❌ Update failed: ' + error.message, 'error');
+        }
+    }
+
+    validateResolutionInline(forceShow = false) {
+        const notes = document.getElementById('resolution-notes');
+        const error = document.getElementById('resolution-notes-error');
+        
+        if (!notes) return false;
+        
+        const text = notes.value.trim();
+        const len = text.length;
+        
+        if (len === 0) {
+            if (forceShow) {
+                error.style.display = 'block';
+                error.innerHTML = '<i class="fas fa-exclamation-circle"></i> Response notes cannot be empty.';
+            }
+            return false;
+        }
+        
+        if (len < 5) { // Reporters can have shorter notes than PMs maybe? Or same.
+            if (forceShow || len > 0) {
+                error.style.display = 'block';
+                error.innerHTML = `<i class="fas fa-exclamation-circle"></i> Notes too short (${len}/5 chars).`;
+            }
+            return false;
+        }
+        
+        error.style.display = 'none';
+        return true;
     }
 }
 

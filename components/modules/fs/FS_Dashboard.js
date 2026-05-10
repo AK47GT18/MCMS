@@ -733,6 +733,7 @@ export const FS_Dashboard = {
                 limit: 10 
             });
             const logArray = Array.isArray(logs) ? logs : (logs.data || []);
+            this.historicalLogs = logArray;
             window.drawer.updateContent(window.DrawerTemplates.dailyProgressLogHistory(logArray));
         } catch (error) {
             console.error('[FS] Failed to load history:', error);
@@ -753,6 +754,7 @@ export const FS_Dashboard = {
             });
             
             const logArray = Array.isArray(logs) ? logs : (logs.data || []);
+            this.historicalLogs = logArray;
             const log = logArray[0];
 
             if (!log) {
@@ -790,6 +792,15 @@ export const FS_Dashboard = {
         } catch (error) {
             console.error('[FS] Failed to load historical log:', error);
             container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--red);">Error loading log details.</div>';
+        }
+    },
+
+    openHistoricalLogDetails(logId) {
+        const log = this.historicalLogs?.find(l => String(l.id) === String(logId));
+        if (log) {
+            window.drawer.open("Log Details", window.DrawerTemplates.dailyLogDetails(log));
+        } else {
+            window.toast?.show('Log details not found.', 'warning');
         }
     },
 

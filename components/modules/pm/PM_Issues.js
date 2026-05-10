@@ -49,6 +49,7 @@ export const PM_Issues = {
             if (issuesList.length === 0) {
                 container.innerHTML = this.renderEmptyState('No active issues or governance alerts.');
             } else {
+                this.currentIssues = issuesList; // Cache for lookup
                 container.innerHTML = this.renderIssuesTable(issuesList);
             }
         } catch (error) {
@@ -63,6 +64,13 @@ export const PM_Issues = {
             if (this._issuesPollingTimer) clearTimeout(this._issuesPollingTimer);
             this._issuesPollingTimer = setTimeout(() => this.loadIssuesFromAPI(true), 15000); // Poll every 15s
         }
+    },
+
+    handleRespondToIssue(id) {
+        const issue = this.currentIssues?.find(i => i.id === id);
+        if (!issue) return;
+        window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(issue));
+        window.app.pmModule.initIssueResolutionForm(issue);
     },
 
     renderIssuesTable(issuesList) {
@@ -80,8 +88,8 @@ export const PM_Issues = {
                 <td><span class="status ${item.status === 'open' ? 'pending' : (item.status === 'resolved' || item.status === 'closed') ? 'active' : 'locked'}" style="font-size: 10px; font-weight: 700;">${this.escapeHTML(item.status?.toUpperCase() || 'OPEN')}</span></td>
                 <td>
                     ${(item.status !== 'resolved' && item.status !== 'closed') ? 
-                        `<button class="btn btn-action btn-sm" style="font-size: 11px; padding: 4px 12px;" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')})); window.app.pmModule.initIssueResolutionForm(${JSON.stringify(item).replace(/"/g, '&quot;')})">Respond</button>` :
-                        `<button class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 12px;" onclick="window.drawer.open('Issue Details', window.DrawerTemplates.complaintDetails(${JSON.stringify(item).replace(/"/g, '&quot;')}))"><i class="fas fa-history" style="margin-right:4px;"></i> History</button>`
+                        `<button class="btn btn-action btn-sm" style="font-size: 11px; padding: 4px 12px;" onclick="window.app.pmModule.handleRespondToIssue(${item.id})">Respond</button>` :
+                        `<button class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 12px;" onclick="window.app.pmModule.handleRespondToIssue(${item.id})"><i class="fas fa-history" style="margin-right:4px;"></i> History</button>`
                     }
                 </td>
             </tr>

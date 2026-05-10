@@ -73,26 +73,51 @@ export const PM_FeatureHandlers = {
 
     async handleResolveIssue(id) {
         try {
-            const status = document.getElementById('resolution-status').value;
-            const notes = document.getElementById('resolution-notes').value;
+            const statusEl = document.getElementById('resolution-status');
+            const notesEl = document.getElementById('resolution-notes');
+            const submitBtn = document.getElementById('btn-submit-resolution');
+            
+            if (!statusEl || !notesEl) {
+                console.warn('[Issue Resolution] Cannot find status or notes elements. Drawer may have closed.');
+                return;
+            }
+
+            const status = statusEl.value;
+            const notes = notesEl.value;
 
             if (!this.validateResolutionInline(true)) {
-                document.getElementById('resolution-notes')?.focus();
+                notesEl.focus();
                 return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             }
 
             if (status === 'resolved') {
                 window.modal.confirm(
                     'Confirm Resolution',
                     'Mark this issue as fully resolved? This will notify the reporting team.',
-                    () => this.executeResolutionUpdate(id, status, notes)
+                    () => this.executeResolutionUpdate(id, status, notes),
+                    () => {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = 'Submit Response';
+                        }
+                    }
                 );
             } else {
                 await this.executeResolutionUpdate(id, status, notes);
             }
         } catch (error) {
             console.error('[Issue Resolution] Error:', error);
-            window.toast.show('❌ Failed to update resolution', 'error');
+            window.toast?.show('❌ Failed to update resolution', 'error');
+            const submitBtn = document.getElementById('btn-submit-resolution');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Submit Response';
+            }
         }
     },
 

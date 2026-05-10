@@ -294,6 +294,8 @@ class App {
         this.moduleLoader = new ModuleLoaderStrategy();
         this.currentRoute = 'dashboard';
         this.currentUser = null;
+        // Bind legacy alias for issue submission
+        this.handleIssueSubmit = this.handleSubmitIssue.bind(this);
         this.init();
     }
 
@@ -744,7 +746,10 @@ class App {
     }
 
     // Generic Issue Submission Handler (works for all roles)
-    async handleIssueSubmit() {
+    async handleSubmitIssue(passedProjectId = null) {
+        if (passedProjectId) {
+            window.currentIssueProjectId = passedProjectId;
+        }
         const submitBtn = document.getElementById('issue-submit-btn');
         try {
             const category = document.getElementById('issue-category')?.value;
