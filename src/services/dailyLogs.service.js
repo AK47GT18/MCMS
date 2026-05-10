@@ -55,15 +55,24 @@ async function getById(id) {
 
 async function create(data, userId) {
   // Extract progress increment if provided in the payload
-  const { progressIncrement, progressCompletion, task_id, submissionLat, submissionLng, expenseItems, assetUsages, materialsConsumed, phaseId, ...logData } = data;
+  const { progressIncrement, progressCompletion, task_id, submissionLat, submissionLng, expenseItems, assetUsages, materialsConsumed, phaseId, activePhase, ...logData } = data;
 
   // Validate geofence
   const project = await prisma.project.findUnique({
     where: { id: data.projectId },
-    select: { id: true, lat: true, lng: true, radius: true, managerId: true, code: true, name: true, budgetTotal: true, budgetSpent: true, currentPhase: true }
+    select: { id: true, lat: true, lng: true, radius: true, managerId: true, code: true, name: true, budgetTotal: true, budgetSpent: true, currentPhase: true, phaseProgress: true }
   });
 
   if (!project) throw new AppError('Project not found', 404);
+
+  // --- PHASE COMPLETION GUARD ---
+  const selectedPhase = activePhase || phaseId;
+  if (selectedPhase && project.phaseProgress && typeof project.phaseProgress === 'object') {
+    const phaseCompletion = project.phaseProgress[selectedPhase];
+    if (phaseCompletion >= 100) {
+      throw new AppError(`Submission rejected: Phase "${selectedPhase}" has already been completed and approved at 100%. Please report on the current active phase.`, 400);
+    }
+  }
 
   let locationVerified = false;
   if (submissionLat && submissionLng) {
@@ -153,7 +162,7 @@ async function create(data, userId) {
       },
       task_id: task_id,
       workProgress: progressCompletion || progressIncrement,
-      activePhase: phaseId || null,
+      activePhase: activePhase || phaseId || null,
       submittedBy: userId,
       logDate: new Date(data.logDate),
       submissionLat,
@@ -176,7 +185,7 @@ async function create(data, userId) {
             operatorName: u.operatorName || 'Site Operator',
             hoursOperated: parseFloat(u.hoursOperated || 0),
             fuelConsumed: 0,
-            roleInPhase: u.roleInPhase || phaseId
+            roleInPhase: u.roleInPhase || activePhase || phaseId
           }))
         }
       })
@@ -326,26 +335,79 @@ async function approve(id, approverId) {
 
   // --- PHASE COMPLETION LOGIC ---
   // If the daily log reported 100% for its phase, advance the project
+  logger.info('[SYNC DEBUG] Checking log for phase completion', { 
+    workProgress: log.workProgress, 
+    activePhase: log.activePhase 
+  });
+
   if (log.workProgress >= 100 && log.activePhase) {
     try {
       const tasksConfig = require('../config/tasks_config.json');
       const phases = tasksConfig.phases || [];
       const currentIndex = phases.findIndex(p => p.id === log.activePhase);
       
+      logger.info('[SYNC DEBUG] Phase index found', { currentIndex, phaseId: log.activePhase });
+
       if (currentIndex !== -1) {
         const completedPhases = currentIndex + 1;
         const totalPhases = phases.length;
         const overallProgress = Math.round((completedPhases / totalPhases) * 100);
         const nextPhase = phases[currentIndex + 1];
-        
-        await prisma.project.update({
+
+        // Build phaseProgress map (stores each phase's completion %)
+        const existingProject = await prisma.project.findUnique({
           where: { id: log.projectId },
-          data: {
-            progress: overallProgress,
-            currentPhase: nextPhase ? currentIndex + 2 : currentIndex + 1, // Int: 1-based phase number
-            ...(overallProgress >= 100 && { status: 'completed' })
-          }
+          select: { phaseProgress: true }
         });
+        
+        logger.info('[SYNC DEBUG] Existing project progress', { 
+          phaseProgress: existingProject?.phaseProgress 
+        });
+
+        const phaseProgress = (existingProject?.phaseProgress && typeof existingProject.phaseProgress === 'object') 
+          ? { ...existingProject.phaseProgress } 
+          : {};
+        phaseProgress[log.activePhase] = 100;
+        
+        // HARDENING: Use raw SQL to update project fields. 
+        // This bypasses Prisma Client type-checking which might be stale due to file locks.
+        const nextPhaseNumber = nextPhase ? currentIndex + 2 : currentIndex + 1;
+        
+        await prisma.$executeRaw`
+          UPDATE projects 
+          SET 
+            progress = ${overallProgress},
+            current_phase = ${nextPhaseNumber},
+            phase_progress = ${JSON.stringify(phaseProgress)}::jsonb
+          WHERE id = ${log.projectId}
+        `;
+
+        logger.info('[SYNC DEBUG] Project updated with phase completion (via raw SQL)');
+
+        // Mark all Gantt tasks for this completed phase as 100%
+        try {
+          const completedPhaseNumber = currentIndex + 1; // 1-based
+          const phaseTasks = await prisma.task.findMany({
+            where: { projectId: log.projectId, phaseNumber: completedPhaseNumber }
+          });
+          
+          logger.info('[SYNC DEBUG] Tasks found for phase', { 
+            count: phaseTasks.length, 
+            phaseNumber: completedPhaseNumber 
+          });
+
+          if (phaseTasks.length > 0) {
+            await prisma.task.updateMany({
+              where: { projectId: log.projectId, phaseNumber: completedPhaseNumber },
+              data: { progress: 100 }
+            });
+            logger.info('All Gantt tasks for completed phase marked at 100%', { 
+              phaseId: log.activePhase, tasksUpdated: phaseTasks.length 
+            });
+          }
+        } catch (taskErr) {
+          logger.error('Failed to sync Gantt tasks for phase completion', { error: taskErr.message });
+        }
 
         // Audit log for phase completion
         await auditService.log({
@@ -358,17 +420,26 @@ async function approve(id, approverId) {
           }
         });
 
-        // Notify FS of phase advancement
-        await notifService.create({
-          userId: log.submittedBy,
-          type: 'success', icon: 'fa-flag-checkered',
-          title: `Phase Complete: ${phases[currentIndex].name}`,
-          message: nextPhase ? `Advancing to ${nextPhase.name}. Overall progress: ${overallProgress}%` : `All phases complete! Project at 100%.`
+        // Notify ALL project-affected users of phase completion
+        const completedPhaseName = phases[currentIndex].name;
+        const projectInfo = await prisma.project.findUnique({
+          where: { id: log.projectId },
+          select: { code: true, name: true }
+        });
+        
+        await notifService.notifyProjectUsers(log.projectId, {
+          type: 'success', 
+          icon: 'fa-flag-checkered',
+          title: `Phase Complete: ${completedPhaseName}`,
+          message: nextPhase 
+            ? `[${projectInfo?.code || 'Project'}] ${completedPhaseName} is now 100% complete. Advancing to ${nextPhase.name}. Overall progress: ${overallProgress}%` 
+            : `[${projectInfo?.code || 'Project'}] All phases complete! Project at 100%.`,
+          link: `/dashboard.html?page=gantt&projectId=${log.projectId}`
         });
 
         logger.info('Phase completed and project advanced', {
           projectId: log.projectId,
-          completedPhase: log.phaseId,
+          completedPhase: log.activePhase,
           nextPhase: nextPhase?.id,
           overallProgress
         });

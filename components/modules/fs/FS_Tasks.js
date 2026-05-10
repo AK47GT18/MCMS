@@ -453,7 +453,7 @@ export const FS_Tasks = {
                 narrative: payloadOverride?.narrative || document.getElementById('daily-narrative')?.value || 'Daily Progress',
                 status: 'submitted',
                 progressCompletion: parseInt(progressValue),
-                phaseId: payloadOverride?.phaseId || document.getElementById('daily-log-phase-id')?.value || null,
+                activePhase: payloadOverride?.phaseId || document.getElementById('daily-log-phase-id')?.value || null,
                 weather: payloadOverride?.weather || document.getElementById('daily-weather')?.value || 'Clear',
 
                 // Location Metadata
@@ -633,7 +633,7 @@ export const FS_Tasks = {
         }).filter(a => a.assetId && a.hoursUsed > 0);
 
         this.handleDailyLogSubmit({
-            phaseId: document.getElementById('daily-log-phase-id')?.value,
+            activePhase: document.getElementById('daily-log-phase-id')?.value,
             progressCompletion: document.getElementById('daily-progress-completion')?.value,
             narrative: narrative,
             weather: document.getElementById('daily-weather')?.value || 'Clear',

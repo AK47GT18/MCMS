@@ -179,9 +179,52 @@ async function getUnreadCount(userId) {
   });
 }
 
+/**
+ * Notify all users associated with a project (manager, supervisor, and key roles)
+ * @param {number} projectId - Project ID
+ * @param {Object} data - { type, icon, title, message, link }
+ */
+async function notifyProjectUsers(projectId, data) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { managerId: true, fieldSupervisorId: true }
+  });
+
+  if (!project) return [];
+
+  // Collect unique user IDs: PM + FS + key oversight roles
+  const userIds = new Set();
+  if (project.managerId) userIds.add(project.managerId);
+  if (project.fieldSupervisorId) userIds.add(project.fieldSupervisorId);
+
+  // Also notify Finance Director, Equipment Coordinator, Operations Manager
+  const oversightUsers = await prisma.user.findMany({
+    where: {
+      role: { in: ['Finance_Director', 'Equipment_Coordinator', 'Operations_Manager', 'Managing_Director'] },
+      isActive: true,
+      deletedAt: null
+    },
+    select: { id: true }
+  });
+  oversightUsers.forEach(u => userIds.add(u.id));
+
+  const notifications = [];
+  for (const userId of userIds) {
+    try {
+      const n = await create({ ...data, userId, broadcast: false });
+      notifications.push(n);
+    } catch (err) {
+      logger.error(`Error notifying project user ${userId}:`, err);
+    }
+  }
+
+  return notifications;
+}
+
 module.exports = {
   create,
   notifyRole,
+  notifyProjectUsers,
   getByUser,
   markRead,
   markAllRead,

@@ -85,6 +85,8 @@ model Project {
   suspensionReason       String?                   @map("suspension_reason")
   status                 String                    @default("active") @db.VarChar(20)
   currentPhase           Int                       @default(1) @map("current_phase")
+  progress               Int                       @default(0)
+  phaseProgress          Json?                     @map("phase_progress")
   assetLogs              AssetLog[]
   assetUsages            AssetUsage[]
   assets                 Asset[]

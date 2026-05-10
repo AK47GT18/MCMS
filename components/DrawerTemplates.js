@@ -1827,6 +1827,7 @@ export const DrawerTemplates = {
         const siteAssets = data.siteAssets || [];
         const tasksConfig = data.tasksConfig || { phases: [] };
         const phases = tasksConfig.phases || [];
+        const phaseProgress = project.phaseProgress || {};
 
         // Determine current phase (project.currentPhase is Int 1-4)
         const phaseNumber = Number(project.currentPhase || 1);
@@ -1850,17 +1851,45 @@ export const DrawerTemplates = {
         // Inventory items for material selection
         const inventoryItems = Object.entries(inventory);
 
+        // Check if selected phase is completed
+        const isCurrentPhaseComplete = phaseProgress[currentPhase.id] >= 100;
+
         return `
         <div class="drawer-section" style="padding-top: 12px;">
             <div class="hidden-desktop" style="width: 40px; height: 5px; background: var(--slate-300); border-radius: 10px; margin: 0 auto 20px;"></div>
             <div style="margin-bottom: 12px;">
                 <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Reporting Phase</label>
-                <select id="daily-log-phase-id" class="form-input" style="width: 100%; font-weight: 700;">
+                <select id="daily-log-phase-id" class="form-input" style="width: 100%; font-weight: 700;" onchange="
+                    const sel = this.options[this.selectedIndex];
+                    const banner = document.getElementById('phase-complete-banner');
+                    const submitBtn = document.getElementById('daily-log-submit-btn');
+                    if (sel.dataset.completed === 'true') {
+                        banner.style.display = 'block';
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                    } else {
+                        banner.style.display = 'none';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }
+                ">
                     ${phases.map((p, i) => {
+                        const isComplete = phaseProgress[p.id] >= 100;
                         const name = p.name?.startsWith('Phase') ? p.name : `Phase ${i + 1}: ${p.name}`;
-                        return `<option value="${p.id}" ${p.id === currentPhase.id ? 'selected' : ''}>${name}</option>`;
+                        const label = isComplete ? `✓ ${name} (Complete)` : name;
+                        return `<option value="${p.id}" ${p.id === currentPhase.id ? 'selected' : ''} ${isComplete ? 'disabled' : ''} data-completed="${isComplete}">${label}</option>`;
                     }).join('')}
                 </select>
+            </div>
+
+            <div id="phase-complete-banner" style="display: ${isCurrentPhaseComplete ? 'block' : 'none'}; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-flag-checkered" style="font-size: 18px; color: #D97706;"></i>
+                    <div>
+                        <div style="font-weight: 800; font-size: 13px; color: #92400E;">Phase Already Complete</div>
+                        <div style="font-size: 11px; color: #B45309; margin-top: 2px;">This phase has been approved at 100%. No further reports can be submitted. Please select the next active phase.</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Phase Progress Tracker -->

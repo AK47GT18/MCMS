@@ -272,6 +272,7 @@ const createDailyLogSchema = z.object({
   isSos: z.boolean().optional(),
   taskId: z.number().int().positive().optional(),
   activePhase: z.string().max(100).optional(),
+  phaseId: z.string().max(100).optional(),
   activeTask: z.string().max(255).optional(),
   progressIncrement: z.number().int().min(0).max(100).optional(),
   progressCompletion: z.number().int().min(0).max(100).optional(),
@@ -282,6 +283,17 @@ const createDailyLogSchema = z.object({
   deviceType: z.string().optional(),
   locationCapturedAt: z.string().optional(),
   locationFlagged: z.boolean().optional(),
+  materialsConsumed: z.array(z.object({
+    materialName: z.string(),
+    quantity: z.number(),
+    usedBy: z.string().optional()
+  })).optional(),
+  assetUsages: z.array(z.object({
+    assetId: z.coerce.number(),
+    hoursOperated: z.number(),
+    operatorName: z.string().optional(),
+    roleInPhase: z.string().optional()
+  })).optional(),
   photos: z.array(z.any()).optional(), // Added for evidence
 });
 

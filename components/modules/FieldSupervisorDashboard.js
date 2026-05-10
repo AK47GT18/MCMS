@@ -547,7 +547,7 @@ export class FieldSupervisorDashboard {
                         </div>
                     </td>
                     <td style="text-align: center;">
-                        <i class="fas fa-images"></i> ${log.photos?.length || 0}
+                        <i class="fas fa-images"></i> ${Array.isArray(log.photos) ? log.photos.length : (log.photos?.items?.length || 0)}
                     </td>
                     <td style="text-align: right;">
                         <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" 
@@ -587,7 +587,7 @@ export class FieldSupervisorDashboard {
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--slate-50);">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-images"></i> ${log.photos?.length || 0}
+                                <i class="fas fa-images"></i> ${Array.isArray(log.photos) ? log.photos.length : (log.photos?.items?.length || 0)}
                             </div>
                             <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
                                 <i class="fas fa-users"></i> ${log.headcount || 0}
