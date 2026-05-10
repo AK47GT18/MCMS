@@ -44,7 +44,7 @@ const MSGS = {
     integer:   'Enter a whole number',
     currency:  'Enter a valid amount (e.g. 50,000.00)',
     date:      'Enter a valid date',
-    password:  'Min 8 chars with uppercase, lowercase & number',
+    password:  'Must be 8+ chars with uppercase, lowercase, and number',
     noSpecial: 'Special characters not allowed',
     url:       'Enter a valid URL',
     mwkCode:   'Format: ABC-01',
