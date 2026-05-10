@@ -117,6 +117,13 @@ export class FieldSupervisorDashboard {
             
             // First pass: Add Required Machinery from the Gap Analysis (The standard for the project)
             const requiredMachinery = gapData.required || [];
+            
+            // Create a lookup for estimated days from the full gap analysis
+            const daysLookup = {};
+            (gapData.owned || []).concat(gapData.needsRental || []).forEach(m => {
+                daysLookup[m.type] = m.estimatedDays;
+            });
+
             requiredMachinery.forEach(req => {
                 const name = req.label || req.type;
                 uniqueMachines.set(name, {
@@ -126,6 +133,7 @@ export class FieldSupervisorDashboard {
                     source: 'planned',
                     available: true,
                     isAssigned: false,
+                    days: daysLookup[req.type] || 0,
                     phaseKeys: (req.phases || []).map(p => Number(p.phaseKey))
                 });
             });
@@ -142,7 +150,8 @@ export class FieldSupervisorDashboard {
                     source: 'owned',
                     available: a.status === 'available' || a.status === 'checked_out',
                     status: a.status,
-                    isAssigned: true
+                    isAssigned: true,
+                    days: existing ? existing.days : 0
                 });
             });
 
@@ -244,7 +253,7 @@ export class FieldSupervisorDashboard {
         }
 
         this.requisitionCart = []; // Reset cart for new request
-        window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS(this.assignedProject));
+        window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS(this.assignedProject), 'lg');
     }
 
     render() {

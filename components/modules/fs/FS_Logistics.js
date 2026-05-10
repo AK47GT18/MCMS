@@ -1386,21 +1386,37 @@ export const FS_Logistics = {
     },
 
     async handleBulkRequisitionSubmit() {
-        const inputs = document.querySelectorAll('.fs-req-input');
+        const checkboxes = document.querySelectorAll('.fs-req-checkbox');
+        const macCheckboxes = document.querySelectorAll('.fs-req-mac-checkbox');
         const items = [];
 
-        inputs.forEach(input => {
-            const qty = parseFloat(input.value);
-            if (qty > 0) {
+        for (const cb of checkboxes) {
+            if (cb.checked) {
+                const limit = parseFloat(cb.dataset.limit || 0);
+                if (limit > 0) {
+                    items.push({
+                        itemName: cb.dataset.name,
+                        quantity: limit,
+                        unit: cb.dataset.unit || 'units',
+                        category: cb.dataset.type,
+                        unitPrice: 0
+                    });
+                }
+            }
+        }
+
+        for (const cb of macCheckboxes) {
+            if (cb.checked) {
                 items.push({
-                    itemName: input.dataset.name,
-                    quantity: qty,
-                    unit: input.dataset.unit || 'units',
-                    category: input.dataset.type,
+                    itemName: cb.dataset.name,
+                    quantity: parseFloat(cb.dataset.days || 30),
+                    unit: 'days',
+                    category: 'machinery',
+                    machineUnits: parseFloat(cb.dataset.units || 1),
                     unitPrice: 0
                 });
             }
-        });
+        }
 
         if (items.length === 0) {
             if (window.toast) window.toast.show('Please enter a quantity for at least one item.', 'warning');
@@ -1605,7 +1621,7 @@ export const FS_Logistics = {
             
             // Re-open the drawer with the new phase data
             // Since we're already in a drawer, this will just replace the content
-            window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS(tempProject));
+            window.drawer.open('Request Resource', window.DrawerTemplates.requestResourceFS(tempProject), 'lg');
         }
     },
 

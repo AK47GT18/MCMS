@@ -1507,45 +1507,6 @@ export const DrawerTemplates = {
                     </label>
                 </div>
 
-                <div style="margin-bottom: 20px; padding: 12px; background: #fff7ed; border-radius: 8px; border: 1px solid #ffedd5;">
-                    <div style="font-weight: 700; color: #9a3412; font-size: 14px;">Fleet & Heavy Equipment</div>
-                    <div style="font-size: 11px; color: #c2410c;">Select core machinery required for this road type.</div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_excavator" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Excavator Group</div>
-                            <div style="font-size:10px; color:var(--slate-500);">20T/30T digging & loading</div>
-                        </div>
-                    </label>
-                    
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_grader" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Motor Grader</div>
-                            <div style="font-size:10px; color:var(--slate-500);">140K precision levelling</div>
-                        </div>
-                    </label>
-
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_roller" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Compaction Fleet</div>
-                            <div style="font-size:10px; color:var(--slate-500);">10T Vibratory & Pneumatic</div>
-                        </div>
-                    </label>
-
-                    <label style="border:1px solid var(--slate-200); padding:12px; border-radius:6px; background:white; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
-                        <input type="checkbox" name="road_acc" value="fleet_tipper" style="margin-top:3px; accent-color:var(--orange);">
-                        <div>
-                            <div style="font-size:12px; font-weight:700; color:var(--slate-800);">Haulage Group</div>
-                            <div style="font-size:10px; color:var(--slate-500);">15m³ Tipper Truck fleet</div>
-                        </div>
-                    </label>
-                </div>
-
                 <div style="margin-bottom: 20px;">
                     <label style="display:block; font-size:12px; font-weight:600; margin-bottom:8px;">Street Lighting Option</label>
                     <select id="acc_lighting" class="form-input" style="width:100%; padding:10px;">
@@ -4556,117 +4517,126 @@ Contract Admin</textarea>
         const currentPhaseName = phases[currentPhaseNum - 1]?.name || `Phase ${currentPhaseNum}`;
 
         return `
-            <div style="padding: 24px;">
-                <!-- Header Section -->
-                <div style="margin-bottom: 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #ffedd5; display: flex; gap: 12px; align-items: center;">
-                    <i class="fas fa-truck-loading" style="color: var(--orange); font-size: 28px;"></i>
-                    <div>
-                        <div style="font-weight: 800; color: #9a3412; font-size: 16px;">Create Resource Requisition</div>
-                        <div style="font-size: 11px; color: #c2410c;">Select a project stage and define the required quantities</div>
-                    </div>
-                </div>
-
-                <!-- Project Context Card -->
-                <div style="background: var(--slate-900); color: white; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-md);">
-                    <div style="font-size: 10px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Active Project</div>
-                    <div style="font-size: 15px; font-weight: 700;">${projectData.name}</div>
-                </div>
-
-                <!-- Phase Selector -->
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
-                        <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 0; text-transform: uppercase;">Select Project Phase</label>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn-ghost" style="font-size: 10px; font-weight: 700; color: var(--orange); padding: 2px 6px; border: 1px solid #ffedd5; border-radius: 4px; background: #fff7ed;"
+            <div style="padding: 0; background: white; min-height: 100%; font-family: sans-serif;">
+                <!-- Clean Header -->
+                <div style="padding: 24px; border-bottom: 2px solid #FFF7ED; background: white;">
+                    <div style="font-size: 11px; color: #F97316; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Resource Requisition</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 20px; color: #1E293B;">${projectData.name}</h2>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Define required quantities for ${currentPhaseName}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <button type="button" class="btn" style="background: #FFF7ED; color: #F97316; border: 1px solid #FFEDD5; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;"
                                 onclick="window.app.fsModule.handleRequisitionPhaseChange(document.getElementById('fs_req_phase_select').value)">
                                 <i class="fas fa-sync-alt"></i> Refresh
                             </button>
                         </div>
                     </div>
-                    <select id="fs_req_phase_select" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-weight: 700; background: white;"
-                        onchange="window.app.fsModule.handleRequisitionPhaseChange(this.value)">
-                        ${phases.map((p, i) => `
-                            <option value="${i + 1}" ${currentPhaseNum === (i + 1) ? 'selected' : ''}>
-                                STAGE ${i + 1}: ${p.name.toUpperCase()} ${currentPhaseNum === (i + 1) ? '(ACTIVE)' : ''}
-                            </option>
-                        `).join('')}
-                    </select>
                 </div>
 
-                <!-- Selection Table -->
-                <div style="margin-bottom: 24px;">
-                    <div style="display: flex; gap: 8px; margin-bottom: 12px; background: var(--slate-100); padding: 4px; border-radius: 10px;">
-                        <button id="fs_btn_machinery" onclick="window.app.fsModule.toggleRequestType('machinery', this)" class="btn active" style="flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 800; font-size: 11px; background: var(--orange); color: white; transition: all 0.2s;">EQUIPMENT</button>
-                        <button id="fs_btn_materials" onclick="window.app.fsModule.toggleRequestType('materials', this)" class="btn" style="flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 800; font-size: 11px; background: transparent; color: var(--slate-600); transition: all 0.2s;">MATERIALS</button>
+                <div style="padding: 24px;">
+                    <!-- Phase Selection -->
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 8px;">Target Project Stage</label>
+                        <select id="fs_req_phase_select" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-weight: 700; background: #F8FAFC; color: #1E293B; appearance: none; cursor: pointer;"
+                            onchange="window.app.fsModule.handleRequisitionPhaseChange(this.value)">
+                            ${phases.map((p, i) => `
+                                <option value="${i + 1}" ${currentPhaseNum == (i + 1) ? 'selected' : ''}>
+                                    STAGE ${i + 1}: ${p.name.toUpperCase()} ${currentPhaseNum == (i + 1) ? '(ACTIVE)' : ''}
+                                </option>
+                            `).join('')}
+                        </select>
                     </div>
 
-                    <div style="background: white; border: 1px solid var(--slate-200); border-radius: 12px; overflow-x: auto; box-shadow: var(--shadow-sm);">
-                        <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px;">
-                            <thead>
-                                <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
-                                    <th style="padding: 12px; text-align: left; color: var(--slate-500); font-weight: 700; text-transform: uppercase; font-size: 10px;">Resource Item</th>
-                                    <th style="padding: 12px; text-align: center; width: 120px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; font-size: 10px;">Gap / Need</th>
-                                    <th style="padding: 12px; text-align: center; width: 120px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; font-size: 10px;">Request Qty</th>
+                    <!-- Type Toggle -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <button id="fs_btn_machinery" onclick="window.app.fsModule.toggleRequestType('machinery', this)" class="btn active" style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 800; font-size: 11px; background: #F97316; color: white;">EQUIPMENT</button>
+                        <button id="fs_btn_materials" onclick="window.app.fsModule.toggleRequestType('materials', this)" class="btn" style="flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 800; font-size: 11px; background: #F1F5F9; color: #64748B;">MATERIALS</button>
+                    </div>
+
+                    <!-- Simplified Resource Table -->
+                    <div style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: white;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                                <tr>
+                                    <th style="padding: 12px 16px; text-align: left; font-size: 10px; color: #94A3B8; text-transform: uppercase;">Resource Item</th>
+                                    <th style="padding: 12px 16px; text-align: center; font-size: 10px; color: #94A3B8; text-transform: uppercase; width: 140px;">Current Stock / Gap</th>
+                                    <th style="padding: 12px 16px; text-align: center; font-size: 10px; color: #94A3B8; text-transform: uppercase; width: 140px;">Request Quantity</th>
                                 </tr>
                             </thead>
                             <tbody id="fs_resource_table_body">
                                 <!-- Machinery Rows -->
                                 ${(() => {
                                     const machines = projectData.recommendedMachines || [];
-                                    const filtered = machines.filter(m => m.isAssigned || !m.phaseKeys || m.phaseKeys.includes(currentPhaseNum));
+                                    const filtered = machines.filter(m => 
+                                        m.isAssigned || 
+                                        !m.phaseKeys || 
+                                        m.phaseKeys.length === 0 || 
+                                        m.phaseKeys.some(pk => pk == currentPhaseNum)
+                                    );
                                     
-                                    if (filtered.length === 0) return '<tr class="fs-mac-row"><td colspan="3" style="padding: 32px; text-align: center; color: var(--slate-400);">No planned equipment for this stage.</td></tr>';
-
-                                    return filtered.map(m => `
-                                        <tr class="fs-mac-row" style="border-bottom: 1px solid var(--slate-100);">
-                                            <td style="padding: 12px;">
-                                                <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">${m.name.toUpperCase()}</div>
-                                                <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">
-                                                    SOURCE: ${m.source.toUpperCase()} | STATUS: ${m.isAssigned ? '<span style="color:var(--emerald);font-weight:700;">ON-SITE</span>' : 'AVAILABLE'}
-                                                </div>
+                                    if (filtered.length === 0) return '<tr class="fs-mac-row"><td colspan="3" style="padding: 32px; text-align: center; color: #94A3B8; font-size: 13px;">No planned equipment for this stage.</td></tr>';
+                                    
+                                    return filtered.map(m => {
+                                        const statusColor = m.isAssigned ? '#10B981' : '#F97316';
+                                        const statusBg = m.isAssigned ? '#ECFDF5' : '#FFF7ED';
+                                        const statusText = m.isAssigned ? 'ON-SITE' : 'AVAILABLE';
+                                        const estDays = m.days || 0;
+                                        return `
+                                        <tr class="fs-mac-row" style="border-bottom: 1px solid #F1F5F9;">
+                                            <td style="padding: 16px;">
+                                                <div style="font-weight: 700; color: #1E293B; font-size: 14px;">${m.name.toUpperCase()}</div>
+                                                <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Source: ${m.source}</div>
                                             </td>
-                                            <td style="padding: 12px; text-align: center;">
-                                                <input type="number" class="fs-req-input" data-type="machinery" data-name="${m.name}" data-unit="days" 
-                                                    placeholder="0" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 700; background: var(--slate-50);">
-                                                <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 4px;">Days</div>
+                                            <td style="padding: 16px; text-align: center;">
+                                                <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; color: ${statusColor}; background: ${statusBg};">${statusText}</span>
                                             </td>
-                                            <td style="padding: 12px; text-align: center;">
-                                                <input type="number" class="fs-req-input" data-type="machinery" data-name="${m.name}" data-unit="units" 
-                                                    placeholder="0" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 700; background: #FFF9F5; color: var(--orange-dark);">
-                                                <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 4px;">Unit(s)</div>
+                                            <td style="padding: 16px; text-align: center;">
+                                                <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; transition: all 0.2s;" onmouseover="this.style.borderColor='#F97316'; this.style.background='white'; this.style.boxShadow='0 2px 4px rgba(249,115,22,0.1)'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'; this.style.boxShadow='none'">
+                                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                                        <input type="checkbox" class="fs-req-mac-checkbox" data-type="machinery" data-name="${m.name}" data-days="${estDays > 0 ? estDays : 30}" data-units="1" style="width: 16px; height: 16px; accent-color: #F97316; cursor: pointer;">
+                                                        <span style="font-size: 11px; font-weight: 800; color: #1E293B;">${estDays > 0 ? estDays : 30} DAYS</span>
+                                                    </div>
+                                                    <div style="font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">1 Unit Request</div>
+                                                </label>
                                             </td>
                                         </tr>
-                                    `).join('');
+                                    `}).join('');
                                 })()}
 
                                 <!-- Materials Rows -->
                                 ${(() => {
-                                    const materials = (projectData.recommendedMaterials || []).filter(m => m.phaseNumber === currentPhaseNum);
+                                    const allMaterials = projectData.recommendedMaterials || [];
+                                    // Show materials for current phase OR materials with no phase assigned (like general accessories)
+                                    let filtered = allMaterials.filter(m => m.phaseNumber == currentPhaseNum || !m.phaseNumber || isNaN(m.phaseNumber));
                                     
-                                    if (materials.length === 0) return '<tr class="fs-mat-row" style="display: none;"><td colspan="3" style="padding: 32px; text-align: center; color: var(--slate-400);">No planned materials for this stage.</td></tr>';
+                                    // Fallback: If current phase has NO materials but the project has some, show all to ensure 'scope' is visible
+                                    if (filtered.length === 0 && allMaterials.length > 0) {
+                                        filtered = allMaterials;
+                                    }
 
-                                    return materials.map(m => {
+                                    if (filtered.length === 0) return '<tr class="fs-mat-row" style="display: none;"><td colspan="3" style="padding: 32px; text-align: center; color: #94A3B8; font-size: 13px;">No planned materials for this stage.</td></tr>';
+                                    
+                                    return filtered.map(m => {
                                         const onSite = Number(m.onSiteQty) || 0;
                                         const approved = Number(m.approvedQty) || 0;
                                         const remaining = Math.max(0, approved - (onSite + (Number(m.inTransitQty) || 0)));
-                                        
                                         return `
-                                            <tr class="fs-mat-row" style="display: none; border-bottom: 1px solid var(--slate-100);">
-                                                <td style="padding: 12px;">
-                                                    <div style="font-weight: 700; color: var(--slate-900); font-size: 13px;">${m.name.toUpperCase()}</div>
-                                                    <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">
-                                                        SITE STOCK: ${onSite.toLocaleString()} ${m.unit.toUpperCase()}
-                                                    </div>
+                                            <tr class="fs-mat-row" style="display: none; border-bottom: 1px solid #F1F5F9;">
+                                                <td style="padding: 16px;">
+                                                    <div style="font-weight: 700; color: #1E293B; font-size: 14px;">${m.name.toUpperCase()}</div>
+                                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Stock: ${onSite.toLocaleString()} ${m.unit}</div>
                                                 </td>
-                                                <td style="padding: 12px; text-align: center;">
-                                                    <div style="font-weight: 800; color: var(--orange-dark); font-size: 13px;">${remaining.toLocaleString()}</div>
-                                                    <div style="font-size: 9px; color: var(--slate-400); font-weight: 700; text-transform: uppercase; margin-top: 4px;">${m.unit.toUpperCase()} NEED</div>
+                                                <td style="padding: 16px; text-align: center;">
+                                                    <div style="font-weight: 800; color: #F97316; font-size: 14px;">${remaining.toLocaleString()}</div>
+                                                    <div style="font-size: 9px; color: #94A3B8; font-weight: 700; text-transform: uppercase; margin-top: 4px;">${m.unit} GAP</div>
                                                 </td>
-                                                <td style="padding: 12px; text-align: center;">
-                                                    <input type="number" class="fs-req-input" data-type="material" data-name="${m.name}" data-unit="${m.unit}"
-                                                        placeholder="0.0" step="0.1"
-                                                        style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid var(--slate-200); text-align: center; font-weight: 700; background: #F0FDFA; color: var(--emerald-700);">
-                                                    <div style="font-size: 9px; font-weight: 700; color: var(--slate-400); text-transform: uppercase; margin-top: 4px;">Total</div>
+                                                <td style="padding: 16px; text-align: center;">
+                                                    <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid #E2E8F0; border-radius: 6px; background: #F8FAFC; transition: all 0.2s;" onmouseover="this.style.borderColor='#10B981'; this.style.background='white'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'">
+                                                        <input type="checkbox" class="fs-req-checkbox" data-type="material" data-name="${m.name}" data-unit="${m.unit}" data-limit="${remaining}" style="width: 18px; height: 18px; accent-color: #10B981; cursor: pointer;">
+                                                        <span style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">Request Full Gap</span>
+                                                    </label>
                                                 </td>
                                             </tr>
                                         `;
@@ -4675,26 +4645,24 @@ Contract Admin</textarea>
                             </tbody>
                         </table>
                     </div>
-                    <div style="font-size: 11px; color: var(--slate-500); margin-top: 10px; font-style: italic; display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-info-circle"></i>
-                        Define required quantities for each resource and stage dispatch.
+                </div>
+
+                <!-- Simple Footer -->
+                <div style="padding: 24px; border-top: 1px solid #E2E8F0; background: #F8FAFC;">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 8px;">Operational Urgency</label>
+                        <select id="fs_req_urgency" style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-weight: 600; background: white; appearance: none; cursor: pointer;">
+                            <option value="normal">Routine Supply (72h Cycle)</option>
+                            <option value="priority">Priority Dispatch (24h Window)</option>
+                            <option value="emergency">Critical / Work-Stoppage (ASAP)</option>
+                        </select>
                     </div>
-                </div>
 
-                <!-- Footer Section -->
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Operational Urgency</label>
-                    <select id="fs_req_urgency" class="form-input" style="width: 100%; padding: 12px; border: 1px solid var(--slate-300); border-radius: 8px; font-weight: 600;">
-                        <option value="normal">Routine Supply (72h Cycle)</option>
-                        <option value="priority">Priority Dispatch (24h Window)</option>
-                        <option value="emergency">Critical / Work-Stoppage (ASAP)</option>
-                    </select>
+                    <button class="btn" onclick="window.app.fsModule.handleBulkRequisitionSubmit()" 
+                        style="width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 15px; background: #F97316; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);">
+                        <i class="fas fa-paper-plane"></i> DISPATCH REQUEST TO EC
+                    </button>
                 </div>
-
-                <button class="btn btn-primary" onclick="window.app.fsModule.handleBulkRequisitionSubmit()" 
-                    style="width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 14px; background: var(--orange); border: none; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <i class="fas fa-paper-plane"></i> DISPATCH REQUEST TO EC
-                </button>
             </div>
         `;
     },
