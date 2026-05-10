@@ -1895,7 +1895,10 @@ export const DrawerTemplates = {
             <div style="margin-bottom: 12px;">
                 <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Reporting Phase</label>
                 <select id="daily-log-phase-id" class="form-input" style="width: 100%; font-weight: 700;">
-                    ${phases.map((p, i) => `<option value="${p.id}" ${p.id === currentPhase.id ? 'selected' : ''}>Phase ${i + 1}: ${p.name}</option>`).join('')}
+                    ${phases.map((p, i) => {
+                        const name = p.name?.startsWith('Phase') ? p.name : `Phase ${i + 1}: ${p.name}`;
+                        return `<option value="${p.id}" ${p.id === currentPhase.id ? 'selected' : ''}>${name}</option>`;
+                    }).join('')}
                 </select>
             </div>
 
@@ -1938,6 +1941,17 @@ export const DrawerTemplates = {
                  <label class="form-label">Narrative / Progress Log <span style="color:var(--red);">*</span></label>
                  <textarea id="daily-narrative" class="form-input" data-vrules="required|minLen:10" rows="3" placeholder="Describe work done today in detail... (min 10 characters)"></textarea>
                  <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Be specific: what was accomplished, blockers encountered, next steps.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 800; color: var(--slate-700);"><i class="fas fa-cloud-sun" style="margin-right: 6px; color: #0EA5E9;"></i> Site Weather Condition</span>
+                </label>
+                <div id="daily-weather-widget-placeholder">
+                    <div style="padding: 16px; background: var(--slate-50); border: 2px dashed var(--slate-200); border-radius: 16px; text-align: center; color: var(--slate-400); font-size: 12px; font-weight: 600;">
+                        <i class="fas fa-circle-notch fa-spin" style="margin-right: 8px; color: var(--blue);"></i> Syncing with local station...
+                    </div>
+                </div>
             </div>
 
             <!-- Materials Consumed Section -->
@@ -2069,7 +2083,7 @@ export const DrawerTemplates = {
                                     <i class="fas fa-camera"></i> ${log.photos?.length || 0}
                                 </div>
                                 <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-chart-line"></i> ${log.progressCompletion || 0}%
+                                    <i class="fas fa-chart-line"></i> ${log.progressCompletion || log.workProgress || 0}%
                                 </div>
                             </div>
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: var(--slate-300);"></i>
@@ -2082,7 +2096,9 @@ export const DrawerTemplates = {
     `,
 
     dailyLogDetails: (log) => {
-        const photos = log.photos || [];
+        const photosData = log.photos || [];
+        const photos = Array.isArray(photosData) ? photosData : (photosData.items || []);
+        const materialsConsumed = Array.isArray(photosData) ? [] : (photosData.materialsConsumed || []);
         const machinery = log.assetUsage || [];
         const isFlagged = log.locationFlagged;
         window.__currentCarouselPhotos = photos.map(p => p.dataUrl);
@@ -2096,7 +2112,23 @@ export const DrawerTemplates = {
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700;">Completion</div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald);">${log.progressCompletion || 0}%</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald);">${log.progressCompletion || log.workProgress || 0}%</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                    <div style="flex: 1; background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 12px; padding: 12px;">
+                        <div style="font-size: 10px; text-transform: uppercase; color: #0369A1; font-weight: 800; margin-bottom: 4px;">Weather</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0C4A6E;">
+                            <i class="fas ${log.weather?.includes('Rain') || log.weather?.includes('Drizzle') ? 'fa-cloud-rain' : log.weather?.includes('Cloud') ? 'fa-cloud-sun' : log.weather?.includes('Storm') ? 'fa-bolt' : 'fa-sun'}" style="margin-right: 6px;"></i>
+                            ${log.weather || 'Clear'}
+                        </div>
+                    </div>
+                    <div style="flex: 1; background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 12px;">
+                        <div style="font-size: 10px; text-transform: uppercase; color: #9A3412; font-weight: 800; margin-bottom: 4px;">Materials</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #7C2D12;">
+                            ${(materialsConsumed || []).length} Items Used
+                        </div>
                     </div>
                 </div>
 
@@ -2109,9 +2141,9 @@ export const DrawerTemplates = {
 
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 11px; text-transform: uppercase; color: var(--slate-500); font-weight: 700; margin-bottom: 12px;">Materials Consumed</div>
-                    ${log.materialsConsumed && log.materialsConsumed.length > 0 ? `
+                    ${materialsConsumed && materialsConsumed.length > 0 ? `
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            ${log.materialsConsumed.map(m => `
+                            ${materialsConsumed.map(m => `
                                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: white; border: 1px solid var(--slate-200); border-radius: 8px;">
                                     <div>
                                         <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.materialName}</div>
@@ -2186,7 +2218,7 @@ export const DrawerTemplates = {
                         </div>
                     </div>
                     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 10px; font-family: monospace;">
-                        Lat: ${log.submissionLat?.toFixed(6) || 'N/A'}, Lng: ${log.submissionLng?.toFixed(6) || 'N/A'} (±${log.submissionAccuracy || '??'}m)
+                        Lat: ${log.submissionLat ? Number(log.submissionLat).toFixed(6) : 'N/A'}, Lng: ${log.submissionLng ? Number(log.submissionLng).toFixed(6) : 'N/A'} (±${log.submissionAccuracy || '??'}m)
                     </div>
                 </div>
 

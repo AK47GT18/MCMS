@@ -2,25 +2,27 @@ const { prisma } = require('../config/database');
 const { AppError } = require('../middlewares/error.middleware');
 const auditService = require('./audit.service');
 const notifService = require('./notification.service');
+const logger = require('../utils/logger');
 
 async function create(data) {
   const req = await prisma.budgetChangeRequest.create({ 
     data,
-    include: { requester: true }
+    include: { requester: true, project: true }
   });
   
   // Audit Log
   await auditService.log({
-    userId: data.requesterId, userName: req.requester?.name, userRole: req.requester?.role,
+    userId: data.requestedBy, userName: req.requester?.name, userRole: req.requester?.role,
     action: 'CREATE_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: req.id,
-    details: { projectId: data.projectId, amount: Number(data.amount) }
+    details: { projectId: data.projectId, projectName: req.project?.name, amount: Number(data.amount) }
   });
   
-  // Notice PM and System
+  // Notify Managing Director (approver)
   await notifService.notifyRole('Managing_Director', {
     type: 'warning', icon: 'fa-money-bill-wave',
     title: 'Budget Uplift Requested',
-    message: `A budget change request of MWK ${Number(data.amount).toLocaleString()} has been submitted for Project #${data.projectId}.`,
+    message: `A budget change request of MWK ${Number(data.amount).toLocaleString()} has been submitted for ${req.project?.name || 'Project #' + data.projectId}.`,
+    link: `/dashboard.html?page=budget`
   });
 
   return req;
@@ -50,17 +52,24 @@ async function approve(id, approverId) {
   if (!req) throw new AppError('Request not found', 404);
   if (req.status !== 'Pending') throw new AppError('Request is not pending', 400);
 
+  const oldBudget = Number(req.project?.budgetTotal || 0);
+  const upliftAmount = Number(req.amount || 0);
+  const newBudget = oldBudget + upliftAmount;
+
   // Use a transaction to approve request and increment project budget
   const result = await prisma.$transaction(async (tx) => {
     const updatedReq = await tx.budgetChangeRequest.update({
       where: { id: Number(id) },
-      data: { status: 'Approved', approvedById: approverId },
+      data: { 
+        status: 'Approved', 
+        pmApproved: true, 
+        pmApprovedAt: new Date() 
+      },
     });
 
-    const project = await tx.project.findUnique({ where: { id: req.projectId }});
     await tx.project.update({
       where: { id: req.projectId },
-      data: { budgetTotal: project.budgetTotal + req.amount },
+      data: { budgetTotal: { increment: upliftAmount } },
     });
 
     // If this uplift was triggered by a specific contract, activate it
@@ -83,46 +92,89 @@ async function approve(id, approverId) {
     return updatedReq;
   });
 
-  // Notify Requester
-  await notifService.create({
-    userId: req.requesterId,
+  // --- NOTIFICATIONS: Notify all project stakeholders ---
+  const approver = await prisma.user.findUnique({ where: { id: approverId }, select: { id: true, name: true, role: true } });
+  const formatter = new Intl.NumberFormat('en-MW', { style: 'decimal', minimumFractionDigits: 0 });
+  const notifPayload = {
     type: 'success', icon: 'fa-check-circle',
     title: 'Budget Uplift Approved',
-    message: `Your budget uplift request for ${req.project?.name || '#' + req.projectId} has been approved.`
+    message: `Budget uplift of MWK ${formatter.format(upliftAmount)} approved for ${req.project?.name || 'Project'}. New budget: MWK ${formatter.format(newBudget)}.`,
+    link: `/dashboard.html?page=budget`
+  };
+
+  // 1. Notify the original requester (FD)
+  if (req.requestedBy) {
+    await notifService.create({ ...notifPayload, userId: req.requestedBy });
+  }
+
+  // 2. Notify project PM (if different from approver)
+  if (req.project?.managerId && req.project.managerId !== approverId && req.project.managerId !== req.requestedBy) {
+    await notifService.create({ ...notifPayload, userId: req.project.managerId });
+  }
+
+  // 3. Notify project FS
+  const fullProject = await prisma.project.findUnique({ where: { id: req.projectId }, select: { managerId: true, fieldSupervisorId: true } });
+  if (fullProject?.fieldSupervisorId && fullProject.fieldSupervisorId !== req.requestedBy) {
+    await notifService.create({ ...notifPayload, userId: fullProject.fieldSupervisorId });
+  }
+
+  // 4. Notify all Finance Directors
+  await notifService.notifyRole('Finance_Director', notifPayload);
+
+  // --- AUDIT LOG ---
+  await auditService.log({
+    userId: approverId, userName: approver?.name, userRole: approver?.role,
+    action: 'APPROVE_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: id,
+    details: { 
+      projectId: req.projectId, 
+      projectName: req.project?.name,
+      oldBudget,
+      upliftAmount,
+      newBudget,
+      requesterName: req.requester?.name,
+      targetContractId: req.targetContractId || null
+    }
   });
 
-  // Audit Log
-  const user = await prisma.user.findUnique({ where: { id: approverId } });
-  await auditService.log({
-    userId: approverId, userName: user?.name, userRole: user?.role,
-    action: 'APPROVE_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: id,
-    details: { amount: Number(req.amount) }
-  });
+  logger.info('Budget uplift approved', { id, approverId, upliftAmount, newBudget });
 
   return result;
 }
 
-async function reject(id, approverId) {
+async function reject(id, approverId, reason) {
   const req = await prisma.budgetChangeRequest.update({
     where: { id: Number(id) },
-    data: { status: 'Rejected', approvedById: approverId },
+    data: { 
+      status: 'Rejected', 
+      pmApproved: false, 
+      pmApprovedAt: new Date() 
+    },
     include: { requester: true, project: true }
   });
   
+  const approver = await prisma.user.findUnique({ where: { id: approverId }, select: { id: true, name: true, role: true } });
+
   // Notify Requester
   await notifService.create({
-    userId: req.requesterId,
+    userId: req.requestedBy,
     type: 'error', icon: 'fa-times-circle',
     title: 'Budget Uplift Rejected',
-    message: `Your budget uplift request for ${req.project?.name || '#' + req.projectId} was rejected.`
+    message: `Your budget uplift request for ${req.project?.name || '#' + req.projectId} was rejected.${reason ? ' Reason: ' + reason : ''}`
   });
 
   // Audit Log
-  const user = await prisma.user.findUnique({ where: { id: approverId } });
   await auditService.log({
-    userId: approverId, userName: user?.name, userRole: user?.role,
-    action: 'REJECT_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: id
+    userId: approverId, userName: approver?.name, userRole: approver?.role,
+    action: 'REJECT_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: id,
+    details: { 
+      projectId: req.projectId,
+      projectName: req.project?.name,
+      amount: Number(req.amount),
+      reason: reason || 'No reason provided'
+    }
   });
+
+  logger.info('Budget uplift rejected', { id, approverId, reason });
 
   return req;
 }

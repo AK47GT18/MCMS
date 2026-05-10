@@ -905,7 +905,7 @@ tbody td {
     }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
     .hidden-desktop {
         display: none !important;
     }

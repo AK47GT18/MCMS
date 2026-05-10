@@ -2,6 +2,7 @@ import client from '../../../src/api/client.js';
 import tasksApi from '../../../src/api/tasks.api.js';
 import dailyLogs from '../../../src/api/dailyLogs.api.js';
 import assets from '../../../src/api/assets.api.js';
+import WeatherService from './WeatherService.js';
 
 export const FS_Dashboard = {
     getDashboardView() {
@@ -136,6 +137,20 @@ export const FS_Dashboard = {
                         </div>
                     </div>
                 </div>
+                <div class="data-card" id="weather-card">
+                    <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="card-title"><i class="fas fa-cloud-sun" style="color: var(--blue); margin-right: 6px;"></i>Site Weather</div>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;" onclick="window.app.fsModule._loadWeather(true)">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="fs-weather-widget" style="padding: 20px;">
+                        <div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;">
+                            <i class="fas fa-circle-notch fa-spin" style="font-size: 16px; margin-bottom: 8px; display: block;"></i>
+                            Loading weather data…
+                        </div>
+                    </div>
+                </div>
                 <div class="data-card ${this.isExpanded ? 'expanded-map-card' : ''}" id="map-card" style="grid-column: span 2;">
                     <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <div class="card-title">Project Work Zone (Geofence)</div>
@@ -189,6 +204,26 @@ export const FS_Dashboard = {
                 </div>
             </div>
         `;
+    },
+
+    async _loadWeather(forceRefresh = false) {
+        const project = this.assignedProject;
+        if (!project?.lat || !project?.lng) {
+            const widget = document.getElementById('fs-weather-widget');
+            if (widget) widget.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--slate-400); font-size: 12px;"><i class="fas fa-map-marker-alt" style="display: block; font-size: 20px; margin-bottom: 8px; opacity: 0.5;"></i>No project coordinates set</div>';
+            return;
+        }
+
+        try {
+            if (forceRefresh) WeatherService._cache = null;
+            const weather = await WeatherService.fetchWeather(Number(project.lat), Number(project.lng));
+            const widget = document.getElementById('fs-weather-widget');
+            if (widget) {
+                widget.innerHTML = WeatherService.renderWidget(weather);
+            }
+        } catch (err) {
+            console.error('[FS] Weather load failed:', err);
+        }
     },
 
     async _loadDashboardStats() {

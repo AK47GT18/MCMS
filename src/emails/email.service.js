@@ -107,17 +107,19 @@ function loadTemplate(name, variables = {}) {
 /**
  * Send welcome email to new user
  */
-async function sendWelcome(user) {
+async function sendWelcome(user, password) {
   const { html, text } = loadTemplate('welcome', {
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: (user.role || '').replace(/_/g, ' '),
+    password: password || '(Set by administrator)',
     loginUrl: `${env.FRONTEND_URL}/login`,
+    year: new Date().getFullYear(),
   });
   
   return send({
     to: user.email,
-    subject: 'Welcome to MCMS',
+    subject: 'Welcome to MCMS — Your Account Credentials',
     html,
     text,
   });

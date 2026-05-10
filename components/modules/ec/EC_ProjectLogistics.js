@@ -125,9 +125,14 @@ export const EC_ProjectLogistics = {
                                         </div>
                                     </td>
                                     <td style="padding: 24px; text-align: right;">
-                                        <button class="btn btn-secondary btn-sm" style="border-radius: 10px; padding: 8px 16px; border-color: var(--slate-200); font-weight: 700; background: white;" onclick="window.app.ecModule.openProjectIntelligence(${p.id})">
-                                            <i class="fas fa-chart-line" style="margin-right: 8px; color: var(--indigo-500);"></i> Audit
-                                        </button>
+                                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                            <button class="btn btn-secondary btn-sm" style="border-radius: 10px; padding: 8px 16px; border-color: var(--slate-200); font-weight: 700; background: white;" onclick="window.app.ecModule.openProjectIntelligence(${p.id})">
+                                                <i class="fas fa-chart-line" style="margin-right: 8px; color: var(--indigo-500);"></i> Audit
+                                            </button>
+                                            <button class="btn btn-primary btn-sm" style="border-radius: 10px; padding: 8px 16px; background: var(--orange); border: none; font-weight: 700;" onclick="window.app.ecModule.openDispatchDrawer()">
+                                                <i class="fas fa-truck-loading" style="margin-right: 8px;"></i> Dispatch
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             `;

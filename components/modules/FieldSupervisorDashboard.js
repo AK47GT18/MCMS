@@ -210,7 +210,8 @@ export class FieldSupervisorDashboard {
                         this._cacheRequisitionData(),
                         this._loadSiteInventory(),
                         this._loadDashboardStats(),
-                        this._loadSiteAssets()
+                        this._loadSiteAssets(),
+                        this._loadWeather()
                     ]);
                     
                     // Final single refresh once everything is primed
@@ -473,9 +474,9 @@ export class FieldSupervisorDashboard {
                     <td>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="width: 60px; height: 6px; background: var(--slate-100); border-radius: 3px; overflow: hidden;">
-                                <div style="width: ${log.progressCompletion || 0}%; height: 100%; background: var(--emerald);"></div>
+                                <div style="width: ${log.progressCompletion || log.workProgress || 0}%; height: 100%; background: var(--emerald);"></div>
                             </div>
-                            <span style="font-size: 11px; font-weight: 700;">${log.progressCompletion || 0}%</span>
+                            <span style="font-size: 11px; font-weight: 700;">${log.progressCompletion || log.workProgress || 0}%</span>
                         </div>
                     </td>
                     <td style="text-align: center;">
@@ -511,9 +512,9 @@ export class FieldSupervisorDashboard {
 
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="flex: 1; height: 6px; background: var(--slate-100); border-radius: 3px; overflow: hidden;">
-                            <div style="width: ${log.progressCompletion || 0}%; height: 100%; background: var(--emerald);"></div>
+                            <div style="width: ${log.progressCompletion || log.workProgress || 0}%; height: 100%; background: var(--emerald);"></div>
                         </div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--slate-700);">${log.progressCompletion || 0}%</span>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--slate-700);">${log.progressCompletion || log.workProgress || 0}%</span>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--slate-50);">

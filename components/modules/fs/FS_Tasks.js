@@ -448,6 +448,7 @@ export const FS_Tasks = {
                 status: 'submitted',
                 progressCompletion: parseInt(progressValue),
                 phaseId: payloadOverride?.phaseId || document.getElementById('daily-log-phase-id')?.value || null,
+                weather: payloadOverride?.weather || document.getElementById('daily-weather')?.value || 'Clear',
 
                 // Location Metadata
                 submissionLat: latitude,
@@ -566,6 +567,23 @@ export const FS_Tasks = {
             tasksConfig: tasksConfig
         }));
 
+        // ASYNC: Populate Live Weather Widget
+        if (window.WeatherService && this.assignedProject) {
+            const lat = this.assignedProject.lat;
+            const lng = this.assignedProject.lng;
+            window.WeatherService.fetchWeather(lat, lng).then(weather => {
+                const placeholder = document.getElementById('daily-weather-widget-placeholder');
+                if (placeholder) {
+                    placeholder.innerHTML = window.WeatherService.renderUltraMiniWidget(weather);
+                }
+            }).catch(err => {
+                const placeholder = document.getElementById('daily-weather-widget-placeholder');
+                if (placeholder) {
+                    placeholder.innerHTML = `<div style="font-size:10px; color:var(--red);">Unable to sync weather data</div>`;
+                }
+            });
+        }
+
         // Initialize phase dropdown if needed
         if (!this.taskConfig) {
             this.initializePhaseDropdown();
@@ -611,6 +629,7 @@ export const FS_Tasks = {
             phaseId: document.getElementById('daily-log-phase-id')?.value,
             progressCompletion: document.getElementById('daily-progress-completion')?.value,
             narrative: narrative,
+            weather: document.getElementById('daily-weather')?.value || 'Clear',
             materialsConsumed: materialsConsumed,
             assetUsage: assetUsage,
             sos: document.getElementById('sos-toggle')?.checked

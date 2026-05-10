@@ -130,8 +130,8 @@ async function create(data) {
   
   logger.info('User created', { userId: user.id, email: user.email });
   
-  // Send welcome email
-  emailService.sendWelcome(user).catch(err => logger.error('Failed to send welcome email', err));
+  // Send welcome email with credentials
+  emailService.sendWelcome(user, password).catch(err => logger.error('Failed to send welcome email', err));
   
   return user;
 }

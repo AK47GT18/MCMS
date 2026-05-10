@@ -137,36 +137,15 @@ async function create(data, userId) {
     throw new AppError('Evidence required: Please capture at least 3 photos of site progress.', 400);
   }
 
-  // --- AUTO-DEDUCT MATERIALS FROM SITE INVENTORY ---
-  if (materialsConsumed && Array.isArray(materialsConsumed) && materialsConsumed.length > 0) {
-    const inventoryService = require('./inventory.service');
-    // Find the project's primary sector for inventory deduction
-    const projectSectors = await prisma.sector.findMany({ where: { projectId: data.projectId }, take: 1 });
-    const primarySectorId = projectSectors[0]?.id;
-    
-    if (primarySectorId) {
-      for (const mat of materialsConsumed) {
-        try {
-          await inventoryService.consume({
-            sectorId: primarySectorId,
-            materialName: mat.materialName,
-            quantity: Number(mat.quantity),
-            reference: `Daily Log - ${phaseId || 'Site Work'}`,
-            notes: `[DAILY LOG] Consumed during ${phaseId || 'site work'}. Narrative: ${(logData.narrative || '').substring(0, 80)}`
-          }, { id: userId });
-          logger.info('Material consumed via daily log', { materialName: mat.materialName, qty: mat.quantity, projectId: data.projectId });
-        } catch (matErr) {
-          logger.error('Failed to deduct material from inventory', { error: matErr.message, materialName: mat.materialName });
-        }
-      }
-    } else {
-      logger.warn('No sectors found for project, skipping material deduction', { projectId: data.projectId });
-    }
-  }
+
 
   const log = await prisma.dailyLog.create({
     data: {
       ...logData,
+      photos: {
+        items: logData.photos || [],
+        materialsConsumed: materialsConsumed || []
+      },
       task_id: task_id,
       workProgress: progressCompletion || progressIncrement,
       activePhase: phaseId || null,
@@ -210,7 +189,7 @@ async function create(data, userId) {
     type: 'info', 
     icon: 'fa-clipboard-check',
     title: 'New Daily Log Submitted',
-    message: `${log.submitter.name} submitted a log for ${log.project.code} on ${new Date(log.logDate).toLocaleDateString()}.`,
+    message: `${log.submitter.name} submitted a log for ${log.project.code} on ${new Date(log.logDate).toLocaleDateString()}. Weather: ${log.weather || 'Clear'}. Materials consumed: ${(data.materialsConsumed || []).length} items.`,
     link: `/dashboard.html?page=daily_logs&projectId=${log.projectId}&logId=${log.id}`
   });
 
@@ -265,11 +244,6 @@ async function approve(id, approverId) {
     try {
       const task = await prisma.task.findUnique({ where: { id: log.task_id }});
       if (task) {
-        // Here workProgress represents the absolute phase/task progress from the frontend
-        // If it's an increment, we'd add it. But the frontend sends progressCompletion which is absolute.
-        // The original code did: currentProgress + progressIncrement.
-        // Since the UI says "Phase Progress", we can just set it to log.workProgress.
-        // Let's make sure it updates the task progress
         let updatedProgress = Number(log.workProgress);
         if (updatedProgress > 100) updatedProgress = 100;
 
@@ -281,6 +255,67 @@ async function approve(id, approverId) {
       }
     } catch (e) {
       logger.error('Failed to sync progress from Daily Log to Task upon approval', { error: e.message });
+    }
+  }
+
+  // --- MACHINERY DAY DEDUCTION (RENTAL TRACKING) ---
+  const assetUsages = await prisma.assetUsage.findMany({
+    where: { dailyLogId: log.id },
+    include: { asset: true }
+  });
+
+  for (const usage of assetUsages) {
+    // If it's a rental asset, find the contract and record a shift (deduct a day)
+    try {
+      // Find active rental contract for this machine type on this project
+      const contract = await prisma.vehicleRentalContract.findFirst({
+        where: {
+          projectId: log.projectId,
+          status: 'active',
+          machineType: { contains: usage.asset.category || usage.asset.name, mode: 'insensitive' }
+        }
+      });
+
+      if (contract) {
+        await prisma.vehicleRentalShift.create({
+          data: {
+            rentalContractId: contract.id,
+            date: log.logDate,
+            hours: usage.hoursOperated || 0,
+            notes: `Auto-recorded from Daily Log #${log.id}`
+          }
+        });
+        logger.info('Machinery shift recorded (day deducted) from Daily Log', { contractId: contract.id, assetId: usage.assetId });
+      }
+    } catch (err) {
+      logger.error('Failed to record machinery shift during log approval', { error: err.message, assetId: usage.assetId });
+    }
+  }
+
+  // --- AUTO-DEDUCT MATERIALS FROM SITE INVENTORY UPON APPROVAL ---
+  const photosJson = log.photos || {};
+  const materialsConsumedArr = Array.isArray(photosJson.materialsConsumed) ? photosJson.materialsConsumed : [];
+
+  if (materialsConsumedArr.length > 0) {
+    const inventoryService = require('./inventory.service');
+    const projectSectors = await prisma.sector.findMany({ where: { projectId: log.projectId }, take: 1 });
+    const primarySectorId = projectSectors[0]?.id;
+
+    if (primarySectorId) {
+      for (const mat of materialsConsumedArr) {
+        try {
+          await inventoryService.consume({
+            sectorId: primarySectorId,
+            materialName: mat.materialName,
+            quantity: Number(mat.quantity),
+            reference: `Daily Log - ${log.activePhase || 'Site Work'}`,
+            notes: `[DAILY LOG APPROVED] Consumed during ${log.activePhase || 'site work'}. Narrative: ${(log.narrative || '').substring(0, 80)}`
+          }, { id: approverId });
+          logger.info('Material consumed via daily log (approved)', { materialName: mat.materialName, qty: mat.quantity, projectId: log.projectId });
+        } catch (matErr) {
+          logger.error('Failed to deduct material from inventory on approval', { error: matErr.message, materialName: mat.materialName });
+        }
+      }
     }
   }
 
