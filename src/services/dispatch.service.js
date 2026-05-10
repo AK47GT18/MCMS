@@ -32,8 +32,9 @@ const dispatchService = {
         dispatchStatus: 'in_transit',
         estimatedArrival: new Date(estimatedArrival),
         status: 'approved',
-        dispatchedBy: userName,
-        dispatchedPhone: data.userPhone || null
+        dispatchedBy: data.transporterName || userName,
+        dispatchedPhone: data.userPhone || null,
+        dispatchedAt: data.dispatchedAt ? new Date(data.dispatchedAt) : new Date()
       }
     });
 
@@ -105,7 +106,9 @@ const dispatchService = {
   /**
    * Confirm arrival of resources at site
    */
-  async confirmArrival(requisitionId, userId, userName, userRole) {
+  async confirmArrival(data) {
+    const { requisitionId, userId, userName, userRole, notes, reference, receivedBy } = data;
+    
     if (String(requisitionId).startsWith('RENT-')) {
       const contractId = parseInt(requisitionId.replace('RENT-', ''));
       const inventoryService = require('./inventory.service');
@@ -153,7 +156,7 @@ const dispatchService = {
       // For contract items, we treat the arrival as a full fulfillment of the contract line item
       const contractItem = await prisma.contractItem.findUnique({
         where: { id: contractItemId },
-        include: { contract: { include: { project: true } } }
+        include: { contract: { include: { project: { include: { sectors: true } } } } }
       });
       
       if (!contractItem) throw new Error('Contract item not found');
@@ -164,9 +167,11 @@ const dispatchService = {
         data: { receivedQty: contractItem.quantity } // Fully received
       });
 
-      // Distribute to site inventory
+      // Distribute to site inventory (Find project's first sector or fallback)
+      const targetSector = contractItem.contract.project.sectors?.[0]?.id || 1;
+      
       await inventoryService.distribute({
-        sectorId: 1, 
+        sectorId: targetSector, 
         materialName: contractItem.itemName,
         unit: contractItem.unit,
         quantity: contractItem.quantity,
@@ -190,7 +195,7 @@ const dispatchService = {
       where: { id: parseInt(requisitionId) },
       include: { 
         items: true,
-        project: true
+        project: { include: { sectors: true } }
       }
     });
 
@@ -200,21 +205,25 @@ const dispatchService = {
       where: { id: parseInt(requisitionId) },
       data: {
         dispatchStatus: 'arrived',
-        status: 'fulfilled'
+        status: 'fulfilled',
+        notes: notes ? (requisition.notes ? `${requisition.notes}\nIntake Notes: ${notes} (Ref: ${reference || 'N/A'})` : notes) : requisition.notes
       }
     });
 
     // Distribute materials into site inventory on arrival
     try {
       const inventoryService = require('./inventory.service');
+      const targetSector = requisition.project.sectors?.[0]?.id || 1;
+
       for (const item of requisition.items) {
         await inventoryService.distribute({
-          sectorId: 1,
+          sectorId: targetSector,
           materialName: item.itemName,
           unit: item.unit || 'Units',
           quantity: item.quantity,
           reference: updatedReq.reqCode || `REQ-${requisitionId}`,
-          notes: `Arrival confirmed by ${userName}. Added to site inventory.`
+          notes: `Arrival confirmed by ${userName}. Added to site inventory.`,
+          reqId: requisitionId
         }, { id: userId });
       }
     } catch (invErr) {
@@ -231,7 +240,9 @@ const dispatchService = {
       targetId: updatedReq.id,
       targetCode: updatedReq.reqCode,
       details: {
-        items: requisition.items.map(i => `${i.quantity} x ${i.itemName}`)
+        items: requisition.items.map(i => `${i.quantity} x ${i.itemName}`),
+        receivedBy: receivedBy || userName,
+        deliveryNote: reference || 'N/A'
       }
     });
 
@@ -264,7 +275,7 @@ const dispatchService = {
    * Confirm arrival with potential variance (shortages/damage)
    */
   async confirmArrivalVariance(data) {
-    let { requisitionId, receivedItems, receivedBy, dispatchedBy, notes, userId, userName, userRole } = data;
+    let { requisitionId, receivedItems, receivedBy, dispatchedBy, notes, reference, userId, userName, userRole } = data;
     
     if (String(requisitionId).startsWith('SHIP-')) {
       const contractItemId = parseInt(requisitionId.replace('SHIP-', ''));
@@ -342,7 +353,7 @@ const dispatchService = {
       data: {
         dispatchStatus: 'arrived',
         status: 'fulfilled',
-        notes: notes ? (requisition.notes ? `${requisition.notes}\nIntake Notes: ${notes}` : notes) : requisition.notes
+        notes: notes ? (requisition.notes ? `${requisition.notes}\nIntake Notes (Variance): ${notes} (Ref: ${reference || 'N/A'})` : notes) : requisition.notes
       }
     });
 
@@ -409,6 +420,7 @@ const dispatchService = {
       details: {
         receivedBy,
         dispatchedBy,
+        deliveryNote: reference || 'N/A',
         items: receivedItems.map(i => `${i.qtyReceived}/${i.qtySent} x ${i.itemName}`),
         hasDiscrepancies: discrepancies.length > 0,
         discrepancies

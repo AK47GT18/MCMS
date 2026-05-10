@@ -46,9 +46,9 @@ export const PM_Reviews = {
 
         try {
             const [extRes, logsRes, reqsRes, auditRes] = await Promise.all([
-                client.get('/timeline-extensions'),
-                client.get('/daily-logs'),
-                requisitions.getAll({ limit: 50 }),
+                client.get('/timeline-extensions'), // Show all, not just pending
+                client.get('/daily-logs'), // Show all, not just pending
+                requisitions.getPending(),
                 audit.getAll({ limit: 20 })
             ]);
 
@@ -101,9 +101,9 @@ export const PM_Reviews = {
                 <td>${this.escapeHTML(item.project?.name || item.projectName || 'Active Project')}</td>
                 <td>${new Date(item.currentEndDate).toLocaleDateString()}</td>
                 <td style="font-weight: 700; color: var(--orange);">${new Date(item.requestedEndDate).toLocaleDateString()}</td>
-                <td><span class="status ${item.status === 'approved' ? 'active' : (item.status === 'rejected' ? 'delayed' : 'locked')}">${(item.status || 'pending').toUpperCase()}</span></td>
+                <td><span class="status ${item.status === 'approved' ? 'active' : (item.status === 'rejected' ? 'delayed' : 'locked')}">${item.status.toUpperCase()}</span></td>
                 <td>
-                    ${(item.status || 'pending') === 'pending' ? `
+                    ${item.status === 'pending' ? `
                         <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Review Extension', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
                     ` : `
                         <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Extension Details', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Details</button>
@@ -169,11 +169,7 @@ export const PM_Reviews = {
                 <td>${item.items?.length || 0} items</td>
                 <td>MWK ${Number(item.totalEstimatedCost || 0).toLocaleString()}</td>
                 <td>
-                    ${item.status === 'pending' ? `
-                        <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
-                    ` : `
-                        <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Requisition Details', window.DrawerTemplates.requisitionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Details</button>
-                    `}
+                    <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Requisition Review', window.DrawerTemplates.requisitionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
                 </td>
             </tr>
         `).join('');

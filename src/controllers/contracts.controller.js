@@ -16,8 +16,12 @@ const getAll = asyncHandler(async (req, res) => {
   if (!hasMinimumRole(req, res, 'Field_Supervisor')) return;
   
   const query = parseQuery(req.url);
-  const options = validateBody(query, paginationSchema, res);
-  if (!options) return;
+  const options = {
+    page: parseInt(query.page) || 1,
+    limit: parseInt(query.limit) || 20,
+    sortBy: query.sortBy || 'createdAt',
+    sortOrder: query.sortOrder || 'desc'
+  };
   
   const result = await contractsService.getAll({ ...options, status: query.status, projectId: query.projectId });
   response.paginated(res, result.contracts, result.page, result.limit, result.total);

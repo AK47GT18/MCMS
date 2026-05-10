@@ -14,8 +14,12 @@ const getAll = asyncHandler(async (req, res) => {
   if (!user) return;
   
   const query = parseQuery(req.url);
-  const options = validateBody(query, paginationSchema, res);
-  if (!options) return;
+  const options = {
+    page: parseInt(query.page) || 1,
+    limit: parseInt(query.limit) || 20,
+    sortBy: query.sortBy || 'createdAt',
+    sortOrder: query.sortOrder || 'desc'
+  };
   
   const result = await dailyLogsService.getAll({
     ...options,

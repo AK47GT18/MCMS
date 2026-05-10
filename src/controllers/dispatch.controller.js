@@ -11,7 +11,7 @@ const dispatch = asyncHandler(async (req, res) => {
   if (!user) return;
 
   req.body = await parseBody(req);
-  const { requisitionId, estimatedArrival } = req.body;
+  const { requisitionId, estimatedArrival, dispatchDate } = req.body;
   
   if (!requisitionId || !estimatedArrival) {
     return response.error(res, 'Missing requisitionId or estimatedArrival', 400);
@@ -26,7 +26,9 @@ const dispatch = asyncHandler(async (req, res) => {
     userId: user.id,
     userName: user.name,
     userRole: user.role,
-    userPhone: user.phone
+    userPhone: req.body.userPhone || user.phone,
+    transporterName: req.body.transporterName || user.name,
+    dispatchedAt: dispatchDate || new Date()
   });
 
   // Broadcast update
@@ -42,7 +44,18 @@ const confirmArrival = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
 
-  const result = await dispatchService.confirmArrival(id, user.id, user.name, user.role);
+  const body = await parseBody(req);
+  const { notes, reference, receivedBy } = body;
+
+  const result = await dispatchService.confirmArrival({
+    requisitionId: id,
+    userId: user.id,
+    userName: user.name,
+    userRole: user.role,
+    notes,
+    reference,
+    receivedBy
+  });
 
   // Broadcast update
   websocket.broadcastToChannel('requisitions', 'REQUISITION_ARRIVED', {
@@ -57,7 +70,7 @@ const confirmArrivalVariance = asyncHandler(async (req, res, id) => {
   if (!user) return;
 
   req.body = await parseBody(req);
-  const { receivedItems, receivedBy, dispatchedBy, notes } = req.body;
+  const { receivedItems, receivedBy, dispatchedBy, notes, reference } = req.body;
 
   const result = await dispatchService.confirmArrivalVariance({
     requisitionId: id,
@@ -65,6 +78,7 @@ const confirmArrivalVariance = asyncHandler(async (req, res, id) => {
     receivedBy,
     dispatchedBy,
     notes,
+    reference,
     userId: user.id,
     userName: user.name,
     userRole: user.role

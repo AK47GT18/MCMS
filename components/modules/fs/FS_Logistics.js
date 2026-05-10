@@ -790,7 +790,7 @@ export const FS_Logistics = {
                 name: name,
                 assetCode: data.inventoryId ? `INV-${data.inventoryId}` : 'ALLOC',
                 category: 'Contracted Allocation',
-                status: 'pending_intake',
+                status: data.qty > 0 ? 'checked_out' : 'pending_intake',
                 isInventoryItem: true,
                 unit: data.unit,
                 qty: data.qty
@@ -845,12 +845,25 @@ export const FS_Logistics = {
                         </span>
                     </td>
                     <td style="text-align: right; min-width: 150px;">
-                        ${asset.isInventoryItem ? `
-                            <button class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 11px; background: var(--blue); border-color: var(--blue);" 
-                                onclick="window.app.fsModule.openManualIntakeDrawer('${asset.name.replace(/'/g, "\\'")}', '${asset.unit || 'Day'}', '${activeReqId}')">
-                                <i class="fas fa-truck-loading"></i> Confirm Arrival
-                            </button>
-                        ` : (asset.status !== 'maintenance' ? `
+                        ${asset.isInventoryItem ? (
+                            asset.status === 'pending_intake' ? `
+                                <button class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 11px; background: var(--emerald); border-color: var(--emerald);" 
+                                    onclick="window.app.fsModule.openManualIntakeDrawer('${asset.name.replace(/'/g, "\\'")}', '${asset.unit || 'Day'}', '${activeReqId}')">
+                                    <i class="fas fa-truck-loading"></i> Confirm Arrival
+                                </button>
+                            ` : `
+                                <div style="display:flex; gap:4px; justify-content: flex-end;">
+                                    <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: var(--red-light);" 
+                                        onclick="window.app.fsModule.openAssetIncidentDrawer('${asset.id}', true)">
+                                        <i class="fas fa-triangle-exclamation"></i> Breakdown
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px;" 
+                                        onclick="window.app.fsModule.openReturnEquipmentDrawer('${asset.id}', '${asset.name.replace(/'/g, "\\'")}', '${asset.assetCode || ''}')">
+                                        <i class="fas fa-undo"></i> Return
+                                    </button>
+                                </div>
+                            `
+                        ) : (asset.status !== 'maintenance' ? `
                             <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: var(--red-light);" onclick="window.app.fsModule.openAssetIncidentDrawer('${asset.id}')">
                                 <i class="fas fa-triangle-exclamation"></i> Log Breakdown
                             </button>
@@ -1143,6 +1156,7 @@ export const FS_Logistics = {
 
         const receivedBy = document.getElementById('arrival_received_by').value;
         const dispatchedBy = document.getElementById('arrival_dispatched_by').value;
+        const reference = document.getElementById('arrival_ref').value;
         const notes = document.getElementById('arrival_notes').value;
         const inputs = document.querySelectorAll('.received-qty-input');
         
@@ -1223,14 +1237,16 @@ export const FS_Logistics = {
                     receivedItems,
                     receivedBy,
                     dispatchedBy,
-                    notes
+                    notes,
+                    reference
                 });
                 window.toast.show('Intake completed with variance. Replenishment triggered.', 'warning');
             } else {
                 await client.post(`/dispatch/${reqId}/confirm`, {
                     receivedBy,
                     dispatchedBy,
-                    notes
+                    notes,
+                    reference
                 });
                 window.toast.show('Full delivery confirmed. Inventory updated.', 'success');
             }

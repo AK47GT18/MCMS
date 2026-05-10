@@ -16,7 +16,6 @@ export const PM_Portfolio = {
         setTimeout(() => this.loadProjectsFromAPI(), 0);
 
         return `
-            ${this.getStatsGridHTML()}
             <div class="data-card">
                 <div class="data-card-header" style="flex-wrap: wrap; gap: 16px;">
                     <div class="tabs" style="margin-bottom: 0; flex-grow: 1;">
@@ -93,11 +92,9 @@ export const PM_Portfolio = {
 
         const filtered = status === 'all' 
             ? this.allProjects 
-            : this.allProjects.filter(p => {
-                const s = (p.status || '').toLowerCase();
-                if (status === 'active') return s === 'active' || s === 'in_progress';
-                return s === status.toLowerCase();
-            });
+            : (status === 'active' 
+                ? this.allProjects.filter(p => (p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'in_progress')
+                : this.allProjects.filter(p => (p.status || '').toLowerCase() === status.toLowerCase()));
         
         this.currentFilteredProjects = filtered;
         this.renderProjectsWithPagination();
@@ -120,8 +117,8 @@ export const PM_Portfolio = {
         
         if (totalItems === 0) {
             const activeTab = document.querySelector('.tabs .tab.active');
-            const displayStatus = (status || 'active').replace(/_/g, ' ');
-            container.innerHTML = this.renderEmptyState(`No ${displayStatus} projects found.`);
+            const status = activeTab ? activeTab.getAttribute('data-status') : 'active';
+            container.innerHTML = this.renderEmptyState(`No ${status.replace(/_/g, ' ')} projects found.`);
             return;
         }
 
@@ -155,7 +152,7 @@ export const PM_Portfolio = {
         return `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--slate-200); background: #fcfcfd; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
                 <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">
-                    Showing <b style="color: var(--slate-900);">${this.currentFilteredProjects.length > 0 ? (current - 1) * 10 + 1 : 0}</b> to <b style="color: var(--slate-900);">${Math.min(current * 10, this.currentFilteredProjects.length)}</b> of <b style="color: var(--slate-900);">${this.currentFilteredProjects.length}</b> projects
+                    Showing <b style="color: var(--slate-900);">${Math.min((current - 1) * 10 + 1, this.currentFilteredProjects.length)}</b> to <b style="color: var(--slate-900);">${Math.min(current * 10, this.currentFilteredProjects.length)}</b> of <b style="color: var(--slate-900);">${this.currentFilteredProjects.length}</b> projects
                 </div>
                 <div style="display: flex; gap: 4px;">
                     ${buttons}
@@ -248,30 +245,5 @@ export const PM_Portfolio = {
         });
     },
 
-    getStatsGridHTML() {
-        return `
-            <div class="stats-grid">
-               <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Budget Health</span><i class="fas fa-wallet" style="color: var(--emerald);"></i></div>
-                  <div class="stat-value" id="stat-budget-health">85%</div>
-                  <div class="stat-sub"><i class="fas fa-arrow-up"></i> Utilized (Aggregate)</div>
-               </div>
-               <div class="stat-card" style="border-color: var(--orange-light); background: #fffbf7;" onclick="window.toast.show('Filtering for pending reviews...', 'info')">
-                  <div class="stat-header"><span class="stat-label" style="color: var(--orange);">Pending Reviews</span><i class="fas fa-clipboard-check" style="color: var(--orange);"></i></div>
-                  <div class="stat-value" style="color: var(--orange);" id="stat-pending-reviews">0</div>
-                  <div class="stat-sub">Field logs awaiting approval</div>
-               </div>
-               <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Portfolio Value</span><i class="fas fa-chart-line" style="color: var(--blue);"></i></div>
-                  <div class="stat-value" id="stat-portfolio-value">MWK 0</div>
-                  <div class="stat-sub">Across all projects</div>
-               </div>
-               <div class="stat-card">
-                  <div class="stat-header"><span class="stat-label">Active Projects</span><i class="fas fa-project-diagram" style="color: var(--slate-600);"></i></div>
-                  <div class="stat-value" id="stat-active-projects">0</div>
-                  <div class="stat-sub">Managed currently</div>
-               </div>
-            </div>
-        `;
-    }
+
 };

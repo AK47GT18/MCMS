@@ -233,6 +233,7 @@ const createRequisitionSchema = z.object({
     isVariation: z.boolean().optional(),
     notes: z.string().optional()
   })).optional(),
+  notes: z.string().optional(),
 });
 
 const updateRequisitionSchema = z.object({

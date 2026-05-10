@@ -18,10 +18,21 @@ const getAll = asyncHandler(async (req, res) => {
   if (!user) return;
   
   const query = parseQuery(req.url);
-  const options = validateBody(query, paginationSchema, res);
-  if (!options) return;
   
-  const result = await requisitionsService.getAll({ ...options, status: query.status, projectId: query.projectId ? parseInt(query.projectId) : undefined });
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 20;
+  const sortBy = query.sortBy || 'createdAt';
+  const sortOrder = query.sortOrder || 'desc';
+  
+  const result = await requisitionsService.getAll({ 
+    page, 
+    limit, 
+    sortBy, 
+    sortOrder,
+    status: query.status, 
+    projectId: query.projectId ? parseInt(query.projectId) : undefined 
+  });
+  
   response.paginated(res, result.requisitions, result.page, result.limit, result.total);
 });
 
@@ -78,7 +89,7 @@ const create = asyncHandler(async (req, res) => {
 const approve = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  if (!hasMinimumRole(req, res, 'Equipment_Coordinator')) return;
   
   const reqId = validateId(id, res);
   if (!reqId) return;
@@ -113,7 +124,7 @@ const approve = asyncHandler(async (req, res, id) => {
 const reject = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  if (!hasMinimumRole(req, res, 'Equipment_Coordinator')) return;
   
   const reqId = validateId(id, res);
   if (!reqId) return;
@@ -153,7 +164,7 @@ const reject = asyncHandler(async (req, res, id) => {
 const flagFraud = asyncHandler(async (req, res, id) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  if (!hasMinimumRole(req, res, 'Finance_Director')) return;
+  if (!hasMinimumRole(req, res, 'Equipment_Coordinator')) return;
   
   const reqId = validateId(id, res);
   if (!reqId) return;

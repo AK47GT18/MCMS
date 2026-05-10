@@ -104,17 +104,21 @@ export const EC_Handlers = {
 
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label class="form-label">Justification / Remarks</label>
-                        <textarea id="dispatch_justification" class="form-input" placeholder="Scheduled fulfillment for site works..." style="width: 100%; height: 60px; resize: none; font-size: 12px;"></textarea>
+                        <textarea id="dispatch_justification" class="form-input" placeholder="Scheduled fulfillment for site works..." 
+                            style="width: 100%; height: 60px; resize: none; font-size: 12px;"
+                            oninput="window.app.ecModule._validateDispatchForm()"></textarea>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label class="form-label">Transporter / Driver Name</label>
-                            <input type="text" id="dispatch_transporter" class="form-input" placeholder="Name of driver..." style="width: 100%;">
+                            <input type="text" id="dispatch_transporter" class="form-input" placeholder="Name of driver..." style="width: 100%;"
+                                oninput="window.app.ecModule._validateDispatchForm()">
                         </div>
                         <div>
                             <label class="form-label">Driver Phone Number</label>
-                            <input type="text" id="dispatch_transporter_phone" class="form-input" placeholder="+265..." style="width: 100%;">
+                            <input type="text" id="dispatch_transporter_phone" class="form-input" placeholder="+265..." style="width: 100%;"
+                                oninput="window.app.ecModule._validateDispatchForm()">
                         </div>
                     </div>
 
@@ -123,16 +127,20 @@ export const EC_Handlers = {
                             <label class="form-label">Dispatch Date & Time</label>
                             <input type="datetime-local" id="dispatch_date" class="form-input" style="width: 100%;" 
                                 min="${new Date().toISOString().slice(0, 16)}"
-                                value="${new Date().toISOString().slice(0, 16)}">
+                                value="${new Date().toISOString().slice(0, 16)}"
+                                onchange="window.app.ecModule._validateDispatchForm()">
                         </div>
                         <div>
                             <label class="form-label">Estimated Arrival (ETA)</label>
                             <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;" 
-                                min="${new Date().toISOString().slice(0, 16)}">
+                                min="${new Date().toISOString().slice(0, 16)}"
+                                onchange="window.app.ecModule._validateDispatchForm()">
                         </div>
                     </div>
+                    <div id="date_error" style="color: var(--red); font-size: 11px; display: none; margin-bottom: 12px; font-weight: 600;">⚠ ETA must be after dispatch time.</div>
 
-                    <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 14px;" 
+                    <button id="dispatch_submit_btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 800; font-size: 14px; opacity: 0.5;" 
+                        disabled
                         onclick="window.app.ecModule.handleMaterialDistribution('${materialName}')">
                         <i class="fas fa-truck-loading" style="margin-right: 8px;"></i> Authorize & Execute Dispatch
                     </button>
@@ -169,8 +177,29 @@ export const EC_Handlers = {
             if (errorEl) errorEl.style.display = 'block';
             return;
         }
-        if (!projectId || !recipient || !justification || !transporter || !eta) {
-            window.toast?.show('Project site, transporter, justification, and ETA are required.', 'warning');
+
+        // --- ENHANCED VALIDATION ---
+        const phoneRegex = /^(\+265|0)[89][0-9]{8}$/;
+        if (!projectId || !recipient) {
+            window.toast?.show('Please select a target project site.', 'warning');
+            return;
+        }
+        if (!transporter || transporter.length < 3) {
+            window.toast?.show('Valid Transporter/Driver name is required.', 'warning');
+            return;
+        }
+        if (!phoneRegex.test(transporterPhone)) {
+            window.toast?.show('Invalid Driver Phone Number. Use Malawi format (e.g. 088... or +265...)', 'warning');
+            return;
+        }
+        if (!justification || justification.trim().length < 10) {
+            window.toast?.show('Justification must be at least 10 characters.', 'warning');
+            return;
+        }
+        const bufferDate = new Date(date);
+        bufferDate.setMinutes(bufferDate.getMinutes() - 1);
+        if (!eta || !date || new Date(eta) <= bufferDate) {
+            window.toast?.show('ETA must be at least 1 minute after the dispatch time.', 'warning');
             return;
         }
 
@@ -192,8 +221,10 @@ export const EC_Handlers = {
                 items: [{
                     itemName: materialName,
                     quantity: amount,
-                    unit: material.unit || 'Units'
+                    unit: material.unit || 'Units',
+                    unitPrice: 0 // Service will load from catalog
                 }],
+                totalAmount: 0, // Service will calculate
                 notes: `Direct EC Dispatch - Reason: ${justification}`,
                 priority: 'high'
             });
@@ -209,7 +240,8 @@ export const EC_Handlers = {
                 partial: false,
                 dispatchedItems: [`${amount} x ${materialName}`],
                 userPhone: transporterPhone,
-                transporterName: transporter
+                transporterName: transporter,
+                dispatchDate: date
             });
 
             // Update local state
@@ -226,6 +258,68 @@ export const EC_Handlers = {
         } catch (err) {
             window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');
         }
+    },
+    
+    _validateDispatchForm() {
+        const amount = Number(document.getElementById('dispatch_amount')?.value || 0);
+        const project = document.getElementById('dispatch_project')?.value;
+        const transporter = document.getElementById('dispatch_transporter')?.value;
+        const phone = document.getElementById('dispatch_transporter_phone')?.value;
+        const justification = document.getElementById('dispatch_justification')?.value;
+        const dateVal = document.getElementById('dispatch_date')?.value;
+        const etaVal = document.getElementById('dispatch_eta')?.value;
+        
+        const errorEl = document.getElementById('date_error');
+        const submitBtn = document.getElementById('dispatch_submit_btn');
+        const phoneRegex = /^(\+265|0)[89][0-9]{8}$/;
+
+        let isValid = true;
+
+        // Visual feedback & validation
+        const setFieldState = (id, valid) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (valid) {
+                el.style.borderColor = 'var(--emerald-500)';
+                el.style.background = '#F0FDF4';
+            } else {
+                el.style.borderColor = 'var(--red-500)';
+                el.style.background = '#FEF2F2';
+                isValid = false;
+            }
+        };
+
+        setFieldState('dispatch_amount', amount > 0);
+        setFieldState('dispatch_project', !!project);
+        setFieldState('dispatch_transporter', transporter && transporter.length >= 3);
+        setFieldState('dispatch_transporter_phone', phoneRegex.test(phone));
+        setFieldState('dispatch_justification', justification && justification.trim().length >= 10);
+
+        if (dateVal && etaVal) {
+            const d = new Date(dateVal);
+            const e = new Date(etaVal);
+            // Allow 1 minute buffer for ETA
+            const bufferDate = new Date(d);
+            bufferDate.setMinutes(bufferDate.getMinutes() - 1);
+
+            if (e <= bufferDate) {
+                if (errorEl) errorEl.style.display = 'block';
+                setFieldState('dispatch_eta', false);
+            } else {
+                if (errorEl) errorEl.style.display = 'none';
+                setFieldState('dispatch_eta', true);
+            }
+        } else {
+            isValid = false;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = !isValid;
+            submitBtn.style.opacity = isValid ? '1' : '0.5';
+            submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+        }
+
+        return isValid;
     },
 
     _updateLiveDeduction(val, max) {
@@ -274,6 +368,7 @@ export const EC_Handlers = {
                 siteImpactEl.style.display = 'none';
             }
         }
+        this._validateDispatchForm();
     },
 
     async _loadProjectContext(materialName, projectId) {
@@ -343,6 +438,8 @@ export const EC_Handlers = {
                 siteStockEl.textContent = '0';
             }
         }
+        
+        this._validateDispatchForm();
     },
 
     async _loadProjectPhases(projectId) {
@@ -463,12 +560,8 @@ export const EC_Handlers = {
         const isMachinery = document.getElementById('btn_machinery')?.classList.contains('active');
         const eta = document.getElementById('dispatch_eta')?.value;
 
-        // 1. Validate ETA (Inline)
-        const etaDate = new Date(eta);
-        const etaError = document.getElementById('eta_error');
-        if (isNaN(etaDate.getTime()) || etaDate < new Date()) {
-            if (etaError) etaError.style.display = 'block';
-            window.toast?.show('Invalid ETA provided.', 'warning');
+        // 1. Validate using unified validator
+        if (!this._validateStrategicDispatchForm()) {
             return;
         }
 
@@ -557,6 +650,68 @@ export const EC_Handlers = {
                 }
             }
         );
+    },
+
+    _validateStrategicDispatchForm() {
+        const project = document.getElementById('assign_project')?.value;
+        const supervisor = document.getElementById('assign_fs')?.value;
+        const eta = document.getElementById('dispatch_eta')?.value;
+        const submitBtn = document.getElementById('btn_execute_dispatch');
+        const etaError = document.getElementById('eta_error');
+
+        let isValid = true;
+
+        const setFieldState = (id, valid) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (valid) {
+                el.style.borderColor = 'var(--emerald-500)';
+                el.style.background = '#F0FDF4';
+            } else {
+                el.style.borderColor = 'var(--red-500)';
+                el.style.background = '#FEF2F2';
+                isValid = false;
+            }
+        };
+
+        setFieldState('assign_project', !!project);
+        setFieldState('assign_fs', !!supervisor);
+
+        // ETA Validation: Allow "in 2 min time" -> buffer of 1 minute from now
+        if (eta) {
+            const etaDate = new Date(eta);
+            const now = new Date();
+            // Subtract 1 minute to allow for clock drift / user taking time to fill form
+            now.setMinutes(now.getMinutes() - 1); 
+
+            if (isNaN(etaDate.getTime()) || etaDate < now) {
+                setFieldState('dispatch_eta', false);
+                if (etaError) etaError.style.display = 'block';
+            } else {
+                setFieldState('dispatch_eta', true);
+                if (etaError) etaError.style.display = 'none';
+            }
+        } else {
+            setFieldState('dispatch_eta', false);
+        }
+
+        // Quantities check (if material sheet is active)
+        const isMachinery = document.getElementById('btn_machinery')?.classList.contains('active');
+        const itemsToMove = (this._currentProjectMaterials || []).map((mat, i) => ({
+            quantity: Number(document.getElementById(`qty_${i}`)?.value || 0)
+        })).filter(i => i.quantity > 0);
+
+        if (!isMachinery && itemsToMove.length === 0) {
+            isValid = false;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = !isValid;
+            submitBtn.style.opacity = isValid ? '1' : '0.5';
+            submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+        }
+
+        return isValid;
     },
 
     async handleIssueMaterial(itemId) {

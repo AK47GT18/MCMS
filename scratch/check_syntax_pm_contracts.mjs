@@ -104,14 +104,13 @@ export const PM_Contracts = {
           contracts.getAll({ limit: 50 })
         ]);
         
-        // Extract arrays from paginated responses
-        const specificRentals = rentalRes.contracts || rentalRes.data || (Array.isArray(rentalRes) ? rentalRes : []);
-        const generalContracts = contractRes.contracts || contractRes.data || (Array.isArray(contractRes) ? contractRes : []);
+        const specificRentals = rentalRes.data || rentalRes || [];
+        const generalContracts = Array.isArray(contractRes.data) ? contractRes.data : (contractRes.contracts || contractRes || []);
         
         // Merge them
         allContracts = [
           ...specificRentals,
-          ...generalContracts.filter(c => String(c.contractType).toLowerCase() === 'rental')
+          ...generalContracts.filter(c => c.contractType === 'rental' || c.contractType === 'RENTAL')
         ];
       } else {
         const response = await contracts.getAll({ limit: 50 });

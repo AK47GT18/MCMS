@@ -102,15 +102,33 @@ export const FS_Equipment = {
         }
     },
 
-    async openAssetIncidentDrawer(assetId) {
+    async openAssetIncidentDrawer(assetId, isInventory = false) {
         try {
-            // Find asset from local cache first
-            let asset = this.siteAssets.find(a => String(a.id) === String(assetId));
+            // Find asset from local cache first (FS_Logistics merges these into its own view, but FS_Equipment uses siteAssets)
+            // Wait, FS_Logistics and FS_Equipment are separate.
+            // In FS_Logistics, combinedAssets is local to _renderEquipmentTable.
             
-            // If not in cache, fetch from API
-            if (!asset) {
+            let asset;
+            if (isInventory) {
+                // If it's from the Logistics tab, we need to find it from the siteInventory
+                // Actually, let's just use the ID to find it in the current module's context if possible
+                // But this method is in FS_Equipment.
+                
+                // Let's make it robust:
+                asset = (window.app.fsModule.siteAssets || []).find(a => String(a.id) === String(assetId));
+            } else {
+                asset = (this.siteAssets || []).find(a => String(a.id) === String(assetId));
+            }
+            
+            // If not in cache, fetch from API (only for physical assets)
+            if (!asset && !isInventory) {
                 const res = await assets.getById(assetId);
                 asset = res.data || res;
+            }
+
+            if (!asset) {
+                window.toast?.show('Asset details not found locally.', 'warning');
+                return;
             }
 
             window.drawer.open(

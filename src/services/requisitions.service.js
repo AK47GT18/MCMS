@@ -138,7 +138,13 @@ async function create(data, userId) {
     data: {
       ...reqData,
       submittedBy: userId,
-      items: calculatedItems ? { create: calculatedItems } : undefined,
+      items: calculatedItems ? { 
+        create: calculatedItems.map(item => ({
+          itemName: item.itemName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice
+        }))
+      } : undefined,
     },
     include: { items: true, project: { select: { id: true, code: true, name: true } } },
   });

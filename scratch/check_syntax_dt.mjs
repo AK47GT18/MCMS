@@ -4774,17 +4774,17 @@ Contract Admin</textarea>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
                         <div>
                             <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Driver / Transporter</div>
-                            <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${req.dispatchedBy || req.transporterName || req.driverName || 'Yard Team'}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${req.dispatchedBy || req.transporterName || 'Yard Team'}</div>
                         </div>
                         <div>
                             <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Contact Phone</div>
-                            <div style="font-size: 13px; font-weight: 700; color: var(--blue);">${req.dispatchedPhone || req.userPhone || req.driverPhone || 'N/A'}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--blue);">${req.dispatchedPhone || req.driverPhone || 'N/A'}</div>
                         </div>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
                         <div>
                             <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Dispatch Time</div>
-                            <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${req.dispatchedAt ? new Date(req.dispatchedAt).toLocaleString() : (req.updatedAt ? new Date(req.updatedAt).toLocaleString() : 'N/A')}</div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--slate-600);">${req.dispatchDate ? new Date(req.dispatchDate).toLocaleString() : (req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A')}</div>
                         </div>
                         <div>
                             <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Estimated Arrival</div>
@@ -4805,7 +4805,7 @@ Contract Admin</textarea>
                     </div>
                     <div>
                         <label style="font-size: 10px; font-weight: 700; color: var(--slate-400);">Delivery Note / ID</label>
-                        <input type="text" id="arrival_ref" class="form-input" placeholder="e.g. DN-10234" style="width: 100%; font-weight: 700;" value="DN-${(req.reqCode || 'REQ-' + req.id).replace('REQ-', '')}">
+                        <input type="text" id="arrival_ref" class="form-input" placeholder="e.g. DN-10234" style="width: 100%;">
                     </div>
                 </div>
                 
@@ -5104,16 +5104,13 @@ Contract Admin</textarea>
                             <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveExtension('${req.id}', document.getElementById('extension-review-comment').value)">Approve Extension</button>
                         </div>
                     ` : `
-                        <div style="text-align: center; padding: 40px 20px;">
-                            <div style="width: 64px; height: 64px; background: ${req.status === 'approved' ? 'var(--emerald-light)' : 'var(--red-light)'}; color: ${req.status === 'approved' ? 'var(--emerald)' : 'var(--red)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px;">
-                                <i class="fas ${req.status === 'approved' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Review Comments</div>
+                            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; color: var(--slate-600); font-style: italic;">
+                                "${req.pmComment || "No comments recorded."}"
                             </div>
-                            <h3 style="font-size: 18px; font-weight: 800; color: var(--slate-900); margin-bottom: 8px;">Review Finalized</h3>
-                            <p style="font-size: 13px; color: var(--slate-500); line-height: 1.5; margin-bottom: 24px;">
-                                This request was <strong>${req.status.toUpperCase()}</strong>. ${req.pmComment ? `<br><br><i style="color: var(--slate-400);">"${req.pmComment}"</i>` : ''}
-                            </p>
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Details</button>
                         </div>
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Details</button>
                     `}
                 </div>
             </div>
@@ -5262,32 +5259,19 @@ Contract Admin</textarea>
                     </tbody>
                 </table>
 
-                ${(req.status || 'pending') === 'pending' ? `
-                    <div class="form-group" style="margin-bottom: 24px;">
-                        <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Approval/Rejection Justification *</label>
-                        <textarea id="requisition_note" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" rows="3" style="width: 100%; border-radius: 8px; border-color: var(--slate-300);" placeholder="Provide reasoning for this decision..."></textarea>
-                    </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="display: block; font-size: 11px; font-weight: 700; color: var(--slate-500); margin-bottom: 6px; text-transform: uppercase;">Approval/Rejection Justification *</label>
+                    <textarea id="requisition_note" class="form-input" data-vrules="required|minLen:5" oninput="window.V?.checkField(this)" rows="3" style="width: 100%; border-radius: 8px; border-color: var(--slate-300);" placeholder="Provide reasoning for this decision..."></textarea>
+                </div>
 
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                        <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="if(!window.V?.validateForm(this.closest('.drawer-content'))){return} window.app.fmModule?.handleRequisitionAction('${req.id}', 'rejected')">Reject</button>
-                        <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
-                            onclick="if(!window.V?.validateForm(this.closest('.drawer-content'))){return} window.app.fmModule?.handleRequisitionAction('${req.id}', 'approved')">
-                            Approve & Create Contract
-                        </button>
-                    </div>
-                ` : `
-                    <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-                        <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Review Outcome</div>
-                        <div style="font-size: 14px; font-weight: 700; color: ${req.status === 'approved' ? 'var(--emerald)' : 'var(--red)'};">${req.status.toUpperCase()}</div>
-                        ${req.rejectionReason || req.pmComment || req.notes ? `
-                            <div style="margin-top: 12px; font-size: 13px; color: var(--slate-600); font-style: italic;">
-                                "${req.rejectionReason || req.pmComment || req.notes}"
-                            </div>
-                        ` : ''}
-                    </div>
-                    <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Details</button>
-                `}
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
+                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="if(!window.V?.validateForm(this.closest('.drawer-content'))){return} window.app.fmModule?.handleRequisitionAction('${req.id}', 'rejected')">Reject</button>
+                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" 
+                        onclick="if(!window.V?.validateForm(this.closest('.drawer-content'))){return} window.app.fmModule?.handleRequisitionAction('${req.id}', 'approved')">
+                        Approve & Create Contract
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -5437,8 +5421,7 @@ Contract Admin</textarea>
             
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project / Site</label>
-                <select id="assign_project" class="form-input" style="width: 100%;" 
-                    onchange="window.app.ecModule.handleTimelineProjectChange(this.value); window.app.ecModule._validateStrategicDispatchForm()">
+                <select id="assign_project" class="form-input" style="width: 100%;" onchange="window.app.ecModule.handleTimelineProjectChange(this.value)">
                     <option value="">Select Project...</option>
                     ${projects.map((p) => `<option value="${p.id}">${p.name}</option>`).join("")}
                 </select>
@@ -5463,7 +5446,7 @@ Contract Admin</textarea>
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Site Supervisor / Recipient</label>
-                <select id="assign_fs" class="form-input" style="width: 100%;" onchange="window.app.ecModule._validateStrategicDispatchForm()">
+                <select id="assign_fs" class="form-input" style="width: 100%;">
                     <option value="">Select Supervisor...</option>
                     <option value="Mike Banda">(Available) Mike Banda (Sector 1)</option>
                     <option value="Grace Chibwe">(Available) Grace Chibwe (Sector 2)</option>
@@ -5473,8 +5456,7 @@ Contract Admin</textarea>
             <div class="form-group" id="eta_container" style="margin-bottom: 24px;">
                 <label class="form-label">Estimated Arrival Time *</label>
                 <input type="datetime-local" id="dispatch_eta" class="form-input" style="width: 100%;"
-                    min="${new Date().toISOString().slice(0, 16)}" 
-                    onchange="window.app.ecModule._validateStrategicDispatchForm()">
+                    min="${new Date().toISOString().slice(0, 16)}" onchange="document.getElementById('eta_error').style.display='none'">
                 <div id="eta_error" style="font-size: 11px; color: var(--red); margin-top: 4px; display: none; font-weight: 600;">⚠ Please set a valid future arrival time.</div>
                 <div style="font-size: 11px; color: var(--slate-400); margin-top: 4px;">Past dates are restricted.</div>
             </div>
@@ -5487,9 +5469,7 @@ Contract Admin</textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" id="btn_execute_dispatch" style="width: 100%; justify-content: center; padding: 14px; opacity: 0.5;" 
-                disabled 
-                onclick="window.app.ecModule.handleExecuteDispatch()">Authorize & Execute Dispatch</button>
+            <button class="btn btn-primary" id="btn_execute_dispatch" style="width: 100%; justify-content: center; padding: 14px;" onclick="window.app.ecModule.handleExecuteDispatch()">Authorize & Execute Dispatch</button>
         </div>
     `,
 

@@ -357,6 +357,7 @@ model Requisition {
   vendorName       String?               @map("vendor_name") @db.VarChar(255)
   dispatchStatus   String?               @default("pending") @map("dispatch_status")
   estimatedArrival DateTime?             @map("estimated_arrival")
+  dispatchedAt     DateTime?             @map("dispatched_at")
   dispatchedBy     String?               @map("dispatched_by")
   dispatchedPhone  String?               @map("dispatched_phone")
   notes            String?
