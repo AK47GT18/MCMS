@@ -1915,17 +1915,48 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <!-- Materials Consumed Section -->
-            <div style="background: #FFF7ED; padding: 16px; border-radius: 8px; border: 1px solid #FED7AA; margin-bottom: 16px;">
+            <!-- Materials Consumed Section (Pre-populated from site inventory) -->
+            <div style="background: #FFF7ED; padding: 16px; border-radius: 16px; border: 1px solid #FED7AA; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <label class="form-label" style="color: #9A3412; font-weight: 700; margin: 0;"><i class="fas fa-cubes"></i> Materials Consumed Today</label>
-                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; background: white; border-color: #FED7AA;" onclick="window.app.fsModule?.addMaterialUsageRow()">
-                        <i class="fas fa-plus"></i> Add Material
-                    </button>
+                    <span style="font-size: 10px; font-weight: 700; color: #92400E; background: #FFEDD5; padding: 2px 8px; border-radius: 20px;">${inventoryItems.filter(([n, d]) => { const u = (d.unit||'').toLowerCase(); return u !== 'day' && u !== 'hour'; }).length} on site</span>
                 </div>
                 <div id="material-usage-rows" style="display: flex; flex-direction: column; gap: 8px;">
-                    <div style="text-align: center; color: #92400E; font-size: 11px; padding: 8px; opacity: 0.6;">No materials logged yet. Add items used on site today.</div>
+                    ${(() => {
+                        const materialItems = inventoryItems.filter(([name, data]) => {
+                            const unit = (data.unit || '').toLowerCase();
+                            return unit !== 'day' && unit !== 'hour';
+                        });
+                        if (materialItems.length === 0) {
+                            return '<div style="text-align: center; color: #92400E; font-size: 11px; padding: 8px; opacity: 0.6;">No materials allocated to this site yet.</div>';
+                        }
+                        return materialItems.map(([name, data]) => `
+                            <div class="material-usage-row" style="background: white; border: 1px solid #FED7AA; padding: 12px; border-radius: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-cube" style="color: #EA580C; font-size: 14px;"></i>
+                                        <div>
+                                            <div style="font-weight: 800; font-size: 13px; color: var(--slate-900);">${name}</div>
+                                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 600;">Available: <strong style="color: #9A3412;">${data.qty.toLocaleString()}</strong> ${data.unit}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" class="material-select" value="${name}">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div>
+                                        <label style="font-size: 9px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Qty Used</label>
+                                        <input type="number" class="form-input material-qty" placeholder="0" min="0" max="${data.qty}" step="0.1" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 9px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Used By / Team</label>
+                                        <input type="text" class="form-input material-used-by" placeholder="Team / Person" style="padding: 6px; font-size: 12px; height: 34px;">
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    })()}
                 </div>
+                <div style="font-size: 10px; color: #92400E; margin-top: 8px; font-style: italic;"><i class="fas fa-info-circle"></i> Leave quantity at 0 for materials not used today.</div>
             </div>
 
              <div class="form-group" style="margin-bottom: 20px;">
@@ -1953,39 +1984,56 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
-            <div style="border-top:1px solid var(--slate-200); margin: 0 -24px 20px; padding: 16px 24px; background:var(--slate-50);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <label style="font-weight:700; font-size:13px; color:var(--slate-700);">Request Additional Funds?</label>
-                    <input type="checkbox" id="sos-toggle" style="width:20px; height:20px; accent-color:var(--red);" onchange="document.getElementById('sos-fields').style.display = this.checked ? 'block' : 'none'">
-                </div>
-                
-                <div id="sos-fields" style="display:none; animation: fadeIn 0.3s ease;">
-                    <div class="form-group" style="margin-bottom:12px;">
-                         <label class="form-label" style="color:var(--red);">Amount Needed (MWK)</label>
-                         <input type="number" id="sos-amount" class="form-input" placeholder="e.g. 500,000" style="border-color:var(--red-light);">
-                    </div>
-                     <div class="form-group">
-                         <label class="form-label" style="color:var(--red);">Reason</label>
-                         <select id="sos-reason" class="form-input" style="border-color:var(--red-light);">
-                            <option>Material Price Increase</option>
-                            <option>Unforeseen Labor Costs</option>
-                            <option>Emergency Repair</option>
-                         </select>
-                    </div>
-                    <div style="font-size:11px; color:var(--red); margin-top:8px;"> <i class="fas fa-bolt"></i> Triggers instant alert to Finance Director</div>
-                </div>
-            </div>
-
-            <div id="machinery-usage-section" style="background: #F0F9FF; padding: 16px; border-radius: 8px; border: 1px solid #BAE6FD; margin-bottom: 16px;">
+            <!-- Machinery Usage (Pre-populated from site assets) -->
+            <div id="machinery-usage-section" style="background: #F0F9FF; padding: 16px; border-radius: 16px; border: 1px solid #BAE6FD; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <label class="form-label" style="color: #0369A1; font-weight: 700; margin: 0;"><i class="fas fa-truck-monster"></i> Machinery Usage</label>
-                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; background: white; border-color: #BAE6FD;" onclick="window.app.fsModule?.addMachineUsageRow()">
-                        <i class="fas fa-plus"></i> Add Machine
-                    </button>
+                    <span style="font-size: 10px; font-weight: 700; color: #0369A1; background: #E0F2FE; padding: 2px 8px; border-radius: 20px;">${siteAssets.length} assigned</span>
                 </div>
-                <div id="machine-usage-rows" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery usage logged today.</div>
+                <div id="machine-usage-rows" style="display: flex; flex-direction: column; gap: 8px;">
+                    ${(() => {
+                        // Also include inventory equipment (Day/Hour units)
+                        const invEquipment = inventoryItems.filter(([name, data]) => {
+                            const unit = (data.unit || '').toLowerCase();
+                            return unit === 'day' || unit === 'hour';
+                        }).map(([name, data]) => ({
+                            id: data.inventoryId || name,
+                            name: name,
+                            assetCode: data.inventoryId ? 'INV-' + data.inventoryId : 'ALLOC',
+                            status: data.qty > 0 ? 'available' : 'pending',
+                            isInventory: true
+                        }));
+                        const allMachines = [...siteAssets, ...invEquipment];
+                        if (allMachines.length === 0) {
+                            return '<div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery assigned to this site yet.</div>';
+                        }
+                        return allMachines.map(a => `
+                            <div class="machine-usage-row" style="background: white; border: 1px solid #BAE6FD; padding: 12px; border-radius: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-truck-monster" style="color: #0284C7; font-size: 14px;"></i>
+                                        <div>
+                                            <div style="font-weight: 800; font-size: 13px; color: var(--slate-900);">${a.name}</div>
+                                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 600;">${a.assetCode || a.id} • <span style="color: ${a.status === 'available' || a.status === 'in_use' || a.status === 'checked_out' ? 'var(--emerald)' : 'var(--orange)'}">${(a.status || 'assigned').replace(/_/g, ' ').toUpperCase()}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" class="machine-select" value="${a.id}">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div>
+                                        <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Hours Used</label>
+                                        <input type="number" class="form-input machine-hours" placeholder="0" min="0" max="24" step="0.5" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Operator / Driver</label>
+                                        <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 34px;">
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    })()}
                 </div>
+                <div style="font-size: 10px; color: #0369A1; margin-top: 8px; font-style: italic;"><i class="fas fa-info-circle"></i> Leave hours at 0 for machines not used today.</div>
             </div>
 
             <div id="log-location-status" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 11px;">
@@ -2041,7 +2089,7 @@ export const DrawerTemplates = {
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--slate-50);">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-camera"></i> ${log.photos?.length || 0}
+                                    <i class="fas fa-camera"></i> ${Array.isArray(log.photos) ? log.photos.length : (log.photos?.items?.length || 0)}
                                 </div>
                                 <div style="font-size: 11px; font-weight: 700; color: var(--slate-500); display: flex; align-items: center; gap: 4px;">
                                     <i class="fas fa-chart-line"></i> ${log.progressCompletion || log.workProgress || 0}%
@@ -5136,10 +5184,22 @@ Contract Admin</textarea>
             </div>
 
             <div style="padding: 24px; max-height: calc(100vh - 150px); overflow-y: auto;">
-                <div style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px;">
-                    <div style="background: var(--emerald-light); padding: 12px; border-radius: 8px; border: 1px solid var(--emerald-border); text-align: center;">
-                        <div style="font-size: 10px; color: var(--emerald-dark); font-weight: 700;">WORK PERCENT</div>
-                        <div style="font-size: 18px; font-weight: 800; color: var(--emerald-dark);">${log.workProgress || 0}%</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                    <div style="background: var(--emerald-light); padding: 12px; border-radius: 12px; border: 1px solid var(--emerald-border); text-align: center;">
+                        <div style="font-size: 10px; color: var(--emerald-dark); font-weight: 700; text-transform: uppercase;">Progress</div>
+                        <div style="font-size: 20px; font-weight: 900; color: var(--emerald-dark);">${log.workProgress || 0}%</div>
+                    </div>
+                    <div style="background: #F0F9FF; padding: 12px; border-radius: 12px; border: 1px solid #BAE6FD; text-align: center;">
+                        <div style="font-size: 10px; color: #0369A1; font-weight: 700; text-transform: uppercase;">Weather</div>
+                        <div style="font-size: 14px; font-weight: 800; color: #0C4A6E; margin-top: 2px;">
+                            <i class="fas ${(log.weather || '').includes('Rain') || (log.weather || '').includes('Drizzle') ? 'fa-cloud-rain' : (log.weather || '').includes('Cloud') ? 'fa-cloud-sun' : (log.weather || '').includes('Storm') ? 'fa-bolt' : 'fa-sun'}" style="margin-right: 4px;"></i>
+                            ${log.weather || 'Clear'}
+                        </div>
+                    </div>
+                    <div style="background: #FFF7ED; padding: 12px; border-radius: 12px; border: 1px solid #FED7AA; text-align: center;">
+                        <div style="font-size: 10px; color: #9A3412; font-weight: 700; text-transform: uppercase;">Log Date</div>
+                        <div style="font-size: 13px; font-weight: 800; color: #7C2D12; margin-top: 2px;">${log.logDate ? new Date(log.logDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}</div>
+                        ${log.activePhase ? '<div style="font-size: 9px; color: #9A3412; margin-top: 2px;">' + log.activePhase + '</div>' : ''}
                     </div>
                 </div>
 
@@ -5150,18 +5210,82 @@ Contract Admin</textarea>
                     </div>
                 </div>
 
-                ${log.photos && log.photos.length > 0 ? `
+                ${(() => {
+                    const photoItems = Array.isArray(log.photos) ? log.photos : (log.photos?.items || []);
+                    if (photoItems.length === 0) return '';
+                    return `
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Site Progress Photos</div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
-                        ${log.photos.map(p => `
+                        ${photoItems.map(p => `
                             <a href="${p.dataUrl || p}" target="_blank" style="display: block; border: 1px solid var(--slate-200); border-radius: 8px; overflow: hidden; background: var(--slate-50); text-decoration: none;">
                                 <img src="${p.dataUrl || p}" style="width: 100%; height: 120px; object-fit: cover; display: block;" loading="lazy" />
                             </a>
                         `).join('')}
                     </div>
-                </div>
-                ` : ''}
+                </div>`;
+                })()}
+
+                ${(() => {
+                    const materials = (log.photos && log.photos.materialsConsumed) || log.materialsConsumed || [];
+                    if (!Array.isArray(materials) || materials.length === 0) return '';
+                    return `
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 11px; color: #9A3412; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;"><i class="fas fa-cubes" style="margin-right: 4px;"></i>Materials Consumed</div>
+                        <div style="background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; overflow: hidden;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr style="background: #FFEDD5;">
+                                        <th style="padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Material</th>
+                                        <th style="padding: 10px 12px; text-align: right; font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Qty Used</th>
+                                        <th style="padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Used By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${materials.map(m => `
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-top: 1px solid #FED7AA; font-weight: 700; color: var(--slate-800);">${m.materialName || 'Unknown'}</td>
+                                            <td style="padding: 10px 12px; border-top: 1px solid #FED7AA; text-align: right; font-weight: 800; font-family: 'JetBrains Mono'; color: #9A3412;">${Number(m.quantity || 0).toLocaleString()}</td>
+                                            <td style="padding: 10px 12px; border-top: 1px solid #FED7AA; color: var(--slate-600);">${m.usedBy || '—'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                })()}
+
+                ${(() => {
+                    const usages = log.assetUsages || [];
+                    if (!Array.isArray(usages) || usages.length === 0) return '';
+                    return `
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 11px; color: #0369A1; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;"><i class="fas fa-truck-monster" style="margin-right: 4px;"></i>Machinery Usage</div>
+                        <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 12px; overflow: hidden;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr style="background: #E0F2FE;">
+                                        <th style="padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Equipment</th>
+                                        <th style="padding: 10px 12px; text-align: right; font-size: 10px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Hours</th>
+                                        <th style="padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Operator</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${usages.map(u => `
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-top: 1px solid #BAE6FD; font-weight: 700; color: var(--slate-800);">
+                                                ${u.asset?.name || 'Asset #' + u.assetId}
+                                                ${u.asset?.assetCode ? '<div style="font-size: 10px; color: var(--slate-500);">' + u.asset.assetCode + '</div>' : ''}
+                                            </td>
+                                            <td style="padding: 10px 12px; border-top: 1px solid #BAE6FD; text-align: right; font-weight: 800; font-family: 'JetBrains Mono'; color: #0369A1;">${Number(u.hoursOperated || 0).toFixed(1)}h</td>
+                                            <td style="padding: 10px 12px; border-top: 1px solid #BAE6FD; color: var(--slate-600);">${u.operatorName || '—'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                })()}
 
                 ${log.expenseItems && log.expenseItems.length > 0
             ? `

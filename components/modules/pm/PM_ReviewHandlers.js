@@ -15,7 +15,7 @@ export const PM_ReviewHandlers = {
         try {
             window.toast.show('Processing approval...', 'info');
             await dailyLogs.approve(id);
-            window.app.showToast('Daily log approved successfully', 'success');
+            window.toast.show('Daily log approved successfully', 'success');
             
             // Re-render drawer with status
             const drawerContent = document.querySelector('.drawer-content');
@@ -38,7 +38,7 @@ export const PM_ReviewHandlers = {
             }
             window.toast.show('Processing rejection...', 'info');
             await dailyLogs.reject(id, reason);
-            window.app.showToast('Daily log rejected', 'info');
+            window.toast.show('Daily log rejected', 'info');
             
             // Re-render drawer with status
             const drawerContent = document.querySelector('.drawer-content');
@@ -57,7 +57,7 @@ export const PM_ReviewHandlers = {
         try {
             window.toast.show('Approving requisition...', 'info');
             await requisitions.approve(id);
-            window.app.showToast('Requisition approved', 'success');
+            window.toast.show('Requisition approved', 'success');
             
             // Re-render drawer with status
             const drawerContent = document.querySelector('.drawer-content');
@@ -80,7 +80,7 @@ export const PM_ReviewHandlers = {
             }
             window.toast.show('Rejecting requisition...', 'info');
             await requisitions.reject(id, reason);
-            window.app.showToast('Requisition rejected', 'info');
+            window.toast.show('Requisition rejected', 'info');
             
             // Re-render drawer with status
             const drawerContent = document.querySelector('.drawer-content');
@@ -104,7 +104,7 @@ export const PM_ReviewHandlers = {
             window.toast.show('Approving extension request...', 'info');
             const timelineApi = (await import('../../../src/api/timelineExtensions.api.js')).default;
             await timelineApi.approve(id, { pmComment: comment || '' });
-            window.app.showToast('Extension approved successfully', 'success');
+            window.toast.show('Extension approved successfully', 'success');
             
             // Re-render drawer with updated status
             const drawerContent = document.querySelector('.drawer-content');
@@ -135,7 +135,7 @@ export const PM_ReviewHandlers = {
             window.toast.show('Rejecting extension request...', 'info');
             const timelineApi = (await import('../../../src/api/timelineExtensions.api.js')).default;
             await timelineApi.reject(id, { pmComment: comment.trim() });
-            window.app.showToast('Extension rejected', 'info');
+            window.toast.show('Extension rejected', 'info');
             
             // Re-render drawer with updated status
             const drawerContent = document.querySelector('.drawer-content');

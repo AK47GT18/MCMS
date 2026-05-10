@@ -42,6 +42,11 @@ async function getById(id) {
     include: {
       project: true,
       submitter: { select: { id: true, name: true, email: true } },
+      assetUsages: {
+        include: {
+          asset: { select: { id: true, name: true, assetCode: true, category: true } }
+        }
+      }
     },
   });
   if (!log) throw new AppError('Daily log not found', 404);

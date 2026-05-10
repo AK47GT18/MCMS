@@ -479,7 +479,6 @@ export const FS_Tasks = {
             if (payloadOverride) {
                 if (payloadOverride.taskId) payload.task_id = parseInt(payloadOverride.taskId);
                 if (payloadOverride.expenseItems) payload.expenseItems = payloadOverride.expenseItems;
-                if (payloadOverride.sos) payload.isSos = true;
             }
 
             // --- HARDENING: Attach Evidence Photos ---
@@ -503,13 +502,14 @@ export const FS_Tasks = {
                 const machineRows = document.querySelectorAll('.machine-usage-row');
                 if (machineRows.length > 0) {
                     payload.assetUsages = Array.from(machineRows).map(row => {
+                        const rawId = row.querySelector('.machine-select')?.value || '';
                         return {
-                            assetId: parseInt(row.querySelector('.machine-select').value) || 0,
-                            hoursOperated: parseFloat(row.querySelector('.machine-hours').value) || 0,
-                            operatorName: row.querySelector('.machine-operator').value || '',
+                            assetId: rawId,
+                            hoursOperated: parseFloat(row.querySelector('.machine-hours')?.value) || 0,
+                            operatorName: row.querySelector('.machine-operator')?.value || '',
                             roleInPhase: payload.phaseId
                         };
-                    }).filter(a => a.assetId > 0);
+                    }).filter(a => a.assetId && a.hoursOperated > 0);
                 }
             }
 
@@ -611,7 +611,7 @@ export const FS_Tasks = {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying site coordinates...';
         btn.disabled = true;
 
-        // Collect materials consumed
+        // Collect materials consumed (only rows with qty > 0)
         const materialRows = document.querySelectorAll('.material-usage-row');
         const materialsConsumed = Array.from(materialRows).map(row => {
             return {
@@ -621,15 +621,16 @@ export const FS_Tasks = {
             };
         }).filter(m => m.materialName && m.quantity > 0);
 
-        // Collect machine usage
+        // Collect machine usage (only rows with hours > 0)
         const machineRows = document.querySelectorAll('.machine-usage-row');
         const assetUsage = Array.from(machineRows).map(row => {
+            const rawId = row.querySelector('.machine-select')?.value || '';
             return {
-                assetId: parseInt(row.querySelector('.machine-select')?.value) || 0,
+                assetId: rawId,
                 hoursUsed: parseFloat(row.querySelector('.machine-hours')?.value) || 0,
                 operator: row.querySelector('.machine-operator')?.value || ''
             };
-        }).filter(a => a.assetId > 0);
+        }).filter(a => a.assetId && a.hoursUsed > 0);
 
         this.handleDailyLogSubmit({
             phaseId: document.getElementById('daily-log-phase-id')?.value,
@@ -637,8 +638,7 @@ export const FS_Tasks = {
             narrative: narrative,
             weather: document.getElementById('daily-weather')?.value || 'Clear',
             materialsConsumed: materialsConsumed,
-            assetUsage: assetUsage,
-            sos: document.getElementById('sos-toggle')?.checked
+            assetUsage: assetUsage
         }).finally(() => {
             btn.innerHTML = originalText;
             btn.disabled = false;
