@@ -115,6 +115,7 @@ export const FD_Contracts = {
       // Load Vehicle Rentals if on that tab
       if (this.currentContractTab === "rental") {
           const rentalRes = await window.vehicleRentalsApi.getAll();
+          this.data = this.data || {};
           this.data.vehicleRentals = Array.isArray(rentalRes) ? rentalRes : (rentalRes.data || []);
       }
 
@@ -1293,7 +1294,7 @@ export const FD_Contracts = {
 
   renderRentalsTable() {
     const container = document.getElementById("contracts-table-container");
-    const requisitions = this.data.vehicleRentals || [];
+    const requisitions = (this.data && this.data.vehicleRentals) || [];
     const finalizedRentals = (this.allContracts || []).filter(c => c.contractType === 'rental' || c.contractType === 'RENTAL');
     const rentals = [...requisitions, ...finalizedRentals];
 

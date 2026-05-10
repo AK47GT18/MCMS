@@ -99,8 +99,19 @@ export const PM_Contracts = {
       // Load contracts based on tab
       let allContracts = [];
       if (this.currentContractTab === "rental") {
-        const response = await window.vehicleRentalsApi.getAll({ limit: 50 });
-        allContracts = response.data || response || [];
+        const [rentalRes, contractRes] = await Promise.all([
+          window.vehicleRentalsApi.getAll({ limit: 50 }),
+          contracts.getAll({ limit: 50 })
+        ]);
+        
+        const specificRentals = rentalRes.data || rentalRes || [];
+        const generalContracts = Array.isArray(contractRes.data) ? contractRes.data : (contractRes.contracts || contractRes || []);
+        
+        // Merge them
+        allContracts = [
+          ...specificRentals,
+          ...generalContracts.filter(c => c.contractType === 'rental' || c.contractType === 'RENTAL')
+        ];
       } else {
         const response = await contracts.getAll({ limit: 50 });
         const data = response.data || response;

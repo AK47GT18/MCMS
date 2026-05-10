@@ -47,9 +47,9 @@ export const PM_Reviews = {
         try {
             const [extRes, logsRes, reqsRes, auditRes] = await Promise.all([
                 client.get('/timeline-extensions'), // Show all, not just pending
-                client.get('/daily-logs?status=submitted'),
+                client.get('/daily-logs'), // Show all, not just pending
                 requisitions.getPending(),
-                audit.getAll({ search: 'APPROVE', limit: 20 })
+                audit.getAll({ limit: 20 })
             ]);
 
             this.pendingExtensions = Array.isArray(extRes) ? extRes : (extRes.data || []);
@@ -134,7 +134,11 @@ export const PM_Reviews = {
                 <td>${this.escapeHTML(item.project?.name || item.projectName || 'Site Project')}</td>
                 <td>${item.submitter?.name || 'FS'}</td>
                 <td>${item.workProgress || 0}%</td>
-                <td><span class="status pending">SUBMITTED</span></td>
+                <td>
+                    <span class="status ${item.status === 'approved' ? 'active' : (item.status === 'rejected' ? 'delayed' : 'locked')}">
+                        ${(item.status || 'SUBMITTED').toUpperCase()}
+                    </span>
+                </td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="window.app.pmModule.openDailyLogReviewDrawer('${item.id}', '${item.projectId}')">Review Progress</button>
                 </td>

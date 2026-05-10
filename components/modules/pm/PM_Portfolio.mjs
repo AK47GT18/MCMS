@@ -89,17 +89,16 @@ export const PM_Portfolio = {
         const container = document.getElementById('projects-table-container');
         if (!container || !this.allProjects) return;
 
+        this.projectsPage = 1; 
+
         const filtered = status === 'all' 
             ? this.allProjects 
             : (status === 'active' 
                 ? this.allProjects.filter(p => (p.status || '').toLowerCase() === 'active' || (p.status || '').toLowerCase() === 'in_progress')
                 : this.allProjects.filter(p => (p.status || '').toLowerCase() === status.toLowerCase()));
         
-        if (filtered.length > 0) {
-            container.innerHTML = this.renderProjectsTable(filtered);
-        } else {
-            container.innerHTML = this.renderEmptyState(`No ${status.replace(/_/g, ' ')} projects found.`);
-        }
+        this.currentFilteredProjects = filtered;
+        this.renderProjectsWithPagination();
 
         // Sync with tabs UI
         const tabs = document.querySelectorAll('.tabs .tab');
@@ -109,6 +108,65 @@ export const PM_Portfolio = {
                 t.classList.add('active');
             }
         });
+    },
+
+    renderProjectsWithPagination() {
+        const container = document.getElementById('projects-table-container');
+        if (!container || !this.currentFilteredProjects) return;
+
+        const totalItems = this.currentFilteredProjects.length;
+        
+        if (totalItems === 0) {
+            const activeTab = document.querySelector('.tabs .tab.active');
+            const status = activeTab ? activeTab.getAttribute('data-status') : 'active';
+            container.innerHTML = this.renderEmptyState(`No ${status.replace(/_/g, ' ')} projects found.`);
+            return;
+        }
+
+        const perPage = 10;
+        const totalPages = Math.ceil(totalItems / perPage);
+        const start = (this.projectsPage - 1) * perPage;
+        const end = start + perPage;
+        const pageData = this.currentFilteredProjects.slice(start, end);
+
+        let html = this.renderProjectsTable(pageData);
+
+        if (totalPages > 1) {
+            html += this.renderPaginationControls(this.projectsPage, totalPages);
+        }
+
+        container.innerHTML = html;
+    },
+
+    renderPaginationControls(current, total) {
+        let buttons = '';
+        for (let i = 1; i <= total; i++) {
+            buttons += `
+                <button class="btn ${i === current ? 'btn-primary' : 'btn-secondary'}" 
+                        style="padding: 4px 10px; font-size: 11px; min-width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" 
+                        onclick="window.app.pmModule.changeProjectsPage(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--slate-200); background: #fcfcfd; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                <div style="font-size: 11px; color: var(--slate-500); font-weight: 500;">
+                    Showing <b style="color: var(--slate-900);">${Math.min((current - 1) * 10 + 1, this.currentFilteredProjects.length)}</b> to <b style="color: var(--slate-900);">${Math.min(current * 10, this.currentFilteredProjects.length)}</b> of <b style="color: var(--slate-900);">${this.currentFilteredProjects.length}</b> projects
+                </div>
+                <div style="display: flex; gap: 4px;">
+                    ${buttons}
+                </div>
+            </div>
+        `;
+    },
+
+    changeProjectsPage(page) {
+        this.projectsPage = page;
+        this.renderProjectsWithPagination();
+        const container = document.getElementById('projects-table-container');
+        if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
 
     renderProjectsTable(projects) {
