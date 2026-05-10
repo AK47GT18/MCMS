@@ -6,34 +6,16 @@ import inventoryApi from '../../../src/api/inventory.api.js';
 
 export const FS_Logistics = {
     getLogisticsView() {
-        // Default tab if not set
-        if (!this.activeLogisticsTab) this.activeLogisticsTab = 'materials';
-
-        // Trigger refresh only if not currently fetching
-        if (!this._fetchingLogistics) {
-            this._fetchingLogistics = true;
-            setTimeout(() => {
-                Promise.all([
-                    this._loadSiteInventory(), 
-                    this._loadInTransit(),
-                    this._loadSiteAssets()
-                ]).finally(() => { 
-                    this._fetchingLogistics = false; 
-                    this._refreshCurrentView();
-                });
-            }, 0);
-        }
-
         const entries = Object.entries(this.siteInventory || {});
-        const activeTab = this.activeLogisticsTab;
+        const activeTab = this.activeLogisticsTab || 'materials';
 
         return `
             <div class="data-card">
                 <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="card-title">Site Resource Center</div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary" onclick="window.app.fsModule._loadSiteInventory()" title="Sync Records">
-                            <i class="fas fa-sync"></i> Refresh
+                        <button class="btn btn-secondary" onclick="window.app.fsModule.refreshLogistics()" title="Sync Records">
+                            <i class="fas fa-sync ${this._fetchingLogistics ? 'fa-spin' : ''}"></i> Refresh
                         </button>
                     </div>
                 </div>
@@ -56,8 +38,28 @@ export const FS_Logistics = {
     },
 
     switchLogisticsTab(tab) {
+        if (this.activeLogisticsTab === tab) return;
         this.activeLogisticsTab = tab;
         this._refreshCurrentView();
+    },
+
+    async refreshLogistics() {
+        if (this._fetchingLogistics) return;
+        this._fetchingLogistics = true;
+        this._refreshCurrentView(); // Show loading state on button if possible
+
+        try {
+            await Promise.all([
+                this._loadSiteInventory(),
+                this._loadInTransit(),
+                this._loadSiteAssets()
+            ]);
+        } catch (error) {
+            console.error('[FS] Logistics refresh failed:', error);
+        } finally {
+            this._fetchingLogistics = false;
+            this._refreshCurrentView();
+        }
     },
 
     _renderMaterialsTable(entries) {

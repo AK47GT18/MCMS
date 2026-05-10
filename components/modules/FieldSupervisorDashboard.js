@@ -33,6 +33,7 @@ export class FieldSupervisorDashboard {
         this.accuracyCircle = null;
         this.isTracking = false;
         this.isExpanded = false;
+        this.activeLogisticsTab = 'materials';
 
         // Register module globally for template access
         window.app = window.app || {};
@@ -258,6 +259,7 @@ export class FieldSupervisorDashboard {
             await Promise.all([
                 this._cacheRequisitionData(),
                 this._loadSiteInventory(),
+                this._loadInTransit ? this._loadInTransit() : Promise.resolve(),
                 this._loadDashboardStats(),
                 this._loadSiteAssets(),
                 this._loadWeather()
