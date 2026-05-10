@@ -695,9 +695,40 @@ export class AppLayout {
         }
     }
 
-    handlePasswordUpdate() {
-        toast.show('Password has been updated successfully.', 'success');
-        window.drawer.close();
+    async handlePasswordUpdate() {
+        const currentPassword = document.getElementById('pw_current').value;
+        const newPassword = document.getElementById('pw_new').value;
+        const confirmPassword = document.getElementById('pw_confirm').value;
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast.show('Please fill in all password fields.', 'warning');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.show('New passwords do not match.', 'error');
+            return;
+        }
+
+        const btn = document.querySelector('#password-form .btn-primary');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Updating...';
+
+        try {
+            const authApi = await import('../src/api/auth.api.js');
+            await authApi.default.changePassword(currentPassword, newPassword);
+
+            toast.show('Password has been updated successfully.', 'success');
+            window.drawer.close();
+        } catch (error) {
+            console.error('[Auth] Password update failed:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to update password';
+            toast.show(errorMsg, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
 
     handleLogout() {
