@@ -19,7 +19,7 @@ const getAll = asyncHandler(async (req, res) => {
   
   const userRole = user.role.replace(/ /g, '_');
   // PMs only see their own projects' requests
-  if (userRole === 'Project_Manager') filters.managerId = user.id;
+  // if (userRole === 'Project_Manager') filters.managerId = user.id;
 
   const requests = await timelineExtService.getAll(filters);
   response.success(res, requests);

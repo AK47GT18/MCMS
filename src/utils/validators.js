@@ -228,8 +228,10 @@ const createRequisitionSchema = z.object({
   budgetLine: z.string().max(20).optional(),
   items: z.array(z.object({
     itemName: z.string().min(1).max(255),
-    quantity: z.coerce.number().int().positive(),
+    quantity: z.coerce.number().positive(),
     unitPrice: z.coerce.number().min(0),
+    isVariation: z.boolean().optional(),
+    notes: z.string().optional()
   })).optional(),
 });
 

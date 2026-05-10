@@ -4593,13 +4593,32 @@ Contract Admin</textarea>
                                                 <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; color: ${statusColor}; background: ${statusBg};">${statusText}</span>
                                             </td>
                                             <td style="padding: 16px; text-align: center;">
-                                                <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; transition: all 0.2s;" onmouseover="this.style.borderColor='#F97316'; this.style.background='white'; this.style.boxShadow='0 2px 4px rgba(249,115,22,0.1)'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'; this.style.boxShadow='none'">
-                                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                                        <input type="checkbox" class="fs-req-mac-checkbox" data-type="machinery" data-name="${m.name}" data-days="${estDays > 0 ? estDays : 30}" data-units="1" style="width: 16px; height: 16px; accent-color: #F97316; cursor: pointer;">
-                                                        <span style="font-size: 11px; font-weight: 800; color: #1E293B;">${estDays > 0 ? estDays : 30} DAYS</span>
+                                                <!-- Standard Checkbox Wrapper -->
+                                                <div id="wrapper_std_mac_${m.name.replace(/\W/g,'_')}" style="display: block;">
+                                                    <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; transition: all 0.2s;" onmouseover="this.style.borderColor='#F97316'; this.style.background='white'; this.style.boxShadow='0 2px 4px rgba(249,115,22,0.1)'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'; this.style.boxShadow='none'">
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                                            <input type="checkbox" class="fs-req-mac-checkbox" data-type="machinery" data-name="${m.name}" data-days="${estDays > 0 ? estDays : 30}" data-units="1" style="width: 16px; height: 16px; accent-color: #F97316; cursor: pointer;">
+                                                            <span style="font-size: 11px; font-weight: 800; color: #1E293B;">${estDays > 0 ? estDays : 30} DAYS</span>
+                                                        </div>
+                                                        <div style="font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">1 Unit Request</div>
+                                                    </label>
+                                                    <div style="margin-top: 6px; text-align: center;">
+                                                        <a href="javascript:void(0)" onclick="document.getElementById('wrapper_std_mac_${m.name.replace(/\W/g,'_')}').style.display='none'; document.getElementById('wrapper_ovr_mac_${m.name.replace(/\W/g,'_')}').style.display='block';" style="font-size: 9px; font-weight: 700; color: #F97316; text-decoration: underline; text-transform: uppercase;">Need More? Override</a>
                                                     </div>
-                                                    <div style="font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">1 Unit Request</div>
-                                                </label>
+                                                </div>
+
+                                                <!-- Override Wrapper -->
+                                                <div id="wrapper_ovr_mac_${m.name.replace(/\W/g,'_')}" style="display: none; background: #FFF7ED; border: 1px dashed #F97316; padding: 12px; border-radius: 8px; width: 140px; margin: 0 auto; box-sizing: border-box;">
+                                                    <div style="font-size: 10px; font-weight: 800; color: #C2410C; margin-bottom: 8px; text-transform: uppercase;">Variation Override</div>
+                                                    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                                                        <input type="number" class="fs-req-ovr-days" data-name="${m.name}" placeholder="Days" style="flex: 1; min-width: 0; padding: 6px; border: 1px solid #FDBA74; border-radius: 4px; font-size: 11px; font-weight: 700; text-align: center; background: white; box-sizing: border-box;">
+                                                        <input type="number" class="fs-req-ovr-units" placeholder="Units" style="flex: 1; min-width: 0; padding: 6px; border: 1px solid #FDBA74; border-radius: 4px; font-size: 11px; font-weight: 700; text-align: center; background: white; box-sizing: border-box;">
+                                                    </div>
+                                                    <input type="text" class="fs-req-ovr-reason" placeholder="Reason for extra?" style="width: 100%; padding: 6px; border: 1px solid #FDBA74; border-radius: 4px; font-size: 11px; margin-bottom: 8px; background: white; box-sizing: border-box;">
+                                                    <div style="text-align: center;">
+                                                        <a href="javascript:void(0)" onclick="document.getElementById('wrapper_ovr_mac_${m.name.replace(/\W/g,'_')}').style.display='none'; document.getElementById('wrapper_std_mac_${m.name.replace(/\W/g,'_')}').style.display='block'; this.parentElement.parentElement.querySelector('.fs-req-ovr-days').value=''; this.parentElement.parentElement.querySelector('.fs-req-ovr-units').value='';" style="font-size: 10px; font-weight: 700; color: #94A3B8; text-decoration: underline; text-transform: uppercase;">Cancel</a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     `}).join('');
@@ -4633,10 +4652,26 @@ Contract Admin</textarea>
                                                     <div style="font-size: 9px; color: #94A3B8; font-weight: 700; text-transform: uppercase; margin-top: 4px;">${m.unit} GAP</div>
                                                 </td>
                                                 <td style="padding: 16px; text-align: center;">
-                                                    <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid #E2E8F0; border-radius: 6px; background: #F8FAFC; transition: all 0.2s;" onmouseover="this.style.borderColor='#10B981'; this.style.background='white'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'">
-                                                        <input type="checkbox" class="fs-req-checkbox" data-type="material" data-name="${m.name}" data-unit="${m.unit}" data-limit="${remaining}" style="width: 18px; height: 18px; accent-color: #10B981; cursor: pointer;">
-                                                        <span style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">Request Full Gap</span>
-                                                    </label>
+                                                    <!-- Standard Checkbox Wrapper -->
+                                                    <div id="wrapper_std_${m.name.replace(/\W/g,'_')}" style="display: block;">
+                                                        <label style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid #E2E8F0; border-radius: 6px; background: #F8FAFC; transition: all 0.2s;" onmouseover="this.style.borderColor='#10B981'; this.style.background='white'" onmouseout="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'">
+                                                            <input type="checkbox" class="fs-req-checkbox" data-type="material" data-name="${m.name}" data-unit="${m.unit}" data-limit="${remaining}" style="width: 18px; height: 18px; accent-color: #10B981; cursor: pointer;">
+                                                            <span style="font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase;">Request Full Gap</span>
+                                                        </label>
+                                                        <div style="margin-top: 6px;">
+                                                            <a href="javascript:void(0)" onclick="document.getElementById('wrapper_std_${m.name.replace(/\W/g,'_')}').style.display='none'; document.getElementById('wrapper_ovr_${m.name.replace(/\W/g,'_')}').style.display='block';" style="font-size: 9px; font-weight: 700; color: #F97316; text-decoration: underline; text-transform: uppercase;">Need More? Override</a>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Override Wrapper -->
+                                                    <div id="wrapper_ovr_${m.name.replace(/\W/g,'_')}" style="display: none; background: #FFF7ED; border: 1px dashed #F97316; padding: 12px; border-radius: 8px; width: 140px; margin: 0 auto; box-sizing: border-box;">
+                                                        <div style="font-size: 10px; font-weight: 800; color: #C2410C; margin-bottom: 8px; text-transform: uppercase;">Variation Override</div>
+                                                        <input type="number" class="fs-req-ovr-qty" data-name="${m.name}" data-unit="${m.unit}" data-type="material" placeholder="Custom Qty" style="width: 100%; padding: 6px; border: 1px solid #FDBA74; border-radius: 4px; font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 6px; background: white; box-sizing: border-box;">
+                                                        <input type="text" class="fs-req-ovr-reason" placeholder="Reason for extra?" style="width: 100%; padding: 6px; border: 1px solid #FDBA74; border-radius: 4px; font-size: 11px; margin-bottom: 8px; background: white; box-sizing: border-box;">
+                                                        <div style="text-align: center;">
+                                                            <a href="javascript:void(0)" onclick="document.getElementById('wrapper_ovr_${m.name.replace(/\W/g,'_')}').style.display='none'; document.getElementById('wrapper_std_${m.name.replace(/\W/g,'_')}').style.display='block'; this.parentElement.parentElement.querySelector('.fs-req-ovr-qty').value='';" style="font-size: 10px; font-weight: 700; color: #94A3B8; text-decoration: underline; text-transform: uppercase;">Cancel</a>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         `;
@@ -5023,47 +5058,64 @@ Contract Admin</textarea>
         </div>
     `,
 
-    timelineExtensionReview: (req) => `
-        <div style="padding: 0;">
-            <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Review Timeline Extension</div>
-                    <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.requestedBy?.name || req.requestedByName || "Supervisor"}</div>
+    timelineExtensionReview: (req) => {
+        const isPending = (req.status || 'pending') === 'pending';
+        const statusColor = req.status === 'approved' ? 'var(--emerald)' : (req.status === 'rejected' ? 'var(--red)' : 'var(--orange)');
+        const statusBg = req.status === 'approved' ? 'var(--emerald-light)' : (req.status === 'rejected' ? 'var(--red-light)' : 'var(--orange-light)');
+        const statusBorder = req.status === 'approved' ? 'var(--emerald-border)' : (req.status === 'rejected' ? 'var(--red-border)' : 'var(--orange-border)');
+
+        return `
+            <div style="padding: 0;">
+                <div style="padding: 16px 24px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Review Timeline Extension</div>
+                        <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Requested by ${req.requestedBy?.name || req.requestedByName || "Supervisor"}</div>
+                    </div>
+                    <div class="status-badge" style="background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusBorder}; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">${(req.status || 'PENDING').toUpperCase()}</div>
                 </div>
-                <div class="status-badge" style="background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">PENDING</div>
+
+                <div style="padding: 24px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
+                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Current End Date</div>
+                            <div style="font-size: 14px; font-weight: 700; color: var(--slate-700); margin-top: 4px;">${new Date(req.currentEndDate).toLocaleDateString()}</div>
+                        </div>
+                        <div style="background: var(--orange-light); padding: 12px; border-radius: 8px; border: 1px solid var(--orange-border);">
+                            <div style="font-size: 10px; color: var(--orange); font-weight: 700; text-transform: uppercase;">Requested New Date</div>
+                            <div style="font-size: 14px; font-weight: 800; color: var(--orange-dark); margin-top: 4px;">${new Date(req.requestedEndDate).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Justification / Reason</div>
+                        <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
+                            "${req.justification || req.reason || "No reason provided."}"
+                        </div>
+                    </div>
+
+                    ${isPending ? `
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="form-label" style="font-size: 11px;">PM REVIEW COMMENTS (OPTIONAL)</label>
+                            <textarea id="extension-review-comment" class="form-input" rows="3" placeholder="Enter any notes or reasons for approval/rejection..."></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; margin-top: 32px;">
+                            <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectExtension('${req.id}', document.getElementById('extension-review-comment').value)">Reject Request</button>
+                            <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveExtension('${req.id}', document.getElementById('extension-review-comment').value)">Approve Extension</button>
+                        </div>
+                    ` : `
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Review Comments</div>
+                            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; color: var(--slate-600); font-style: italic;">
+                                "${req.pmComment || "No comments recorded."}"
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Details</button>
+                    `}
+                </div>
             </div>
-
-            <div style="padding: 24px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                    <div style="background: var(--slate-50); padding: 12px; border-radius: 8px; border: 1px solid var(--slate-100);">
-                        <div style="font-size: 10px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Current End Date</div>
-                        <div style="font-size: 14px; font-weight: 700; color: var(--slate-700); margin-top: 4px;">${new Date(req.currentEndDate).toLocaleDateString()}</div>
-                    </div>
-                    <div style="background: var(--orange-light); padding: 12px; border-radius: 8px; border: 1px solid var(--orange-border);">
-                        <div style="font-size: 10px; color: var(--orange); font-weight: 700; text-transform: uppercase;">Requested New Date</div>
-                        <div style="font-size: 14px; font-weight: 800; color: var(--orange-dark); margin-top: 4px;">${new Date(req.requestedEndDate).toLocaleDateString()}</div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 24px;">
-                    <div style="font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Justification / Reason</div>
-                    <div style="background: white; border: 1px solid var(--slate-200); padding: 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--slate-700);">
-                        "${req.justification || req.reason || "No reason provided."}"
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label class="form-label" style="font-size: 11px;">PM REVIEW COMMENTS (OPTIONAL)</label>
-                    <textarea id="extension-review-comment" class="form-input" rows="3" placeholder="Enter any notes or reasons for approval/rejection..."></textarea>
-                </div>
-
-                <div style="display: flex; gap: 12px; margin-top: 32px;">
-                    <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectExtension('${req.id}', document.getElementById('extension-review-comment').value)">Reject Request</button>
-                    <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveExtension('${req.id}', document.getElementById('extension-review-comment').value)">Approve Extension</button>
-                </div>
-            </div>
-        </div>
-    `,
+        `;
+    },
 
     dailyLogReview: (log, historicalLogs = []) => `
         <div style="padding: 0;">
@@ -5072,7 +5124,8 @@ Contract Admin</textarea>
                     <div style="font-weight: 700; font-size: 15px; color: var(--slate-900)">Site Progress Review</div>
                     <div style="font-size: 12px; color: var(--slate-500); margin-top: 2px;">Project: ${log.project?.name || log.projectName || "Site Project"}</div>
                 </div>
-                <div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="status-badge" style="background: ${log.status === 'approved' ? 'var(--emerald-light)' : (log.status === 'rejected' ? 'var(--red-light)' : 'var(--orange-light)')}; color: ${log.status === 'approved' ? 'var(--emerald)' : (log.status === 'rejected' ? 'var(--red)' : 'var(--orange)')}; border: 1px solid ${log.status === 'approved' ? 'var(--emerald-border)' : (log.status === 'rejected' ? 'var(--red-border)' : 'var(--orange-border)')}; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">${(log.status || 'PENDING').toUpperCase()}</div>
                     <select id="log-history-selector" class="form-input" style="font-size: 11px; padding: 4px 8px;" onchange="window.app.pmModule.switchReviewLog(this.value)">
                         ${historicalLogs.map((h) => `<option value="${h.id}" ${h.id === log.id ? "selected" : ""}>${new Date(h.date || h.createdAt).toLocaleDateString()}</option>`).join("")}
                     </select>
@@ -5138,13 +5191,15 @@ Contract Admin</textarea>
                 </div>
 
                 <div style="display: flex; gap: 12px; margin-top: 32px;">
-                    <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
-                    ${log.status === "submitted" || log.status === "pending"
+                    ${log.status === "submitted" || log.status === "pending" || !log.status
             ? `
+                        <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="window.drawer.close()">Cancel</button>
                         <button class="btn btn-danger" style="flex: 1; justify-content: center;" onclick="window.app.pmModule.handleRejectLog('${log.id}', document.getElementById('log-review-comment').value)">Reject</button>
                         <button class="btn btn-primary" style="flex: 2; justify-content: center; background: var(--emerald); border-color: var(--emerald);" onclick="window.app.pmModule.handleApproveLog('${log.id}')">Approve & Update Schedule</button>
                     `
-            : ""
+            : `
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="window.drawer.close()">Close Details</button>
+                    `
         }
                 </div>
             </div>

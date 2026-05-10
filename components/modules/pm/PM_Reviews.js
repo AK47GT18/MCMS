@@ -46,16 +46,19 @@ export const PM_Reviews = {
 
         try {
             const [extRes, logsRes, reqsRes, auditRes] = await Promise.all([
-                client.get('/timeline-extensions?status=pending'),
+                client.get('/timeline-extensions'), // Show all, not just pending
                 client.get('/daily-logs?status=submitted'),
                 requisitions.getPending(),
-                audit.getAll({ action: 'APPROVE', limit: 20 })
+                audit.getAll({ search: 'APPROVE', limit: 20 })
             ]);
 
             this.pendingExtensions = Array.isArray(extRes) ? extRes : (extRes.data || []);
             this.pendingLogs = Array.isArray(logsRes) ? logsRes : (logsRes.data || []);
             this.pendingRequisitions = Array.isArray(reqsRes) ? reqsRes : (reqsRes.data || []);
-            this.reviewHistory = Array.isArray(auditRes) ? auditRes : (auditRes.data || []);
+            
+            // Audit response is paginated: { logs: [], total: 0, ... }
+            const auditData = auditRes.data || auditRes;
+            this.reviewHistory = Array.isArray(auditData.logs) ? auditData.logs : (Array.isArray(auditData) ? auditData : []);
 
             this.renderActiveReviewTab();
         } catch (error) {
@@ -89,18 +92,22 @@ export const PM_Reviews = {
 
     renderExtensionsTable() {
         if (!this.pendingExtensions || this.pendingExtensions.length === 0) {
-            return this.renderEmptyState('No pending timeline extension requests.');
+            return this.renderEmptyState('No timeline extension requests found.');
         }
 
-        const rows = this.pendingExtensions.map(item => `
+        const rows = this.pendingExtensions.slice(0, 20).map(item => `
             <tr>
                 <td style="font-weight: 700;">${item.project?.code || item.projectCode || 'PRJ-' + item.projectId}</td>
                 <td>${this.escapeHTML(item.project?.name || item.projectName || 'Active Project')}</td>
                 <td>${new Date(item.currentEndDate).toLocaleDateString()}</td>
                 <td style="font-weight: 700; color: var(--orange);">${new Date(item.requestedEndDate).toLocaleDateString()}</td>
-                <td>${item.requestedBy?.name || item.requestedByName || 'Supervisor'}</td>
+                <td><span class="status ${item.status === 'approved' ? 'active' : (item.status === 'rejected' ? 'delayed' : 'locked')}">${item.status.toUpperCase()}</span></td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Review Extension', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
+                    ${item.status === 'pending' ? `
+                        <button class="btn btn-primary btn-sm" onclick="window.drawer.open('Review Extension', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Review</button>
+                    ` : `
+                        <button class="btn btn-secondary btn-sm" onclick="window.drawer.open('Extension Details', window.DrawerTemplates.timelineExtensionReview(${JSON.stringify(item).replace(/"/g, '&quot;')}))">Details</button>
+                    `}
                 </td>
             </tr>
         `).join('');
@@ -108,10 +115,11 @@ export const PM_Reviews = {
         return `
             <table class="data-table">
                 <thead>
-                    <tr><th>Project Code</th><th>Name</th><th>Current End</th><th>Requested End</th><th>Requester</th><th>Actions</th></tr>
+                    <tr><th>Project Code</th><th>Name</th><th>Current End</th><th>Requested End</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
+            ${this.pendingExtensions.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 11px; color: var(--slate-500); border-top: 1px solid var(--slate-200);">Showing 20 of ${this.pendingExtensions.length} recent requests.</div>` : ''}
         `;
     },
 
@@ -120,7 +128,7 @@ export const PM_Reviews = {
             return this.renderEmptyState('No daily site logs awaiting review.');
         }
 
-        const rows = this.pendingLogs.map(item => `
+        const rows = this.pendingLogs.slice(0, 20).map(item => `
             <tr>
                 <td style="font-weight: 700;">${new Date(item.logDate || item.createdAt).toLocaleDateString()}</td>
                 <td>${this.escapeHTML(item.project?.name || item.projectName || 'Site Project')}</td>
@@ -140,6 +148,7 @@ export const PM_Reviews = {
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
+            ${this.pendingLogs.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 11px; color: var(--slate-500); border-top: 1px solid var(--slate-200);">Showing 20 of ${this.pendingLogs.length} recent logs.</div>` : ''}
         `;
     },
 
@@ -148,7 +157,7 @@ export const PM_Reviews = {
             return this.renderEmptyState('No pending material requisitions.');
         }
 
-        const rows = this.pendingRequisitions.map(item => `
+        const rows = this.pendingRequisitions.slice(0, 20).map(item => `
             <tr>
                 <td style="font-weight: 700;">REQ-${item.id}</td>
                 <td>${this.escapeHTML(item.projectName || 'Site Project')}</td>
@@ -168,6 +177,7 @@ export const PM_Reviews = {
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
+            ${this.pendingRequisitions.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 11px; color: var(--slate-500); border-top: 1px solid var(--slate-200);">Showing 20 of ${this.pendingRequisitions.length} recent requisitions.</div>` : ''}
         `;
     },
 
@@ -177,13 +187,21 @@ export const PM_Reviews = {
             return this.renderEmptyState('No recent approval history found.');
         }
 
-        const rows = history.map(item => `
+        const rows = history.slice(0, 20).map(item => `
             <tr>
-                <td>${new Date(item.timestamp).toLocaleString()}</td>
-                <td style="font-weight: 600;">${item.action}</td>
-                <td>${item.targetType || '-'}</td>
-                <td>${this.escapeHTML(item.details?.reason || 'No comments')}</td>
-                <td><span class="status active">COMPLETED</span></td>
+                <td>${new Date(item.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
+                <td>
+                    <div style="font-weight: 700; font-size: 13px; color: var(--slate-900);">${item.action.replace(/_/g, ' ')}</div>
+                    <div style="font-size: 11px; color: var(--slate-500);">${item.userName || 'System'} (${item.userRole?.replace(/_/g, ' ') || 'User'})</div>
+                </td>
+                <td>
+                    <div style="font-weight: 700; color: var(--slate-700);">${item.targetType || '-'}</div>
+                    <div style="font-size: 11px; font-family: 'JetBrains Mono';">${item.targetCode || item.targetId || ''}</div>
+                </td>
+                <td style="max-width: 300px; white-space: normal; font-size: 12px; color: var(--slate-600);">
+                    ${this.escapeHTML(typeof item.details === 'string' ? item.details : (item.details?.pmComment || item.details?.reason || item.details?.pmApprovalNotes || 'Action processed successfully'))}
+                </td>
+                <td><span class="status active" style="font-size: 10px; padding: 2px 8px;">COMPLETED</span></td>
             </tr>
         `).join('');
 
@@ -194,6 +212,7 @@ export const PM_Reviews = {
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
+            ${history.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 11px; color: var(--slate-500); border-top: 1px solid var(--slate-200);">Showing 20 of ${history.length} recent historical items.</div>` : ''}
         `;
     },
 

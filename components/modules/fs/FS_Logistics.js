@@ -1388,10 +1388,16 @@ export const FS_Logistics = {
     async handleBulkRequisitionSubmit() {
         const checkboxes = document.querySelectorAll('.fs-req-checkbox');
         const macCheckboxes = document.querySelectorAll('.fs-req-mac-checkbox');
+        
+        const matOvrWrappers = document.querySelectorAll('[id^="wrapper_ovr_"]:not([id^="wrapper_ovr_mac_"])');
+        const macOvrWrappers = document.querySelectorAll('[id^="wrapper_ovr_mac_"]');
+        
         const items = [];
 
+        // 1. Standard Materials
         for (const cb of checkboxes) {
-            if (cb.checked) {
+            const stdWrapper = cb.closest('[id^="wrapper_std_"]');
+            if (stdWrapper && stdWrapper.style.display !== 'none' && cb.checked) {
                 const limit = parseFloat(cb.dataset.limit || 0);
                 if (limit > 0) {
                     items.push({
@@ -1405,8 +1411,37 @@ export const FS_Logistics = {
             }
         }
 
+        // 2. Override Materials
+        for (const wrapper of matOvrWrappers) {
+            if (wrapper.style.display !== 'none') {
+                const qtyInput = wrapper.querySelector('.fs-req-ovr-qty');
+                const reasonInput = wrapper.querySelector('.fs-req-ovr-reason');
+                const qty = parseFloat(qtyInput.value || 0);
+                const reason = reasonInput.value.trim();
+                const name = qtyInput.dataset.name;
+
+                if (qty > 0) {
+                    if (!reason) {
+                        if (window.toast) window.toast.show(`Variation Reason required for ${name}.`, 'warning');
+                        return; // Stop submission
+                    }
+                    items.push({
+                        itemName: name,
+                        quantity: qty,
+                        unit: qtyInput.dataset.unit || 'units',
+                        category: qtyInput.dataset.type,
+                        unitPrice: 0,
+                        isVariation: true,
+                        notes: `[VARIATION OVERRIDE] ${reason}`
+                    });
+                }
+            }
+        }
+
+        // 3. Standard Machinery
         for (const cb of macCheckboxes) {
-            if (cb.checked) {
+            const stdWrapper = cb.closest('[id^="wrapper_std_mac_"]');
+            if (stdWrapper && stdWrapper.style.display !== 'none' && cb.checked) {
                 items.push({
                     itemName: cb.dataset.name,
                     quantity: parseFloat(cb.dataset.days || 30),
@@ -1415,6 +1450,40 @@ export const FS_Logistics = {
                     machineUnits: parseFloat(cb.dataset.units || 1),
                     unitPrice: 0
                 });
+            }
+        }
+
+        // 4. Override Machinery
+        for (const wrapper of macOvrWrappers) {
+            if (wrapper.style.display !== 'none') {
+                const daysInput = wrapper.querySelector('.fs-req-ovr-days');
+                const unitsInput = wrapper.querySelector('.fs-req-ovr-units');
+                const reasonInput = wrapper.querySelector('.fs-req-ovr-reason');
+                
+                const days = parseFloat(daysInput.value || 0);
+                const units = parseFloat(unitsInput.value || 0);
+                const reason = reasonInput.value.trim();
+                const name = daysInput.dataset.name;
+
+                if (days > 0 && units > 0) {
+                    if (!reason) {
+                        if (window.toast) window.toast.show(`Variation Reason required for ${name}.`, 'warning');
+                        return; // Stop submission
+                    }
+                    items.push({
+                        itemName: name,
+                        quantity: days,
+                        unit: 'days',
+                        category: 'machinery',
+                        machineUnits: units,
+                        unitPrice: 0,
+                        isVariation: true,
+                        notes: `[VARIATION OVERRIDE] ${reason}`
+                    });
+                } else if (days > 0 || units > 0) {
+                    if (window.toast) window.toast.show(`Both Days and Units must be greater than 0 for ${name}.`, 'warning');
+                    return;
+                }
             }
         }
 

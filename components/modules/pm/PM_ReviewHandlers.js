@@ -15,10 +15,15 @@ export const PM_ReviewHandlers = {
         try {
             window.toast.show('Processing approval...', 'info');
             await dailyLogs.approve(id);
-            window.toast.show('Log approved and Schedule updated', 'success');
-            window.drawer.close();
-            this.updateHeaderStats();
-            this.render(); 
+            window.app.showToast('Daily log approved successfully', 'success');
+            
+            // Re-render drawer with status
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                drawerContent.innerHTML = window.DrawerTemplates.dailyLogReview({ id, status: 'approved', workProgress: 'Processed' });
+            }
+            
+            this.loadReviewsData();
         } catch (error) {
             console.error('Log approval failed:', error);
             window.toast.show(error.message || 'Failed to approve log', 'error');
@@ -32,10 +37,16 @@ export const PM_ReviewHandlers = {
                 return;
             }
             window.toast.show('Processing rejection...', 'info');
-            await dailyLogs.update(id, { status: 'rejected', rejectionReason: reason });
-            window.toast.show('Log rejected successfully', 'warning');
-            window.drawer.close();
-            this.render();
+            await dailyLogs.reject(id, reason);
+            window.app.showToast('Daily log rejected', 'info');
+            
+            // Re-render drawer with status
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                drawerContent.innerHTML = window.DrawerTemplates.dailyLogReview({ id, status: 'rejected', rejectionReason: reason });
+            }
+            
+            this.loadReviewsData();
         } catch (error) {
             console.error('Log rejection failed:', error);
             window.toast.show(error.message || 'Failed to reject log', 'error');
@@ -46,9 +57,15 @@ export const PM_ReviewHandlers = {
         try {
             window.toast.show('Approving requisition...', 'info');
             await requisitions.approve(id);
-            window.toast.show(`Requisition ${id} approved`, 'success');
-            window.drawer.close();
-            this.render();
+            window.app.showToast('Requisition approved', 'success');
+            
+            // Re-render drawer with status
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                drawerContent.innerHTML = window.DrawerTemplates.requisitionReview({ id, status: 'approved' });
+            }
+            
+            this.loadReviewsData();
         } catch (error) {
             console.error('Requisition approval failed:', error);
             window.toast.show(error.message || 'Failed to approve requisition', 'error');
@@ -63,9 +80,15 @@ export const PM_ReviewHandlers = {
             }
             window.toast.show('Rejecting requisition...', 'info');
             await requisitions.reject(id, reason);
-            window.toast.show(`Requisition ${id} rejected`, 'warning');
-            window.drawer.close();
-            this.render();
+            window.app.showToast('Requisition rejected', 'info');
+            
+            // Re-render drawer with status
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                drawerContent.innerHTML = window.DrawerTemplates.requisitionReview({ id, status: 'rejected', rejectionReason: reason });
+            }
+            
+            this.loadReviewsData();
         } catch (error) {
             console.error('Requisition rejection failed:', error);
             window.toast.show(error.message || 'Failed to reject requisition', 'error');
@@ -81,11 +104,19 @@ export const PM_ReviewHandlers = {
             window.toast.show('Approving extension request...', 'info');
             const timelineApi = (await import('../../../src/api/timelineExtensions.api.js')).default;
             await timelineApi.approve(id, { pmComment: comment || '' });
-            window.toast.show('Timeline extension approved. Project end date updated and stakeholders notified.', 'success');
-            window.drawer.close();
-            // Refresh reviews tab data
-            if (typeof this.loadReviewsData === 'function') this.loadReviewsData();
-            // Refresh portfolio / gantt if loaded
+            window.app.showToast('Extension approved successfully', 'success');
+            
+            // Re-render drawer with updated status
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                // Find item in local cache or just build a mock for the template
+                const item = (this.pendingExtensions || []).find(i => i.id === id) || { id };
+                const updatedItem = { ...item, status: 'approved', pmComment: comment || '' };
+                drawerContent.innerHTML = window.DrawerTemplates.timelineExtensionReview(updatedItem);
+            }
+            
+            // Refresh underlying data
+            this.loadReviewsData();
             if (typeof this.loadProjectsFromAPI === 'function') this.loadProjectsFromAPI();
             if (typeof this.renderGanttChart === 'function') this.renderGanttChart();
         } catch (error) {
@@ -104,10 +135,17 @@ export const PM_ReviewHandlers = {
             window.toast.show('Rejecting extension request...', 'info');
             const timelineApi = (await import('../../../src/api/timelineExtensions.api.js')).default;
             await timelineApi.reject(id, { pmComment: comment.trim() });
-            window.toast.show('Extension request rejected. Requester has been notified.', 'warning');
-            window.drawer.close();
-            // Refresh reviews tab data
-            if (typeof this.loadReviewsData === 'function') this.loadReviewsData();
+            window.app.showToast('Extension rejected', 'info');
+            
+            // Re-render drawer with updated status
+            const drawerContent = document.querySelector('.drawer-content');
+            if (drawerContent) {
+                const item = (this.pendingExtensions || []).find(i => i.id === id) || { id };
+                const updatedItem = { ...item, status: 'rejected', pmComment: comment.trim() };
+                drawerContent.innerHTML = window.DrawerTemplates.timelineExtensionReview(updatedItem);
+            }
+            
+            this.loadReviewsData();
         } catch (error) {
             console.error('Extension rejection failed:', error);
             window.toast.show(error.message || 'Failed to reject extension', 'error');

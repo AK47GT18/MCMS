@@ -69,7 +69,7 @@ async function getAll({ page = 1, limit = 50, userId, action, targetType, startD
     where.OR = [
       { userName: { contains: search, mode: 'insensitive' } },
       { action: { contains: search, mode: 'insensitive' } },
-      { details: { contains: search, mode: 'insensitive' } }
+      { targetCode: { contains: search, mode: 'insensitive' } }
     ];
   }
 

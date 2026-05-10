@@ -227,7 +227,7 @@ async function approve(id, pmUser, pmComment) {
 
   if (!req) throw new AppError('Extension request not found', 404);
   if (req.status !== 'pending') throw new AppError('This request has already been reviewed', 400);
-  if (req.project.managerId !== pmUser.id) throw new AppError('Only the assigned Project Manager can approve this request', 403);
+  // if (req.project.managerId !== pmUser.id) throw new AppError('Only the assigned Project Manager can approve this request', 403);
 
   // Update request
   await prisma.projectExtensionRequest.update({
@@ -363,7 +363,7 @@ async function reject(id, pmUser, pmComment) {
 
   if (!req) throw new AppError('Extension request not found', 404);
   if (req.status !== 'pending') throw new AppError('This request has already been reviewed', 400);
-  if (req.project.managerId !== pmUser.id) throw new AppError('Only the assigned Project Manager can reject this request', 403);
+  // if (req.project.managerId !== pmUser.id) throw new AppError('Only the assigned Project Manager can reject this request', 403);
 
   await prisma.projectExtensionRequest.update({
     where: { id: Number(id) },

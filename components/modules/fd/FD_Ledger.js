@@ -150,7 +150,7 @@ export const FD_Ledger = {
                         </tr>
                     </thead>
                     <tbody>
-                        ${commitments.map(c => `
+                        ${commitments.slice(0, 20).map(c => `
                             <tr>
                                 <td><span class="project-id">${c.id}</span></td>
                                 <td style="font-weight:600;">${c.type}</td>
@@ -165,6 +165,7 @@ export const FD_Ledger = {
                         `).join('')}
                     </tbody>
                 </table>
+                ${commitments.length > 20 ? `<div style="text-align: center; padding: 16px; font-size: 12px; color: var(--slate-500); border-top: 1px solid var(--border);">Showing 20 of ${commitments.length} recent commitments. Export to view all.</div>` : ''}
             `;
         } catch (error) {
             console.error('Ledger error:', error);
