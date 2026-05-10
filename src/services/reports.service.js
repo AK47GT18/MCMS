@@ -969,6 +969,7 @@ const REPORT_HANDLERS = {
   // 2.01 Asset Register (Full Inventory)
   '2.01': async (f) => {
     const where = {};
+    if (f.projectId) where.currentProjectId = Number(f.projectId);
     if (f.status) where.status = f.status;
     if (f.category) where.category = f.category;
 
@@ -1056,7 +1057,12 @@ const REPORT_HANDLERS = {
 
   // 2.05 Asset Availability Dashboard
   '2.05': async (f) => {
+    const where = {};
+    if (f.projectId) where.currentProjectId = Number(f.projectId);
+    if (f.status) where.status = f.status;
+
     const assets = await prisma.asset.findMany({
+      where,
       include: { currentProject: { select: { code: true } } }
     });
 
@@ -1175,13 +1181,17 @@ const REPORT_HANDLERS = {
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() + 14); // 2 weeks
 
-    const assets = await prisma.asset.findMany({
-      where: {
+    const where = {
         OR: [
           { condition: { in: ['Fair', 'Poor'] } },
           { lastMaintenanceAt: { lte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } } // Over 90 days
         ]
-      }
+    };
+    if (f.projectId) where.currentProjectId = Number(f.projectId);
+    if (f.status) where.status = f.status;
+
+    const assets = await prisma.asset.findMany({
+      where
     });
 
     const rows = assets.map(a => ({
@@ -1896,14 +1906,24 @@ const REPORT_HANDLERS = {
 
   // 7.02 Equipment + cost combined
   '7.02': async (f) => {
+    const whereAsset = {};
+    if (f.projectId) whereAsset.currentProjectId = Number(f.projectId);
+    if (f.status) whereAsset.status = f.status;
+
     const assets = await prisma.asset.findMany({
+      where: whereAsset,
       include: { 
-        maintenanceRecords: true,
+        maintenanceRecords: { where: { ...dateFilter('serviceDate', f.dateFrom, f.dateTo) } },
         currentProject: { select: { code: true } }
       }
     });
 
+    const whereRental = { ...dateFilter('startDate', f.dateFrom, f.dateTo) };
+    if (f.projectId) whereRental.projectId = Number(f.projectId);
+    if (f.status) whereRental.status = f.status;
+
     const rentals = await prisma.vehicleRentalContract.findMany({
+      where: whereRental,
       include: { project: { select: { code: true } } }
     });
 
@@ -1958,8 +1978,22 @@ const REPORT_HANDLERS = {
 
   // 7.04 Safety + issues combined
   '7.04': async (f) => {
-    const incidents = await prisma.safetyIncident.findMany({ include: { project: { select: { code: true } } } });
-    const issues = await prisma.issue.findMany({ include: { project: { select: { code: true } } } });
+    const whereIncident = { ...dateFilter('createdAt', f.dateFrom, f.dateTo) };
+    if (f.projectId) whereIncident.projectId = Number(f.projectId);
+    if (f.status) whereIncident.status = f.status;
+
+    const whereIssue = { ...dateFilter('createdAt', f.dateFrom, f.dateTo) };
+    if (f.projectId) whereIssue.projectId = Number(f.projectId);
+    if (f.status) whereIssue.status = f.status;
+
+    const incidents = await prisma.safetyIncident.findMany({ 
+      where: whereIncident,
+      include: { project: { select: { code: true } } } 
+    });
+    const issues = await prisma.issue.findMany({ 
+      where: whereIssue,
+      include: { project: { select: { code: true } } } 
+    });
 
     const rows = [
       ...incidents.map(i => ({ 'Type': 'SAFETY', 'Project': i.project?.code, 'Severity/Priority': i.severity, 'Status': i.status, 'Created At': i.createdAt.toISOString() })),

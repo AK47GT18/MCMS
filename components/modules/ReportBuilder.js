@@ -14,7 +14,9 @@ export class ReportBuilder {
             status: '',
             dateFrom: '',
             dateTo: '',
-            chartField: ''
+            chartField: '',
+            category: '',
+            searchTerm: ''
         };
         this.data = null;
         this.chart = null;
@@ -155,6 +157,10 @@ export class ReportBuilder {
         }
 
         this.filters[name] = value;
+        
+        if (name === 'category' || name === 'searchTerm') {
+            this.render();
+        }
     }
 
     initChart() {
@@ -207,42 +213,62 @@ export class ReportBuilder {
     }
 
     renderControlPanel() {
-        const categories = [...new Set(this.catalog.map(r => r.category))];
+        const allCategories = [...new Set(this.catalog.map(r => r.category))];
+        const filteredCatalog = this.catalog.filter(r => {
+            const matchesCategory = !this.filters.category || r.category === this.filters.category;
+            const matchesSearch = !this.filters.searchTerm || 
+                                r.name.toLowerCase().includes(this.filters.searchTerm.toLowerCase()) || 
+                                r.code.toLowerCase().includes(this.filters.searchTerm.toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+
+        const activeCategories = [...new Set(filteredCatalog.map(r => r.category))];
         
         return `
             <div class="report-view-header">
-                <div class="report-header-main" style="align-items: center;">
+                <div class="report-header-main" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
                     <div class="report-header-info" style="display: flex; align-items: center; gap: 12px;">
-                        <div class="kpi-icon" style="width: 36px; height: 36px; background: #fff7ed; color: var(--rb-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                            <span class="material-symbols-outlined" style="font-size: 20px;">analytics</span>
+                        <div class="kpi-icon" style="width: 32px; height: 32px; background: #fff7ed; color: var(--rb-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">analytics</span>
                         </div>
                         <div>
-                            <h2 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: var(--rb-dark);">Analytics Center</h2>
-                            <p style="font-size: 0.75rem; color: var(--rb-text-light); margin: 0; margin-top: 2px;">Unified Reporting Dashboard</p>
+                            <h2 style="font-size: 1.15rem; font-weight: 900; margin: 0; color: var(--rb-dark); line-height: 1.1;">Analytics Center</h2>
+                            <p style="font-size: 0.7rem; color: var(--rb-text-light); margin: 0; margin-top: 1px;">Unified Reporting Dashboard</p>
                         </div>
                     </div>
                     ${this.currentReport && this.data ? `
                         <div class="report-actions-integrated">
-                            <button class="btn-report-action" onclick="window.reportBuilder.export('csv')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">download</span> CSV
+                            <button class="btn-report-action" onclick="window.reportBuilder.export('csv')" style="padding: 6px 12px; font-size: 0.75rem;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
                             </button>
-                            <button class="btn-report-action" onclick="window.reportBuilder.export('pdf')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">picture_as_pdf</span> PDF
+                            <button class="btn-report-action" onclick="window.reportBuilder.export('pdf')" style="padding: 6px 12px; font-size: 0.75rem;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">picture_as_pdf</span> PDF
                             </button>
                         </div>
                     ` : ''}
                 </div>
 
-                <div class="controls-grid" style="margin-top: 16px; padding: 16px; gap: 16px;">
-                    <div class="control-item" style="grid-column: 1 / -1;">
+                <div class="discovery-layer">
+                    <div class="discovery-top">
+                        <div class="discovery-search">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="text" name="searchTerm" placeholder="Search 52 reports by name or code..." value="${this.filters.searchTerm}" oninput="window.reportBuilder.handleFilterChange(event)">
+                        </div>
+                        <select name="category" class="category-select" onchange="window.reportBuilder.handleFilterChange(event)">
+                            <option value="">All Categories</option>
+                            ${allCategories.map(cat => `<option value="${cat}" ${this.filters.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="main-report-selector">
                         <label>Select Analytical Report</label>
-                        <select name="reportSelect" class="report-input" style="font-weight: 700; font-size: 0.85rem; padding: 8px 12px; height: 38px;">
-                            <option value="">-- Choose a report to analyze --</option>
-                            ${categories.map(cat => `
-                                <optgroup label="${cat.toUpperCase()}" style="font-weight: 800; background: var(--rb-bg);">
-                                    ${this.catalog.filter(r => r.category === cat).map(r => `
-                                        <option value="${r.code}" ${this.currentReport?.code === r.code ? 'selected' : ''} style="font-weight: 500; background: white;">
-                                            ${r.code} - ${r.name}
+                        <select name="reportSelect" onchange="window.reportBuilder.handleFilterChange(event)">
+                            <option value="">-- Choose a report to analyze (${filteredCatalog.length} found) --</option>
+                            ${activeCategories.map(cat => `
+                                <optgroup label="${cat.toUpperCase()}">
+                                    ${filteredCatalog.filter(r => r.category === cat).map(r => `
+                                        <option value="${r.code}" ${this.currentReport?.code === r.code ? 'selected' : ''}>
+                                            ${r.name}
                                         </option>
                                     `).join('')}
                                 </optgroup>
@@ -250,32 +276,34 @@ export class ReportBuilder {
                         </select>
                     </div>
 
-                    <div class="control-item">
-                        <label>Project Scope</label>
-                        <select name="projectId" class="report-input">
-                            <option value="">Global (All Projects)</option>
-                            ${this.config.projects.map(p => `<option value="${p.id}" ${this.filters.projectId == p.id ? 'selected' : ''}>${p.code} - ${p.name}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="control-item">
-                        <label>Status Filter</label>
-                        <select name="status" class="report-input">
-                            <option value="">All Statuses</option>
-                            ${this.config.statuses.map(s => `<option value="${s}" ${this.filters.status === s ? 'selected' : ''}>${s}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="control-item">
-                        <label>Start Date</label>
-                        <input type="date" name="dateFrom" value="${this.filters.dateFrom}" class="report-input">
-                    </div>
-                    <div class="control-item">
-                        <label>End Date</label>
-                        <input type="date" name="dateTo" value="${this.filters.dateTo}" class="report-input">
-                    </div>
-                    <div class="control-item" style="justify-content: flex-end;">
-                        <button class="btn-report-action primary" style="width: 100%; justify-content: center; height: 38px; font-size: 0.8rem;" onclick="window.reportBuilder.runAnalysis()" ${this.loading || !this.currentReport ? 'disabled' : ''}>
-                            ${this.loading ? '<div class="rb-loader" style="width:14px; height:14px; border-width:2px;"></div>' : '<span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span> Run Analysis'}
-                        </button>
+                    <div class="controls-grid">
+                        <div class="control-item">
+                            <label>Project Scope</label>
+                            <select name="projectId" class="report-input" onchange="window.reportBuilder.handleFilterChange(event)">
+                                <option value="">Global (All Projects)</option>
+                                ${this.config.projects.map(p => `<option value="${p.id}" ${this.filters.projectId == p.id ? 'selected' : ''}>${p.code} - ${p.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="control-item">
+                            <label>Status Filter</label>
+                            <select name="status" class="report-input" onchange="window.reportBuilder.handleFilterChange(event)">
+                                <option value="">All Statuses</option>
+                                ${this.config.statuses.map(s => `<option value="${s}" ${this.filters.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="control-item">
+                            <label>Start Date</label>
+                            <input type="date" name="dateFrom" value="${this.filters.dateFrom}" class="report-input" oninput="window.reportBuilder.handleFilterChange(event)">
+                        </div>
+                        <div class="control-item">
+                            <label>End Date</label>
+                            <input type="date" name="dateTo" value="${this.filters.dateTo}" class="report-input" oninput="window.reportBuilder.handleFilterChange(event)">
+                        </div>
+                        <div class="control-item" style="justify-content: flex-end;">
+                            <button class="btn-report-action primary" style="width: 100%; justify-content: center; height: 34px; font-size: 0.8rem; margin-top: auto;" onclick="window.reportBuilder.runAnalysis()" ${this.loading || !this.currentReport ? 'disabled' : ''}>
+                                ${this.loading ? '<div class="rb-loader" style="width:14px; height:14px; border-width:2px;"></div>' : '<span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span> Run'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
