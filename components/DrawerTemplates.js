@@ -3384,8 +3384,34 @@ Contract Admin</textarea>
 
                     <!-- Resolution Thread -->
                     ${notes.map((note, idx) => {
-            const isSystem = note.includes("System") || note.includes("HQ") || note.includes("PM Response");
-            return `
+                        // Attempt to parse: [Date, Time] Name: Message
+                        const match = note.match(/^\[(.*?)\] (.*?): ([\s\S]*)$/);
+                        const isSystem = note.includes("System") || note.includes("HQ") || note.includes("PM Response");
+                        
+                        if (match) {
+                            const [_, timestamp, sender, message] = match;
+                            const isMe = window.app.currentUser?.name === sender;
+
+                            return `
+                            <div style="display: flex; flex-direction: column; align-items: ${isMe ? 'flex-end' : 'flex-start'}; gap: 4px; margin-bottom: 8px;">
+                                <div style="display: flex; gap: 8px; align-items: center; font-size: 11px; font-weight: 700; color: var(--slate-400); ${isMe ? 'flex-direction: row-reverse;' : ''}">
+                                    <span style="color: var(--slate-600);">${sender}</span>
+                                    <span style="font-weight: 400; opacity: 0.7;">${timestamp}</span>
+                                </div>
+                                <div style="display: flex; gap: 10px; ${isMe ? 'flex-direction: row-reverse;' : ''}; max-width: 90%;">
+                                    <div style="width: 28px; height: 28px; background: ${isSystem ? 'var(--slate-200)' : (isMe ? 'var(--blue-light)' : 'var(--orange-light)')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; color: ${isSystem ? 'var(--slate-600)' : (isMe ? 'var(--blue)' : 'var(--orange)')}; border: 1px solid rgba(0,0,0,0.05);">
+                                        <i class="fas ${isSystem ? 'fa-shield-halved' : (isMe ? 'fa-user-tie' : 'fa-user-helmet-safety')}"></i>
+                                    </div>
+                                    <div style="background: ${isMe ? 'var(--blue)' : (isSystem ? 'white' : '#FFF7ED')}; color: ${isMe ? 'white' : 'var(--slate-700)'}; padding: 12px 16px; border-radius: ${isMe ? '16px 4px 16px 16px' : '4px 16px 16px 16px'}; border: 1px solid ${isMe ? 'var(--blue)' : (isSystem ? 'var(--slate-200)' : 'var(--orange-hover)')}; box-shadow: var(--shadow-sm); position: relative;">
+                                        <div style="font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${this.escapeHTML(message.trim())}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+                        }
+
+                        // Fallback for unformatted notes
+                        return `
                         <div style="display: flex; gap: 12px; ${!isSystem ? 'flex-direction: row-reverse;' : ''}">
                             <div style="width: 32px; height: 32px; background: ${isSystem ? 'var(--slate-200)' : 'var(--orange-light)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; color: ${isSystem ? 'var(--slate-600)' : 'var(--orange)'}">
                                 <i class="fas ${isSystem ? 'fa-shield-halved' : 'fa-user-tie'}"></i>
@@ -3395,7 +3421,7 @@ Contract Admin</textarea>
                             </div>
                         </div>
                         `;
-        }).join('')}
+                    }).join('')}
                 </div>
 
                 <!-- Response Input Area -->
