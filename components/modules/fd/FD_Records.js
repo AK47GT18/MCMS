@@ -13,9 +13,9 @@ export const FD_Records = {
         }, 0);
 
         return `<div id="fd-reports-root">
-            <div style="padding: 40px; text-align: center; color: var(--slate-400);">
-                <i class="fas fa-circle-notch fa-spin" style="font-size: 24px; margin-bottom: 12px;"></i>
-                <p>Initializing Records Center...</p>
+            <div class="rb-empty-state">
+                <div class="rb-loader"></div>
+                <p style="margin-top: 20px;">Initializing Records Center...</p>
             </div>
         </div>`;
     },

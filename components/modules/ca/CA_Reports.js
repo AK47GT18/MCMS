@@ -12,9 +12,10 @@ export const CA_Reports = {
         setTimeout(() => this.init(), 100);
 
         return `
-            <div id="ca-reports-root" class="animate-fade-in" style="height: calc(100vh - 120px);">
-                <div class="flex items-center justify-center p-20">
-                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+            <div id="ca-reports-root" class="animate-fade-in" style="min-height: calc(100vh - 120px);">
+                <div class="rb-empty-state">
+                    <div class="rb-loader"></div>
+                    <p style="margin-top: 20px;">Booting Compliance Analytics...</p>
                 </div>
             </div>
         `;

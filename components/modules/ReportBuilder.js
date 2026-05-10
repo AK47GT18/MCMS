@@ -1,6 +1,6 @@
 /**
- * MCMS Report Builder Module
- * Framework-agnostic dynamic reporting component
+ * MCMS Report Engine - Unified Dashboard Version
+ * Single-screen UI with integrated control panel.
  */
 
 export class ReportBuilder {
@@ -25,41 +25,50 @@ export class ReportBuilder {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        window.reportBuilder = this; // Global reference for event handlers
+        window.reportBuilder = this;
+
+        // Ensure full Material Symbols library is loaded for reporting icons
+        if (!document.getElementById('rb-material-symbols')) {
+            const link = document.createElement('link');
+            link.id = 'rb-material-symbols';
+            link.rel = 'stylesheet';
+            link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
+            document.head.appendChild(link);
+        }
 
         this.showLoading();
-        await Promise.all([
-            this.fetchCatalog(),
-            this.fetchConfig()
-        ]);
-        this.render();
+        try {
+            await Promise.all([
+                this.fetchCatalog(),
+                this.fetchConfig()
+            ]);
+            
+            // Auto-select first report if catalog isn't empty, to avoid empty states if possible
+            // Actually, better to let the user select so we don't spam the DB.
+            this.render();
+        } catch (err) {
+            console.error('Initialization failed', err);
+            this.container.innerHTML = `<div class="rb-empty-state"><h3>Connection Error</h3><p>Could not load reporting metadata.</p></div>`;
+        }
     }
 
     async fetchCatalog() {
-        try {
-            const res = await fetch('/api/v1/reports/catalog', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
-            });
-            const data = await res.json();
-            this.catalog = data.data || [];
-        } catch (err) {
-            console.error('Failed to fetch catalog', err);
-        }
+        const res = await fetch('/api/v1/reports/catalog', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
+        });
+        const data = await res.json();
+        this.catalog = data.data || [];
     }
 
     async fetchConfig() {
-        try {
-            const res = await fetch('/api/v1/reports/config', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
-            });
-            const data = await res.json();
-            this.config = data.data || { projects: [], statuses: [], categories: [] };
-        } catch (err) {
-            console.error('Failed to fetch config', err);
-        }
+        const res = await fetch('/api/v1/reports/config', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` }
+        });
+        const data = await res.json();
+        this.config = data.data || { projects: [], statuses: [], categories: [] };
     }
 
-    async runReport() {
+    async runAnalysis() {
         if (!this.currentReport) return;
         this.loading = true;
         this.render();
@@ -77,10 +86,11 @@ export class ReportBuilder {
                 })
             });
             const data = await res.json();
+            if (!data.success) throw new Error(data.error?.message || 'Execution failed');
             this.data = data.data;
         } catch (err) {
             console.error('Failed to run report', err);
-            window.toast?.show('Failed to generate report', 'error');
+            window.toast?.show(err.message, 'error');
         } finally {
             this.loading = false;
             this.render();
@@ -88,55 +98,44 @@ export class ReportBuilder {
         }
     }
 
-    async exportReport(format) {
+    async export(format) {
         if (!this.currentReport) return;
-        
-        const params = new URLSearchParams({
-            format,
-            reportCode: this.currentReport.code,
-            ...this.filters
-        });
+        window.toast?.show(`Preparing ${format.toUpperCase()}...`, 'info');
 
-        // For CSV/PDF we use a direct link or fetch with blob
-        const url = `/api/v1/reports/run?${params.toString()}`;
-        
         try {
-            const res = await fetch(url, {
-                method: 'POST', // The endpoint is POST
+            const res = await fetch('/api/v1/reports/run', {
+                method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('mcms_auth_token')}` 
                 },
                 body: JSON.stringify({
                     reportCode: this.currentReport.code,
-                    filters: this.filters
+                    filters: { ...this.filters, format }
                 })
             });
-
-            if (format === 'json') {
-                const data = await res.json();
-                console.log('JSON Data:', data);
-                return;
-            }
 
             const blob = await res.blob();
             const downloadUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = downloadUrl;
-            a.download = `${this.currentReport.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.${format}`;
+            a.download = `${this.currentReport.name.replace(/\s+/g, '_')}.${format}`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(downloadUrl);
+            window.toast?.show('Export complete.', 'success');
         } catch (err) {
             console.error('Export failed', err);
+            window.toast?.show('Export failed.', 'error');
         }
     }
 
     showLoading() {
         if (this.container) {
             this.container.innerHTML = `
-                <div class="flex items-center justify-center p-20">
-                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+                <div class="rb-empty-state" style="padding: 40px;">
+                    <div class="rb-loader" style="width: 24px; height: 24px; border-width: 3px;"></div>
+                    <p style="margin-top: 12px; font-size: 0.85rem;">Booting Analytics Center...</p>
                 </div>
             `;
         }
@@ -144,14 +143,18 @@ export class ReportBuilder {
 
     handleFilterChange(e) {
         const { name, value } = e.target;
-        this.filters[name] = value;
-    }
+        
+        if (name === 'reportSelect') {
+            this.currentReport = this.catalog.find(r => r.code === value) || null;
+            this.data = null;
+            if (this.currentReport) {
+                this.filters.chartField = this.currentReport.numericFields[0] || '';
+            }
+            this.render();
+            return;
+        }
 
-    selectReport(code) {
-        this.currentReport = this.catalog.find(r => r.code === code);
-        this.data = null;
-        this.filters.chartField = this.currentReport?.numericFields[0] || '';
-        this.render();
+        this.filters[name] = value;
     }
 
     initChart() {
@@ -169,19 +172,19 @@ export class ReportBuilder {
                 datasets: [{
                     label: this.filters.chartField,
                     data: this.data.chartData.values,
-                    backgroundColor: 'rgba(249, 116, 21, 0.6)',
+                    backgroundColor: 'rgba(249, 116, 21, 0.7)',
                     borderColor: 'rgb(249, 116, 21)',
-                    borderWidth: 1
+                    borderWidth: 2,
+                    borderRadius: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true }
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
                 }
             }
         });
@@ -191,254 +194,210 @@ export class ReportBuilder {
         if (!this.container) return;
 
         this.container.innerHTML = `
-            <div class="report-builder-grid">
-                <!-- Sidebar: Catalog -->
-                <aside class="report-catalog-sidebar bg-white border-r border-slate-200 overflow-y-auto">
-                    <div class="p-4 border-b border-slate-200">
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-orange-500">analytics</span>
-                            Report Catalog
-                        </h3>
-                    </div>
-                    <div class="catalog-list">
-                        ${this.renderCatalog()}
-                    </div>
-                </aside>
-
-                <!-- Main Content -->
-                <main class="report-main-content bg-slate-50 overflow-y-auto">
-                    ${this.currentReport ? this.renderActiveReport() : this.renderEmptyState()}
-                </main>
+            <div class="report-engine-container animate-view">
+                ${this.renderControlPanel()}
+                <div class="results-container">
+                    ${this.data ? this.renderResults() : this.renderEmptyState()}
+                </div>
             </div>
         `;
 
         this.attachEventListeners();
+        if (this.data) this.initChart();
     }
 
-    renderCatalog() {
-        const grouped = this.catalog.reduce((acc, r) => {
-            if (!acc[r.category]) acc[r.category] = [];
-            acc[r.category].push(r);
-            return acc;
-        }, {});
-
-        return Object.entries(grouped).map(([category, reports]) => `
-            <div class="catalog-group">
-                <div class="px-4 py-2 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                    ${category}
-                </div>
-                ${reports.map(r => `
-                    <button class="catalog-item w-full text-left px-4 py-3 text-sm transition-colors border-b border-slate-50 ${this.currentReport?.code === r.code ? 'bg-orange-50 text-orange-600 font-bold border-l-4 border-l-orange-500' : 'text-slate-600 hover:bg-slate-50'}"
-                        onclick="window.reportBuilder.selectReport('${r.code}')">
-                        <span class="text-[10px] text-slate-400 block mb-0.5">${r.code}</span>
-                        ${r.name}
-                    </button>
-                `).join('')}
-            </div>
-        `).join('');
-    }
-
-    renderEmptyState() {
+    renderControlPanel() {
+        const categories = [...new Set(this.catalog.map(r => r.category))];
+        
         return `
-            <div class="flex flex-col items-center justify-center h-full text-slate-400 p-20">
-                <span class="material-symbols-outlined text-6xl mb-4">analytics</span>
-                <p class="text-lg">Select a report from the catalog to begin</p>
-                <p class="text-sm">Comprehensive financial and operational analytics at your fingertips.</p>
-            </div>
-        `;
-    }
-
-    renderActiveReport() {
-        return `
-            <!-- Control Panel -->
-            <div class="sticky top-0 bg-white border-b border-slate-200 p-4 z-10">
-                <div class="flex flex-wrap items-end gap-4">
-                    <div class="flex-1">
-                        <h2 class="text-xl font-bold text-slate-800">${this.currentReport.name}</h2>
-                        <p class="text-xs text-slate-500">Category: ${this.currentReport.category} | Model: ${this.currentReport.model}</p>
+            <div class="report-view-header">
+                <div class="report-header-main" style="align-items: center;">
+                    <div class="report-header-info" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="kpi-icon" style="width: 36px; height: 36px; background: #fff7ed; color: var(--rb-accent); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">analytics</span>
+                        </div>
+                        <div>
+                            <h2 style="font-size: 1.25rem; font-weight: 900; margin: 0; color: var(--rb-dark);">Analytics Center</h2>
+                            <p style="font-size: 0.75rem; color: var(--rb-text-light); margin: 0; margin-top: 2px;">Unified Reporting Dashboard</p>
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.reportBuilder.exportReport('csv')" class="px-3 py-1.5 border border-slate-200 rounded text-xs font-medium hover:bg-slate-50 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-[18px]">download</span> CSV
-                        </button>
-                        <button onclick="window.reportBuilder.exportReport('pdf')" class="px-3 py-1.5 border border-slate-200 rounded text-xs font-medium hover:bg-slate-50 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> PDF
-                        </button>
-                        <button onclick="window.print()" class="px-3 py-1.5 border border-slate-200 rounded text-xs font-medium hover:bg-slate-50 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-[18px]">print</span> Print
-                        </button>
-                    </div>
+                    ${this.currentReport && this.data ? `
+                        <div class="report-actions-integrated">
+                            <button class="btn-report-action" onclick="window.reportBuilder.export('csv')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">download</span> CSV
+                            </button>
+                            <button class="btn-report-action" onclick="window.reportBuilder.export('pdf')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">picture_as_pdf</span> PDF
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
 
-                <div class="grid grid-cols-5 gap-3 mt-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div class="form-group-sm">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Project</label>
-                        <select name="projectId" class="report-filter-select w-full text-xs p-1.5 rounded border border-slate-200">
-                            <option value="">All Projects</option>
+                <div class="controls-grid" style="margin-top: 16px; padding: 16px; gap: 16px;">
+                    <div class="control-item" style="grid-column: 1 / -1;">
+                        <label>Select Analytical Report</label>
+                        <select name="reportSelect" class="report-input" style="font-weight: 700; font-size: 0.85rem; padding: 8px 12px; height: 38px;">
+                            <option value="">-- Choose a report to analyze --</option>
+                            ${categories.map(cat => `
+                                <optgroup label="${cat.toUpperCase()}" style="font-weight: 800; background: var(--rb-bg);">
+                                    ${this.catalog.filter(r => r.category === cat).map(r => `
+                                        <option value="${r.code}" ${this.currentReport?.code === r.code ? 'selected' : ''} style="font-weight: 500; background: white;">
+                                            ${r.code} - ${r.name}
+                                        </option>
+                                    `).join('')}
+                                </optgroup>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="control-item">
+                        <label>Project Scope</label>
+                        <select name="projectId" class="report-input">
+                            <option value="">Global (All Projects)</option>
                             ${this.config.projects.map(p => `<option value="${p.id}" ${this.filters.projectId == p.id ? 'selected' : ''}>${p.code} - ${p.name}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="form-group-sm">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Status</label>
-                        <select name="status" class="report-filter-select w-full text-xs p-1.5 rounded border border-slate-200">
+                    <div class="control-item">
+                        <label>Status Filter</label>
+                        <select name="status" class="report-input">
                             <option value="">All Statuses</option>
                             ${this.config.statuses.map(s => `<option value="${s}" ${this.filters.status === s ? 'selected' : ''}>${s}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="form-group-sm">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">From Date</label>
-                        <input type="date" name="dateFrom" value="${this.filters.dateFrom}" class="report-filter-select w-full text-xs p-1.5 rounded border border-slate-200">
+                    <div class="control-item">
+                        <label>Start Date</label>
+                        <input type="date" name="dateFrom" value="${this.filters.dateFrom}" class="report-input">
                     </div>
-                    <div class="form-group-sm">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">To Date</label>
-                        <input type="date" name="dateTo" value="${this.filters.dateTo}" class="report-filter-select w-full text-xs p-1.5 rounded border border-slate-200">
+                    <div class="control-item">
+                        <label>End Date</label>
+                        <input type="date" name="dateTo" value="${this.filters.dateTo}" class="report-input">
                     </div>
-                    <div class="flex items-end">
-                        <button onclick="window.reportBuilder.runReport()" class="w-full bg-orange-500 text-white font-bold py-1.5 rounded hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 text-xs shadow-sm" ${this.loading ? 'disabled' : ''}>
-                            ${this.loading ? '<div class="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div> Running...' : '<span class="material-symbols-outlined text-[16px]">play_arrow</span> Run Analysis'}
+                    <div class="control-item" style="justify-content: flex-end;">
+                        <button class="btn-report-action primary" style="width: 100%; justify-content: center; height: 38px; font-size: 0.8rem;" onclick="window.reportBuilder.runAnalysis()" ${this.loading || !this.currentReport ? 'disabled' : ''}>
+                            ${this.loading ? '<div class="rb-loader" style="width:14px; height:14px; border-width:2px;"></div>' : '<span class="material-symbols-outlined" style="font-size: 16px;">play_arrow</span> Run Analysis'}
                         </button>
                     </div>
                 </div>
             </div>
+        `;
+    }
 
-            <div class="p-6">
-                ${this.data ? this.renderReportResults() : `
-                    <div class="bg-white rounded-xl border border-slate-200 p-20 text-center">
-                        <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 mx-auto mb-4">
-                            <span class="material-symbols-outlined text-3xl">play_circle</span>
-                        </div>
-                        <h3 class="text-slate-800 font-bold text-lg">Ready to Generate</h3>
-                        <p class="text-slate-500 text-sm max-w-xs mx-auto mt-1">Adjust your filters above and click "Run Analysis" to fetch live data.</p>
-                    </div>
-                `}
+    renderEmptyState() {
+        return `
+            <div class="rb-empty-state" style="background: white; border-radius: 12px; border: 1px solid var(--rb-border); padding: 40px 20px;">
+                <div style="width: 64px; height: 64px; background: var(--rb-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                    <span class="material-symbols-outlined" style="font-size: 32px; color: var(--rb-accent);">query_stats</span>
+                </div>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--rb-dark); margin: 0 0 8px 0;">Ready for Analysis</h3>
+                <p style="color: var(--rb-text-light); max-width: 400px; margin: 0 auto; font-size: 0.8rem;">Select a report from the dropdown above and configure your filters to instantly retrieve live operational and financial data.</p>
             </div>
         `;
     }
 
-    renderReportResults() {
+    renderResults() {
         return `
-            <!-- Summary Stats -->
-            <div class="grid grid-cols-4 gap-4 mb-6">
+            <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--rb-border);">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 900; color: var(--rb-dark);">${this.currentReport.name} Results</h3>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--rb-text-light);">Generated just now</p>
+            </div>
+
+            <div class="summary-strip">
                 ${Object.entries(this.data.summary).map(([label, val]) => `
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">${label}</div>
-                        <div class="text-xl font-bold text-slate-800">${typeof val === 'number' ? val.toLocaleString() : val}</div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">
+                            <span class="material-symbols-outlined">trending_up</span>
+                        </div>
+                        <div class="kpi-data">
+                            <div class="label">${label}</div>
+                            <div class="value">${this.formatValue(val, label)}</div>
+                        </div>
                     </div>
                 `).join('')}
             </div>
 
-            <!-- Visualization Area -->
-            ${this.currentReport.numericFields.length > 0 ? `
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-orange-500">bar_chart</span>
-                            Data Visualization
-                        </h4>
-                        <div class="flex items-center gap-2">
-                            <label class="text-[10px] font-bold text-slate-500">Metric:</label>
-                            <select name="chartField" class="report-filter-select text-[10px] border border-slate-200 rounded px-2 py-1" onchange="window.reportBuilder.handleFilterChange(event); window.reportBuilder.initChart();">
-                                ${this.currentReport.numericFields.map(f => `<option value="${f}" ${this.filters.chartField === f ? 'selected' : ''}>${f}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="h-[300px]">
-                        <canvas id="reportChart"></canvas>
+            <div class="integrated-table-wrapper animate-view" style="margin-bottom: 32px;">
+                <div class="table-top-bar">
+                    <h4 style="font-size: 1rem; font-weight: 800; color: var(--rb-dark); margin: 0;">Detailed Records (${this.data.rows.length})</h4>
+                    <div class="table-search">
+                        <span class="material-symbols-outlined" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--rb-text-light);">search</span>
+                        <input type="text" placeholder="Search within results..." oninput="window.reportBuilder.filterTable(this.value)">
                     </div>
                 </div>
-            ` : ''}
-
-            <!-- Data Table -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h4 class="font-bold text-slate-800 text-sm">Data Records (${this.data.rows.length})</h4>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                        <input type="text" placeholder="Search records..." class="pl-8 pr-4 py-1.5 text-xs rounded-full border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all w-64">
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
+                <div style="overflow-x: auto;">
+                    <table class="integrated-table">
                         <thead>
-                            <tr class="bg-slate-50">
-                                ${this.data.columns.map(col => `
-                                    <th class="px-4 py-3 font-bold text-slate-500 uppercase tracking-tighter border-b border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
-                                        <div class="flex items-center gap-1">
-                                            ${col}
-                                            <span class="material-symbols-outlined text-[12px] opacity-0 group-hover:opacity-100">unfold_more</span>
-                                        </div>
-                                    </th>
-                                `).join('')}
-                            </tr>
+                            <tr>${this.data.columns.map(c => `<th>${c}</th>`).join('')}</tr>
                         </thead>
                         <tbody>
-                            ${this.data.rows.length ? this.data.rows.map(row => `
-                                <tr class="hover:bg-orange-50/30 transition-colors group">
-                                    ${this.data.columns.map(col => {
-                                        const val = row[col];
-                                        const isNumeric = this.currentReport.numericFields.includes(col);
-                                        return `
-                                            <td class="px-4 py-3 border-b border-slate-50 font-medium ${isNumeric ? 'text-slate-900' : 'text-slate-600'}">
-                                                ${this.formatValue(val, col)}
-                                            </td>
-                                        `;
-                                    }).join('')}
-                                </tr>
-                            `).join('') : `
-                                <tr>
-                                    <td colspan="${this.data.columns.length}" class="px-4 py-10 text-center text-slate-400">No records found matching your filters.</td>
-                                </tr>
-                            `}
+                            ${this.data.rows.map(row => `
+                                <tr>${this.data.columns.map(col => `<td>${this.formatCell(row[col], col)}</td>`).join('')}</tr>
+                            `).join('')}
+                            ${this.data.rows.length === 0 ? `<tr><td colspan="${this.data.columns.length}" style="text-align: center; padding: 40px; color: var(--rb-text-light);">No data found for the selected filters.</td></tr>` : ''}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            ${this.currentReport.numericFields.length > 0 ? `
+                <div class="rb-visualization-card animate-view">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--rb-dark); margin: 0;">Data Visualization</h4>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="font-size: 11px; font-weight: 800; color: var(--rb-text-light);">METRIC:</label>
+                            <select name="chartField" class="report-input" style="padding: 4px 8px; font-size: 11px; width: auto;" onchange="window.reportBuilder.handleFilterChange(event); window.reportBuilder.initChart();">
+                                ${this.currentReport.numericFields.map(f => `<option value="${f}" ${this.filters.chartField === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="height: 350px;">
+                        <canvas id="reportChart"></canvas>
+                    </div>
+                </div>
+            ` : ''}
         `;
+
     }
 
-    formatValue(val, col) {
-        if (val === null || val === undefined) return '-';
+    formatValue(val, label) {
         if (typeof val === 'number') {
-            if (col.toLowerCase().includes('percent') || col.includes('%')) return `${val}%`;
-            if (col.toLowerCase().includes('value') || col.toLowerCase().includes('total') || col.toLowerCase().includes('budget') || col.toLowerCase().includes('cost') || col.toLowerCase().includes('spent') || col.toLowerCase().includes('remaining')) {
+            if (label.toLowerCase().includes('value') || label.toLowerCase().includes('cost') || label.toLowerCase().includes('budget') || label.toLowerCase().includes('spent')) {
                 return val.toLocaleString('en-MW', { style: 'currency', currency: 'MWK', maximumFractionDigits: 0 });
             }
             return val.toLocaleString();
         }
-        
-        // Status formatting
-        if (col.toLowerCase() === 'status') {
-            const statusColors = {
-                'active': 'bg-green-100 text-green-700',
-                'pending': 'bg-orange-100 text-orange-700',
-                'completed': 'bg-blue-100 text-blue-700',
-                'on_hold': 'bg-slate-100 text-slate-700',
-                'rejected': 'bg-red-100 text-red-700',
-                'approved': 'bg-emerald-100 text-emerald-700'
-            };
-            const color = statusColors[val.toLowerCase()] || 'bg-slate-100 text-slate-700';
-            return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight ${color}">${val}</span>`;
-        }
-
         return val;
     }
 
-    attachEventListeners() {
-        const selects = this.container.querySelectorAll('.report-filter-select');
-        selects.forEach(s => {
-            s.addEventListener('change', (e) => this.handleFilterChange(e));
-        });
-
-        const searchInput = this.container.querySelector('input[placeholder="Search records..."]');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                const rows = this.container.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(term) ? '' : 'none';
-                });
-            });
+    formatCell(val, col) {
+        if (val === null || val === undefined) return '-';
+        if (typeof val === 'number') {
+            if (col.toLowerCase().includes('percent') || col.includes('%')) return `${val}%`;
+            if (col.toLowerCase().includes('value') || col.toLowerCase().includes('cost') || col.toLowerCase().includes('budget') || col.toLowerCase().includes('spent') || col.toLowerCase().includes('remaining')) {
+                return val.toLocaleString('en-MW', { style: 'currency', currency: 'MWK', maximumFractionDigits: 0 });
+            }
+            return val.toLocaleString();
         }
+        if (col.toLowerCase() === 'status') {
+            const colors = { 'active': '#f0fdf4; color: #166534', 'completed': '#eff6ff; color: #1e40af', 'pending': '#fff7ed; color: #9a3412', 'rejected': '#fef2f2; color: #991b1b', 'on_site': '#f0fdf4; color: #166534' };
+            const style = colors[val.toLowerCase()] || '#f1f5f9; color: #475569';
+            return `<span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; background: ${style}">${val}</span>`;
+        }
+        return val;
+    }
+
+    filterTable(term) {
+        const query = term.toLowerCase();
+        const rows = this.container.querySelectorAll('.integrated-table tbody tr');
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    }
+
+    attachEventListeners() {
+        const inputs = this.container.querySelectorAll('.report-input');
+        inputs.forEach(input => {
+            input.addEventListener('change', (e) => this.handleFilterChange(e));
+        });
     }
 }

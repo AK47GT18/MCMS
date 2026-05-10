@@ -1103,18 +1103,24 @@ const REPORT_HANDLERS = {
     const shifts = await prisma.vehicleRentalShift.findMany({
       where: { ...dateFilter('shiftDate', f.dateFrom, f.dateTo) },
       include: { 
-        rental: { select: { refCode: true, machineType: true } },
-        fromProject: { select: { code: true } },
-        toProject: { select: { code: true } }
+        rentalContract: { select: { refCode: true, machineType: true } }
       }
     });
 
+    // Fetch projects separately to avoid needing new relations in Prisma client
+    const projectIds = [...new Set([...shifts.map(s => s.fromProjectId), ...shifts.map(s => s.toProjectId)].filter(Boolean))];
+    const projects = await prisma.project.findMany({
+      where: { id: { in: projectIds } },
+      select: { id: true, code: true }
+    });
+    const projectMap = projects.reduce((acc, p) => ({ ...acc, [p.id]: p.code }), {});
+
     const rows = shifts.map(s => ({
-      'Rental Ref': s.rental.refCode,
-      'Machine Type': s.rental.machineType,
+      'Rental Ref': s.rentalContract.refCode,
+      'Machine Type': s.rentalContract.machineType,
       'Shift Date': s.shiftDate.toISOString().split('T')[0],
-      'From Project': s.fromProject.code,
-      'To Project': s.toProject.code,
+      'From Project': projectMap[s.fromProjectId] || 'N/A',
+      'To Project': projectMap[s.toProjectId] || 'N/A',
       'Reason': s.reason
     }));
 
@@ -1352,7 +1358,7 @@ const REPORT_HANDLERS = {
 
     const usage = await prisma.materialUsage.findMany({
       where,
-      include: { project: { select: { code: true } }, sector: { select: { name: true } }, reporter: { select: { name: true } } }
+      include: { project: { select: { code: true } }, sector: { select: { name: true } }, reportedBy: { select: { name: true } } }
     });
 
     const rows = usage.map(u => ({
@@ -1362,7 +1368,7 @@ const REPORT_HANDLERS = {
       'Quantity': Number(u.quantity),
       'Unit': u.unit,
       'Log Date': u.logDate.toISOString().split('T')[0],
-      'Reported By': u.reporter?.name || 'N/A'
+      'Reported By': u.reportedBy?.name || 'N/A'
     }));
 
     return { rows };
@@ -1893,22 +1899,35 @@ const REPORT_HANDLERS = {
     const assets = await prisma.asset.findMany({
       include: { 
         maintenanceRecords: true,
-        rentalContracts: true,
         currentProject: { select: { code: true } }
       }
     });
 
-    const rows = assets.map(a => {
-      const maint = a.maintenanceRecords.reduce((s, r) => s + (Number(r.cost) || 0), 0);
-      const rental = a.rentalContracts.reduce((s, c) => s + (Number(c.totalValue) || 0), 0);
-      return {
-        'Asset': a.name,
-        'Project': a.currentProject?.code || 'N/A',
-        'Rental Cost': rental,
-        'Maintenance Cost': maint,
-        'Total Cost': rental + maint
-      };
+    const rentals = await prisma.vehicleRentalContract.findMany({
+      include: { project: { select: { code: true } } }
     });
+
+    const rows = [
+      ...assets.map(a => {
+        const maint = a.maintenanceRecords.reduce((s, r) => s + (Number(r.cost) || 0), 0);
+        return {
+          'Asset': a.name,
+          'Type': 'OWNED',
+          'Project': a.currentProject?.code || 'N/A',
+          'Rental Cost': 0,
+          'Maintenance Cost': maint,
+          'Total Cost': maint
+        };
+      }),
+      ...rentals.map(r => ({
+        'Asset': r.machineType + ' (' + r.vendorName + ')',
+        'Type': 'RENTED',
+        'Project': r.project?.code || 'N/A',
+        'Rental Cost': Number(r.totalValue) || 0,
+        'Maintenance Cost': 0,
+        'Total Cost': Number(r.totalValue) || 0
+      }))
+    ];
 
     return { rows };
   },

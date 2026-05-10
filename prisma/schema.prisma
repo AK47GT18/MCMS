@@ -108,6 +108,8 @@ model Project {
   variationOrders        VariationOrder[]
   vehicleRentalContracts VehicleRentalContract[]
   whistleblowerReports   WhistleblowerReport[]
+  shiftsFrom             VehicleRentalShift[]      @relation("ShiftFromProject")
+  shiftsTo               VehicleRentalShift[]      @relation("ShiftToProject")
 
   @@map("projects")
 }
@@ -950,6 +952,8 @@ model VehicleRentalShift {
   reason           String?
   shiftedById      Int?                  @map("shifted_by_id")
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  fromProject      Project?              @relation("ShiftFromProject", fields: [fromProjectId], references: [id])
+  toProject        Project?              @relation("ShiftToProject", fields: [toProjectId], references: [id])
   rentalContract   VehicleRentalContract @relation(fields: [rentalContractId], references: [id], onDelete: Cascade)
 
   @@index([rentalContractId])
