@@ -1827,12 +1827,13 @@ export const DrawerTemplates = {
         const siteAssets = data.siteAssets || [];
         const tasksConfig = data.tasksConfig || { phases: [] };
         const phases = tasksConfig.phases || [];
-        const phaseProgress = project.phaseProgress || {};
+        const phaseProgress = (project.phaseProgress && typeof project.phaseProgress === 'object') ? project.phaseProgress : {};
 
         // Determine current phase (project.currentPhase is Int 1-4)
         const phaseNumber = Number(project.currentPhase || 1);
         const currentPhaseIndex = Math.max(0, phaseNumber - 1);
         const currentPhase = phases[currentPhaseIndex] || phases[0] || { id: 'PHASE_1', name: 'Phase 1', tasks: [] };
+        const currentPhaseProgress = phaseProgress[currentPhase.id] || 0;
         const completedPhaseCount = currentPhaseIndex >= 0 ? currentPhaseIndex : 0;
         const overallProgress = project.progress || Math.round((completedPhaseCount / Math.max(phases.length, 1)) * 100);
 
@@ -1992,8 +1993,8 @@ export const DrawerTemplates = {
                 <label class="form-label">Phase Progress <span style="color:var(--red);">*</span></label>
                 <div style="font-size: 11px; color: var(--slate-500); margin-bottom: 8px;">How complete is <strong>${currentPhase.name}</strong>?</div>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <input type="range" id="daily-progress-completion" class="form-input" style="flex:1;" min="0" max="100" value="${project.phaseProgress || 0}" oninput="this.nextElementSibling.innerText = this.value + '%'">
-                    <span style="font-weight:700; font-size:14px; width:40px;">${project.phaseProgress || 0}%</span>
+                    <input type="range" id="daily-progress-completion" class="form-input" style="flex:1;" min="0" max="100" value="${currentPhaseProgress}" oninput="this.nextElementSibling.innerText = this.value + '%'">
+                    <span style="font-weight:700; font-size:14px; width:40px;">${currentPhaseProgress}%</span>
                 </div>
                 <div style="font-size: 10px; color: var(--orange); margin-top: 4px; font-weight: 600;"><i class="fas fa-info-circle"></i> Setting to 100% and getting PM approval will complete this phase and advance to the next.</div>
             </div>
