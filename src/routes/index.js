@@ -761,67 +761,22 @@ async function router(req, res) {
   // REPORTS ROUTES
   // ============================================
   if (resource === 'reports') {
-    const { id: role, action: reportName, subAction } = parseUrl(req.url);
-
-    // Dynamic Report (Universal)
-    if (role === 'dynamic' && (method === 'POST' || method === 'GET')) {
-      return reportsController.dynamicReport(req, res);
+    if (id === 'catalog' && method === 'GET') {
+      return reportsController.getCatalog(req, res);
+    }
+    if (id === 'config' && method === 'GET') {
+      return reportsController.getConfig(req, res);
+    }
+    if (id === 'run' && method === 'POST') {
+      return reportsController.runReport(req, res);
+    }
+    
+    // Legacy support for dynamic (optional)
+    if (id === 'dynamic') {
+      return reportsController.runReport(req, res);
     }
 
-    if (method !== 'GET') return methodNotAllowed(res, ['GET', 'POST']);
-
-    // PM Reports
-    if (role === 'pm') {
-      if (reportName === 'portfolio') return reportsController.pmPortfolio(req, res);
-      if (reportName === 'project-health' && subAction) return reportsController.pmProjectHealth(req, res, subAction);
-      if (reportName === 'timeline') return reportsController.pmTimeline(req, res);
-    }
-    // Finance Reports
-    if (role === 'finance') {
-      if (reportName === 'budget') return reportsController.financeBudget(req, res);
-      if (reportName === 'requisitions') return reportsController.financeRequisitions(req, res);
-      if (reportName === 'top-vendors') return reportsController.financeTopVendors(req, res);
-      if (reportName === 'spend-categories') return reportsController.financeSpendCategories(req, res);
-    }
-    // Field Reports
-    if (role === 'field') {
-      if (reportName === 'daily-logs' && subAction) return reportsController.fieldDailyLogs(req, res, subAction);
-      if (reportName === 'top-materials' && subAction) return reportsController.fieldTopMaterials(req, res, subAction);
-      if (reportName === 'burn-rate' && subAction) return reportsController.fieldBurnRate(req, res, subAction);
-      if (reportName === 'headcount' && subAction) return reportsController.fieldHeadcount(req, res, subAction);
-      if (reportName === 'task-progress' && subAction) return reportsController.fieldDailyLogs(req, res, subAction);
-    }
-    // Contract Reports
-    if (role === 'contracts') {
-      if (reportName === 'status') return reportsController.contractsStatus(req, res);
-      if (reportName === 'milestones') return reportsController.contractsMilestones(req, res);
-    }
-    // Equipment Reports
-    if (role === 'equipment') {
-      if (reportName === 'utilization') return reportsController.equipmentUtilization(req, res);
-      if (reportName === 'top-deployed') return reportsController.equipmentTopDeployed(req, res);
-      if (reportName === 'maintenance-costs') return reportsController.equipmentMaintenanceCosts(req, res);
-    }
-    // Ops Reports
-    if (role === 'ops') {
-      if (reportName === 'dashboard') return reportsController.opsDashboard(req, res);
-      if (reportName === 'issues') return reportsController.opsIssues(req, res);
-      if (reportName === 'top-issues') return reportsController.opsTopIssues(req, res);
-      if (reportName === 'safety') return reportsController.opsSafety(req, res);
-    }
-    // Executive Reports
-    if (role === 'executive') {
-      if (reportName === 'summary') return reportsController.execSummary(req, res);
-      if (reportName === 'risks') return reportsController.execRisks(req, res);
-      if (reportName === 'project-rankings') return reportsController.execProjectRankings(req, res);
-    }
-    // System Reports
-    if (role === 'system') {
-      if (reportName === 'health') return reportsController.sysHealth(req, res);
-      if (reportName === 'audit') return reportsController.sysAudit(req, res);
-      if (reportName === 'top-actions') return reportsController.sysTopActions(req, res);
-      if (reportName === 'integrity') return reportsController.sysIntegrity(req, res);
-    }
+    return methodNotAllowed(res, ['GET', 'POST']);
   }
 
   // ============================================

@@ -1076,6 +1076,7 @@ enum MaintenanceTypeEnum {
 
 enum VehicleRentalStatusEnum {
   active
+  on_site
   shifted
   renewed
   returned

@@ -1,0 +1,779 @@
+================================================================================
+        RCMS — COMPLETE REPORT CATALOG BY ROLE
+        Road Construction Management System
+        Generated from Prisma Schema Analysis
+================================================================================
+
+LEGEND
+  [PM]  = Project Manager         (ALL reports below)
+  [FD]  = Finance Director
+  [EC]  = Equipment Coordinator
+  [FS]  = Field Supervisor
+  [CA]  = Contract Administrator
+
+================================================================================
+  SECTION 1: FINANCIAL REPORTS
+================================================================================
+
+1.01  Budget Overview by Project
+      Roles : PM, FD
+      Source: Project (budgetTotal, budgetSpent, contractValue)
+      Fields: Project Code, Name, Contract Value, Budget Total, Budget Spent,
+              Remaining Budget, % Utilised, Status, Manager
+      Filters: Project Status, Date Range (startDate–endDate), Project Type,
+               Manager, % Spent threshold
+      Charts: Bar (Budget Total vs Spent per project), Pie (Remaining vs Spent)
+
+1.02  Transaction Ledger
+      Roles : PM, FD
+      Source: Transaction
+      Fields: Entry Code, Project, Description, Debit, Credit, Net,
+              Account Code, Created By, Created At
+      Filters: Project, Date Range, Account Code, Created By, Debit/Credit type
+      Charts: Bar (Debits vs Credits by month), Pie (Spend by Account Code)
+
+1.03  Requisition Spend Summary
+      Roles : PM, FD
+      Source: Requisition + RequisitionItem
+      Fields: Req Code, Project, Submitted By, Total Amount, Status,
+              Vendor Name, Reviewed By, Reviewed At, Dispatch Status,
+              Fraud Check flag
+      Filters: Status (pending/approved/rejected/fraud_flag/fulfilled),
+               Project, Date Range, Vendor, Fraud Flag, Dispatch Status,
+               Amount range
+      Charts: Bar (Total Amount by Status), Pie (Spend by Project),
+              Bar (Monthly requisition volume)
+
+1.04  Requisition Items Detail
+      Roles : PM, FD
+      Source: RequisitionItem joined Requisition
+      Fields: Req Code, Project, Item Name, Quantity, Unit Price, Line Total,
+              Requisition Status
+      Filters: Project, Item Name (search), Status, Date Range, Price range
+      Charts: Bar (Top 10 items by spend), Pie (Spend by item category)
+
+1.05  Budget Change Requests (BCR) Log
+      Roles : PM, FD
+      Source: BudgetChangeRequest
+      Fields: BCR Code, Project, Budget Category, Current Amount,
+              Proposed Amount, Difference, Justification, Requester,
+              Requester Role, Status, PM Approved, PM Approved At,
+              Finance Approved, Finance Approved At
+      Filters: Status (Pending/Approved/Rejected), Project, Date Range,
+               Budget Category, Requester Role, PM Approved, Finance Approved
+      Charts: Bar (Proposed vs Current by category), Pie (BCRs by status)
+
+1.06  Budget Control Allocation vs Spent
+      Roles : PM, FD
+      Source: BudgetControl
+      Fields: Project, Phase, Category, Allocated Limit, Spent Amount,
+              Remaining, % Used, Status
+      Filters: Project, Phase, Category, Status, % Used threshold
+      Charts: Bar (Allocated vs Spent by category), Pie (Spent by phase)
+
+1.07  Daily Log Expenses Summary
+      Roles : PM, FD, FS
+      Source: DailyLogExpense + DailyLog
+      Fields: Log Date, Project, Category, Quantity, Unit Price, Total Cost,
+              Description, Submitted By, PM Approved
+      Filters: Project, Date Range, Category, PM Approved status,
+               Amount range
+      Charts: Bar (Daily expense trend), Pie (Spend by category)
+
+1.08  Contract Financial Summary
+      Roles : PM, FD, CA
+      Source: Contract
+      Fields: Ref Code, Project, Title, Vendor, Contract Value, VAT Amount,
+              WHT Amount, Advance Payment, Retention Amount,
+              Retention %, Tax Inclusive, Status, Start Date, End Date
+      Filters: Project, Status, Vendor, Date Range, Contract Type,
+               Value range, Tax Inclusive flag
+      Charts: Bar (Contract value by vendor), Pie (Contract value by status)
+
+1.09  Milestone Payment Schedule
+      Roles : PM, FD, CA
+      Source: Milestone + Contract
+      Fields: Milestone Ref, Contract Ref, Project, Description, Due Date,
+              Value, Status, Certificate URL
+      Filters: Status (scheduled/pending/certified/paid), Contract, Project,
+               Date Range, Value range
+      Charts: Bar (Milestone value by status), Pie (Certified vs Paid vs Pending)
+
+1.10  Variation Orders Financial Impact
+      Roles : PM, FD, CA
+      Source: VariationOrder
+      Fields: VO Code, Project, Title, Description, Net Value, Status,
+              Requested By, Approved By, Created At
+      Filters: Project, Status, Date Range, Value range, Requested By
+      Charts: Bar (VO value by project), Pie (VOs by status)
+
+1.11  Replenishment Request Cost Tracking
+      Roles : PM, FD
+      Source: ReplenishmentRequest
+      Fields: Req Code, Project, Sector, Material Name, Quantity Needed,
+              Estimated Cost, Requested By, Status, Finance Comments,
+              PM Comments, Created At
+      Filters: Project, Sector, Status, Material Name, Date Range,
+               Cost range
+      Charts: Bar (Estimated cost by material), Pie (Requests by status)
+
+1.12  Vendor Spend Analysis
+      Roles : PM, FD, CA
+      Source: Contract + Vendor
+      Fields: Vendor Name, Category, Risk Level, Rating, Total Contract Value,
+              Number of Contracts, Active Contracts, Average Contract Value
+      Filters: Vendor Category, Risk Level, Rating range, Active flag,
+               Date Range
+      Charts: Bar (Spend per vendor), Pie (Spend by vendor category)
+
+1.13  Insurance Policy Expiry Report
+      Roles : PM, FD
+      Source: InsurancePolicy
+      Fields: Entity Name, Document Type, Policy Number, Expiry Date,
+              Days to Expiry, Status
+      Filters: Status (Valid/Expiring/Expired), Expiry Date range,
+               Document Type, Entity Name
+      Charts: Bar (Policies by status), Pie (Policies by document type)
+
+1.14  Procurement Request Budget Report
+      Roles : PM, FD
+      Source: ProcurementRequest
+      Fields: Req Code, Vehicle Name, Estimated Cost, Priority, Requested By,
+              Status, PM Comments, Finance Comments, Created At
+      Filters: Status, Priority, Date Range, Cost range, Requested By
+      Charts: Bar (Cost by priority), Pie (Requests by status)
+
+================================================================================
+  SECTION 2: EQUIPMENT & ASSET REPORTS
+================================================================================
+
+2.01  Asset Register (Full Inventory)
+      Roles : PM, EC
+      Source: Asset
+      Fields: Asset Code, Name, Category, Serial Number, Model Year,
+              Condition, Status, Fuel Level, Hours/KM, Estimated Value,
+              Current Project, Last Maintenance
+      Filters: Status (available/checked_out/in_transit/maintenance/
+               decommissioned), Condition (Good/Fair/Poor), Category,
+               Current Project, Fuel Level range, Value range
+      Charts: Pie (Assets by status), Bar (Assets by category),
+              Pie (Assets by condition)
+
+2.02  Asset Utilisation Report
+      Roles : PM, EC
+      Source: AssetUsage
+      Fields: Asset Code, Asset Name, Project, Operator, Usage Date,
+              Role in Phase, Hours Operated, Fuel Consumed, Notes
+      Filters: Asset, Project, Operator, Date Range, Phase Role
+      Charts: Bar (Hours operated per asset), Bar (Fuel consumed per asset),
+              Bar (Daily usage trend)
+
+2.03  Asset Movement Log (Check-in/Check-out)
+      Roles : PM, EC
+      Source: AssetLog
+      Fields: Asset Code, Asset Name, Action (dispatched/returned/etc.),
+              Project, User, Fuel Level at Action, Dispatched By, Timestamp
+      Filters: Asset, Project, Action type, Date Range, User, Dispatched By
+      Charts: Bar (Actions per asset), Bar (Movement frequency by project)
+
+2.04  Maintenance Records Report
+      Roles : PM, EC
+      Source: MaintenanceRecord
+      Fields: Asset Code, Asset Name, Service Date, Type, Provider, Cost,
+              Description, Next Service Date
+      Filters: Asset, Maintenance Type (preventive/corrective/emergency/
+               incident), Date Range, Provider, Cost range,
+               Overdue Next Service
+      Charts: Bar (Maintenance cost by type), Pie (Maintenance by type),
+              Bar (Cost per asset)
+
+2.05  Asset Availability Dashboard
+      Roles : PM, EC
+      Source: Asset
+      Fields: Asset Code, Name, Category, Status, Current Project,
+              Condition, Fuel Level, Last Maintenance Date
+      Filters: Status, Category, Project (assigned/unassigned), Condition
+      Charts: Pie (Available vs In Use vs Maintenance), Bar (By category)
+
+2.06  Vehicle Rental Contract Report
+      Roles : PM, EC, FD
+      Source: VehicleRentalContract
+      Fields: Ref Code, Project, Machine Type, Contract Type, Vendor Name,
+              Daily Rate, Mobilisation Fee, Demobilisation Fee, Total Value,
+              Start Date, End Date, Return Date, Status, Renewal Count,
+              Phase Number, Approved By, Approved At
+      Filters: Project, Machine Type, Contract Type (rental/purchase),
+               Status (active/shifted/renewed/returned/expired/
+               pending_approval), Date Range, Vendor Name, Value range
+      Charts: Bar (Daily rate by machine type), Pie (Rentals by status),
+              Bar (Rental value by project)
+
+2.07  Vehicle Rental Shifts Log
+      Roles : PM, EC
+      Source: VehicleRentalShift + VehicleRentalContract
+      Fields: Rental Ref Code, Machine Type, Shift Date, From Project,
+              To Project, Reason, Shifted By
+      Filters: Machine Type, From Project, To Project, Date Range
+      Charts: Bar (Shifts by machine type), Bar (Shifts per project)
+
+2.08  Equipment Price Configuration Report
+      Roles : PM, EC, FD
+      Source: EquipmentPriceConfig
+      Fields: Machine Type, Label, Daily Rate, Is Deleted, Updated At,
+              Updated By
+      Filters: Is Deleted, Machine Type, Daily Rate range
+      Charts: Bar (Daily rate comparison by machine type)
+
+2.09  Fuel Consumption Trend
+      Roles : PM, EC
+      Source: AssetUsage (fuelConsumed)
+      Fields: Asset, Project, Date, Fuel Consumed, Hours Operated,
+              Fuel Efficiency (km or hrs per litre)
+      Filters: Asset, Project, Date Range
+      Charts: Bar (Fuel by asset), Line (Daily fuel trend), Bar (By project)
+
+2.10  Assets Requiring Maintenance Soon
+      Roles : PM, EC
+      Source: Asset (lastMaintenanceAt + hoursOrKm)
+      Fields: Asset Code, Name, Category, Last Maintenance, Hours/KM,
+              Condition, Status, Current Project
+      Filters: Condition (Fair/Poor), Days since last maintenance threshold,
+               Status
+      Charts: Bar (Assets by days since maintenance), Pie (Condition split)
+
+================================================================================
+  SECTION 3: FIELD OPERATIONS REPORTS
+================================================================================
+
+3.01  Daily Log Summary
+      Roles : PM, FS
+      Source: DailyLog
+      Fields: Log Date, Project, Submitted By, Headcount, Weather, Narrative,
+              Expense Amount, Expense Category, Status, PM Approved,
+              Active Phase, Active Task, Work Progress %, Location Verified,
+              Location Flagged, Is SOS
+      Filters: Project, Date Range, Status (pending/approved/rejected),
+               PM Approved, Weather, Is SOS, Location Verified,
+               Location Flagged, Headcount range, Work Progress range
+      Charts: Bar (Daily headcount trend), Pie (Logs by status),
+              Bar (Work progress by date)
+
+3.02  SOS / Emergency Logs
+      Roles : PM, FS
+      Source: DailyLog (isSos = true)
+      Fields: Log Date, Project, Submitted By, Narrative, Status,
+              Headcount, Location (lat/lng), Location Verified
+      Filters: Project, Date Range, Status
+      Charts: Bar (SOS events by project), Bar (SOS by month)
+
+3.03  Location Verification Report
+      Roles : PM, FS
+      Source: DailyLog (location fields)
+      Fields: Log Date, Project, Submitted By, Submission Lat, Submission Lng,
+              Submission Accuracy, Location Source, Device Type,
+              Location Captured At, Location Verified, Location Flagged
+      Filters: Project, Date Range, Location Verified, Location Flagged,
+               Device Type, Location Source
+      Charts: Pie (Verified vs Flagged vs Unverified),
+              Bar (Flagged submissions by project)
+
+3.04  Work Progress by Phase
+      Roles : PM, FS
+      Source: DailyLog (activePhase, workProgress)
+      Fields: Log Date, Project, Active Phase, Active Task, Work Progress %,
+              Submitted By, Headcount
+      Filters: Project, Phase, Date Range, Work Progress range
+      Charts: Bar (Avg progress by phase), Line (Progress trend over time)
+
+3.05  Task Progress Report
+      Roles : PM, FS
+      Source: Task
+      Fields: Task Name, Project, Phase Number, Start Date, End Date,
+              Progress %, Status Class, Dependency, Days Remaining
+      Filters: Project, Phase Number, Progress range, Status Class, Date Range,
+               Overdue tasks only
+      Charts: Bar (Progress by task), Pie (Tasks by status class),
+              Bar (Tasks by phase)
+
+3.06  Safety Incident Report
+      Roles : PM, FS
+      Source: SafetyIncident
+      Fields: Project, Reported By, Description, Severity, Type, Status,
+              Location, Created At, Resolved At, Days to Resolve
+      Filters: Project, Severity (low/medium/high), Type, Status (open/closed),
+               Date Range, Reported By
+      Charts: Pie (Incidents by severity), Bar (Incidents by project),
+              Bar (Incidents by type), Bar (Monthly trend)
+
+3.07  Safety Incident Response Log
+      Roles : PM, FS
+      Source: SafetyIncidentReply
+      Fields: Incident ID, Project, Replied By, Message, Created At,
+              Photos count
+      Filters: Project, Date Range, Replied By
+      Charts: Bar (Replies per incident), Bar (Response time)
+
+3.08  Material Usage Log
+      Roles : PM, FS, EC
+      Source: MaterialUsage
+      Fields: Project, Sector, Layer/Phase, Material Name, Quantity, Unit,
+              Log Date, Reported By
+      Filters: Project, Sector, Material Name, Date Range, Reported By,
+               Phase/Layer
+      Charts: Bar (Quantity used by material), Pie (Usage by sector),
+              Bar (Daily usage trend)
+
+3.09  Inventory Stock Levels
+      Roles : PM, FS, EC
+      Source: Inventory + Sector
+      Fields: Sector, Material Name, Category, Unit, Quantity On Hand,
+              Low Threshold, Min Threshold, Last Restocked At,
+              Below Min flag, Below Low flag
+      Filters: Project, Sector, Category, Below Min Threshold,
+               Below Low Threshold, Date of last restock range
+      Charts: Bar (Stock levels by material), Pie (Items below threshold)
+
+3.10  Inventory Movement Log
+      Roles : PM, FS
+      Source: InventoryLog
+      Fields: Sector, Material, Movement Type, Quantity, Reference,
+              Notes, Dispatched By, User, Timestamp
+      Filters: Sector, Material, Movement Type (in/out/adjust),
+               Date Range, Dispatched By, User
+      Charts: Bar (In vs Out by material), Bar (Daily movement volume)
+
+3.11  Sector Activity Report
+      Roles : PM, FS
+      Source: Sector + MaterialUsage + Inventory
+      Fields: Sector Name, Project, Description, Start Date, End Date,
+              Status, Total Material Used, Total Stock On Hand
+      Filters: Project, Status, Date Range
+      Charts: Bar (Material usage by sector), Pie (Sectors by status)
+
+3.12  Issue Tracker Report
+      Roles : PM, FS
+      Source: Issue
+      Fields: Issue Code, Project, Category, Site Location, Priority,
+              Description, Reported By, Assigned To, Status,
+              Resolution Notes, Resolved At, Created At, Days Open
+      Filters: Project, Category, Priority (Low/Medium/High), Status
+               (open/in_progress/closed), Assigned To, Reported By,
+               Date Range, Unresolved only
+      Charts: Pie (Issues by priority), Bar (Issues by category),
+              Bar (Issues by project), Bar (Resolution time)
+
+================================================================================
+  SECTION 4: CONTRACT & PROCUREMENT REPORTS
+================================================================================
+
+4.01  Contract Register
+      Roles : PM, CA, FD
+      Source: Contract
+      Fields: Ref Code, Project, Title, Vendor, Contract Type, Value,
+              Start Date, End Date, Status, Materials List, VAT, WHT,
+              Retention, Rating, Rated At
+      Filters: Project, Status, Vendor, Contract Type, Date Range,
+               Value range, Rating range
+      Charts: Bar (Contract value by status), Pie (Contracts by type)
+
+4.02  Contract Version History
+      Roles : PM, CA
+      Source: ContractVersion
+      Fields: Contract Ref, Version Number, Title, Value, Status,
+              Change Notes, Created By, Created At, Document URL
+      Filters: Contract, Version Number, Status, Date Range, Created By
+      Charts: Bar (Value change across versions)
+
+4.03  Contract Items (Bill of Quantities)
+      Roles : PM, CA, FD
+      Source: ContractItem
+      Fields: Contract Ref, Material Name, Quantity, Unit, Unit Price,
+              Total Cost, Received Qty, Outstanding Qty,
+              % Received, Fulfillment Status
+      Filters: Contract, Project, Material Name, % Received range,
+               Unfulfilled only
+      Charts: Bar (Received vs Outstanding by item),
+              Pie (Fulfillment status)
+
+4.04  Vendor Performance Report
+      Roles : PM, CA, FD
+      Source: Vendor + Contract
+      Fields: Vendor Name, Category, Risk Level, Overall Rating,
+              Total Contracts, Active Contracts, Total Value,
+              Average Contract Value, Is Active
+      Filters: Category, Risk Level, Rating range, Is Active,
+               Date Range
+      Charts: Bar (Rating by vendor), Pie (Vendors by risk level),
+              Bar (Value by vendor)
+
+4.05  Procurement Request Status Report
+      Roles : PM, FD
+      Source: ProcurementRequest
+      Fields: Req Code, Vehicle Name, Estimated Cost, Priority,
+              Requested By, Status, PM Comments, PM Reviewed At,
+              Finance Comments, Finance Reviewed At, Created At
+      Filters: Status (pending_pm/pending_finance/approved/rejected/purchased),
+               Priority, Date Range, Requested By, Cost range
+      Charts: Bar (Cost by status), Pie (Requests by priority)
+
+4.06  Replenishment Requests Pipeline
+      Roles : PM, FD, FS
+      Source: ReplenishmentRequest
+      Fields: Req Code, Project, Sector, Material Name, Quantity Needed,
+              Estimated Cost, Status, Requested By, Finance Comments,
+              PM Comments, Created At, Updated At
+      Filters: Project, Sector, Status, Material, Date Range, Cost range
+      Charts: Bar (Cost by material), Pie (Requests by status),
+              Bar (Volume by sector)
+
+================================================================================
+  SECTION 5: HUMAN RESOURCES / USER REPORTS
+================================================================================
+
+5.01  User Directory & Role Report
+      Roles : PM (Operations Manager access implied)
+      Source: User
+      Fields: Name, Email, Phone, Role, Permissions, Is Active, Is Locked,
+              Last Login IP, Created At, Must Change Password,
+              Must Change Email
+      Filters: Role, Is Active, Is Locked, Must Change Password,
+               Created Date range
+      Charts: Pie (Users by role), Bar (Active vs Inactive)
+
+5.02  User Activity Audit Log
+      Roles : PM
+      Source: AuditLog
+      Fields: Timestamp, User Name, User Role, Action, Target Type,
+              Target ID, Target Code, IP Address, Severity, Details
+      Filters: User, Role, Action, Target Type, Severity (info/warning/
+               critical), Date Range, IP Address
+      Charts: Bar (Actions per user), Pie (Actions by type),
+              Bar (Severity distribution)
+
+5.03  Field Supervisor Assignments
+      Roles : PM
+      Source: Project (fieldSupervisorId) + User
+      Fields: Project Code, Project Name, Field Supervisor Name, Email,
+              Project Status, Start Date, End Date, Project Type
+      Filters: Field Supervisor, Project Status, Project Type, Date Range
+      Charts: Bar (Projects per supervisor), Pie (Status distribution)
+
+5.04  Project Manager Portfolio Report
+      Roles : PM
+      Source: Project (managerId) + User
+      Fields: Manager Name, Total Projects, Active Projects, Budget Total
+              (sum), Budget Spent (sum), Average Utilisation %
+      Filters: Manager, Project Status, Date Range, Project Type
+      Charts: Bar (Projects per manager), Bar (Spend per manager)
+
+5.05  Notification Activity Report
+      Roles : PM
+      Source: Notification
+      Fields: User, Type, Title, Message, Is Read, Created At
+      Filters: User, Type, Is Read, Date Range
+      Charts: Pie (Read vs Unread), Bar (Notifications by type)
+
+5.06  Daily Log Submission Compliance
+      Roles : PM, FS
+      Source: DailyLog grouped by User + Date
+      Fields: Submitted By, Name, Role, Project, Total Logs Submitted,
+              Approved, Rejected, Pending, Compliance %
+      Filters: Project, Date Range, User, Status
+      Charts: Bar (Submission rate by user), Pie (Approved vs Rejected)
+
+================================================================================
+  SECTION 6: PROJECT OVERVIEW REPORTS
+================================================================================
+
+6.01  Project Status Dashboard
+      Roles : PM, FD
+      Source: Project
+      Fields: Code, Name, Type, Status, Manager, Field Supervisor,
+              Client, Start Date, End Date, Contract Value,
+              Budget Total, Budget Spent, % Used, Current Phase,
+              Suspension Reason
+      Filters: Status, Type, Manager, Field Supervisor, Client,
+               Date Range, % Budget Used threshold
+      Charts: Pie (Projects by status), Bar (Budget used by project),
+              Pie (Projects by type)
+
+6.02  Project Timeline / Gantt Data
+      Roles : PM, FS
+      Source: Task
+      Fields: Project, Phase Number, Task Name, Start Date, End Date,
+              Duration (days), Progress %, Dependency, Status Class
+      Filters: Project, Phase, Progress range, Date Range, Status Class,
+               Overdue only
+      Charts: Bar (Duration by task), Bar (Progress by phase)
+
+6.03  Phase Sign-off Report (Photo Evidence)
+      Roles : PM, FS
+      Source: DailyLog (photos) + Task (phaseNumber)
+      Fields: Log Date, Project, Phase, Task, Photos Count, Submitted By,
+              PM Approved, Work Progress %
+      Filters: Project, Phase, Date Range, PM Approved, Has Photos
+      Charts: Bar (Photo submissions by phase)
+
+6.04  Extension Requests Report
+      Roles : PM
+      Source: ProjectExtensionRequest
+      Fields: Project, Requested By, Reviewed By, Current End Date,
+              Requested End Date, Extension Days, Justification,
+              Status, PM Comment, Created At
+      Filters: Project, Status (pending/approved/rejected),
+               Requested By, Date Range, Extension Days range
+      Charts: Pie (Requests by status), Bar (Extension days by project)
+
+6.05  Road Specification Budget Report
+      Roles : PM, FD
+      Source: RoadSpecification + RoadLayer + RoadAccessory
+      Fields: Project, Road Type, Length (km), Width (m), Lanes, Terrain,
+              Geographic Zone, Est. Total Low, Est. Total High,
+              Approved Total, Equipment Budget, Cost per Meter,
+              Reconciliation Status
+      Filters: Project, Road Type, Terrain, Reconciliation Status,
+               Length range, Budget range
+      Charts: Bar (Low vs High estimate by project), Pie (By road type)
+
+6.06  Road Layer Cost Breakdown
+      Roles : PM, FD
+      Source: RoadLayer
+      Fields: Project, Phase Number, Phase Name, Material Type, Unit,
+              Quantity per KM, Total Quantity, Unit Cost Low,
+              Unit Cost High, Total Cost Low, Total Cost High, Approved
+      Filters: Project, Phase Number, Material Type, Approved flag,
+               Cost range
+      Charts: Bar (Cost by phase), Pie (Cost by material type)
+
+6.07  Road Accessory Cost Breakdown
+      Roles : PM, FD
+      Source: RoadAccessory
+      Fields: Project, Category, Item Name, Unit, Quantity per KM,
+              Total Quantity, Unit Cost Low, Unit Cost High,
+              Total Cost Low, Total Cost High, Approved
+      Filters: Project, Category, Item Name, Approved flag, Cost range
+      Charts: Bar (Cost by category), Pie (Items by category)
+
+6.08  Material Price Configuration Report
+      Roles : PM, FD
+      Source: MaterialPriceConfig
+      Fields: Material Name, Category, Phase, Unit, Base Price,
+              Cost per KM, Is Active, Is Deleted, Updated By, Updated At
+      Filters: Category, Phase, Is Active, Is Deleted, Price range
+      Charts: Bar (Base price by material), Pie (Materials by category)
+
+6.09  Whistleblower Report Summary (Anonymised)
+      Roles : PM
+      Source: WhistleblowerReport
+      Fields: ID, Category, Project, Status, Assigned To, Created At,
+              Is Anonymous (no reporter name if anonymous)
+      Filters: Category, Project, Status, Assigned To, Date Range,
+               Is Anonymous
+      Charts: Pie (Reports by status), Bar (Reports by category)
+
+6.10  Document Management Report
+      Roles : PM, CA
+      Source: Document + DocumentVersion
+      Fields: Title, Project, Document Type, Status, Uploaded By,
+              Current Version URL, Version Count, Contract Value,
+              Created At, Updated At
+      Filters: Project, Document Type, Status, Uploaded By, Date Range,
+               Has Contract Value
+      Charts: Pie (Documents by type), Bar (Documents per project)
+
+================================================================================
+  SECTION 7: CROSS-ROLE COMPOSITE REPORTS
+================================================================================
+
+7.01  Project Financial Health Scorecard
+      Roles : PM, FD
+      Source: Project + Requisition + Transaction + BudgetControl +
+              BudgetChangeRequest
+      Fields: Project, Budget Total, Budget Spent, Open Requisitions Value,
+              Pending BCRs, Approved VOs Total, Remaining Budget,
+              Burn Rate per Month
+      Filters: Project, Date Range, Status
+      Charts: Bar (Health metrics per project), Pie (Budget breakdown)
+
+7.02  Combined Equipment + Cost Report
+      Roles : PM, EC, FD
+      Source: VehicleRentalContract + Asset + MaintenanceRecord + AssetUsage
+      Fields: Equipment/Asset, Project, Rental Cost + Maintenance Cost,
+              Hours Operated, Fuel Consumed, Total Cost of Ownership
+      Filters: Project, Machine/Asset Type, Date Range
+      Charts: Bar (Cost components by equipment), Pie (Rental vs Own vs Maint)
+
+7.03  Material Supply Chain Audit
+      Roles : PM, FD, FS
+      Source: ContractItem + ReplenishmentRequest + MaterialUsage + Inventory
+      Fields: Material Name, Contracted Qty, Received Qty, Consumed Qty,
+              On Hand Qty, Variance, Projects, Sectors
+      Filters: Material Name, Project, Date Range
+      Charts: Bar (Contracted vs Received vs Used), Pie (Variance by material)
+
+7.04  Safety + Issue Combined Report
+      Roles : PM, FS
+      Source: SafetyIncident + Issue
+      Fields: Type (Safety/Issue), Project, Category/Severity, Status,
+              Reported By, Created At, Resolved At, Days Open
+      Filters: Project, Date Range, Status, Type, Priority/Severity
+      Charts: Bar (Events by project), Pie (Safety vs Issues),
+              Bar (Open vs Resolved)
+
+7.05  Full Audit Trail Report
+      Roles : PM
+      Source: AuditLog
+      Fields: Timestamp, User, Role, IP Address, Action, Target Type,
+              Target Code, Severity, Details
+      Filters: User, Role, Action, Severity, Target Type, Date Range,
+               IP Address
+      Charts: Bar (Actions by severity), Pie (Actions by user role),
+              Bar (Daily action volume)
+
+================================================================================
+  ROLE ACCESS SUMMARY MATRIX
+================================================================================
+
+Report Category                     PM   FD   EC   FS   CA
+-----------------------------------------------------------
+Financial Reports (1.01–1.14)       ALL  ALL  ---  1.07  1.08,1.09,1.10
+Equipment & Asset (2.01–2.10)       ALL  2.06,2.08  ALL  2.08,2.09  ---
+Field Operations (3.01–3.12)        ALL  ---  3.08,3.09  ALL  ---
+Contract & Procurement (4.01–4.06)  ALL  ALL  ---  4.06  ALL
+HR / User Reports (5.01–5.06)       ALL  ---  ---  5.06  ---
+Project Overview (6.01–6.10)        ALL  6.01,6.05,6.06,6.07,6.08  ---  6.02,6.03  6.10
+Cross-Role Composite (7.01–7.05)    ALL  7.01,7.02,7.03  7.02  7.03,7.04  ---
+
+================================================================================
+  FILTER TYPES REFERENCE
+================================================================================
+
+Date Filters:
+  - Single date (exact)
+  - Date range (from–to)
+  - Relative (Last 7 days / 30 days / 90 days / This year)
+  - Month picker
+  - Quarter picker
+
+Categorical Filters:
+  - Multi-select dropdown (Status, Role, Type, Category)
+  - Boolean toggle (Is Active, Fraud Flag, PM Approved, SOS, etc.)
+  - Search/text (Name, Code, Description contains)
+
+Numeric Filters:
+  - Minimum / Maximum range slider
+  - Above / Below threshold
+  - Percentage range (e.g. % Budget Used 80–100%)
+
+Relational Filters:
+  - Project selector (single or multi)
+  - User/Person selector (Manager, Submitted By, Assigned To)
+  - Vendor selector
+  - Sector selector
+  - Asset/Machine selector
+
+================================================================================
+  TOTAL REPORT COUNT: 52 distinct reports
+  TOTAL POSSIBLE FILTER COMBINATIONS: 200+
+  CHART TYPES: Bar Chart, Pie Chart (selectable per numeric field)
+  OUTPUT FORMATS: Table (rows + columns), Bar Chart, Pie Chart
+================================================================================
+
+END OF CATALOG
+You are a senior full-stack engineer. Build a complete, production-ready Report Builder module for the RCMS (Road Construction Management System) using Node.js, Prisma, PostgreSQL, vanilla HTML/CSS/JS (no frontend frameworks).
+
+STACK
+
+Backend: Node.js + Express
+ORM: Prisma (PostgreSQL)
+Frontend: Vanilla HTML + CSS + JS (no React, no Vue)
+Charts: Chart.js (CDN)
+
+
+THE 5 ROLES
+Project Manager (PM)     — sees ALL reports
+Finance Director (FD)    — financial, contracts, equipment costs
+Equipment Coordinator (EC) — assets, rentals, maintenance, fuel
+Field Supervisor (FS)    — daily logs, safety, materials, inventory
+Contract Administrator (CA) — contracts, vendors, milestones, documents
+
+WHAT TO BUILD
+1. Backend — reports.router.js
+Create a single Express router mounted at /api/reports.
+POST /api/reports/run
+Accepts JSON body:
+json{
+  "reportCode": "1.03",
+  "filters": {
+    "projectId": 1,
+    "dateFrom": "2025-01-01",
+    "dateTo": "2025-12-31",
+    "status": "approved",
+    "groupBy": "project"
+  },
+  "fields": ["Req Code", "Project", "Total Amount", "Status", "Vendor"],
+  "chartField": "Total Amount"
+}
+Returns:
+json{
+  "columns": ["Req Code", "Project", "Total Amount", "Status", "Vendor"],
+  "rows": [...],
+  "summary": { "total": 12, "sum": 5400000, "avg": 450000 },
+  "chartData": { "labels": [...], "values": [...] }
+}
+Implement every report below as a Prisma query with dynamic where, select, and optional groupBy. Each report maps to real Prisma models from the schema.
+GET /api/reports/catalog
+Returns the full report catalog filtered by the calling user's role (read role from req.user.role).
+
+2. Report Definitions — implement ALL 52 reports
+Each report needs:
+
+A Prisma query with dynamic filters (projectId, dateFrom, dateTo, status, etc.)
+Computed fields where needed (e.g. Remaining = budgetTotal - budgetSpent, % Used, Days Open = now - createdAt)
+groupBy support on project, month, status, category
+
+FINANCIAL (1.01–1.14)
+CodeNamePrisma Model(s)1.01Budget overview by projectproject1.02Transaction ledgertransaction1.03Requisition spend summaryrequisition1.04Requisition items detailrequisitionItem + requisition1.05Budget change requestsbudgetChangeRequest1.06Budget control allocationbudgetControl1.07Daily log expensesdailyLogExpense + dailyLog1.08Contract financial summarycontract1.09Milestone payment schedulemilestone + contract1.10Variation orders impactvariationOrder1.11Replenishment cost trackingreplenishmentRequest1.12Vendor spend analysisvendor + contract1.13Insurance policy expiryinsurancePolicy1.14Procurement request budgetprocurementRequest
+EQUIPMENT & ASSETS (2.01–2.10)
+CodeNamePrisma Model(s)2.01Asset registerasset2.02Asset utilisationassetUsage2.03Asset movement logassetLog2.04Maintenance recordsmaintenanceRecord2.05Asset availabilityasset2.06Vehicle rental contractsvehicleRentalContract2.07Vehicle rental shiftsvehicleRentalShift2.08Equipment price configequipmentPriceConfig2.09Fuel consumption trendassetUsage (fuelConsumed)2.10Assets needing maintenanceasset + maintenanceRecord
+FIELD OPERATIONS (3.01–3.12)
+CodeNamePrisma Model(s)3.01Daily log summarydailyLog3.02SOS / Emergency logsdailyLog (isSos=true)3.03Location verificationdailyLog (location fields)3.04Work progress by phasedailyLog (activePhase)3.05Task progresstask3.06Safety incident reportsafetyIncident3.07Safety incident responsessafetyIncidentReply3.08Material usage logmaterialUsage3.09Inventory stock levelsinventory + sector3.10Inventory movement loginventoryLog3.11Sector activitysector + materialUsage3.12Issue trackerissue
+CONTRACTS & PROCUREMENT (4.01–4.06)
+CodeNamePrisma Model(s)4.01Contract registercontract4.02Contract version historycontractVersion4.03Contract items (BOQ)contractItem4.04Vendor performancevendor + contract4.05Procurement statusprocurementRequest4.06Replenishment pipelinereplenishmentRequest
+HR / USERS (5.01–5.06)
+CodeNamePrisma Model(s)5.01User directoryuser5.02Audit logauditLog5.03Supervisor assignmentsproject + user5.04PM portfolioproject grouped by manager5.05Notification activitynotification5.06Daily log compliancedailyLog grouped by user
+PROJECT OVERVIEW (6.01–6.10)
+CodeNamePrisma Model(s)6.01Project status dashboardproject6.02Timeline / Gantt datatask6.03Phase sign-off evidencedailyLog (photos)6.04Extension requestsprojectExtensionRequest6.05Road specification budgetroadSpecification6.06Road layer costsroadLayer6.07Road accessory costsroadAccessory6.08Material price configmaterialPriceConfig6.09Whistleblower summarywhistleblowerReport6.10Document managementdocument + documentVersion
+COMPOSITE (7.01–7.05)
+CodeNamePrisma Model(s)7.01Financial health scorecardproject + requisition + budgetControl + variationOrder7.02Equipment + cost combinedvehicleRentalContract + maintenanceRecord + assetUsage7.03Material supply chain auditcontractItem + replenishmentRequest + materialUsage + inventory7.04Safety + issues combinedsafetyIncident + issue7.05Full audit trailauditLog
+
+Frontend behaviour:
+
+On role change → refetch /api/reports/catalog → re-render sidebar categories and report cards
+On report card click → show config panel, pre-populate field chips from report definition
+Field chips are toggleable — selected chips = columns sent to backend
+Run Report → POST to /api/reports/run → render table + chart
+Table columns are sortable (click header to toggle asc/desc, client-side)
+Status values render as coloured pills (approved=green, pending=amber, rejected=red)
+Numeric cells right-aligned, formatted with toLocaleString() and MWK prefix where monetary
+Export CSV — generate and download from the current table data in JS
+Export PDF — window.print() with a print stylesheet that hides sidebar and shows only the table
+
+Chart behaviour:
+
+Bar chart: x-axis = first text column, y-axis = chartField (the numeric field user picks)
+Pie chart: labels = first text column, values = chartField
+Charts use Chart.js 4 loaded from CDN
+Custom HTML legend (colored squares + label + value), not Chart.js default legend
+
+
+4. Role-based access enforcement
+In the router, before running any report query:
+jsconst REPORT_ROLES = {
+  '1.01': ['PM','FD'],
+  '1.02': ['PM','FD'],
+  // ... all 52
+};
+if (!REPORT_ROLES[reportCode].includes(req.user.role)) {
+  return res.status(403).json({ error: 'Access denied for your role' });
+}

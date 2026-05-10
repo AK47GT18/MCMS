@@ -1,311 +1,138 @@
 /**
  * MCMS Controller - Reports
- * Handles all report endpoints with JSON/CSV/PDF export
+ * Standardized report builder controller
  */
 
 const reports = require('../services/reports.service');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { asyncHandler } = require('../middlewares/error.middleware');
 const { parseBody } = require('../middlewares/validate.middleware');
-const { parseReportQuery, sendReport } = require('../utils/exportUtils');
+const { sendReport, parseReportQuery } = require('../utils/exportUtils');
 const auditService = require('../services/audit.service');
+const response = require('../utils/response');
+const { prisma } = require('../config/database');
 
-// Helper: log report access to audit trail
-async function auditReport(user, reportName, query) {
+/**
+ * Log report access to audit trail
+ */
+async function auditReport(user, reportCode, filters) {
   if (user?.id) {
     await auditService.log({
       userId: user.id,
       userName: user.name,
       userRole: user.role,
-      action: 'VIEW_REPORT',
+      action: 'RUN_REPORT',
       targetType: 'Report',
-      details: { report: reportName, filters: query }
+      details: { reportCode, filters }
     }).catch(() => {});
   }
 }
 
-// ============================================
-// PM REPORTS
-// ============================================
+/**
+ * GET /api/v1/reports/catalog
+ * Returns the list of available reports based on user role
+ */
+const getCatalog = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
 
-const pmPortfolio = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.pmPortfolio(query);
-  await auditReport(user, 'pm_portfolio', query);
-  sendReport(req, res, data, 'pm_portfolio', { title: 'Project Portfolio Report' });
+  // Filter catalog by user role
+  // Roles in catalog are short (PM, FD, EC, FS, CA)
+  // Mapping from DB role to short role
+  const roleMap = {
+    'Project_Manager': 'PM',
+    'Finance_Director': 'FD',
+    'Equipment_Coordinator': 'EC',
+    'Field_Supervisor': 'FS',
+    'Contract_Administrator': 'CA'
+  };
+  const shortRole = roleMap[user.role] || user.role;
+
+  const catalog = reports.REPORT_CATALOG.filter(r => 
+    r.roles.includes(shortRole) || user.role === 'Project_Manager' // PM sees all
+  );
+
+  return response.success(res, catalog);
 });
 
-const pmProjectHealth = asyncHandler(async (req, res, projectId) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.pmProjectHealth(projectId);
-  await auditReport(user, `pm_project_health_${projectId}`, { projectId });
-  sendReport(req, res, data, `pm_project_health_${projectId}`, { title: 'Project Health Analysis' });
-});
+/**
+ * GET /api/v1/reports/config
+ * Returns dynamic filter options (projects, statuses, etc.)
+ */
+const getConfig = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
 
-const pmTimeline = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.pmTimeline(query);
-  await auditReport(user, 'pm_timeline', query);
-  sendReport(req, res, data, 'pm_timeline', { title: 'Project Timeline Performance' });
-});
-
-// ============================================
-// FINANCE REPORTS
-// ============================================
-
-const financeBudget = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeBudget(query);
-  await auditReport(user, 'finance_budget', query);
-  sendReport(req, res, data, 'finance_budget_utilization', { title: 'Global Budget Utilization' });
-});
-
-const financeRequisitions = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeRequisitions(query);
-  await auditReport(user, 'finance_requisitions', query);
-  sendReport(req, res, data, 'finance_requisitions_summary', { title: 'Procurement Requisition Summary' });
-});
-
-const financeTopVendors = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeTopVendors(query);
-  await auditReport(user, 'finance_top_vendors', query);
-  sendReport(req, res, data.rows, 'finance_top_vendors', { 
-    title: 'Top Vendors by Expenditure',
-    columns: ['name', 'count', 'totalSpend'] 
+  const projects = await prisma.project.findMany({
+    select: { id: true, code: true, name: true }
   });
+
+  const config = {
+    projects,
+    statuses: ['active', 'pending', 'completed', 'on_hold', 'rejected', 'approved'],
+    categories: [...new Set(reports.REPORT_CATALOG.map(r => r.category))]
+  };
+
+  return response.success(res, config);
 });
 
-const financeSpendCategories = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.financeSpendCategories(query);
-  await auditReport(user, 'finance_spend_categories', query);
-  sendReport(req, res, data, 'finance_spend_by_category', { title: 'Expenditure by Category' });
-});
+/**
+ * POST /api/v1/reports/run
+ * Executes a report with given filters
+ */
+const runReport = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
 
-// ============================================
-// FIELD REPORTS
-// ============================================
+  const body = await parseBody(req);
+  const { reportCode, filters = {} } = body;
 
-const fieldDailyLogs = asyncHandler(async (req, res, projectId) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.fieldDailyLogs(projectId);
-  await auditReport(user, `field_daily_logs_${projectId}`, { projectId });
-  sendReport(req, res, data, `field_daily_logs_${projectId}`, { title: 'Field Activity Daily Logs' });
-});
-
-const fieldTopMaterials = asyncHandler(async (req, res, projectId) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.fieldTopMaterials(projectId);
-  await auditReport(user, `field_top_materials_${projectId}`, { projectId });
-  sendReport(req, res, data.rows, `field_top_materials_${projectId}`, { 
-    title: 'Top Consumed Materials',
-    columns: ['name', 'count', 'totalQuantity']
-  });
-});
-
-const fieldBurnRate = asyncHandler(async (req, res, projectId) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.fieldBurnRate(projectId);
-  await auditReport(user, `field_burn_rate_${projectId}`, { projectId });
-  sendReport(req, res, data, `field_burn_rate_${projectId}`, { title: 'Material Burn Rate Analysis' });
-});
-
-const fieldHeadcount = asyncHandler(async (req, res, projectId) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.fieldHeadcount(projectId);
-  await auditReport(user, `field_headcount_${projectId}`, { projectId });
-  sendReport(req, res, data, `field_headcount_${projectId}`, { title: 'Site Labor Headcount Report' });
-});
-
-// ============================================
-// CONTRACT REPORTS
-// ============================================
-
-const contractsStatus = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.contractsStatus();
-  await auditReport(user, 'contracts_status', {});
-  sendReport(req, res, data, 'contracts_status_summary', { title: 'Contractual Status Overview' });
-});
-
-const contractsMilestones = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.contractsMilestones();
-  await auditReport(user, 'contracts_milestones', {});
-  sendReport(req, res, data, 'contracts_milestones_health', { title: 'Contract Milestone Compliance' });
-});
-
-// ============================================
-// EQUIPMENT REPORTS
-// ============================================
-
-const equipmentUtilization = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.equipmentUtilization();
-  await auditReport(user, 'equipment_utilization', {});
-  sendReport(req, res, data, 'equipment_utilization_rate', { title: 'Asset Utilization Metrics' });
-});
-
-const equipmentTopDeployed = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.equipmentTopDeployed();
-  await auditReport(user, 'equipment_top_deployed', {});
-  sendReport(req, res, data.rows, 'equipment_top_deployed', { 
-    title: 'Most Deployed Equipment',
-    columns: ['name', 'count']
-  });
-});
-
-const equipmentMaintenanceCosts = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.equipmentMaintenanceCosts();
-  await auditReport(user, 'equipment_maintenance', {});
-  sendReport(req, res, data, 'equipment_maintenance_costs', { title: 'Asset Maintenance Expenditure' });
-});
-
-// ============================================
-// OPS REPORTS
-// ============================================
-
-const opsDashboard = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.opsDashboard();
-  await auditReport(user, 'ops_dashboard', {});
-  sendReport(req, res, data, 'operations_efficiency_kpis', { title: 'Operations Efficiency KPIs' });
-});
-
-const opsIssues = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.opsIssues();
-  await auditReport(user, 'ops_issues', {});
-  sendReport(req, res, data, 'site_issues_summary', { title: 'Site Issues and Blockers' });
-});
-
-const opsTopIssues = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.opsTopIssues();
-  await auditReport(user, 'ops_top_issues', {});
-  sendReport(req, res, data.rows, 'ops_top_recurring_issues', { 
-    title: 'Top Recurring Site Issues',
-    columns: ['name', 'count']
-  });
-});
-
-const opsSafety = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.opsSafety();
-  await auditReport(user, 'ops_safety', {});
-  sendReport(req, res, data, 'safety_compliance_report', { title: 'Safety and Incident Compliance' });
-});
-
-// ============================================
-// EXECUTIVE REPORTS
-// ============================================
-
-const execSummary = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.execSummary();
-  await auditReport(user, 'exec_summary', {});
-  sendReport(req, res, data, 'executive_portfolio_summary', { title: 'Executive Portfolio Summary' });
-});
-
-const execRisks = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.execRisks();
-  await auditReport(user, 'exec_risks', {});
-  sendReport(req, res, data, 'enterprise_risk_exposure', { title: 'Enterprise Risk Exposure' });
-});
-
-const execProjectRankings = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.execProjectRankings();
-  await auditReport(user, 'exec_project_rankings', {});
-  sendReport(req, res, data, 'project_performance_rankings', { title: 'Project Performance Rankings' });
-});
-
-// ============================================
-// SYSTEM REPORTS
-// ============================================
-
-const sysHealth = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.systemHealth();
-  await auditReport(user, 'sys_health', {});
-  sendReport(req, res, data, 'system_health_performance', { title: 'System Health and Performance' });
-});
-
-const sysAudit = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.systemAudit(query);
-  await auditReport(user, 'sys_audit', query);
-  sendReport(req, res, data, 'system_audit_logs', { title: 'Detailed System Audit Trail' });
-});
-
-const sysTopActions = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const query = parseReportQuery(req.url);
-  const data = await reports.systemTopActions(query);
-  await auditReport(user, 'system_top_actions', query);
-  sendReport(req, res, data.rows, 'system_top_actions', { 
-    title: 'Top Actions Report',
-    columns: ['name', 'count'],
-  });
-});
-
-const sysIntegrity = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  const data = await reports.systemIntegrity();
-  await auditReport(user, 'system_integrity', {});
-  sendReport(req, res, data, 'system_data_integrity', {
-    title: 'Data Integrity Report',
-    summary: { 'Score': `${data.score}%`, 'Passed': `${data.passed}/${data.totalChecks}` },
-  });
-});
-
-const dynamicReport = asyncHandler(async (req, res) => {
-  const user = await authenticate(req, res); if (!user) return;
-  
-  // Combine body and query params
-  const query = parseReportQuery(req.url);
-  const body = req.method === 'POST' ? await parseBody(req) : (req.body || {});
-  const params = { ...query, ...body };
-
-  if (!params.model) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ error: 'Parameter "model" is required for dynamic reports.' }));
-      return;
+  if (!reportCode) {
+    return response.error(res, 'Report code is required', 400);
   }
 
-  const data = await reports.dynamicReport(params);
-  await auditReport(user, `dynamic_${params.model}`, params);
-  
-  sendReport(req, res, data, `dynamic_${params.model}`, {
-    title: `Dynamic Analytics: ${params.model.toUpperCase()}`,
-    summary: { 
-      'Model': params.model, 
-      'Metric': params.metric || 'list',
-      'Field': params.field || 'N/A'
+  // Security check: Verify user has access to this report
+  const reportDef = reports.REPORT_CATALOG.find(r => r.code === reportCode);
+  if (!reportDef) {
+    return response.error(res, 'Report not found', 404);
+  }
+
+  const roleMap = {
+    'Project_Manager': 'PM',
+    'Finance_Director': 'FD',
+    'Equipment_Coordinator': 'EC',
+    'Field_Supervisor': 'FS',
+    'Contract_Administrator': 'CA'
+  };
+  const shortRole = roleMap[user.role] || user.role;
+
+  if (!reportDef.roles.includes(shortRole) && user.role !== 'Project_Manager') {
+    return response.error(res, 'Unauthorized access to this report', 403);
+  }
+
+  try {
+    const data = await reports.runReport(reportCode, filters);
+    await auditReport(user, reportCode, filters);
+
+    // If export format is requested in query params, use export logic
+    const query = parseReportQuery(req.url);
+    if (query.format && query.format !== 'json') {
+        return sendReport(req, res, data.rows, `report_${reportCode}`, {
+            title: reportDef.name,
+            summary: data.summary,
+            columns: reportDef.fields
+        });
     }
-  });
+
+    return response.success(res, data);
+  } catch (err) {
+    console.error(`Report Error [${reportCode}]:`, err);
+    return response.error(res, `Failed to generate report: ${err.message}`, 500);
+  }
 });
 
 module.exports = {
-  pmPortfolio, pmProjectHealth, pmTimeline,
-  financeBudget, financeRequisitions, financeTopVendors, financeSpendCategories,
-  fieldDailyLogs, fieldTopMaterials, fieldBurnRate, fieldHeadcount,
-  contractsStatus, contractsMilestones,
-  equipmentUtilization, equipmentTopDeployed, equipmentMaintenanceCosts,
-  opsDashboard, opsIssues, opsTopIssues, opsSafety,
-  execSummary, execRisks, execProjectRankings,
-  sysHealth, sysAudit, sysTopActions, sysIntegrity,
-  dynamicReport,
+  getCatalog,
+  getConfig,
+  runReport
 };

@@ -106,6 +106,46 @@ const dispatchService = {
    * Confirm arrival of resources at site
    */
   async confirmArrival(requisitionId, userId, userName, userRole) {
+    if (String(requisitionId).startsWith('RENT-')) {
+      const contractId = parseInt(requisitionId.replace('RENT-', ''));
+      const inventoryService = require('./inventory.service');
+      
+      const contract = await prisma.vehicleRentalContract.findUnique({
+        where: { id: contractId },
+        include: { project: true }
+      });
+      
+      if (!contract) throw new Error('Rental contract not found');
+      
+      // Update status to on_site
+      const updated = await prisma.vehicleRentalContract.update({
+        where: { id: contractId },
+        data: { status: 'on_site' }
+      });
+
+      // Also add to inventory for tracking/logs
+      await inventoryService.distribute({
+        sectorId: 1, 
+        materialName: contract.machineType,
+        unit: 'Day',
+        quantity: 1,
+        reference: contract.refCode,
+        notes: `Rental machine ${contract.machineType} arrived and confirmed on site by ${userName}.`
+      }, { id: userId });
+
+      // Audit log
+      await auditService.log({
+        userId, userName, userRole,
+        action: 'CONFIRM_ARRIVAL',
+        targetType: 'VEHICLE_RENTAL',
+        targetId: contractId,
+        targetCode: contract.refCode,
+        details: { machine: contract.machineType, project: contract.project.name }
+      });
+
+      return updated;
+    }
+
     if (String(requisitionId).startsWith('SHIP-')) {
       const contractItemId = parseInt(requisitionId.replace('SHIP-', ''));
       const inventoryService = require('./inventory.service');

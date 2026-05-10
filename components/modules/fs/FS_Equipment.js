@@ -27,9 +27,18 @@ export const FS_Equipment = {
                                 const diffDays = Math.floor((new Date() - lastMaint) / (1000 * 60 * 60 * 24));
                                 maintStr = diffDays > 30 ? `<span style="color:var(--red); font-weight:700;">${diffDays} days ago</span>` : `${diffDays} days ago`;
                             }
+                            const daysRemaining = asset.isRental ? Math.ceil((new Date(asset.endDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                            
                             return `
                             <tr>
-                                <td style="font-weight: 700;">${asset.name}</td>
+                                <td style="font-weight: 700;">
+                                    ${asset.name}
+                                    ${asset.isRental ? `
+                                        <div style="font-size: 10px; color: ${daysRemaining < 3 ? 'var(--red)' : 'var(--emerald)'}; font-weight: 600;">
+                                            <i class="fas fa-clock"></i> ${daysRemaining} days left
+                                        </div>
+                                    ` : ''}
+                                </td>
                                 <td><span class="project-id">${asset.assetCode || asset.id}</span></td>
                                 <td>${asset.category || '--'}</td>
                                 <td>${maintStr}</td>
@@ -51,15 +60,45 @@ export const FS_Equipment = {
     },
 
     async _loadSiteAssets() {
+        if (this._fetchingAssets) return;
+        this._fetchingAssets = true;
+
         try {
-            const result = await assets.getAll({ status: 'checked_out', projectId: this.assignedProject?.id });
-            const data = result.data || result;
-            this.siteAssets = Array.isArray(data) ? data : (data.items || []);
+            const projectId = this.assignedProject?.id || 1;
+            const [assetsRes, rentalsRes] = await Promise.all([
+                assets.getAll({ status: 'checked_out', projectId }),
+                client.get(`/vehicle-rentals?projectId=${projectId}&status=on_site`).catch(() => ({ data: [] }))
+            ]);
+
+            const physicalData = assetsRes.data || assetsRes;
+            const physicalAssets = Array.isArray(physicalData) ? physicalData : (physicalData.items || []);
+            
+            const rentalData = rentalsRes.data || rentalsRes;
+            const rentals = Array.isArray(rentalData) ? rentalData : (rentalData.contracts || []);
+
+            const normalizedRentals = rentals.map(r => ({
+                id: r.id,
+                name: r.machineType,
+                assetCode: r.refCode,
+                category: 'Rental Fleet',
+                status: 'checked_out',
+                isRental: true,
+                endDate: r.endDate,
+                lastMaintenanceAt: null // Rentals handled by vendor
+            }));
+
+            this.siteAssets = [
+                ...physicalAssets,
+                ...normalizedRentals
+            ];
+            
             this.assetsLoaded = true;
             this._refreshCurrentView();
         } catch (error) {
             this.assetsLoaded = true;
             console.error('[FS] Failed to load site assets:', error);
+        } finally {
+            this._fetchingAssets = false;
         }
     },
 

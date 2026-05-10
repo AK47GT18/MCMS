@@ -36,8 +36,12 @@ export const FS_Tasks = {
     ,
 
     async _loadTasks(retryCount = 0) {
+        if (this._fetchingTasks) return;
+        this._fetchingTasks = true;
+
         const container = document.getElementById('fs-tasks-container');
         if (!container) {
+            this._fetchingTasks = false;
             if (retryCount < 10) {
                 setTimeout(() => this._loadTasks(retryCount + 1), 100);
             }
@@ -45,7 +49,7 @@ export const FS_Tasks = {
         }
 
         try {
-            if (!this.cachedTasks) {
+            if (!this.cachedTasks || retryCount === 0) { // Refresh if forced or not cached
                 const projectId = this.assignedProject?.id || 1;
                 console.log('[FS] Loading tasks for project:', projectId);
                 const result = await tasksApi.getByProject(projectId);
@@ -170,6 +174,8 @@ export const FS_Tasks = {
             container.innerHTML = tableHTML;
         } catch (error) {
             container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--red);">Failed to load tasks: ${error.message}</div>`;
+        } finally {
+            this._fetchingTasks = false;
         }
     },
 

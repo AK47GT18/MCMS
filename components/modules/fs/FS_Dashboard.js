@@ -218,6 +218,9 @@ export const FS_Dashboard = {
     },
 
     async _loadDashboardStats() {
+        if (this._fetchingDashboardStats) return;
+        this._fetchingDashboardStats = true;
+
         try {
             const projectId = this.assignedProject?.id || 1;
             const [logsResult, tasksResult] = await Promise.all([
@@ -235,13 +238,15 @@ export const FS_Dashboard = {
             this._calculatePhaseStats();
             
             this._refreshCurrentView();
-            
+
             // Render chart if on dashboard
             if (this.currentView === 'dashboard') {
                 setTimeout(() => this._renderProgressChart(), 300);
             }
         } catch (error) {
             console.error('[FS] Failed to load dashboard stats:', error);
+        } finally {
+            this._fetchingDashboardStats = false;
         }
     },
 

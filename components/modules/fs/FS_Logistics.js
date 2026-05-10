@@ -17,7 +17,10 @@ export const FS_Logistics = {
                     this._loadSiteInventory(), 
                     this._loadInTransit(),
                     this._loadSiteAssets()
-                ]).finally(() => { this._fetchingLogistics = false; });
+                ]).finally(() => { 
+                    this._fetchingLogistics = false; 
+                    this._refreshCurrentView();
+                });
             }, 0);
         }
 
@@ -715,9 +718,16 @@ export const FS_Logistics = {
 
         // Merge physical assets with inventory-based allocations (Days/Hours)
         const inventoryEquipment = Object.entries(this.siteInventory || {})
-            .filter(([, data]) => {
+            .filter(([name, data]) => {
                 const unit = (data.unit || '').toLowerCase();
-                return unit === 'day' || unit === 'hour';
+                const isEqp = unit === 'day' || unit === 'hour';
+                if (!isEqp) return false;
+                
+                // Avoid showing allocation row if the physical asset/rental is already on site
+                return !(this.siteAssets || []).some(a => 
+                    (a.name || '').toLowerCase() === name.toLowerCase() || 
+                    (a.assetCode || '').toLowerCase() === (data.inventoryId || '').toString().toLowerCase()
+                );
             })
             .map(([name, data]) => ({
                 id: data.inventoryId || `INV-${name}`,
@@ -731,6 +741,13 @@ export const FS_Logistics = {
             }));
 
         const combinedAssets = [...(this.siteAssets || []), ...inventoryEquipment];
+
+        // Enrichment: Calculate remaining days for rentals
+        combinedAssets.forEach(asset => {
+            if (asset.isRental && asset.endDate && !asset.daysRemaining) {
+                asset.daysRemaining = Math.ceil((new Date(asset.endDate) - new Date()) / (1000 * 60 * 60 * 24));
+            }
+        });
 
         if (combinedAssets.length === 0) {
             return '<div style="padding: 60px; text-align: center; color: var(--slate-400);"><i class="fas fa-truck-pickup" style="font-size:32px; margin-bottom:16px; display:block; opacity: 0.5;"></i>No equipment currently assigned to site.</div>';
@@ -755,7 +772,14 @@ export const FS_Logistics = {
 
             let rows = `
                 <tr>
-                    <td style="font-weight: 700;">${asset.name}</td>
+                    <td style="font-weight: 700;">
+                        ${asset.name}
+                        ${asset.daysRemaining !== undefined ? `
+                            <div style="font-size: 10px; color: ${asset.daysRemaining < 3 ? 'var(--red)' : 'var(--emerald)'}; font-weight: 600;">
+                                <i class="fas fa-calendar-day"></i> ${asset.daysRemaining} days left in rental
+                            </div>
+                        ` : ''}
+                    </td>
                     <td><span class="project-id">${asset.assetCode || asset.id}</span></td>
                     <td>${asset.category || 'Machinery'}</td>
                     <td>
@@ -917,10 +941,11 @@ export const FS_Logistics = {
             const projectId = this.assignedProject?.id || 1;
             const sectorId = this.assignedProject?.sectorId || this.assignedProject?.sector_id;
 
-            const [requisitionsRes, incomingRes, sectorShipsRes] = await Promise.all([
+            const [requisitionsRes, incomingRes, sectorShipsRes, rentalsRes] = await Promise.all([
                 client.get(`/requisitions?projectId=${projectId}`),
                 client.get(`/inventory/incoming-shipments?projectId=${projectId}`).catch(() => ({ data: [] })),
-                sectorId ? client.get(`/inventory/incoming-shipments?sectorId=${sectorId}`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+                sectorId ? client.get(`/inventory/incoming-shipments?sectorId=${sectorId}`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                client.get(`/vehicle-rentals?projectId=${projectId}&status=active`).catch(() => ({ data: [] }))
             ]);
 
             const reqItems = (Array.isArray(requisitionsRes) ? requisitionsRes : (requisitionsRes.data || requisitionsRes.requisitions || [])).filter(r => {
@@ -932,6 +957,7 @@ export const FS_Logistics = {
             });
             const projectShips = Array.isArray(incomingRes) ? incomingRes : (incomingRes.data || incomingRes.shipments || []);
             const sectorShips = Array.isArray(sectorShipsRes) ? (sectorShipsRes.data || sectorShipsRes) : (sectorShipsRes.data || []);
+            const rentals = Array.isArray(rentalsRes.data || rentalsRes) ? (rentalsRes.data || rentalsRes) : (rentalsRes.data?.contracts || []);
             
             const shipItems = [...projectShips, ...sectorShips];
 
@@ -952,9 +978,27 @@ export const FS_Logistics = {
                 dispatchStatus: 'in_transit'
             }));
 
+            // Normalize rentals as en-route shipments
+            const normalizedRentals = rentals.map(r => ({
+                id: `RENT-${r.id}`,
+                reqCode: r.refCode,
+                dispatchedBy: r.vendorName || 'Vendor Delivery',
+                dispatchedPhone: '',
+                dispatchDate: r.startDate,
+                remarks: `Rental Contract: ${r.machineType}. Period: ${new Date(r.startDate).toLocaleDateString()} - ${new Date(r.endDate).toLocaleDateString()}`,
+                eta: r.startDate,
+                items: [{
+                    itemName: r.machineType,
+                    quantity: 1,
+                    unit: 'Unit'
+                }],
+                dispatchStatus: 'in_transit'
+            }));
+
             this.inTransitItems = [
                 ...reqItems,
-                ...normalizedShips
+                ...normalizedShips,
+                ...normalizedRentals
             ];
         } catch (error) {
             console.error('[FS] Failed to load in-transit items:', error);
