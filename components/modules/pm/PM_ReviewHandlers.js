@@ -178,19 +178,23 @@ export const PM_ReviewHandlers = {
     // BUDGET UPLIFT APPROVE / REJECT
     // =========================================
 
-    async approveBudgetUplift(bcrId) {
-        if (!confirm('Are you sure you want to approve this budget uplift? This will permanently increase the project budget.')) return;
-
-        try {
-            window.toast.show('Processing budget uplift approval...', 'info');
-            await client.post(`/budget-changes/${bcrId}/approve`);
-            window.toast.show('Budget uplift approved. Project budget has been increased.', 'success');
-            window.drawer?.close();
-            this.loadReviewsData();
-        } catch (error) {
-            console.error('Budget uplift approval failed:', error);
-            window.toast.show(error.message || 'Failed to approve budget uplift', 'error');
-        }
+    approveBudgetUplift(bcrId) {
+        window.modal.confirm(
+            'Approve Budget Uplift',
+            'Are you sure you want to approve this budget uplift? This will permanently increase the project budget.',
+            async () => {
+                try {
+                    window.toast.show('Processing budget uplift approval...', 'info');
+                    await client.post(`/budget-changes/${bcrId}/approve`);
+                    window.toast.show('Budget uplift approved. Project budget has been increased.', 'success');
+                    window.drawer?.close();
+                    this.loadReviewsData();
+                } catch (error) {
+                    console.error('Budget uplift approval failed:', error);
+                    window.toast.show(error.message || 'Failed to approve budget uplift', 'error');
+                }
+            }
+        );
     },
 
     openRejectBudgetUpliftDrawer(bcrId, bcrCode, projectName, amount) {
