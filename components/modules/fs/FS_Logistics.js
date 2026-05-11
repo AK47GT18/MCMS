@@ -1196,6 +1196,7 @@ export const FS_Logistics = {
                 }
 
                 // Handle shortages: Audit, Notify, and Auto-Procure
+                let totalShortageCost = 0;
                 for (const item of shortages) {
                     const missingQty = item.qtySent - item.qtyReceived;
                     
@@ -1231,6 +1232,60 @@ export const FS_Logistics = {
                         body: `Field Supervisor ${receivedBy} reported a shortage of ${missingQty} units for ${item.itemName} at Project ${this.assignedProject?.id}. A new procurement request has been auto-generated.`,
                         description: notes
                     });
+
+                    // 4. Calculate shortage cost using catalog unit price
+                    try {
+                        const catalogRes = await client.get(`/material-prices?name=${encodeURIComponent(item.itemName)}`).catch(() => null);
+                        const catalogData = catalogRes?.data || catalogRes;
+                        const catalogPrice = Array.isArray(catalogData) && catalogData.length > 0
+                            ? Number(catalogData[0].unitPrice || catalogData[0].price || 0)
+                            : 0;
+                        totalShortageCost += missingQty * catalogPrice;
+                    } catch (e) {
+                        console.warn('[FS] Could not fetch catalog price for', item.itemName, e);
+                    }
+                }
+
+                // 5. Conditional Budget Uplift: only if budget is fully drained
+                if (totalShortageCost > 0) {
+                    try {
+                        const projectId = this.assignedProject?.id || 1;
+                        const projRes = await client.get(`/projects/${projectId}`);
+                        const proj = projRes.data || projRes;
+                        const budgetTotal = Number(proj.budgetTotal || 0);
+                        const budgetSpent = Number(proj.budgetSpent || 0);
+
+                        if (budgetSpent >= budgetTotal) {
+                            // 5.1 Audit the budget exhaustion
+                            await client.post('/audit-logs', {
+                                action: 'PROJECT_BUDGET_EXHAUSTED',
+                                targetType: 'PROJECT',
+                                targetId: projectId,
+                                details: {
+                                    projectName: proj.name,
+                                    total: budgetTotal,
+                                    spent: budgetSpent,
+                                    shortageCost: totalShortageCost,
+                                    trigger: 'Material Intake Shortage'
+                                }
+                            });
+
+                            // 5.2 Budget is drained — auto-create uplift request for PM approval
+                            const shortageDesc = shortages.map(s => `${s.qtySent - s.qtyReceived} x ${s.itemName}`).join(', ');
+                            await client.post('/budget-changes', {
+                                projectId: projectId,
+                                amount: totalShortageCost,
+                                budgetCategory: 'Material Shortage Replenishment',
+                                justification: `Auto-generated: Site intake shortage (${shortageDesc}). Budget exhausted — requires PM approval to increase procurement allocation. Notes: ${notes}`,
+                                requesterRole: 'Field_Supervisor'
+                            });
+                            window.toast.show('Budget exhausted. Uplift request sent to PM for approval.', 'warning');
+                        } else {
+                            window.toast.show('Shortage logged. EC and FD notified. Budget has remaining capacity.', 'info');
+                        }
+                    } catch (budgetErr) {
+                        console.error('[FS] Budget uplift check failed:', budgetErr);
+                    }
                 }
 
                 await client.post(`/dispatch/${reqId}/variance`, {

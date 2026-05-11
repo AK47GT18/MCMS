@@ -699,15 +699,26 @@ export const FS_Tasks = {
         row.style.cssText = 'background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 6px; position: relative;';
 
         const siteAssets = this.siteAssets || [];
-        const options = siteAssets
-            .filter(a => !a.isExpired && !(a.status && a.status.toLowerCase().includes('return')))
-            .map(a => `<option value="${a.id}">${a.name} (${a.assetCode || a.id})</option>`).join('');
+        const activeAssets = siteAssets
+            .filter(a => !a.isExpired && !(a.status && a.status.toLowerCase().includes('return')));
+
+        // If no active assets, show a clear message instead of an empty dropdown
+        if (activeAssets.length === 0) {
+            window.toast?.show('No active machinery available. All asset periods have ended — coordinate return with EC.', 'warning');
+            return;
+        }
+
+        const options = activeAssets
+            .map(a => {
+                const daysInfo = a.daysRemaining !== null ? ` • ${a.daysRemaining}d left` : '';
+                return `<option value="${a.id}">${a.name} (${a.assetCode || a.id}${daysInfo})</option>`;
+            }).join('');
 
         row.innerHTML = `
             <i class="fas fa-times" style="position: absolute; top: 12px; right: 12px; color: var(--red); cursor: pointer;" onclick="this.parentElement.remove()"></i>
             <div style="margin-bottom: 8px;">
                 <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Machine</label>
-                <select class="form-input machine-select" style="padding: 6px; font-size: 12px; height: 30px;">
+                <select class="form-input machine-select" style="padding: 6px; font-size: 12px; height: 30px;" onchange="this.style.borderColor = this.value ? 'var(--emerald)' : 'var(--red)'">
                     <option value="">Select equipment...</option>
                     ${options}
                 </select>
@@ -715,11 +726,13 @@ export const FS_Tasks = {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div>
                     <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Hours Used</label>
-                    <input type="number" class="form-input machine-hours" placeholder="e.g. 8" style="padding: 6px; font-size: 12px; height: 30px;">
+                    <input type="number" class="form-input machine-hours" placeholder="e.g. 8" min="0" max="24" step="0.5" style="padding: 6px; font-size: 12px; height: 30px;"
+                        oninput="const val = parseFloat(this.value); const isValid = !isNaN(val) && val >= 0 && val <= 24; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                 </div>
                 <div>
                     <label style="font-size: 10px; font-weight: 700; color: var(--slate-500); text-transform: uppercase;">Operator / Driver</label>
-                    <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 30px;">
+                    <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 30px;"
+                        oninput="const isValid = /^[a-zA-Z\\s.]{3,}$/.test(this.value); this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                 </div>
             </div>
         `;
@@ -764,7 +777,14 @@ export const FS_Tasks = {
             <i class="fas fa-times" style="position: absolute; top: 12px; right: 12px; color: var(--red); cursor: pointer;" onclick="this.parentElement.remove()"></i>
             <div style="margin-bottom: 8px;">
                 <label style="font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Material</label>
-                <select class="form-input material-select" style="padding: 6px; font-size: 12px; height: 30px;">
+                <select class="form-input material-select" style="padding: 6px; font-size: 12px; height: 30px;" 
+                    onchange="
+                        const opt = this.options[this.selectedIndex];
+                        const stock = parseFloat(opt.getAttribute('data-stock') || 0);
+                        const qtyInp = this.parentElement.parentElement.querySelector('.material-qty');
+                        qtyInp.max = stock;
+                        this.style.borderColor = this.value ? 'var(--emerald)' : 'var(--red)';
+                    ">
                     <option value="">Select material...</option>
                     ${options}
                 </select>
@@ -772,11 +792,18 @@ export const FS_Tasks = {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div>
                     <label style="font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Quantity Used</label>
-                    <input type="number" class="form-input material-qty" placeholder="e.g. 500" step="0.1" style="padding: 6px; font-size: 12px; height: 30px;">
+                    <input type="number" class="form-input material-qty" placeholder="e.g. 500" step="0.1" min="0" style="padding: 6px; font-size: 12px; height: 30px;"
+                        oninput="
+                            const val = parseFloat(this.value); 
+                            const max = parseFloat(this.max || 99999999);
+                            const isValid = !isNaN(val) && val >= 0 && val <= max; 
+                            this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';
+                        ">
                 </div>
                 <div>
                     <label style="font-size: 10px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Used By / Team</label>
-                    <input type="text" class="form-input material-used-by" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 30px;">
+                    <input type="text" class="form-input material-used-by" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 30px;"
+                        oninput="const isValid = /^.{3,}$/.test(this.value); this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                 </div>
             </div>
         `;

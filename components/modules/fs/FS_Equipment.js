@@ -84,13 +84,26 @@ export const FS_Equipment = {
                 status: 'checked_out',
                 isRental: true,
                 endDate: r.endDate,
+                startDate: r.startDate,
                 lastMaintenanceAt: null // Rentals handled by vendor
             }));
 
-            this.siteAssets = [
-                ...physicalAssets,
-                ...normalizedRentals
-            ];
+            // Merge all assets, then enrich with day-tracking for ANY asset with an endDate
+            const allAssets = [...physicalAssets, ...normalizedRentals];
+
+            allAssets.forEach(asset => {
+                if (asset.endDate) {
+                    const end = new Date(asset.endDate);
+                    const now = new Date();
+                    asset.daysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                    asset.isExpired = asset.daysRemaining <= 0;
+                } else {
+                    asset.daysRemaining = null;
+                    asset.isExpired = false;
+                }
+            });
+
+            this.siteAssets = allAssets;
             
             this.assetsLoaded = true;
             this._refreshCurrentView();
@@ -316,20 +329,39 @@ export const FS_Equipment = {
                 notes: `[SITE RETURN] Sent by: ${sentBy}. ETA: ${new Date(arrivalTime).toLocaleString()}. Notes: ${notes}` 
             });
 
-            // Notify EC
-            await client.post('/audit-logs', {
-                action: 'EQUIPMENT_RETURNED_FROM_SITE',
-                targetType: 'ASSET',
-                targetId: assetId,
-                details: { sentBy, arrivalTime, notes, assetName }
-            });
+            // --- Audit & Notification ---
+            try {
+                await client.post('/audit-logs', {
+                    action: 'ASSET_RETURN_INITIATED',
+                    targetType: 'ASSET',
+                    targetId: assetId,
+                    details: {
+                        assetName,
+                        sentBy,
+                        eta: arrivalTime,
+                        notes,
+                        projectId: this.assignedProject?.id || 1
+                    }
+                });
 
-            window.toast.show('Equipment successfully dispatched to base.', 'success');
+                // Notify EC about incoming return
+                await client.post('/notifications', {
+                    role: 'Equipment_Controller',
+                    type: 'warning',
+                    icon: 'fa-undo',
+                    title: 'Asset Returning to Base',
+                    message: `${assetName} (${assetId}) has been dispatched back to HQ by ${sentBy}. ETA: ${new Date(arrivalTime).toLocaleString()}.`
+                });
+            } catch (auditErr) {
+                console.warn('[FS] Return audit/notif failed:', auditErr);
+            }
+
+            window.toast.show(`${assetName} has been marked for return. EC notified.`, 'success');
             window.drawer.close();
             await this._loadSiteAssets();
         } catch (err) {
-            console.error('Return failed:', err);
-            window.toast.show('Failed to process equipment return.', 'error');
+            console.error('[FS] Return failed:', err);
+            window.toast.show('Failed to initiate return: ' + err.message, 'error');
         }
     }
 };

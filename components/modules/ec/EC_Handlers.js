@@ -244,16 +244,49 @@ export const EC_Handlers = {
                 dispatchDate: date
             });
 
-            // Update local state
-            // Removed local deduction
-            // Note: Email notifications and audit logs are securely handled by the backend automatically upon successful /inventory/dispatch }
+            // Immediately deduct from local silo state for instant UI feedback
+            if (this.inventory[materialName]) {
+                this.inventory[materialName].qty = Math.max(0, this.inventory[materialName].qty - amount);
+            }
 
-            window.toast?.show(`Dispatched ${amount} ${material.unit} successfully.`, 'success');
+            // --- Audit & Notification ---
+            try {
+                await client.post('/audit-logs', {
+                    action: 'SILO_DISPATCH',
+                    targetType: 'INVENTORY',
+                    targetId: materialName,
+                    details: {
+                        material: materialName,
+                        amount,
+                        unit: material.unit,
+                        project: project,
+                        transporter,
+                        justification
+                    }
+                });
+
+                // Notify FS and PM of incoming material
+                const projRes = await client.get(`/projects/${project}`).catch(() => null);
+                const proj = projRes?.data || projRes;
+                if (proj) {
+                    await client.post('/notifications', {
+                        userId: proj.fieldSupervisorId,
+                        type: 'info',
+                        icon: 'fa-truck-loading',
+                        title: 'Material Dispatched from Silo',
+                        message: `${amount} ${material.unit} of ${materialName} is en-route via ${transporter}.`
+                    });
+                }
+            } catch (auditErr) {
+                console.warn('[EC] Audit/Notification failed:', auditErr);
+            }
+
+            window.toast?.show(`Dispatched ${amount} ${material.unit} successfully. Silo deducted.`, 'success');
             window.drawer?.close();
 
-            // Refresh view
-            if (this.currentView === 'inventory') this._refreshCurrentView();
-            if (this.currentView === 'dashboard') this._refreshCurrentView();
+            // Always sync with backend and refresh the active view
+            if (this._loadInventory) await this._loadInventory();
+            this._refreshCurrentView();
 
         } catch (err) {
             window.toast?.show('Failed to process distribution: ' + (err.message || 'Server error'), 'error');

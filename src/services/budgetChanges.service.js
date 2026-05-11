@@ -5,6 +5,13 @@ const notifService = require('./notification.service');
 const logger = require('../utils/logger');
 
 async function create(data) {
+  // Generate BCR code if missing (Schema requires it)
+  if (!data.bcrCode) {
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    data.bcrCode = `BCR-${date}-${random}`;
+  }
+
   const req = await prisma.budgetChangeRequest.create({ 
     data,
     include: { requester: true, project: true }
@@ -22,8 +29,19 @@ async function create(data) {
     type: 'warning', icon: 'fa-money-bill-wave',
     title: 'Budget Uplift Requested',
     message: `A budget change request of MWK ${Number(data.amount).toLocaleString()} has been submitted for ${req.project?.name || 'Project #' + data.projectId}.`,
-    link: `/dashboard.html?page=budget`
+    link: `/dashboard.html?page=reviews&tab=uplifts`
   });
+
+  // Also notify the specific Project Manager
+  if (req.project?.managerId) {
+    await notifService.create({
+        userId: req.project.managerId,
+        type: 'warning', icon: 'fa-money-bill-wave',
+        title: 'Budget Uplift Triggered',
+        message: `Your project ${req.project.name} has triggered an auto-uplift request of MWK ${Number(data.amount).toLocaleString()} due to site shortages.`,
+        link: `/dashboard.html?page=reviews&tab=uplifts`
+    });
+  }
 
   return req;
 }

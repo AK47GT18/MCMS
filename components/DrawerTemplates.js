@@ -2079,11 +2079,11 @@ export const DrawerTemplates = {
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                     <div>
                                         <label style="font-size: 9px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Qty Used</label>
-                                        <input type="number" class="form-input material-qty" placeholder="0" min="0" max="${data.qty}" step="0.1" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;">
+                                        <input type="number" class="form-input material-qty" placeholder="0" min="0" max="${data.qty}" step="0.1" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;" oninput="const val = parseFloat(this.value); const isValid = !isNaN(val) && val >= 0 && val <= ${data.qty}; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                                     </div>
                                     <div>
                                         <label style="font-size: 9px; font-weight: 700; color: #9A3412; text-transform: uppercase;">Used By / Team</label>
-                                        <input type="text" class="form-input material-used-by" placeholder="Team / Person" style="padding: 6px; font-size: 12px; height: 34px;">
+                                        <input type="text" class="form-input material-used-by" placeholder="Team / Person" style="padding: 6px; font-size: 12px; height: 34px;" oninput="const isValid = /^.{3,}$/.test(this.value); this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                                     </div>
                                 </div>
                             </div>
@@ -2137,46 +2137,87 @@ export const DrawerTemplates = {
                             name: name,
                             assetCode: data.inventoryId ? 'INV-' + data.inventoryId : 'ALLOC',
                             status: data.qty > 0 ? 'available' : 'pending',
-                            isInventory: true
+                            isInventory: true,
+                            isExpired: false,
+                            daysRemaining: null
                         }));
                         const allMachines = [...siteAssets, ...invEquipment];
-                        if (allMachines.length === 0) {
-                            return '<div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery assigned to this site yet.</div>';
-                        }
-                        return allMachines.map(a => {
-                            const isExpired = a.isExpired || (a.status && a.status.toLowerCase().includes('return'));
-                            return `
-                            <div class="machine-usage-row" style="background: white; border: 1px solid #BAE6FD; padding: 12px; border-radius: 10px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; background: ${isExpired ? 'var(--red-light)' : '#E0F2FE'}; border-radius: 8px; display: flex; align-items: center; justify-content: center; ${isExpired ? 'filter: grayscale(1);' : ''}">
-                                            <i class="fas fa-truck-monster" style="color: ${isExpired ? 'var(--red)' : '#0284C7'}; font-size: 14px;"></i>
-                                        </div>
-                                        <div>
-                                            <div style="font-weight: 800; font-size: 13px; color: var(--slate-900);">${a.name}</div>
-                                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 600;">${a.assetCode || a.id} • <span style="color: ${isExpired ? 'var(--red)' : 'var(--emerald)'}; font-weight: 700;">${isExpired ? 'RENTAL EXPIRED' : (a.status || 'assigned').replace(/_/g, ' ').toUpperCase()}</span></div>
-                                        </div>
+
+                        // Separate expired from active
+                        const expiredAssets = allMachines.filter(a => a.isExpired || (a.status && a.status.toLowerCase().includes('return')));
+                        const activeAssets = allMachines.filter(a => !a.isExpired && !(a.status && a.status.toLowerCase().includes('return')));
+
+                        let html = '';
+
+                        // RETURN TO BASE banner for expired assets
+                        if (expiredAssets.length > 0) {
+                            html += `
+                            <div style="background: #FEF2F2; border: 2px solid var(--red); border-radius: 12px; padding: 14px; margin-bottom: 4px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <i class="fas fa-truck-pickup" style="font-size: 18px; color: var(--red);"></i>
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 13px; color: #991B1B;">RETURN TO BASE REQUIRED</div>
+                                        <div style="font-size: 11px; color: #B91C1C;">The following equipment has exceeded its dispatch period and must be returned to EC.</div>
                                     </div>
                                 </div>
-                                <input type="hidden" class="machine-select" value="${a.id}">
-                                ${isExpired ? `
-                                    <div style="background: var(--red-light); color: var(--red); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-align: center; border: 1px solid var(--red);">
-                                        <i class="fas fa-undo"></i> RENTAL PERIOD OVER - SEND BACK TO HQ
+                                ${expiredAssets.map(a => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: white; border-radius: 8px; border: 1px solid #FECACA; margin-bottom: 4px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-truck-monster" style="color: var(--red); opacity: 0.6;"></i>
+                                            <div>
+                                                <div style="font-weight: 700; font-size: 12px; color: var(--slate-700); text-decoration: line-through;">${a.name}</div>
+                                                <div style="font-size: 10px; color: var(--red); font-weight: 700;">${a.assetCode || a.id} • PERIOD EXPIRED ${a.daysRemaining !== null ? '(' + Math.abs(a.daysRemaining) + ' days overdue)' : ''}</div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 10px; color: var(--red); border-color: var(--red);" 
+                                            onclick="window.app.fsModule?.openReturnEquipmentDrawer('${a.id}', '${(a.name || '').replace(/'/g, "\\\\'")}', '${a.assetCode || ''}')">
+                                            <i class="fas fa-undo"></i> Return
+                                        </button>
                                     </div>
-                                ` : `
+                                `).join('')}
+                            </div>`;
+                        }
+
+                        // Active assets — render normal input rows
+                        if (activeAssets.length === 0 && expiredAssets.length === 0) {
+                            html += '<div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery assigned to this site yet.</div>';
+                        } else if (activeAssets.length === 0) {
+                            html += '<div style="text-align: center; color: #92400E; font-size: 11px; padding: 8px; font-weight: 600;">All machinery periods have ended. Please return equipment above before requesting new assets.</div>';
+                        } else {
+                            html += activeAssets.map(a => {
+                                const daysLabel = a.daysRemaining !== null ? `${a.daysRemaining}d left` : '';
+                                const isLow = a.daysRemaining !== null && a.daysRemaining <= 3;
+                                return `
+                                <div class="machine-usage-row" style="background: white; border: 1px solid #BAE6FD; padding: 12px; border-radius: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width: 32px; height: 32px; background: #E0F2FE; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-truck-monster" style="color: #0284C7; font-size: 14px;"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-weight: 800; font-size: 13px; color: var(--slate-900);">${a.name}</div>
+                                                <div style="font-size: 10px; color: var(--slate-500); font-weight: 600;">
+                                                    ${a.assetCode || a.id} • <span style="color: var(--emerald); font-weight: 700;">${(a.status || 'assigned').replace(/_/g, ' ').toUpperCase()}</span>
+                                                    ${daysLabel ? ` • <span style="color: ${isLow ? 'var(--red)' : 'var(--blue)'}; font-weight: 700;">${daysLabel}</span>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" class="machine-select" value="${a.id}">
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                         <div>
                                             <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Hours Used</label>
-                                            <input type="number" class="form-input machine-hours" placeholder="0" min="0" max="24" step="0.5" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;">
+                                            <input type="number" class="form-input machine-hours" placeholder="0" min="0" max="24" step="0.5" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;" oninput="const val = parseFloat(this.value); const isValid = !isNaN(val) && val >= 0 && val <= 24; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                                         </div>
                                         <div>
                                             <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Operator / Driver</label>
-                                            <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 34px;">
+                                            <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 34px;" oninput="const isValid = /^[a-zA-Z\\s.]{3,}$/.test(this.value); this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                                         </div>
                                     </div>
-                                `}
-                            </div>
-                        `;}).join('');
+                                </div>
+                            `;}).join('');
+                        }
+                        return html;
                     })()}
                 </div>
                 <div style="font-size: 10px; color: #0369A1; margin-top: 8px; font-style: italic;"><i class="fas fa-info-circle"></i> Leave hours at 0 for machines not used today.</div>

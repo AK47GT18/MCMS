@@ -172,5 +172,88 @@ export const PM_ReviewHandlers = {
             console.error('Failed to open log review:', error);
             window.toast.show('Failed to load log details', 'error');
         }
+    },
+
+    // =========================================
+    // BUDGET UPLIFT APPROVE / REJECT
+    // =========================================
+
+    async approveBudgetUplift(bcrId) {
+        if (!confirm('Are you sure you want to approve this budget uplift? This will permanently increase the project budget.')) return;
+
+        try {
+            window.toast.show('Processing budget uplift approval...', 'info');
+            await client.post(`/budget-changes/${bcrId}/approve`);
+            window.toast.show('Budget uplift approved. Project budget has been increased.', 'success');
+            window.drawer?.close();
+            this.loadReviewsData();
+        } catch (error) {
+            console.error('Budget uplift approval failed:', error);
+            window.toast.show(error.message || 'Failed to approve budget uplift', 'error');
+        }
+    },
+
+    openRejectBudgetUpliftDrawer(bcrId, bcrCode, projectName, amount) {
+        window.drawer.open('Reject Budget Uplift', `
+            <div style="padding: 24px;">
+                <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 18px; color: var(--red);"></i>
+                        <div>
+                            <div style="font-weight: 800; font-size: 14px; color: #991B1B;">Rejecting Budget Uplift</div>
+                            <div style="font-size: 12px; color: #B91C1C;">This action cannot be undone. The project will continue with its current budget.</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                        <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
+                            <div style="font-size: 10px; font-weight: 700; color: #991B1B; text-transform: uppercase;">Request</div>
+                            <div style="font-weight: 800; color: var(--slate-900);">${bcrCode}</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #FECACA;">
+                            <div style="font-size: 10px; font-weight: 700; color: #991B1B; text-transform: uppercase;">Amount</div>
+                            <div style="font-weight: 800; color: var(--red);">MWK ${Number(amount).toLocaleString()}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 700;">Rejection Reason <span style="color: var(--red);">*</span></label>
+                    <textarea id="uplift_reject_reason" class="form-input" placeholder="Explain why this uplift is being rejected... (min 10 characters)" 
+                        style="width: 100%; height: 100px; resize: none; font-size: 13px;"
+                        oninput="
+                            const btn = document.getElementById('uplift_reject_btn');
+                            const isValid = this.value.trim().length >= 10;
+                            btn.disabled = !isValid;
+                            btn.style.opacity = isValid ? '1' : '0.5';
+                            this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';
+                        "></textarea>
+                    <div style="font-size: 10px; color: var(--slate-500); margin-top: 4px;">The requester and all stakeholders will be notified of this decision.</div>
+                </div>
+
+                <button id="uplift_reject_btn" class="btn btn-primary" disabled style="width: 100%; padding: 14px; font-weight: 800; background: var(--red); border-color: var(--red); opacity: 0.5;" 
+                    onclick="window.app.pmModule.submitRejectBudgetUplift(${bcrId})">
+                    <i class="fas fa-times-circle" style="margin-right: 8px;"></i> Confirm Rejection
+                </button>
+            </div>
+        `);
+    },
+
+    async submitRejectBudgetUplift(bcrId) {
+        const reason = document.getElementById('uplift_reject_reason')?.value?.trim();
+        if (!reason || reason.length < 10) {
+            window.toast.show('Please provide a detailed rejection reason (min 10 characters).', 'warning');
+            return;
+        }
+
+        try {
+            window.toast.show('Processing rejection...', 'info');
+            await client.post(`/budget-changes/${bcrId}/reject`, { reason });
+            window.toast.show('Budget uplift rejected. Project will work with current allocation.', 'info');
+            window.drawer?.close();
+            this.loadReviewsData();
+        } catch (error) {
+            console.error('Budget uplift rejection failed:', error);
+            window.toast.show(error.message || 'Failed to reject budget uplift', 'error');
+        }
     }
 };

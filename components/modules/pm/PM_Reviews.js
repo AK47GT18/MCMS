@@ -23,6 +23,7 @@ export const PM_Reviews = {
                             <div class="tab ${this.currentReviewTab === 'extensions' ? 'active' : ''}" data-tab="extensions" onclick="window.app.pmModule.switchReviewTab('extensions')">Timeline Extensions</div>
                             <div class="tab ${this.currentReviewTab === 'logs' ? 'active' : ''}" data-tab="logs" onclick="window.app.pmModule.switchReviewTab('logs')">Daily Site Logs</div>
                             <div class="tab ${this.currentReviewTab === 'requisitions' ? 'active' : ''}" data-tab="requisitions" onclick="window.app.pmModule.switchReviewTab('requisitions')">Material Requisitions</div>
+                            <div class="tab ${this.currentReviewTab === 'uplifts' ? 'active' : ''}" data-tab="uplifts" onclick="window.app.pmModule.switchReviewTab('uplifts')" style="${(this.pendingUplifts || []).filter(u => u.status === 'Pending').length > 0 ? 'color: var(--red); font-weight: 800;' : ''}">Budget Uplifts${(this.pendingUplifts || []).filter(u => u.status === 'Pending').length > 0 ? ` <span style="background: var(--red); color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; margin-left: 4px;">${(this.pendingUplifts || []).filter(u => u.status === 'Pending').length}</span>` : ''}</div>
                             <div class="tab ${this.currentReviewTab === 'history' ? 'active' : ''}" data-tab="history" onclick="window.app.pmModule.switchReviewTab('history')">Review History</div>
                         </div>
                     </div>
@@ -45,11 +46,12 @@ export const PM_Reviews = {
         if (!container) return;
 
         try {
-            const [extRes, logsRes, reqsRes, auditRes] = await Promise.all([
+            const [extRes, logsRes, reqsRes, auditRes, upliftsRes] = await Promise.all([
                 client.get('/timeline-extensions'),
                 client.get('/daily-logs'),
                 requisitions.getAll({ limit: 50 }),
-                audit.getAll({ limit: 20 })
+                audit.getAll({ limit: 20 }),
+                client.get('/budget-changes').catch(() => [])
             ]);
 
             this.pendingExtensions = Array.isArray(extRes) ? extRes : (extRes.data || []);
@@ -59,6 +61,9 @@ export const PM_Reviews = {
             // Audit response is paginated: { logs: [], total: 0, ... }
             const auditData = auditRes.data || auditRes;
             this.reviewHistory = Array.isArray(auditData.logs) ? auditData.logs : (Array.isArray(auditData) ? auditData : []);
+
+            const upliftData = upliftsRes.data || upliftsRes;
+            this.pendingUplifts = Array.isArray(upliftData) ? upliftData : [];
 
             this.renderActiveReviewTab();
         } catch (error) {
@@ -81,6 +86,9 @@ export const PM_Reviews = {
                 break;
             case 'requisitions':
                 html = this.renderPendingRequisitionsTable();
+                break;
+            case 'uplifts':
+                html = this.renderPendingUpliftsTable();
                 break;
             case 'history':
                 html = this.renderReviewHistoryTable();
@@ -221,6 +229,67 @@ export const PM_Reviews = {
                 <tbody>${rows}</tbody>
             </table>
             ${history.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 11px; color: var(--slate-500); border-top: 1px solid var(--slate-200);">Showing 20 of ${history.length} recent historical items.</div>` : ''}
+        `;
+    },
+
+    renderPendingUpliftsTable() {
+        if (!this.pendingUplifts || this.pendingUplifts.length === 0) {
+            return this.renderEmptyState('No budget uplift requests found. Uplifts are auto-generated when site shortages occur and the project budget is fully drained.');
+        }
+
+        const rows = this.pendingUplifts.slice(0, 20).map(bcr => {
+            const isPending = bcr.status === 'Pending';
+            const amount = Number(bcr.amount || 0);
+            const statusColor = bcr.status === 'Approved' ? 'active' : (bcr.status === 'Rejected' ? 'delayed' : 'locked');
+
+            return `
+                <tr style="${isPending ? 'background: #FFFBEB;' : ''}">
+                    <td><span class="project-id" style="font-size: 10px;">${bcr.bcrCode || 'BCR-' + bcr.id}</span></td>
+                    <td style="font-weight: 700;">${this.escapeHTML(bcr.project?.name || 'Project #' + bcr.projectId)}</td>
+                    <td style="font-family: 'JetBrains Mono'; font-weight: 700; color: var(--red);">
+                        + MWK ${amount.toLocaleString()}
+                    </td>
+                    <td style="font-size: 12px;">${bcr.budgetCategory || 'General'}</td>
+                    <td style="font-size: 11px; max-width: 250px; white-space: normal; line-height: 1.4;">
+                        ${this.escapeHTML((bcr.justification || 'No justification provided').substring(0, 120))}${(bcr.justification || '').length > 120 ? '...' : ''}
+                    </td>
+                    <td style="font-size: 11px;">${bcr.requester?.name || bcr.requesterRole?.replace(/_/g, ' ') || 'System'}</td>
+                    <td><span class="status ${statusColor}">${bcr.status.toUpperCase()}</span></td>
+                    <td style="text-align: right;">
+                        ${isPending ? `
+                            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                                <button class="btn btn-primary btn-sm" style="background: var(--emerald); border-color: var(--emerald); padding: 4px 12px; font-size: 11px;" 
+                                    onclick="window.app.pmModule.approveBudgetUplift(${bcr.id})">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-secondary btn-sm" style="padding: 4px 12px; font-size: 11px; color: var(--red); border-color: var(--red);" 
+                                    onclick="window.app.pmModule.openRejectBudgetUpliftDrawer(${bcr.id}, '${(bcr.bcrCode || 'BCR-' + bcr.id).replace(/'/g, "\\'")}', '${this.escapeHTML(bcr.project?.name || '').replace(/'/g, "\\'")}', ${amount})">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        ` : `
+                            <span style="font-size: 11px; color: var(--slate-400); font-weight: 600;">${bcr.status === 'Approved' ? 'Budget Increased' : 'Working with Current'}</span>
+                        `}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <div style="padding: 16px 20px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-money-bill-wave" style="color: #D97706; font-size: 16px;"></i>
+                <div>
+                    <div style="font-weight: 800; font-size: 13px; color: #92400E;">Budget Uplift Requests</div>
+                    <div style="font-size: 11px; color: #B45309;">Auto-generated when material shortages occur and the project budget is fully drained.</div>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>BCR Code</th><th>Project</th><th>Amount</th><th>Category</th><th>Justification</th><th>Requester</th><th>Status</th><th style="text-align: right;">Actions</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            ${this.pendingUplifts.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 11px; color: var(--slate-500); border-top: 1px solid var(--slate-200);">Showing 20 of ${this.pendingUplifts.length} requests.</div>` : ''}
         `;
     },
 
