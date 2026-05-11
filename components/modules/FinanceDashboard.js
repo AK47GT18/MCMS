@@ -32,6 +32,9 @@ export class FinanceDashboard {
         console.log('[DEBUG] FinanceDashboard initialized', this);
         if (window.app) window.app.fmModule = this;
         window.fmModule = this; // Restore legacy reference
+        
+        // Load initial data (projects, stats, etc.)
+        this.loadDashboardData();
     }
 
     render() {

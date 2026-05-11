@@ -88,7 +88,7 @@ export const FD_Budget = {
             await client.post('/budget-changes', {
                 projectId: parseInt(project),
                 amount: parseFloat(amount),
-                reason: reason
+                justification: reason
             });
             
             window.toast.show('Uplift request sent to Project Manager successfully.', 'success');

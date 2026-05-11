@@ -4461,7 +4461,8 @@ Contract Admin</textarea>
             
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project *</label>
-                <select id="bcr_project" class="form-input" style="width: 100%;">
+                <select id="bcr_project" class="form-input" style="width: 100%;" onchange="this.style.borderColor = this.value ? 'var(--emerald)' : 'var(--red)'">
+                    <option value="">Select Project...</option>
                     ${projects.length
             ? projects
                 .map(
@@ -4477,13 +4478,16 @@ Contract Admin</textarea>
             
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Requested Uplift Amount (MWK) *</label>
-                <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0">
+                <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0" min="1"
+                    oninput="const val = parseFloat(this.value); const isValid = !isNaN(val) && val > 0; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
                 <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Amount to add to current project budget</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Justification / Reason *</label>
-                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices..."></textarea>
+                <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices..."
+                    oninput="const isValid = this.value.trim().length >= 10; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';"></textarea>
+                <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Min 10 characters required.</div>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">

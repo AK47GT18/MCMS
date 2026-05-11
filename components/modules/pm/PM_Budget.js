@@ -165,6 +165,7 @@ export const PM_Budget = {
                             contractRef: c.refCode, 
                             vendor: c.vendorName,
                             contractStatus: c.status,
+                            contractType: c.contractType || 'material',
                             actualTotal: itemShare // Proportional share of FD's negotiated price
                         });
                     });
@@ -227,58 +228,52 @@ export const PM_Budget = {
                             </tr>
                         </thead>
                         <tbody>
-                            ${items.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--slate-400);">No material procurement records found.</td></tr>' : ''}
-                            ${items.map(item => {
-                                const qty = Number(item.quantity || 0);
-                                const receivedQty = Number(item.receivedQty || 0);
-                                const isTerminated = item.contractStatus === 'cancelled' || item.contractStatus === 'terminated';
-                                
-                                const calcQty = isTerminated ? receivedQty : qty;
-
-                                const marketUnitPrice = Number(item.unitPrice || 0); 
-                                const actualTotalNegotiated = Math.round(Number(item.actualTotal || 0)); 
-                                const actualUnitPrice = qty > 0 ? (actualTotalNegotiated / qty) : 0;
-                                
-                                const marketTotal = marketUnitPrice * calcQty;
-                                const actualTotal = Math.round(actualUnitPrice * calcQty);
-
-                                const diff = actualTotal - marketTotal;
-                                let diffPct = 0;
-                                if (calcQty > 0) {
-                                    diffPct = marketTotal > 0 ? (diff / marketTotal) * 100 : (actualTotal > 0 ? 100 : 0);
-                                }
-                                const isHigh = diff > 0;
-
-                                return `
-                                    <tr>
-                                        <td>
-                                            <div style="font-weight: 700; color: var(--slate-900);">${item.materialName}</div>
-                                            <div style="font-size: 10px; color: var(--slate-500);">
-                                                ${isTerminated ? `<span style="color:var(--red);font-weight:600;">[TERMINATED]</span> ` : ''}
-                                                Qty: ${calcQty} ${item.unit} | Vendor: ${item.vendor || 'N/A'}
-                                            </div>
-                                        </td>
-                                        <td class="project-id" style="font-size: 10px;">${item.contractRef}</td>
-                                        <td style="font-family: 'JetBrains Mono'; color: var(--slate-500);">MWK ${marketTotal.toLocaleString()}</td>
-                                        <td style="font-family: 'JetBrains Mono'; font-weight: 700;">MWK ${actualTotal.toLocaleString()}</td>
-                                        <td>
-                                            <span style="font-weight: 800; color: ${isHigh ? 'var(--red)' : (marketTotal === 0 ? 'var(--slate-500)' : 'var(--emerald)')};">
-                                                ${marketTotal === 0 && actualTotal > 0 ? 'No Baseline' : (calcQty === 0 ? 'N/A' : (isHigh ? '+' : '') + Math.round(diffPct) + '%')}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr style="background: var(--slate-50);">
-                                        <td colspan="5" style="padding: 8px 20px; font-style: italic; color: var(--slate-500); font-size: 11px; border-bottom: 1px solid var(--slate-200);">
-                                            <i class="fas fa-comment-dots" style="margin-right: 4px;"></i> 
-                                            ${isHigh ? 'Procured above market baseline due to logistical urgency or supply constraints.' : 'Procured within or below baseline through optimized vendor selection.'}
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
+                            ${(() => {
+                                const materialItems = items.filter(i => {
+                                    const unit = (i.unit || '').toLowerCase();
+                                    const type = (i.contractType || '').toLowerCase();
+                                    return type !== 'rental' && unit !== 'day' && unit !== 'shift' && unit !== 'hour' && unit !== 'days';
+                                });
+                                if (materialItems.length === 0) return '<tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--slate-400);">No material procurement records found.</td></tr>';
+                                return materialItems.map(item => this.renderVarianceRow(item)).join('');
+                            })()}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- Fleet & Equipment Rental Variance -->
+            ${(() => {
+                const fleetItems = items.filter(i => {
+                    const unit = (i.unit || '').toLowerCase();
+                    const type = (i.contractType || '').toLowerCase();
+                    return type === 'rental' || unit === 'day' || unit === 'shift' || unit === 'hour' || unit === 'days';
+                });
+                if (fleetItems.length === 0) return '';
+                return `
+                    <div class="data-card" style="margin-bottom: 24px;">
+                        <div class="data-card-header">
+                            <div class="card-title"><i class="fas fa-truck-monster" style="margin-right: 8px; color: var(--blue);"></i> Fleet & Equipment Rental Variance</div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; font-size: 12px;">
+                                <thead>
+                                    <tr>
+                                        <th>Asset / Machinery</th>
+                                        <th>Ref</th>
+                                        <th>Market Baseline (Total)</th>
+                                        <th>Actual Total</th>
+                                        <th>Variance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${fleetItems.map(item => this.renderVarianceRow(item)).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            })()}
 
             <!-- Assets & Fleet Section -->
             <div class="data-card" style="margin-bottom: 24px;">
@@ -298,26 +293,43 @@ export const PM_Budget = {
             </div>
 
             <!-- Uplift History Section -->
-            <div class="data-card">
+            <div class="data-card" style="margin-bottom: 24px;">
                 <div class="data-card-header">
-                    <div class="card-title"><i class="fas fa-arrow-up-right-dots" style="margin-right: 8px; color: var(--emerald);"></i> Budget Uplift & Amendment History</div>
+                    <div class="card-title"><i class="fas fa-chart-line" style="margin-right: 8px; color: var(--emerald);"></i> Budget Uplift & BCR History</div>
                 </div>
-                <div style="padding: 0;">
-                    ${bcrs.length === 0 ? '<div style="padding: 24px; text-align: center; color: var(--slate-400); font-size: 12px;">No financial amendments or uplifts recorded.</div>' : ''}
-                    ${bcrs.map(bcr => `
-                        <div style="padding: 16px 20px; border-bottom: 1px solid var(--slate-100);">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                <div>
-                                    <span class="project-id" style="font-size: 10px;">${bcr.bcrCode}</span>
-                                    <div style="font-weight: 800; color: var(--slate-900); font-size: 14px; margin-top: 4px;">+ MWK ${(Number(bcr.amount)).toLocaleString()}</div>
-                                </div>
-                                <span class="status ${bcr.status.toLowerCase() === 'approved' ? 'active' : 'pending'}">${bcr.status.toUpperCase()}</span>
-                            </div>
-                            <div style="font-size: 11px; color: var(--slate-600); background: var(--slate-50); padding: 8px; border-radius: 4px; border-left: 3px solid var(--slate-300);">
-                                <strong>Justification:</strong> ${bcr.justification || 'Administrative adjustment.'}
-                            </div>
-                        </div>
-                    `).join('')}
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; font-size: 12px;">
+                        <thead>
+                            <tr>
+                                <th>BCR Ref</th>
+                                <th>Category</th>
+                                <th>Current</th>
+                                <th>Proposed</th>
+                                <th>Adjustment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${bcrs.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--slate-400);">No budget changes requested for this project.</td></tr>' : ''}
+                            ${bcrs.map(b => `
+                                <tr>
+                                    <td class="project-id">${b.bcrCode}</td>
+                                    <td style="font-weight: 600;">${b.budgetCategory}</td>
+                                    <td style="font-family: 'JetBrains Mono';">MWK ${Number(b.currentAmount).toLocaleString()}</td>
+                                    <td style="font-family: 'JetBrains Mono';">MWK ${Number(b.proposedAmount).toLocaleString()}</td>
+                                    <td style="font-family: 'JetBrains Mono'; font-weight: 700; color: var(--emerald);">+MWK ${Number(b.amount).toLocaleString()}</td>
+                                    <td><span class="status ${b.status === 'Approved' ? 'active' : b.status === 'Rejected' ? 'rejected' : 'locked'}">${b.status}</span></td>
+                                </tr>
+                                ${b.justification ? `
+                                    <tr style="background: #fff;">
+                                        <td colspan="6" style="padding: 8px 20px; font-size: 11px; color: var(--slate-500); border-bottom: 1px solid var(--slate-100);">
+                                            <span style="font-weight: 700; color: var(--slate-700);">Justification:</span> ${b.justification}
+                                        </td>
+                                    </tr>
+                                ` : ''}
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         `;
@@ -338,6 +350,54 @@ export const PM_Budget = {
                 <i class="fas fa-receipt" style="font-size: 40px; color: var(--slate-300); margin-bottom: 16px;"></i>
                 <div style="font-weight: 700; color: var(--slate-500);">${msg}</div>
             </div>
+        `;
+    },
+
+    renderVarianceRow(item) {
+        const qty = Number(item.quantity || 0);
+        const receivedQty = Number(item.receivedQty || 0);
+        const isTerminated = item.contractStatus === 'cancelled' || item.contractStatus === 'terminated';
+        
+        const calcQty = isTerminated ? receivedQty : qty;
+
+        const marketUnitPrice = Number(item.unitPrice || 0); 
+        const actualTotalNegotiated = Math.round(Number(item.actualTotal || 0)); 
+        const actualUnitPrice = qty > 0 ? (actualTotalNegotiated / qty) : 0;
+        
+        const marketTotal = marketUnitPrice * calcQty;
+        const actualTotal = Math.round(actualUnitPrice * calcQty);
+
+        const diff = actualTotal - marketTotal;
+        let diffPct = 0;
+        if (calcQty > 0) {
+            diffPct = marketTotal > 0 ? (diff / marketTotal) * 100 : (actualTotal > 0 ? 100 : 0);
+        }
+        const isHigh = diff > 0;
+
+        return `
+            <tr>
+                <td>
+                    <div style="font-weight: 700; color: var(--slate-900);">${item.materialName}</div>
+                    <div style="font-size: 10px; color: var(--slate-500);">
+                        ${isTerminated ? `<span style="color:var(--red);font-weight:600;">[TERMINATED]</span> ` : ''}
+                        Qty: ${calcQty} ${item.unit} | Vendor: ${item.vendor || 'N/A'}
+                    </div>
+                </td>
+                <td class="project-id" style="font-size: 10px;">${item.contractRef}</td>
+                <td style="font-family: 'JetBrains Mono'; color: var(--slate-500);">MWK ${marketTotal.toLocaleString()}</td>
+                <td style="font-family: 'JetBrains Mono'; font-weight: 700;">MWK ${actualTotal.toLocaleString()}</td>
+                <td>
+                    <span style="font-weight: 800; color: ${isHigh ? 'var(--red)' : (marketTotal === 0 ? 'var(--slate-500)' : 'var(--emerald)')};">
+                        ${marketTotal === 0 && actualTotal > 0 ? 'No Baseline' : (calcQty === 0 ? 'N/A' : (isHigh ? '+' : '') + Math.round(diffPct) + '%')}
+                    </span>
+                </td>
+            </tr>
+            <tr style="background: var(--slate-50);">
+                <td colspan="5" style="padding: 8px 20px; font-style: italic; color: var(--slate-500); font-size: 11px; border-bottom: 1px solid var(--slate-200);">
+                    <i class="fas fa-comment-dots" style="margin-right: 4px;"></i> 
+                    ${isHigh ? 'Procured above market baseline due to logistical urgency or supply constraints.' : 'Procured within or below baseline through optimized vendor selection.'}
+                </td>
+            </tr>
         `;
     }
 };

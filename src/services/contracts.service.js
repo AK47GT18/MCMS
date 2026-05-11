@@ -176,7 +176,7 @@ async function create(data, userId) {
     value: data.value ? Number(data.value) : null,
     startDate: data.startDate ? new Date(data.startDate) : null,
     endDate: data.endDate ? new Date(data.endDate) : null,
-    contractType: data.contractType,
+    contractType: data.contractType ? data.contractType.toLowerCase() : 'material',
     vendorName: data.vendorName,
     projectId: data.projectId ? Number(data.projectId) : null,
     documentUrl: data.documentUrl,

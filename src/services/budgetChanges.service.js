@@ -21,7 +21,12 @@ async function create(data) {
   await auditService.log({
     userId: data.requestedBy, userName: req.requester?.name, userRole: req.requester?.role,
     action: 'CREATE_BUDGET_UPLIFT', targetType: 'BudgetChangeRequest', targetId: req.id,
-    details: { projectId: data.projectId, projectName: req.project?.name, amount: Number(data.amount) }
+    details: { 
+        projectId: data.projectId, 
+        projectName: req.project?.name, 
+        amount: Number(data.amount),
+        justification: data.justification || 'Automated/System Trigger'
+    }
   });
   
   // Notify Managing Director (approver)
