@@ -16,6 +16,41 @@ export const PM_Portfolio = {
         setTimeout(() => this.loadProjectsFromAPI(), 0);
 
         return `
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Active Projects</span>
+                        <span style="color: var(--blue);"><i class="fas fa-project-diagram"></i></span>
+                    </div>
+                    <div class="stat-value" id="stat-active-projects">--</div>
+                    <div class="stat-sub">Across all regions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Portfolio Value</span>
+                        <span style="color: var(--emerald);"><i class="fas fa-coins"></i></span>
+                    </div>
+                    <div class="stat-value" id="stat-portfolio-value">--</div>
+                    <div class="stat-sub">Total contract value</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Pending Reviews</span>
+                        <span style="color: var(--orange);"><i class="fas fa-clock"></i></span>
+                    </div>
+                    <div class="stat-value" id="stat-pending-reviews">--</div>
+                    <div class="stat-sub">Logs & Requisitions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">Critical Issues</span>
+                        <span style="color: var(--red);"><i class="fas fa-exclamation-circle"></i></span>
+                    </div>
+                    <div class="stat-value" id="stat-open-issues">--</div>
+                    <div class="stat-sub">Requires PM attention</div>
+                </div>
+            </div>
+
             <div class="data-card">
                 <div class="data-card-header" style="flex-wrap: wrap; gap: 16px;">
                     <div class="tabs" style="margin-bottom: 0; flex-grow: 1;">
@@ -246,6 +281,4 @@ export const PM_Portfolio = {
             window.toast.show('Failed to load project details', 'error');
         });
     },
-
-
 };

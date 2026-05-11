@@ -14,7 +14,7 @@ export const PM_SystemHelpers = {
     calculateDashboardStats(projects) {
         const stats = {
             totalProjects: projects.length,
-            activeProjects: projects.filter(p => p.status === 'active' || p.status === 'planning').length,
+            activeProjects: projects.filter(p => p.status === 'active' || p.status === 'planning' || p.status === 'in_progress').length,
             portfolioValue: projects.reduce((sum, p) => sum + (parseFloat(p.contractValue) || 0), 0),
             totalBudget: projects.reduce((sum, p) => sum + (parseFloat(p.budgetTotal) || 0), 0),
             totalSpent: projects.reduce((sum, p) => sum + (parseFloat(p.budgetSpent) || 0), 0),
@@ -24,7 +24,7 @@ export const PM_SystemHelpers = {
         stats.budgetUtilization = stats.totalBudget > 0 ? (stats.totalSpent / stats.totalBudget) * 100 : 0;
         
         return stats;
-    },
+    },
 
     async updateHeaderStats() {
         try {
@@ -32,11 +32,18 @@ export const PM_SystemHelpers = {
             const [logsRes, projectsRes, issuesRes] = await Promise.all([
                 client.get('/daily-logs', { status: 'pending', skipCache: true }),
                 client.get('/projects', { skipCache: true }),
-                client.get('/issues', { status: 'open', skipCache: true })
+                client.get('/issues', { skipCache: true }) // Fetch all to filter by priority/status accurately
             ]);
 
             const pendingLogs = (logsRes.data || logsRes || []).length;
-            const openIssues = (issuesRes.data || issuesRes || []).length;
+            const allIssues = issuesRes.issues || issuesRes.data || issuesRes || [];
+            
+            // Critical = Unresolved AND (High OR Critical Priority)
+            const criticalIssues = allIssues.filter(i => 
+                !['resolved', 'closed'].includes(i.status) && 
+                ['High', 'Critical'].includes(i.priority)
+            ).length;
+
             const allProjects = projectsRes.data || projectsRes || [];
             const stats = this.calculateDashboardStats(allProjects);
 
@@ -55,25 +62,25 @@ export const PM_SystemHelpers = {
             }
 
             // 2. Main Stats Grid (Portfolio View)
-            const statBudgetHealth = document.getElementById('stat-budget-health');
-            if (statBudgetHealth) {
-                const health = stats.totalBudget ? ((1 - (stats.totalSpent / stats.totalBudget)) * 100).toFixed(0) : 100;
-                statBudgetHealth.innerText = `${health}%`;
-            }
+            const statActiveProjects = document.getElementById('stat-active-projects');
+            if (statActiveProjects) statActiveProjects.innerText = stats.activeProjects;
+
+            const statPortfolioValue = document.getElementById('stat-portfolio-value');
+            if (statPortfolioValue) statPortfolioValue.innerText = `MWK ${(stats.portfolioValue / 1000000000).toFixed(1)}B`;
 
             const statPendingReviews = document.getElementById('stat-pending-reviews');
             if (statPendingReviews) statPendingReviews.innerText = pendingLogs;
 
-            const statPortfolioValue = document.getElementById('stat-portfolio-value');
-            if (statPortfolioValue) statPortfolioValue.innerText = `MWK ${(stats.portfolioValue / 1000000).toFixed(0)}M`;
-
-            const statActiveProjects = document.getElementById('stat-active-projects');
-            if (statActiveProjects) statActiveProjects.innerText = stats.activeProjects;
+            const statOpenIssues = document.getElementById('stat-open-issues');
+            if (statOpenIssues) {
+                statOpenIssues.innerText = criticalIssues;
+                statOpenIssues.style.color = criticalIssues > 0 ? 'var(--red)' : 'var(--slate-900)';
+            }
 
         } catch (error) {
             console.error('Failed to update header stats:', error);
         }
-    },
+    },
 
     renderEmptyState(message = 'No records found') {
         return `
@@ -86,7 +93,7 @@ export const PM_SystemHelpers = {
                 <button class="btn btn-secondary" style="margin-top: 24px;" onclick="window.app.pmModule.currentView='dashboard'; window.app.pmModule.render();">Return to Overview</button>
             </div>
         `;
-    },
+    },
 
     renderLoadingState() {
         return `
