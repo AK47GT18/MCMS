@@ -1616,58 +1616,134 @@ export const DrawerTemplates = {
         <div style="padding: 0 24px; border-bottom: 1px solid var(--slate-200); background: white;">
           <div class="tabs" style="margin-bottom: 0;">
             <div class="tab active" style="border-bottom-color: var(--orange);">Verify Log</div>
-            <div class="tab">Attendance</div>
+            <div class="tab" onclick="window.drawer.close(); window.app.pmModule?.openAttendanceSheet('${project?.id}')">Attendance</div>
           </div>
         </div>
 
         <div class="drawer-section">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
                 <div>
                     <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Supervisor</div>
-                    <div style="font-weight:600;">${escapeHTML(project?.manager?.name || "Site Supervisor")}</div>
+                    <div style="font-weight:700; color:var(--slate-900);">${escapeHTML(log?.user?.name || project?.manager?.name || "Site Supervisor")}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Date</div>
-                    <div style="font-weight:600;">${log ? new Date(log.createdAt || log.date).toLocaleDateString() : "Today"}</div>
+                    <div style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Log Date</div>
+                    <div style="font-weight:700; color:var(--slate-900);">${log ? new Date(log.logDate || log.createdAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : "Today"}</div>
                 </div>
             </div>
 
-            <div id="verification-map" style="height: 180px; width: 100%; border-radius: 8px; border: 1px solid var(--slate-300); margin-bottom: 16px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                <div style="flex: 1; background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #0369A1; font-weight: 800; margin-bottom: 4px;">Weather</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #0C4A6E;">
+                        <i class="fas fa-cloud-sun" style="margin-right: 6px;"></i> ${log?.weather || 'Clear'}
+                    </div>
+                </div>
+                <div style="flex: 1; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #047857; font-weight: 800; margin-bottom: 4px;">Progress</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #064E3B;">
+                        ${log?.progressCompletion || 0}% Complete
+                    </div>
+                </div>
+            </div>
+
+            <div id="verification-map" style="height: 160px; width: 100%; border-radius: 12px; border: 1px solid var(--slate-200); margin-bottom: 16px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
                 <div style="color: var(--slate-400); font-size: 11px;"><i class="fas fa-map-marked-alt"></i> Loading Verification Map...</div>
             </div>
 
-            <div class="evidence-photo" style="width: 100%; height: 200px; background: var(--slate-200); border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 16px; border: 1px solid var(--slate-300);">
-                <img src="${log?.photoUrl || "public/images/hero-background.jpg"}" loading="eager" alt="Site Evidence" style="width: 100%; height: 100%; object-fit: cover; background: var(--slate-100);" onerror="this.src='public/images/hero-background.jpg'">
-                <div class="geo-tag" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; display: flex; align-items: center; gap: 6px;">
-                    <i class="fas fa-map-marker-alt"></i> ${log?.gpsCoords || project?.location || "Sector 4"}
-                </div>
-            </div>
-
-            <div style="font-size:13px; font-weight:700; color:var(--slate-900); margin-bottom:8px;">Narrative Report</div>
-            <p style="font-size:13px; color:var(--slate-600); line-height:1.5; background:var(--slate-50); padding:12px; border-radius:6px;">
+            <div style="font-size:12px; font-weight:800; color:var(--slate-900); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Narrative Report</div>
+            <p style="font-size:14px; color:var(--slate-700); line-height:1.6; background:var(--slate-50); padding:16px; border-radius:12px; border:1px solid var(--slate-100); margin-bottom: 24px;">
                 "${log?.narrative || "No narrative provided for this log."}"
             </p>
-        </div>
 
-        <div class="drawer-section">
-            <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; margin-bottom:12px;">Resource Consumption</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
-                    <div style="font-size:11px; color:var(--slate-500);">Materials Used</div>
-                    <div style="font-weight:600;">${log?.materials || "None reported"}</div>
-                </div>
-                <div style="border:1px solid var(--slate-200); padding:10px; border-radius:6px;">
-                    <div style="font-size:11px; color:var(--slate-500);">Attendance</div>
-                    <div style="font-weight:600;">${log?.attendanceCount || log?.attendance || 0} Workers</div>
+            <div style="margin-bottom: 24px;">
+                <div style="font-size:12px; font-weight:800; color:var(--slate-900); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Labor Distribution</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <div style="background: white; border: 1px solid var(--slate-100); padding: 10px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-sm);">
+                        <div style="font-size: 9px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">General</div>
+                        <div style="font-size: 16px; font-weight: 800; color: var(--slate-900);">${log?.laborUsage?.general || log?.attendance || 0}</div>
+                    </div>
+                    <div style="background: white; border: 1px solid var(--slate-100); padding: 10px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-sm);">
+                        <div style="font-size: 9px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Skilled</div>
+                        <div style="font-size: 16px; font-weight: 800; color: var(--slate-900);">${log?.laborUsage?.skilled || 0}</div>
+                    </div>
+                    <div style="background: white; border: 1px solid var(--slate-100); padding: 10px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-sm);">
+                        <div style="font-size: 9px; color: var(--slate-500); font-weight: 700; text-transform: uppercase;">Foremen</div>
+                        <div style="font-size: 16px; font-weight: 800; color: var(--slate-900);">${log?.laborUsage?.foremen || 0}</div>
+                    </div>
                 </div>
             </div>
+
+            <div style="margin-bottom: 24px;">
+                <div style="font-size:12px; font-weight:800; color:var(--slate-900); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Resource Consumption</div>
+                
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Materials -->
+                    ${(log?.materialsUsage || []).length > 0 ? log.materialsUsage.map(m => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: white; border: 1px solid var(--slate-100); border-radius: 10px; box-shadow: var(--shadow-sm);">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-cube" style="color: var(--orange); font-size: 14px;"></i>
+                                <span style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${m.materialName}</span>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 800; color: var(--slate-900);">${m.quantity} ${m.unit || ''}</span>
+                        </div>
+                    `).join('') : ''}
+
+                    <!-- Machinery -->
+                    ${(log?.assetUsage || []).length > 0 ? log.assetUsage.map(a => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: white; border: 1px solid var(--slate-100); border-radius: 10px; box-shadow: var(--shadow-sm);">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-truck-monster" style="color: var(--blue); font-size: 14px;"></i>
+                                <span style="font-size: 13px; font-weight: 700; color: var(--slate-800);">${a.assetId}</span>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 800; color: var(--slate-900);">${a.hoursUsed} hrs</span>
+                        </div>
+                    `).join('') : ''}
+                </div>
+            </div>
+
+            <!-- Photos -->
+            <div style="margin-bottom: 24px;">
+                <div style="font-size:12px; font-weight:800; color:var(--slate-900); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Evidence Photos</div>
+                <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                    ${(log?.photos || []).map(p => `
+                        <img src="${p.dataUrl}" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--slate-200);">
+                    `).join('')}
+                </div>
+            </div>
+
+            ${log?.status === 'pending' ? `
+                <div id="rejection-box" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-size: 11px; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Rejection Reason (Internal)</label>
+                    <textarea id="log-rejection-reason" class="form-input" style="width: 100%; border-radius: 8px; padding: 12px;" placeholder="Optional: Explain why this log was rejected..."></textarea>
+                </div>
+            ` : ''}
+
+            ${log?.status !== 'pending' ? `
+                <div style="background: ${log.status === 'approved' ? 'var(--emerald-light)' : 'var(--red-light)'}; border: 1px solid ${log.status === 'approved' ? 'var(--emerald)' : 'var(--red)'}; padding: 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas ${log.status === 'approved' ? 'fa-check-circle' : 'fa-times-circle'}" style="font-size: 20px; color: ${log.status === 'approved' ? 'var(--emerald-dark)' : 'var(--red-dark)'};"></i>
+                    <div>
+                        <div style="font-weight: 800; font-size: 14px; color: ${log.status === 'approved' ? 'var(--emerald-dark)' : 'var(--red-dark)'};">Log ${log.status.charAt(0).toUpperCase() + log.status.slice(1)}</div>
+                        <div style="font-size: 11px; opacity: 0.8;">Action taken on ${new Date(log.updatedAt || Date.now()).toLocaleDateString()}</div>
+                    </div>
+                </div>
+            ` : ''}
         </div>
 
-        <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px;">
-          <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleRejectLog('${escapeHTML(log?.id)}', prompt('Reason for rejection:'))">Reject Log</button>
-          <button class="btn btn-primary" style="flex: 1; background: var(--emerald);" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleApproveLog('${escapeHTML(log?.id)}')">Approve & Update Gantt</button>
-        </div>
+        ${log?.status === 'pending' ? `
+            <div style="padding: 16px 24px; border-top: 1px solid var(--slate-200); background: white; display: flex; gap: 12px; position: sticky; bottom: 0;">
+                <button class="btn btn-secondary" style="flex: 1; border-color: var(--red); color: var(--red); font-weight: 700;" 
+                    onclick="(window.app.pmModule || window.app.fsModule).handleRejectLog('${escapeHTML(log?.id)}', document.getElementById('log-rejection-reason').value)">
+                    Reject Log
+                </button>
+                <button class="btn btn-primary" style="flex: 1; background: var(--emerald); border-color: var(--emerald); font-weight: 700;" 
+                    onclick="(window.app.pmModule || window.app.fsModule).handleApproveLog('${escapeHTML(log?.id)}')">
+                    Approve Log
+                </button>
+            </div>
+        ` : ''}
     `;
+
     },
 
     dailyReport: `
@@ -1930,7 +2006,10 @@ export const DrawerTemplates = {
 
             <div class="form-group" style="margin-bottom:16px;">
                  <label class="form-label">Narrative / Progress Log <span style="color:var(--red);">*</span></label>
-                 <textarea id="daily-narrative" class="form-input" data-vrules="required|minLen:10" rows="3" placeholder="Describe work done today in detail... (min 10 characters)"></textarea>
+                 <textarea id="daily-narrative" class="form-input" 
+                    placeholder="Describe work done today in detail... (min 10 characters)"
+                    oninput="const isValid = /^.{10,}$/s.test(this.value); this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';"
+                    style="width: 100%; height: 100px; border-radius: 8px; padding: 12px; transition: border-color 0.2s;"></textarea>
                  <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Be specific: what was accomplished, blockers encountered, next steps.</div>
             </div>
 
@@ -1945,17 +2024,42 @@ export const DrawerTemplates = {
                 </div>
             </div>
 
+            <!-- Labor & Team Section -->
+            <div style="background: #F0F9FF; padding: 16px; border-radius: 16px; border: 1px solid #BAE6FD; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <label class="form-label" style="color: #0369A1; font-weight: 700; margin: 0;"><i class="fas fa-users-cog"></i> Site Labor & Team</label>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                    <div style="background: white; padding: 10px; border-radius: 10px; border: 1px solid #BAE6FD;">
+                        <label style="display: block; font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">General</label>
+                        <input type="number" id="labor-general" class="form-input" value="10" min="0" style="width: 100%; border: none; padding: 4px 0; font-weight: 800; font-size: 16px; text-align: center;">
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 10px; border: 1px solid #BAE6FD;">
+                        <label style="display: block; font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Skilled</label>
+                        <input type="number" id="labor-skilled" class="form-input" value="2" min="0" style="width: 100%; border: none; padding: 4px 0; font-weight: 800; font-size: 16px; text-align: center;">
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 10px; border: 1px solid #BAE6FD;">
+                        <label style="display: block; font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Foremen</label>
+                        <input type="number" id="labor-foremen" class="form-input" value="1" min="0" style="width: 100%; border: none; padding: 4px 0; font-weight: 800; font-size: 16px; text-align: center;">
+                    </div>
+                </div>
+            </div>
+
             <!-- Materials Consumed Section (Pre-populated from site inventory) -->
             <div style="background: #FFF7ED; padding: 16px; border-radius: 16px; border: 1px solid #FED7AA; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <label class="form-label" style="color: #9A3412; font-weight: 700; margin: 0;"><i class="fas fa-cubes"></i> Materials Consumed Today</label>
-                    <span style="font-size: 10px; font-weight: 700; color: #92400E; background: #FFEDD5; padding: 2px 8px; border-radius: 20px;">${inventoryItems.filter(([n, d]) => { const u = (d.unit||'').toLowerCase(); return u !== 'day' && u !== 'hour'; }).length} on site</span>
+                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 10px; border-color: #FED7AA; background: #FFEDD5; color: #9A3412; font-weight: 800;" onclick="window.app.fsModule.addMaterialUsageRow()">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
                 </div>
                 <div id="material-usage-rows" style="display: flex; flex-direction: column; gap: 8px;">
                     ${(() => {
                         const materialItems = inventoryItems.filter(([name, data]) => {
                             const unit = (data.unit || '').toLowerCase();
-                            return unit !== 'day' && unit !== 'hour';
+                            const isMaterial = unit !== 'day' && unit !== 'hour' && unit !== 'machine';
+                            const isFuel = name.toLowerCase().includes('diesel') || name.toLowerCase().includes('fuel');
+                            return isMaterial && !isFuel;
                         });
                         if (materialItems.length === 0) {
                             return '<div style="text-align: center; color: #92400E; font-size: 11px; padding: 8px; opacity: 0.6;">No materials allocated to this site yet.</div>';
@@ -2018,7 +2122,9 @@ export const DrawerTemplates = {
             <div id="machinery-usage-section" style="background: #F0F9FF; padding: 16px; border-radius: 16px; border: 1px solid #BAE6FD; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <label class="form-label" style="color: #0369A1; font-weight: 700; margin: 0;"><i class="fas fa-truck-monster"></i> Machinery Usage</label>
-                    <span style="font-size: 10px; font-weight: 700; color: #0369A1; background: #E0F2FE; padding: 2px 8px; border-radius: 20px;">${siteAssets.length} assigned</span>
+                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 10px; border-color: #BAE6FD; background: #E0F2FE; color: #0369A1; font-weight: 800;" onclick="window.app.fsModule.addMachineUsageRow()">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
                 </div>
                 <div id="machine-usage-rows" style="display: flex; flex-direction: column; gap: 8px;">
                     ${(() => {
@@ -2037,30 +2143,40 @@ export const DrawerTemplates = {
                         if (allMachines.length === 0) {
                             return '<div style="text-align: center; color: #64748B; font-size: 11px; padding: 8px;">No machinery assigned to this site yet.</div>';
                         }
-                        return allMachines.map(a => `
+                        return allMachines.map(a => {
+                            const isExpired = a.isExpired || (a.status && a.status.toLowerCase().includes('return'));
+                            return `
                             <div class="machine-usage-row" style="background: white; border: 1px solid #BAE6FD; padding: 12px; border-radius: 10px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fas fa-truck-monster" style="color: #0284C7; font-size: 14px;"></i>
+                                        <div style="width: 32px; height: 32px; background: ${isExpired ? 'var(--red-light)' : '#E0F2FE'}; border-radius: 8px; display: flex; align-items: center; justify-content: center; ${isExpired ? 'filter: grayscale(1);' : ''}">
+                                            <i class="fas fa-truck-monster" style="color: ${isExpired ? 'var(--red)' : '#0284C7'}; font-size: 14px;"></i>
+                                        </div>
                                         <div>
                                             <div style="font-weight: 800; font-size: 13px; color: var(--slate-900);">${a.name}</div>
-                                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 600;">${a.assetCode || a.id} • <span style="color: ${a.status === 'available' || a.status === 'in_use' || a.status === 'checked_out' ? 'var(--emerald)' : 'var(--orange)'}">${(a.status || 'assigned').replace(/_/g, ' ').toUpperCase()}</span></div>
+                                            <div style="font-size: 10px; color: var(--slate-500); font-weight: 600;">${a.assetCode || a.id} • <span style="color: ${isExpired ? 'var(--red)' : 'var(--emerald)'}; font-weight: 700;">${isExpired ? 'RENTAL EXPIRED' : (a.status || 'assigned').replace(/_/g, ' ').toUpperCase()}</span></div>
                                         </div>
                                     </div>
                                 </div>
                                 <input type="hidden" class="machine-select" value="${a.id}">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                    <div>
-                                        <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Hours Used</label>
-                                        <input type="number" class="form-input machine-hours" placeholder="0" min="0" max="24" step="0.5" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;">
+                                ${isExpired ? `
+                                    <div style="background: var(--red-light); color: var(--red); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-align: center; border: 1px solid var(--red);">
+                                        <i class="fas fa-undo"></i> RENTAL PERIOD OVER - SEND BACK TO HQ
                                     </div>
-                                    <div>
-                                        <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Operator / Driver</label>
-                                        <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 34px;">
+                                ` : `
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <div>
+                                            <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Hours Used</label>
+                                            <input type="number" class="form-input machine-hours" placeholder="0" min="0" max="24" step="0.5" style="padding: 6px; font-size: 13px; height: 34px; font-weight: 700;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 9px; font-weight: 700; color: #0369A1; text-transform: uppercase;">Operator / Driver</label>
+                                            <input type="text" class="form-input machine-operator" placeholder="Name..." style="padding: 6px; font-size: 12px; height: 34px;">
+                                        </div>
                                     </div>
-                                </div>
+                                `}
                             </div>
-                        `).join('');
+                        `;}).join('');
                     })()}
                 </div>
                 <div style="font-size: 10px; color: #0369A1; margin-top: 8px; font-style: italic;"><i class="fas fa-info-circle"></i> Leave hours at 0 for machines not used today.</div>

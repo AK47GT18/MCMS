@@ -55,7 +55,7 @@ async function getById(id) {
 
 async function create(data, userId) {
   // Extract progress increment if provided in the payload
-  const { progressIncrement, progressCompletion, task_id, submissionLat, submissionLng, expenseItems, assetUsages, materialsConsumed, phaseId, activePhase, ...logData } = data;
+  const { progressIncrement, progressCompletion, task_id, submissionLat, submissionLng, expenseItems, assetUsages, materialsConsumed, laborUsage, phaseId, activePhase, ...logData } = data;
 
   // Validate geofence
   const project = await prisma.project.findUnique({
@@ -156,9 +156,11 @@ async function create(data, userId) {
   const log = await prisma.dailyLog.create({
     data: {
       ...logData,
+      headcount: (laborUsage?.general || 0) + (laborUsage?.skilled || 0) + (laborUsage?.foremen || 0),
       photos: {
         items: logData.photos || [],
-        materialsConsumed: materialsConsumed || []
+        materialsConsumed: materialsConsumed || [],
+        laborUsage: laborUsage || {}
       },
       task_id: task_id,
       workProgress: progressCompletion || progressIncrement,

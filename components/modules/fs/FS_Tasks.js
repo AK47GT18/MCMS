@@ -453,8 +453,15 @@ export const FS_Tasks = {
                 narrative: payloadOverride?.narrative || document.getElementById('daily-narrative')?.value || 'Daily Progress',
                 status: 'submitted',
                 progressCompletion: parseInt(progressValue),
-                activePhase: payloadOverride?.phaseId || document.getElementById('daily-log-phase-id')?.value || null,
-                weather: payloadOverride?.weather || document.getElementById('daily-weather')?.value || 'Clear',
+                activePhase: payloadOverride?.activePhase || document.getElementById('daily-log-phase-id')?.value || null,
+                weather: payloadOverride?.weather || this._currentWeather || 'Clear',
+
+                // Labor Usage
+                laborUsage: payloadOverride?.laborUsage || {
+                    general: parseInt(document.getElementById('labor-general')?.value || 0),
+                    skilled: parseInt(document.getElementById('labor-skilled')?.value || 0),
+                    foremen: parseInt(document.getElementById('labor-foremen')?.value || 0)
+                },
 
                 // Location Metadata
                 submissionLat: latitude,
@@ -578,11 +585,13 @@ export const FS_Tasks = {
             const lat = this.assignedProject.lat;
             const lng = this.assignedProject.lng;
             window.WeatherService.fetchWeather(lat, lng).then(weather => {
+                this._currentWeather = `${weather.condition || 'Clear'} (${weather.temp || 24}°C)`;
                 const placeholder = document.getElementById('daily-weather-widget-placeholder');
                 if (placeholder) {
                     placeholder.innerHTML = window.WeatherService.renderUltraMiniWidget(weather);
                 }
             }).catch(err => {
+                this._currentWeather = 'Clear (24°C)';
                 const placeholder = document.getElementById('daily-weather-widget-placeholder');
                 if (placeholder) {
                     placeholder.innerHTML = `<div style="font-size:10px; color:var(--red);">Unable to sync weather data</div>`;
@@ -611,32 +620,64 @@ export const FS_Tasks = {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying site coordinates...';
         btn.disabled = true;
 
-        // Collect materials consumed (only rows with qty > 0)
-        const materialRows = document.querySelectorAll('.material-usage-row');
-        const materialsConsumed = Array.from(materialRows).map(row => {
-            return {
-                materialName: row.querySelector('.material-select')?.value || '',
-                quantity: parseFloat(row.querySelector('.material-qty')?.value) || 0,
-                usedBy: row.querySelector('.material-used-by')?.value || ''
-            };
-        }).filter(m => m.materialName && m.quantity > 0);
-
-        // Collect machine usage (only rows with hours > 0)
+        // Collect and validate machine usage
         const machineRows = document.querySelectorAll('.machine-usage-row');
-        const assetUsage = Array.from(machineRows).map(row => {
+        const assetUsage = [];
+        for (const row of machineRows) {
             const rawId = row.querySelector('.machine-select')?.value || '';
-            return {
-                assetId: rawId,
-                hoursUsed: parseFloat(row.querySelector('.machine-hours')?.value) || 0,
-                operator: row.querySelector('.machine-operator')?.value || ''
-            };
-        }).filter(a => a.assetId && a.hoursUsed > 0);
+            const hours = parseFloat(row.querySelector('.machine-hours')?.value) || 0;
+            
+            if (rawId && hours > 0) {
+                // Check if machine is expired
+                const asset = (this.siteAssets || []).find(a => String(a.id) === String(rawId));
+                if (asset && asset.isExpired) {
+                    window.toast?.show(`Cannot log hours for ${asset.name}: Rental period expired.`, 'error');
+                    btn.innerHTML = 'Submit Daily Log';
+                    btn.disabled = false;
+                    return;
+                }
+                assetUsage.push({
+                    assetId: rawId,
+                    hoursUsed: hours,
+                    operator: row.querySelector('.machine-operator')?.value || ''
+                });
+            }
+        }
+
+        // Collect and validate materials consumed (with stock check)
+        const materialRows = document.querySelectorAll('.material-usage-row');
+        const materialsConsumed = [];
+        for (const row of materialRows) {
+            const name = row.querySelector('.material-select')?.value || '';
+            const qty = parseFloat(row.querySelector('.material-qty')?.value) || 0;
+            const stock = parseFloat(row.querySelector('.material-select')?.selectedOptions[0]?.dataset.stock || 0);
+
+            if (name && qty > 0) {
+                if (qty > stock) {
+                    window.toast?.show(`Error: ${name} usage (${qty}) exceeds available site stock (${stock}).`, 'error');
+                    row.querySelector('.material-qty').style.borderColor = 'var(--red)';
+                    btn.innerHTML = 'Submit Daily Log';
+                    btn.disabled = false;
+                    return;
+                }
+                materialsConsumed.push({
+                    materialName: name,
+                    quantity: qty,
+                    usedBy: row.querySelector('.material-used-by')?.value || ''
+                });
+            }
+        }
 
         this.handleDailyLogSubmit({
             activePhase: document.getElementById('daily-log-phase-id')?.value,
             progressCompletion: document.getElementById('daily-progress-completion')?.value,
             narrative: narrative,
-            weather: document.getElementById('daily-weather')?.value || 'Clear',
+            weather: this._currentWeather || 'Clear',
+            laborUsage: {
+                general: parseInt(document.getElementById('labor-general')?.value || 0),
+                skilled: parseInt(document.getElementById('labor-skilled')?.value || 0),
+                foremen: parseInt(document.getElementById('labor-foremen')?.value || 0)
+            },
             materialsConsumed: materialsConsumed,
             assetUsage: assetUsage
         }).finally(() => {
@@ -658,7 +699,9 @@ export const FS_Tasks = {
         row.style.cssText = 'background: white; border: 1px solid var(--slate-200); padding: 12px; border-radius: 6px; position: relative;';
 
         const siteAssets = this.siteAssets || [];
-        const options = siteAssets.map(a => `<option value="${a.id}">${a.name} (${a.assetCode || a.id})</option>`).join('');
+        const options = siteAssets
+            .filter(a => !a.isExpired && !(a.status && a.status.toLowerCase().includes('return')))
+            .map(a => `<option value="${a.id}">${a.name} (${a.assetCode || a.id})</option>`).join('');
 
         row.innerHTML = `
             <i class="fas fa-times" style="position: absolute; top: 12px; right: 12px; color: var(--red); cursor: pointer;" onclick="this.parentElement.remove()"></i>
@@ -695,11 +738,27 @@ export const FS_Tasks = {
         row.className = 'material-usage-row';
         row.style.cssText = 'background: white; border: 1px solid #FED7AA; padding: 12px; border-radius: 6px; position: relative;';
 
-        // Build options from site inventory
+        // Build options from site inventory (Excluding assets and pre-populated fuel)
         const inventory = this.siteInventory || {};
-        const options = Object.entries(inventory).map(([name, data]) => {
-            return `<option value="${name}" data-unit="${data.unit}" data-stock="${data.qty}">${name} (Stock: ${data.qty} ${data.unit})</option>`;
-        }).join('');
+        const inventoryEntries = Object.entries(inventory);
+        
+        let options = inventoryEntries
+            .filter(([name, data]) => {
+                if (!data) return false;
+                const unit = (data.unit || '').toLowerCase();
+                // Filter out non-materials and Fuel/Diesel (which is pre-populated/synced)
+                const isFuel = name.toLowerCase().includes('diesel') || name.toLowerCase().includes('fuel');
+                const isMachine = unit === 'day' || unit === 'hour' || unit === 'machine';
+                return !isMachine && !isFuel;
+            })
+            .map(([name, data]) => {
+                const stock = data.qty !== undefined ? data.qty : (data.quantityOnHand || 0);
+                return `<option value="${name}" data-unit="${data.unit || 'unit'}" data-stock="${stock}">${name} (Stock: ${stock} ${data.unit || 'units'})</option>`;
+            }).join('');
+
+        if (!options) {
+            options = `<option value="" disabled>No other materials on site</option>`;
+        }
 
         row.innerHTML = `
             <i class="fas fa-times" style="position: absolute; top: 12px; right: 12px; color: var(--red); cursor: pointer;" onclick="this.parentElement.remove()"></i>
