@@ -109,7 +109,7 @@ export const FD_Dashboard = {
                 client.get('/reports/finance/budget'),
                 requisitions.getPending(),
                 client.get('/replenishment/pending'),
-                client.get('/projects?limit=50'),
+                client.get('/projects?status=active&limit=1000'),
                 client.get('/budget-changes').catch(() => ({ data: [] }))
             ]);
 

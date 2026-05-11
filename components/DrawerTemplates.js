@@ -4454,47 +4454,63 @@ Contract Admin</textarea>
             <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="(window.app.pmModule || window.app.fsModule || window.app.caModule).handleCompleteMaintenance('${assetId}')">Log Completion</button>
         </div>
     `,
-    initiateBCR: (projects = [], selectedId = "") => `
+    initiateBCR: (projects = [], selectedId = "") => {
+        const validate = "const p=document.getElementById('bcr_project').value; const a=parseFloat(document.getElementById('bcr_amount').value); const r=document.getElementById('bcr_reason').value.trim(); const b=document.getElementById('bcr_submit_btn'); const _isValidGlobal = (p && !isNaN(a) && a>0 && r.length>=10); b.disabled=!_isValidGlobal; b.style.opacity=_isValidGlobal?'1':'0.5'; b.style.cursor=_isValidGlobal?'pointer':'not-allowed';";
+        return `
         <div class="drawer-section">
             <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Request Project Budget Uplift</h3>
             <p style="font-size: 13px; color: var(--slate-500); margin-bottom: 24px;">This request will be sent to the Project Manager for final authorization.</p>
             
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Project *</label>
-                <select id="bcr_project" class="form-input" style="width: 100%;" onchange="this.style.borderColor = this.value ? 'var(--emerald)' : 'var(--red)'">
+                <select id="bcr_project" class="form-input" style="width: 100%;" 
+                    onchange="this.style.borderColor = this.value ? 'var(--emerald)' : 'var(--red)'; ${validate}">
                     <option value="">Select Project...</option>
                     ${projects.length
-            ? projects
-                .map(
-                    (p) => `
-                        <option value="${p.id}" ${p.code === selectedId || String(p.id) === selectedId ? "selected" : ""}>${p.code}: ${p.name}</option>
-                    `,
-                )
-                .join("")
-            : '<option value="">No projects available</option>'
-        }
+                ? projects
+                    .map(
+                        (p) => `
+                            <option value="${p.id}" ${p.code === selectedId || String(p.id) === selectedId ? "selected" : ""}>${p.code}: ${p.name}</option>
+                        `,
+                    )
+                    .join("")
+                : '<option value="">No projects available</option>'
+            }
                 </select>
             </div>
             
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label">Requested Uplift Amount (MWK) *</label>
                 <input type="number" id="bcr_amount" class="form-input" style="width: 100%; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--orange);" placeholder="0" min="1"
-                    oninput="const val = parseFloat(this.value); const isValid = !isNaN(val) && val > 0; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';">
+                    oninput="const val = parseFloat(this.value); const isAmountValid = !isNaN(val) && val > 0; this.style.borderColor = isAmountValid ? 'var(--emerald)' : 'var(--red)'; ${validate}">
                 <div style="font-size: 11px; margin-top: 4px; color: var(--slate-400);">Amount to add to current project budget</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label">Justification / Reason *</label>
                 <textarea id="bcr_reason" class="form-input" rows="4" style="width: 100%;" placeholder="e.g. Sharp increase in global Bitumen prices..."
-                    oninput="const isValid = this.value.trim().length >= 10; this.style.borderColor = isValid ? 'var(--emerald)' : 'var(--red)';"></textarea>
+                    oninput="const isReasonValid = this.value.trim().length >= 10; this.style.borderColor = isReasonValid ? 'var(--emerald)' : 'var(--red)'; ${validate}"></textarea>
                 <div style="font-size: 10px; color: var(--slate-400); margin-top: 4px;">Min 10 characters required.</div>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange);" onclick="window.app.fmModule?.handleSubmitUplift()">
+            <button id="bcr_submit_btn" class="btn btn-primary" style="width: 100%; justify-content: center; background: var(--orange); border-color: var(--orange); opacity: 0.5; cursor: not-allowed;" disabled onclick="window.app.fmModule?.handleSubmitUplift()">
                 Send Request to PM
             </button>
+            <script>
+                (function(){
+                    const p=document.getElementById('bcr_project').value; 
+                    const a=parseFloat(document.getElementById('bcr_amount').value); 
+                    const r=document.getElementById('bcr_reason').value.trim(); 
+                    const b=document.getElementById('bcr_submit_btn'); 
+                    const valid = (p && !isNaN(a) && a>0 && r.length>=10); 
+                    if(b) {
+                        b.disabled=!valid; b.style.opacity=valid?'1':'0.5'; b.style.cursor=valid?'pointer':'not-allowed';
+                    }
+                })();
+            </script>
         </div>
-    `,
+    `;
+    },
 
     reportGenerator: `
         <div class="drawer-section">

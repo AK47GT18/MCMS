@@ -636,7 +636,6 @@ async function saveEstimate(projectId, estimateData, approvedTotal) {
   };
 
   // Dispatch email
-  const emailService = require('../emails/email.service');
   emailService.sendRoadBudgetApproved(
     fullProject, 
     result, 

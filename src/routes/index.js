@@ -671,25 +671,6 @@ async function router(req, res) {
   }
 
   // ============================================
-  // BUDGET CHANGE ROUTES
-  // ============================================
-  if (resource === 'budget-changes') {
-    if (!id && method === 'GET') {
-      return budgetChangesController.getAll(req, res);
-    }
-    if (!id && method === 'POST') {
-      return budgetChangesController.create(req, res);
-    }
-    if (id && action === 'approve' && method === 'POST') {
-      return budgetChangesController.approve(req, res, id);
-    }
-    if (id && action === 'reject' && method === 'POST') {
-      return budgetChangesController.reject(req, res, id);
-    }
-    return methodNotAllowed(res, ['GET', 'POST', 'PUT', 'PATCH']);
-  }
-
-  // ============================================
   // TIMELINE EXTENSION ROUTES
   // ============================================
   if (resource === 'timeline-extensions') {
@@ -704,6 +685,29 @@ async function router(req, res) {
     }
     if (id && action === 'reject' && method === 'POST') {
       return timelineExtensionController.reject(req, res, id);
+    }
+    return methodNotAllowed(res, ['GET', 'POST']);
+  }
+
+  // ============================================
+  // BUDGET CHANGE ROUTES
+  // ============================================
+  if (resource === 'budget-changes') {
+    if (method === 'POST') {
+      if (!id) {
+        req.body = await parseBody(req);
+        console.log(`[DEBUG BCR] Parsed Body:`, JSON.stringify(req.body));
+        return budgetChangesController.create(req, res);
+      }
+      if (id && action === 'approve') {
+        return budgetChangesController.approve(req, res, id);
+      }
+      if (id && action === 'reject') {
+        return budgetChangesController.reject(req, res, id);
+      }
+    }
+    if (method === 'GET') {
+      return budgetChangesController.getAll(req, res);
     }
     return methodNotAllowed(res, ['GET', 'POST']);
   }
@@ -769,6 +773,10 @@ async function router(req, res) {
     }
     if (id === 'run' && method === 'POST') {
       return reportsController.runReport(req, res);
+    }
+    
+    if (id === 'finance' && action === 'budget' && method === 'GET') {
+      return reportsController.getFinanceBudget(req, res);
     }
     
     // Legacy support for dynamic (optional)

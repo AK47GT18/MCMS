@@ -789,7 +789,6 @@ async function terminate(contractId, { reason, receivedItems }, user) {
   if (contract.contractType === 'rental' || contract.contractType === 'RENTAL') {
     try {
       const fds = await prisma.user.findMany({ where: { role: 'Finance_Director', isActive: true } });
-      const emailService = require('../emails/email.service');
       const isDamaged = reason?.includes('[DAMAGED]') || receivedItems?.some(i => i.status === 'Damaged');
       
       for (const fd of fds) {

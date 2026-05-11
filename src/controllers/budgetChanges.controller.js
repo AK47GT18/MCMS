@@ -8,7 +8,22 @@ const { parseQuery } = require('../middlewares/validate.middleware');
 const create = asyncHandler(async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-  const data = { ...req.body, requesterId: user.id };
+  const body = req.body || {};
+  const projectId = parseInt(body.projectId || body.project);
+  const amount = parseFloat(body.amount);
+  const justification = body.justification || body.reason;
+
+  if (isNaN(projectId) || isNaN(amount) || !justification) {
+    return response.error(res, 'Invalid request data. Project, Amount and Justification are required.', 400);
+  }
+
+  const data = {
+    projectId,
+    amount,
+    justification,
+    requestedBy: user.id,
+    status: 'Pending'
+  };
   const bcr = await budgetChangesService.create(data);
   response.success(res, bcr, 201);
 });

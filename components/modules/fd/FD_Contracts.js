@@ -867,13 +867,13 @@ export const FD_Contracts = {
     const data = {
       projectId: parseInt(document.getElementById("bcr_project")?.value),
       amount: parseFloat(document.getElementById("bcr_amount")?.value),
-      reason: document.getElementById("bcr_reason")?.value,
+      justification: document.getElementById("bcr_reason")?.value,
       requesterId: window.app.currentUser?.id,
     };
 
-    if (!data.projectId || !data.amount || !data.reason) {
+    if (isNaN(data.projectId) || isNaN(data.amount) || data.amount <= 0 || !data.justification || data.justification.trim().length < 10) {
       window.toast.show(
-        "Please provide project, amount and justification.",
+        "Please provide a valid project, positive amount, and detailed justification (min 10 chars).",
         "warning",
       );
       return;

@@ -8,7 +8,7 @@ export const FD_Budget = {
             <div class="data-card">
                <div class="data-card-header">
                   <div class="card-title">PM Budget Uplift Requests</div>
-                  <button class="btn btn-action" onclick="window.drawer.open('Initiate Budget Uplift', window.DrawerTemplates.initiateBCR(window.app.fmModule.data.projects))"><i class="fas fa-plus"></i> New Request</button>
+                  <button class="btn btn-action" onclick="(window.fmModule || window.app?.fmModule)?.openBCRDrawer()"><i class="fas fa-plus"></i> New Request</button>
                </div>
                <div id="fm-bcr-table">
                    <div style="padding: 24px; text-align: center; color: var(--slate-400);"><i class="fas fa-circle-notch fa-spin"></i> Loading uplift requests...</div>
@@ -73,8 +73,12 @@ export const FD_Budget = {
         const amount = document.getElementById('bcr_amount')?.value;
         const reason = document.getElementById('bcr_reason')?.value;
 
-        if (!amount || parseFloat(amount) <= 0) {
-            window.toast.show('Please enter a valid amount.', 'warning');
+        if (!project || isNaN(parseInt(project))) {
+            window.toast.show('Please select a project.', 'warning');
+            return;
+        }
+        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            window.toast.show('Please enter a valid positive amount.', 'warning');
             return;
         }
         if (!reason || reason.trim().length < 10) {
@@ -102,8 +106,28 @@ export const FD_Budget = {
         }
     },
 
-    requestPMUplift(projectId) {
-        window.toast?.show(`Opening uplift request for ${projectId}...`, 'info');
-        window.drawer.open(`Request Budget Uplift: ${projectId}`, window.DrawerTemplates.initiateBCR(this.data.projects, projectId));
+    async openBCRDrawer() {
+        if (!this.data.projects || this.data.projects.length === 0) {
+            window.toast?.show('Fetching project portfolio...', 'info');
+            try {
+                const res = await client.get('/projects?status=active&limit=100');
+                this.data.projects = res.data?.projects || res.data || [];
+            } catch (e) { console.error('Project fetch failed', e); }
+        }
+        
+        const activeProjects = (this.data.projects || []).filter(p => p.status === 'active' || p.status === 'in_progress');
+        window.drawer.open('Initiate Budget Uplift', window.DrawerTemplates.initiateBCR(activeProjects));
+    },
+
+    async requestPMUplift(projectId) {
+        window.toast?.show(`Opening uplift request for project context...`, 'info');
+        if (!this.data.projects || this.data.projects.length === 0) {
+            try {
+                const res = await client.get('/projects?status=active&limit=100');
+                this.data.projects = res.data?.projects || res.data || [];
+            } catch (e) { console.error('Project fetch failed', e); }
+        }
+        const activeProjects = (this.data.projects || []).filter(p => p.status === 'active' || p.status === 'in_progress');
+        window.drawer.open(`Request Budget Uplift`, window.DrawerTemplates.initiateBCR(activeProjects, projectId));
     }
 };

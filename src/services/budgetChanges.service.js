@@ -52,10 +52,16 @@ async function create(data) {
 }
 
 async function getAll(options = {}) {
-  const { projectId, status } = options;
+  const projectId = options.projectId;
+  const status = options.status;
   const where = {};
-  if (projectId) where.projectId = Number(projectId);
-  if (status) where.status = status;
+  
+  if (projectId && !isNaN(Number(projectId))) {
+    where.projectId = Number(projectId);
+  }
+  if (status && status !== 'null' && status !== 'undefined') {
+    where.status = status;
+  }
 
   return prisma.budgetChangeRequest.findMany({
     where,

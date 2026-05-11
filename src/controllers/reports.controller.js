@@ -131,8 +131,27 @@ const runReport = asyncHandler(async (req, res) => {
   }
 });
 
+const getFinanceBudget = asyncHandler(async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  const projects = await prisma.project.findMany({
+    where: { status: { in: ['active', 'in_progress', 'planning'] } },
+    select: { budgetTotal: true, budgetSpent: true }
+  });
+
+  const summary = projects.reduce((acc, p) => {
+    acc.totalBudget += Number(p.budgetTotal) || 0;
+    acc.totalSpent += Number(p.budgetSpent) || 0;
+    return acc;
+  }, { totalBudget: 0, totalSpent: 0 });
+
+  return response.success(res, summary);
+});
+
 module.exports = {
   getCatalog,
   getConfig,
-  runReport
+  runReport,
+  getFinanceBudget
 };
