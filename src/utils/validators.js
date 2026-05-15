@@ -357,7 +357,8 @@ const updateProcurementSchema = z.object({
 // ============================================
 
 const inventoryDistributeSchema = z.object({
-  sectorId: z.coerce.number().int().positive(),
+  sectorId: z.coerce.number().int().positive().optional(),
+  projectId: z.coerce.number().int().positive().optional(),
   materialName: z.string().min(1),
   unit: z.string().optional(),
   quantity: z.coerce.number().positive(),
@@ -368,7 +369,8 @@ const inventoryDistributeSchema = z.object({
 });
 
 const inventoryConsumeSchema = z.object({
-  sectorId: z.coerce.number().int().positive(),
+  sectorId: z.coerce.number().int().positive().optional(),
+  projectId: z.coerce.number().int().positive().optional(),
   materialName: z.string().min(1),
   quantity: z.coerce.number().positive(),
   reference: z.string().optional(),

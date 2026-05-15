@@ -736,7 +736,7 @@ export const FS_Logistics = {
 
             // Using the inventory distribute endpoint which adds to a sector's stock
             await inventoryApi.distribute({
-                sectorId: this.siteInventory[materialName]?.sectorId || 1,
+                projectId: this.assignedProject?.id || 1,
                 materialName: materialName,
                 unit: unit,
                 quantity: qty,

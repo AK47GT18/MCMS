@@ -35,10 +35,34 @@ async function getBySector(sectorId) {
  */
 async function distribute(data, user) {
   const { sectorId, materialName, category, unit, quantity, reference, notes, lowThreshold, reqId } = data;
-  
-  if (!sectorId || !materialName || !unit || !quantity || quantity <= 0) {
-    throw new AppError('Invalid distribution data', 400);
+  let finalSectorId = sectorId;
+
+  // If sectorId is missing or hardcoded to 1 (which doesn't exist), try to resolve via projectId
+  if ((!finalSectorId || finalSectorId === 1) && data.projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(data.projectId) },
+      include: { sectors: true }
+    });
+    if (project) {
+      finalSectorId = project.sectors?.[0]?.id;
+      if (!finalSectorId) {
+        const newSector = await prisma.sector.create({
+          data: {
+            projectId: project.id,
+            name: `Main Site Silo`,
+            status: 'active'
+          }
+        });
+        finalSectorId = newSector.id;
+      }
+    }
   }
+
+  if (!finalSectorId || !materialName || !unit || !quantity || quantity <= 0) {
+    throw new AppError('Invalid distribution data: Missing sector mapping or quantity.', 400);
+  }
+
+  const targetSectorId = parseInt(finalSectorId);
 
   // If this intake is linked to a requisition dispatch, mark it as fulfilled/delivered
   if (reqId) {
@@ -70,7 +94,7 @@ async function distribute(data, user) {
   const inventory = await prisma.inventory.upsert({
     where: {
       sectorId_materialName: {
-        sectorId,
+        sectorId: targetSectorId,
         materialName
       }
     },
@@ -84,7 +108,7 @@ async function distribute(data, user) {
       lowThreshold: lowThreshold !== undefined ? lowThreshold : undefined
     },
     create: {
-      sectorId,
+      sectorId: targetSectorId,
       materialName,
       category,
       unit,
@@ -172,15 +196,27 @@ Details: ${notes || 'N/A'}`;
  */
 async function consume(data, user) {
   const { sectorId, materialName, quantity, reference, notes } = data;
-  
-  if (!sectorId || !materialName || !quantity || quantity <= 0) {
-    throw new AppError('Invalid consumption data', 400);
+  let finalSectorId = sectorId;
+
+  // Resolve sector from project if needed
+  if ((!finalSectorId || finalSectorId === 1) && data.projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(data.projectId) },
+      include: { sectors: true }
+    });
+    finalSectorId = project?.sectors?.[0]?.id;
   }
+
+  if (!finalSectorId || !materialName || !quantity || quantity <= 0) {
+    throw new AppError('Invalid consumption data: Missing sector mapping or quantity.', 400);
+  }
+
+  const targetSectorId = parseInt(finalSectorId);
 
   const inventory = await prisma.inventory.findUnique({
     where: {
       sectorId_materialName: {
-        sectorId,
+        sectorId: targetSectorId,
         materialName
       }
     },
@@ -378,7 +414,7 @@ async function getAll() {
     totals[item.materialName].totalQuantity += qty;
     totals[item.materialName].allocations.push({
       sectorId: item.sectorId,
-      sectorName: item.sector.name,
+      sectorName: item.sector.project?.name || item.sector.name, // Use project name as location
       projectId: item.sector.projectId,
       projectName: item.sector.project?.name,
       quantity: qty

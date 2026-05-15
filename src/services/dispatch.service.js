@@ -38,18 +38,46 @@ const dispatchService = {
       }
     });
 
-    // Deduct materials from Yard inventory (Sector 1) upon dispatch
+    // Deduct materials from inventory upon dispatch
     try {
       const inventoryService = require('./inventory.service');
       for (const item of requisition.items) {
-        await inventoryService.distribute({
-          sectorId: 1, // Dispatching FROM the Yard
-          materialName: item.itemName,
-          unit: 'Units',
-          quantity: -item.quantity, // Negative quantity to DEDUCT
-          reference: updatedReq.reqCode || `DISPATCH-${requisitionId}`,
-          notes: `Dispatched to ${requisition.project?.name || 'Site'}`
-        }, { id: userId });
+        // Try to deduct from the Central Yard (Project 1) first
+        try {
+          await inventoryService.consume({
+            projectId: 1, 
+            materialName: item.itemName,
+            quantity: item.quantity,
+            reference: updatedReq.reqCode || `DISPATCH-${requisitionId}`,
+            notes: `Dispatched to ${requisition.project?.name || 'Site'}`
+          }, { id: userId });
+        } catch (yardErr) {
+          // If not in Yard, find ANY sector that has this material and deduct from there
+          const invRecord = await prisma.inventory.findFirst({
+            where: {
+              materialName: item.itemName,
+              quantityOnHand: { gte: item.quantity }
+            },
+            orderBy: { quantityOnHand: 'desc' }
+          });
+
+          if (invRecord) {
+            await prisma.inventory.update({
+              where: { id: invRecord.id },
+              data: { quantityOnHand: { decrement: item.quantity } }
+            });
+            await prisma.inventoryLog.create({
+              data: {
+                inventoryId: invRecord.id,
+                userId: userId,
+                type: 'OUT',
+                quantity: item.quantity,
+                reference: updatedReq.reqCode || `DISPATCH-${requisitionId}`,
+                notes: `Auto-deducted from ${invRecord.sectorId} due to Yard shortage.`
+              }
+            });
+          }
+        }
       }
     } catch (invErr) {
       console.error('Inventory deduction on dispatch failed:', invErr.message);
@@ -213,11 +241,9 @@ const dispatchService = {
     // Distribute materials into site inventory on arrival
     try {
       const inventoryService = require('./inventory.service');
-      const targetSector = requisition.project.sectors?.[0]?.id || 1;
-
       for (const item of requisition.items) {
         await inventoryService.distribute({
-          sectorId: targetSector,
+          projectId: requisition.projectId,
           materialName: item.itemName,
           unit: item.unit || 'Units',
           quantity: item.quantity,
@@ -225,6 +251,7 @@ const dispatchService = {
           notes: `Arrival confirmed by ${userName}. Added to site inventory.`,
           reqId: requisitionId
         }, { id: userId });
+        console.log(`[CONFIRM] Added ${item.quantity} of ${item.itemName} to Project ${requisition.projectId}`);
       }
     } catch (invErr) {
       console.error('Inventory distribution on arrival failed:', invErr.message);
@@ -342,7 +369,7 @@ const dispatchService = {
       where: { id: parseInt(requisitionId) },
       include: { 
         items: true,
-        project: true
+        project: { include: { sectors: true } }
       }
     });
 
@@ -371,14 +398,15 @@ const dispatchService = {
       // Add to site inventory (only what was actually received)
       if (qtyReceived > 0) {
         await inventoryService.distribute({
-          sectorId: 1, // Defaulting to site sector 1 for simplicity in this flow
+          projectId: requisition.projectId,
           materialName: receivedItem.itemName,
-          unit: 'Units',
+          unit: receivedItem.unit || originalItem?.unit || 'Units',
           quantity: qtyReceived,
           reference: updatedReq.reqCode || `REQ-${requisitionId}`,
           notes: `Intake confirmed by ${receivedBy}. Dispatched by ${dispatchedBy}.`,
           dispatchedBy: dispatchedBy
         }, { id: userId });
+        console.log(`[VARIANCE] Added ${qtyReceived} of ${receivedItem.itemName} to Project ${requisition.projectId}`);
       }
 
       // Handle variance
