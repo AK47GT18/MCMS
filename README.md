@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏗️ MCMS — Mining & Construction Management System
+# 🏗️ MRCMS — Mkaka Road Construction Management System
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
@@ -35,7 +35,7 @@
 
 ## 🔭 Overview
 
-MCMS is a **role-based construction management platform** built with a vanilla Node.js backend (zero frameworks) and a modular vanilla JS frontend. It supports **8 distinct user roles**, each with their own dashboard, and covers the full project lifecycle — from budget estimation and contract management to daily field logs and equipment tracking.
+MRCMS is a **role-based construction management platform** built with a vanilla Node.js backend (zero frameworks) and a modular vanilla JS frontend. It supports **8 distinct user roles**, each with their own dashboard, and covers the full project lifecycle — from budget estimation and contract management to daily field logs and equipment tracking.
 
 > **Built for:** Construction companies managing multiple road/civil works projects with distributed field teams.
 
